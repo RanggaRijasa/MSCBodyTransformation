@@ -1,0 +1,110 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Xcode user-specific data
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.perspectivev3
+*.mode1v3
+*.mode2v3
+
+# Xcode workspace user data
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Build products and derived data
+DerivedData/
+.build/
+build/
+Build/
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+
+# Xcode and Swift test artifacts
+*.profraw
+*.profdata
+coverage/
+TestResults/
+*.xcresult
+
+# Swift Package Manager local state
+.swiftpm/
+Packages/
+Package.pins
+
+# Package.resolved should be committed when dependencies are intentionally added
+!Package.resolved
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+tmp/
+Temp/
+
+# Local demo-generated media and runtime data
+LocalDemoData/
+GeneratedDemoMedia/
+DemoEvidence/
+RuntimeFixtures/
+
+# Environment files and local configuration
+.env
+.env.*
+!.env.example
+*.local.xcconfig
+Local.xcconfig
+**/Local.xcconfig
+Secrets.xcconfig
+**/Secrets.xcconfig
+SupabaseConfig.plist
+**/SupabaseConfig.plist
+
+# Authentication and service configuration
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+
+# Signing credentials and provisioning
+*.mobileprovision
+*.p12
+*.p8
+AuthKey_*.p8
+Certificates/
+ProvisioningProfiles/
+
+# App Store Connect and local export artifacts
+ExportOptions.plist
+AppStoreExport/
+TestFlightExport/
+
+# Fastlane output, if Fastlane is added later
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# Local tooling and editor metadata
+.vscode/
+.idea/
+*.iml
+
+# Codex or agent scratch output
+.codex/
+.agent-cache/
+.agent-scratch/
