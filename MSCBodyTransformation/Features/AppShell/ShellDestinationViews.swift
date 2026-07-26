@@ -5,6 +5,7 @@ struct ShellRouteDestinationView: View {
     let route: ShellRoute
     let router: ShellTabRouter
     let participantStore: ParticipantJourneyStore?
+    let coachFeatures: CoachFeatureContainer?
 
     var body: some View {
         switch route {
@@ -50,6 +51,39 @@ struct ShellRouteDestinationView: View {
                     router: router
                 )
             }
+        case .coach(.participantDetail(let participantID)):
+            coachDestination {
+                CoachParticipantDetailDestinationView(
+                    participantID: participantID,
+                    features: $0
+                )
+            }
+        case .coach(.reviewQueue):
+            coachDestination {
+                CoachReviewQueueView(features: $0)
+            }
+        case .coach(.invite):
+            coachDestination {
+                CoachInviteView(
+                    state: $0.invites,
+                    router: router
+                )
+            }
+        case .coach(.storePreview):
+            coachDestination {
+                CoachStorePreviewView(state: $0.storePreview)
+            }
+        case .coach(.leaderboard):
+            coachDestination {
+                CoachLeaderboardView(state: $0.leaderboard)
+            }
+        case .coach(.profile):
+            coachDestination {
+                CoachProfileView(
+                    state: $0.profile,
+                    router: router
+                )
+            }
         case .admin(.programEditor):
             LocalDraftEditorPlaceholderView()
         default:
@@ -71,6 +105,18 @@ struct ShellRouteDestinationView: View {
     ) -> some View {
         if let participantStore {
             content(participantStore)
+        } else {
+            LoadingStateView()
+                .padding(AppSpacing.medium)
+        }
+    }
+
+    @ViewBuilder
+    private func coachDestination<Content: View>(
+        @ViewBuilder content: (CoachFeatureContainer) -> Content
+    ) -> some View {
+        if let coachFeatures {
+            content(coachFeatures)
         } else {
             LoadingStateView()
                 .padding(AppSpacing.medium)

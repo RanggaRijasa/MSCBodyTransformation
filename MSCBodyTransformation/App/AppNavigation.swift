@@ -16,6 +16,7 @@ nonisolated enum CoachRoute: Hashable, Sendable {
     case participantDetail(UUID)
     case reviewQueue
     case invite
+    case storePreview
     case leaderboard
     case profile
 }

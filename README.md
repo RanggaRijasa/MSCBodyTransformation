@@ -1,10 +1,10 @@
 # MSC Body Transformation
 
 Aplikasi native iOS dan iPadOS untuk program transformasi tubuh. Phase 00
-sampai Phase 03 menyediakan fondasi, model domain, repository protocol, use
+sampai Phase 04 menyediakan fondasi, model domain, repository protocol, use
 case, fixture JSON, semantic design system, app shell role-aware, serta
-participant journey lokal yang dapat dibangun dan dijalankan tanpa internet
-maupun layanan eksternal.
+participant dan coach journey lokal yang dapat dibangun dan dijalankan tanpa
+internet maupun layanan eksternal.
 
 ## Kebutuhan lokal
 
@@ -103,9 +103,23 @@ peringkat berubah. Tab Program, Coach, dan Profil menyediakan timeline,
 direktori coach, riwayat enrollment, pengaturan, dan alat simulasi khusus
 Debug.
 
-## Batasan Phase 03
+## Coach experience Phase 04
+
+Coach dapat melihat dashboard, saldo kuota, program aktif, peserta yang
+ditugaskan, filter dan detail progres, bukti serta jawaban lokal, antrean
+pemeriksaan, undangan dengan QR lokal, papan peringkat, profil publik, dan
+pratinjau paket kuota. Persetujuan atau penolakan menghitung ulang poin lokal.
+Pembuatan undangan tidak memakai kuota; satu kuota baru terpakai setelah
+enrollment demo berhasil dan enrollment duplikat tetap idempoten.
+
+Store Coach hanya menampilkan fixture paket 10, 25, dan 50 kuota dengan harga
+contoh. Konfirmasi demo menambah saldo repository lokal tanpa membuat
+transaksi atau prompt App Store.
+
+## Batasan Phase 04
 
 Supabase, OAuth, StoreKit production, App Store Connect, networking, dan
 package pihak ketiga belum digunakan. Foto tetap berupa referensi demo lokal
-dan video berupa placeholder sampai workflow media native Phase 06. Coach
-experience lengkap menjadi scope Phase 04.
+dan video berupa placeholder sampai workflow media native Phase 06. Mock
+access check bukan pengganti Row Level Security produksi. Admin CMS lengkap
+menjadi scope Phase 05.

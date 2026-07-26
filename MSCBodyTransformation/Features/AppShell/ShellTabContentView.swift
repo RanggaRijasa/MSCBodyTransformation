@@ -6,6 +6,7 @@ struct ShellTabContentView: View {
     let scenario: AppDemoScenario
     let router: ShellTabRouter
     let participantStore: ParticipantJourneyStore?
+    let coachFeatures: CoachFeatureContainer?
 
     var body: some View {
         content
@@ -79,6 +80,14 @@ struct ShellTabContentView: View {
                 router: router,
                 showsOfflineBanner: showsOfflineBanner
             )
+        } else if case .coach(let coachTab) = tab,
+                  let coachFeatures {
+            CoachTabRootView(
+                tab: coachTab,
+                features: coachFeatures,
+                router: router,
+                showsOfflineBanner: showsOfflineBanner
+            )
         } else if tab == .admin(.settings) {
             AdminSettingsPlaceholderView(
                 showsOfflineBanner: showsOfflineBanner
@@ -133,13 +142,6 @@ struct ShellTabContentView: View {
                         in: tab
                     )
                 }
-            }
-        case .coach(.invite):
-            PrimaryActionBar(
-                title: "action.show_invite",
-                systemImage: "qrcode"
-            ) {
-                router.presentedSheet = .inviteCode("MSC7HARI")
             }
         case .admin(.programs):
             PrimaryActionBar(

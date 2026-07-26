@@ -14,7 +14,8 @@ actor InMemoryAppRepository:
     WalletRepository,
     ManagedContentRepository,
     AdminPeopleRepository,
-    ParticipantDemoRepository
+    ParticipantDemoRepository,
+    CoachDemoRepository
 {
     private var users: [AppUser]
     private var participantProfiles: [ParticipantProfile]
@@ -119,6 +120,17 @@ actor InMemoryAppRepository:
             throw DomainError.notFound(resource: "coach_profile")
         }
         return profile
+    }
+
+    func save(coachProfile: CoachProfile) async throws -> CoachProfile {
+        guard let index = coachProfiles.firstIndex(where: {
+            $0.id == coachProfile.id
+                && $0.userID == coachProfile.userID
+        }) else {
+            throw DomainError.notFound(resource: "coach_profile")
+        }
+        coachProfiles[index] = coachProfile
+        return coachProfile
     }
 
     func publicCoaches() async throws -> [CoachProfile] {
@@ -322,6 +334,18 @@ actor InMemoryAppRepository:
             .sorted { $0.displayName < $1.displayName }
     }
 
+    func assignedParticipant(
+        id participantID: UUID,
+        coachID: UUID
+    ) async throws -> ParticipantProfile {
+        guard let participant = participantProfiles.first(where: {
+            $0.id == participantID && $0.coachID == coachID
+        }) else {
+            throw DomainError.permissionDenied
+        }
+        return participant
+    }
+
     func invites(coachID: UUID) async throws -> [CoachInvite] {
         invitesStorage
             .filter { $0.coachID == coachID }
@@ -329,36 +353,32 @@ actor InMemoryAppRepository:
     }
 
     func createInvite(_ invite: CoachInvite) async throws -> CoachInvite {
-        guard let walletIndex = wallets.firstIndex(
-            where: { $0.coachID == invite.coachID }
-        ) else {
-            throw DomainError.notFound(resource: "coach_wallet")
-        }
-        guard wallets[walletIndex].availableSeatCredits > 0 else {
-            throw DomainError.conflict(
-                reason: "Kuota peserta tidak mencukupi."
-            )
-        }
         guard !invitesStorage.contains(where: { $0.code == invite.code }) else {
             throw DomainError.conflict(
                 reason: "Kode undangan sudah digunakan."
             )
         }
 
-        wallets[walletIndex].availableSeatCredits -= 1
-        wallets[walletIndex].updatedAt = invite.createdAt
-        creditLedgerEntries.append(
-            CreditLedgerEntry(
-                id: invite.id,
-                walletID: wallets[walletIndex].id,
-                kind: .reservation,
-                seatCreditDelta: -1,
-                note: "Reservasi undangan program lokal.",
-                createdAt: invite.createdAt
-            )
-        )
         invitesStorage.append(invite)
         return invite
+    }
+
+    func revokeInvite(
+        id: UUID,
+        coachID: UUID
+    ) async throws -> CoachInvite {
+        guard let index = invitesStorage.firstIndex(where: {
+            $0.id == id && $0.coachID == coachID
+        }) else {
+            throw DomainError.permissionDenied
+        }
+        guard invitesStorage[index].status == .active else {
+            throw DomainError.conflict(
+                reason: "Hanya undangan aktif yang dapat dicabut."
+            )
+        }
+        invitesStorage[index].status = .revoked
+        return invitesStorage[index]
     }
 
     func redeemInvite(
@@ -397,6 +417,17 @@ actor InMemoryAppRepository:
             return existing
         }
 
+        guard let walletIndex = wallets.firstIndex(where: {
+            $0.coachID == invite.coachID
+        }) else {
+            throw DomainError.notFound(resource: "coach_wallet")
+        }
+        guard wallets[walletIndex].availableSeatCredits > 0 else {
+            throw DomainError.conflict(
+                reason: "Kuota peserta tidak mencukupi."
+            )
+        }
+
         let enrollment = ProgramEnrollment(
             id: enrollmentID,
             programID: invite.programID,
@@ -406,6 +437,18 @@ actor InMemoryAppRepository:
             enrolledAt: now
         )
         enrollmentsStorage.append(enrollment)
+        wallets[walletIndex].availableSeatCredits -= 1
+        wallets[walletIndex].updatedAt = now
+        creditLedgerEntries.append(
+            CreditLedgerEntry(
+                id: enrollmentID,
+                walletID: wallets[walletIndex].id,
+                kind: .reservation,
+                seatCreditDelta: -1,
+                note: "Kuota terpakai setelah enrollment demo berhasil.",
+                createdAt: now
+            )
+        )
         invitesStorage[inviteIndex].status = .redeemed
         invitesStorage[inviteIndex].redeemedByParticipantID = participantID
         return enrollment
@@ -424,6 +467,65 @@ actor InMemoryAppRepository:
         creditLedgerEntries
             .filter { $0.walletID == walletID }
             .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    func grantSeatCredits(
+        coachID: UUID,
+        amount: Int,
+        grantedAt: Date
+    ) async throws -> CoachWallet {
+        guard amount > 0 else {
+            throw DomainError.validation(
+                field: "amount",
+                reason: "Jumlah kuota harus lebih dari nol."
+            )
+        }
+        guard let index = wallets.firstIndex(where: {
+            $0.coachID == coachID
+        }) else {
+            throw DomainError.notFound(resource: "coach_wallet")
+        }
+        wallets[index].availableSeatCredits += amount
+        wallets[index].updatedAt = grantedAt
+        let ledgerSequence = creditLedgerEntries.count + 1_000
+        let ledgerID = UUID(
+            uuidString: String(
+                format: "32000000-0000-0000-0000-%012lld",
+                Int64(ledgerSequence)
+            )
+        ) ?? wallets[index].id
+        creditLedgerEntries.append(
+            CreditLedgerEntry(
+                id: ledgerID,
+                walletID: wallets[index].id,
+                kind: .purchase,
+                seatCreditDelta: amount,
+                note: "Kredit demo lokal—bukan transaksi App Store.",
+                createdAt: grantedAt
+            )
+        )
+        return wallets[index]
+    }
+
+    func setSeatCredits(
+        coachID: UUID,
+        amount: Int,
+        updatedAt: Date
+    ) async throws -> CoachWallet {
+        guard amount >= 0 else {
+            throw DomainError.validation(
+                field: "amount",
+                reason: "Saldo kuota tidak boleh negatif."
+            )
+        }
+        guard let index = wallets.firstIndex(where: {
+            $0.coachID == coachID
+        }) else {
+            throw DomainError.notFound(resource: "coach_wallet")
+        }
+        wallets[index].availableSeatCredits = amount
+        wallets[index].updatedAt = updatedAt
+        return wallets[index]
     }
 
     func managedContent() async throws -> [ManagedContent] {

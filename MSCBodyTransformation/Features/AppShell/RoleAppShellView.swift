@@ -11,6 +11,7 @@ struct RoleAppShellView: View {
     @State private var selectedTab: AppTab
     @State private var router = ShellTabRouter()
     @State private var participantStore: ParticipantJourneyStore?
+    @State private var coachFeatures: CoachFeatureContainer?
 
     init(role: UserRole, scenario: AppDemoScenario) {
         self.role = role
@@ -32,13 +33,15 @@ struct RoleAppShellView: View {
                         tab: tab,
                         scenario: scenario,
                         router: router,
-                        participantStore: participantStore
+                        participantStore: participantStore,
+                        coachFeatures: coachFeatures
                     )
                     .navigationDestination(for: ShellRoute.self) { route in
                         ShellRouteDestinationView(
                             route: route,
                             router: router,
-                            participantStore: participantStore
+                            participantStore: participantStore,
+                            coachFeatures: coachFeatures
                         )
                     }
                 }
@@ -75,7 +78,7 @@ struct RoleAppShellView: View {
         }
         .onOpenURL(perform: handleDeepLink)
         .task(id: "\(role.rawValue).\(scenario.rawValue)") {
-            await prepareParticipantStoreIfNeeded()
+            await prepareFeatureStateIfNeeded()
         }
     }
 
@@ -96,11 +99,21 @@ struct RoleAppShellView: View {
         )
     }
 
-    private func prepareParticipantStoreIfNeeded() async {
-        guard role == .participant else {
+    private func prepareFeatureStateIfNeeded() async {
+        switch role {
+        case .participant:
+            coachFeatures = nil
+            await prepareParticipantStoreIfNeeded()
+        case .coach:
             participantStore = nil
-            return
+            await prepareCoachFeaturesIfNeeded()
+        case .admin:
+            participantStore = nil
+            coachFeatures = nil
         }
+    }
+
+    private func prepareParticipantStoreIfNeeded() async {
         guard participantStore == nil else {
             return
         }
@@ -111,6 +124,15 @@ struct RoleAppShellView: View {
         )
         participantStore = store
         await store.load()
+    }
+
+    private func prepareCoachFeaturesIfNeeded() async {
+        guard coachFeatures == nil else {
+            return
+        }
+        let features = CoachFeatureContainer(environment: appEnvironment)
+        await features.prepareIdentity()
+        coachFeatures = features
     }
 }
 

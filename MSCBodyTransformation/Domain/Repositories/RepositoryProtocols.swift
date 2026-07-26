@@ -12,6 +12,7 @@ nonisolated protocol ProfileRepository: Sendable {
     func save(participantProfile: ParticipantProfile) async throws
         -> ParticipantProfile
     func coachProfile(userID: UUID) async throws -> CoachProfile
+    func save(coachProfile: CoachProfile) async throws -> CoachProfile
 }
 
 nonisolated protocol CoachDirectoryRepository: Sendable {
@@ -69,11 +70,19 @@ nonisolated protocol CoachParticipantRepository: Sendable {
     func assignedParticipants(
         coachID: UUID
     ) async throws -> [ParticipantProfile]
+    func assignedParticipant(
+        id participantID: UUID,
+        coachID: UUID
+    ) async throws -> ParticipantProfile
 }
 
 nonisolated protocol InviteRepository: Sendable {
     func invites(coachID: UUID) async throws -> [CoachInvite]
     func createInvite(_ invite: CoachInvite) async throws -> CoachInvite
+    func revokeInvite(
+        id: UUID,
+        coachID: UUID
+    ) async throws -> CoachInvite
     func redeemInvite(
         code: String,
         participantID: UUID,
@@ -112,4 +121,17 @@ nonisolated protocol ParticipantDemoRepository: Sendable {
         dayNumber: Int,
         completedAt: Date
     ) async throws -> StepSubmission?
+}
+
+nonisolated protocol CoachDemoRepository: Sendable {
+    func grantSeatCredits(
+        coachID: UUID,
+        amount: Int,
+        grantedAt: Date
+    ) async throws -> CoachWallet
+    func setSeatCredits(
+        coachID: UUID,
+        amount: Int,
+        updatedAt: Date
+    ) async throws -> CoachWallet
 }

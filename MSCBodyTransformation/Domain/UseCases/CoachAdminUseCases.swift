@@ -16,11 +16,20 @@ nonisolated struct ReviewLocalSubmissionUseCase: Sendable {
                 reason: "Pemeriksaan harus disetujui atau ditolak."
             )
         }
+        let trimmedNote = note?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        if status == .rejected, trimmedNote?.isEmpty != false {
+            throw DomainError.validation(
+                field: "reviewNote",
+                reason: "Alasan penolakan wajib diisi."
+            )
+        }
         return try await repository.reviewSubmission(
             id: submissionID,
             reviewerID: reviewerID,
             status: status,
-            note: note,
+            note: trimmedNote?.isEmpty == false ? trimmedNote : nil,
             reviewedAt: clock.now()
         )
     }

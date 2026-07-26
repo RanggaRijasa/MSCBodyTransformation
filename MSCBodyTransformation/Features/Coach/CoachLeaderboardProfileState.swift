@@ -1,0 +1,175 @@
+import Foundation
+import Observation
+
+@MainActor
+@Observable
+final class CoachLeaderboardState {
+    private let environment: AppEnvironment
+    private let service: CoachDataService
+
+    var state: CoachFeatureLoadState<CoachLeaderboardSnapshot> = .idle
+    var selectedProgramID: UUID?
+
+    init(environment: AppEnvironment) {
+        self.environment = environment
+        service = CoachDataService(environment: environment)
+    }
+
+    func load() async {
+        state = .loading
+        do {
+            let identity = try await service.identity()
+            guard let repositories = environment.repositories else {
+                throw environment.bootstrapError ?? DomainError.unknown
+            }
+            let programs = try await repositories.programs.programs()
+                .filter {
+                    $0.status == .active || $0.status == .completed
+                }
+            guard let selectedProgram = programs.first(where: {
+                $0.id == selectedProgramID
+            }) ?? programs.first(where: {
+                $0.status == .active
+            }) ?? programs.first else {
+                throw DomainError.notFound(resource: "program")
+            }
+            selectedProgramID = selectedProgram.id
+            let entries = try await repositories.leaderboard.leaderboard(
+                programID: selectedProgram.id
+            )
+            let winners = try await repositories.leaderboard.winners(
+                programID: selectedProgram.id
+            )
+            let participantIDs = Set(
+                try await repositories.coachParticipants
+                    .assignedParticipants(coachID: identity.profile.id)
+                    .map(\.id)
+            )
+            guard !Task.isCancelled else {
+                return
+            }
+            state = .loaded(
+                CoachLeaderboardSnapshot(
+                    programs: programs,
+                    selectedProgram: selectedProgram,
+                    entries: entries,
+                    winners: winners,
+                    assignedParticipantIDs: participantIDs
+                )
+            )
+        } catch is CancellationError {
+            return
+        } catch let error as DomainError {
+            state = .failed(error)
+        } catch {
+            state = .failed(.unknown)
+        }
+    }
+
+    func selectProgram(_ id: UUID) async {
+        selectedProgramID = id
+        await load()
+    }
+}
+
+@MainActor
+@Observable
+final class CoachProfileState {
+    private let environment: AppEnvironment
+    private let service: CoachDataService
+
+    var state: CoachFeatureLoadState<CoachProfileSnapshot> = .idle
+    var displayName = ""
+    var biography = ""
+    var city = ""
+    var isPublic = true
+    var notificationsEnabled = true
+    var hasLocalPhotoPlaceholder = false
+    var isSaving = false
+    var saveConfirmationVisible = false
+
+    init(environment: AppEnvironment) {
+        self.environment = environment
+        service = CoachDataService(environment: environment)
+    }
+
+    func load() async {
+        state = .loading
+        do {
+            let identity = try await service.identity()
+            guard let repositories = environment.repositories else {
+                throw environment.bootstrapError ?? DomainError.unknown
+            }
+            let wallet = try await repositories.wallet.wallet(
+                coachID: identity.profile.id
+            )
+            let ledger = try await repositories.wallet.ledger(
+                walletID: wallet.id
+            )
+            displayName = identity.profile.displayName
+            biography = identity.profile.biography
+            city = identity.profile.city
+            isPublic = identity.profile.isPublic
+            guard !Task.isCancelled else {
+                return
+            }
+            state = .loaded(
+                CoachProfileSnapshot(
+                    profile: identity.profile,
+                    ledger: ledger
+                )
+            )
+        } catch is CancellationError {
+            return
+        } catch let error as DomainError {
+            state = .failed(error)
+        } catch {
+            state = .failed(.unknown)
+        }
+    }
+
+    func save() async throws {
+        guard let repositories = environment.repositories,
+              case .loaded(let snapshot) = state else {
+            throw DomainError.unknown
+        }
+        let normalizedName = displayName.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let normalizedBiography = biography.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let normalizedCity = city.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !normalizedName.isEmpty else {
+            throw DomainError.validation(
+                field: "displayName",
+                reason: "Nama publik wajib diisi."
+            )
+        }
+        guard !normalizedBiography.isEmpty else {
+            throw DomainError.validation(
+                field: "biography",
+                reason: "Bio wajib diisi."
+            )
+        }
+        guard !normalizedCity.isEmpty else {
+            throw DomainError.validation(
+                field: "city",
+                reason: "Kota wajib diisi."
+            )
+        }
+
+        isSaving = true
+        defer { isSaving = false }
+        var profile = snapshot.profile
+        profile.displayName = normalizedName
+        profile.biography = normalizedBiography
+        profile.city = normalizedCity
+        profile.isPublic = isPublic
+        _ = try await repositories.profiles.save(coachProfile: profile)
+        saveConfirmationVisible = true
+        await load()
+    }
+}

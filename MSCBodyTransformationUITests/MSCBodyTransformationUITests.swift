@@ -150,12 +150,142 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testCoachCompletesCriticalLocalJourney() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            element(identifier: "coach.dashboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let openReview = app.buttons["coach.open-review-queue"]
+        if !openReview.waitForExistence(timeout: 2)
+            || !openReview.isHittable {
+            app.scrollViews["coach.dashboard"].swipeUp()
+        }
+        XCTAssertTrue(openReview.waitForExistence(timeout: 5))
+        openReview.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.review.queue", in: app)
+                .waitForExistence(timeout: 5)
+        )
+
+        let reviewItem = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.review.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(reviewItem.waitForExistence(timeout: 5))
+        reviewItem.tap()
+
+        let evidence = app.buttons["coach.review.evidence.open"]
+        XCTAssertTrue(evidence.waitForExistence(timeout: 5))
+        evidence.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.evidence.viewer", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        app.navigationBars["Bukti peserta"].buttons["Tutup"].tap()
+
+        let approve = app.buttons["coach.review.approve"]
+        if !approve.waitForExistence(timeout: 2) || !approve.isHittable {
+            app.swipeUp()
+            app.swipeUp()
+        }
+        XCTAssertTrue(approve.waitForExistence(timeout: 5))
+        approve.tap()
+        let confirmApprove = app.sheets[
+            "Konfirmasi pemeriksaan"
+        ].buttons["Setujui bukti"]
+        XCTAssertTrue(confirmApprove.waitForExistence(timeout: 5))
+        confirmApprove.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.review.result", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        tabButton(label: "Undangan", in: app).tap()
+
+        let generateInvite = app.buttons["coach.invite.generate"]
+        XCTAssertTrue(generateInvite.waitForExistence(timeout: 5))
+        generateInvite.tap()
+        XCTAssertTrue(
+            app.buttons["coach.invite.share"]
+                .waitForExistence(timeout: 5)
+        )
+
+        let openStore = app.buttons["coach.invite.open-store"]
+        if !openStore.waitForExistence(timeout: 2)
+            || !openStore.isHittable {
+            app.swipeUp()
+            app.swipeUp()
+        }
+        XCTAssertTrue(openStore.waitForExistence(timeout: 5))
+        openStore.tap()
+        XCTAssertTrue(
+            element(
+                identifier: "coach.store.no-real-purchase",
+                in: app
+            )
+                .waitForExistence(timeout: 5)
+        )
+        let firstPack = app.buttons["coach.store.pack.10"]
+        if !firstPack.waitForExistence(timeout: 2)
+            || !firstPack.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(firstPack.waitForExistence(timeout: 5))
+        firstPack.tap()
+        XCTAssertTrue(
+            app.alerts["Jalankan pembelian demo?"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(app.alerts["Konfirmasi Pembelian"].exists)
+        app.alerts.buttons["Batal"].tap()
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        tabButton(label: "Peserta", in: app).tap()
+        let participant = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.participant.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(participant.waitForExistence(timeout: 5))
+        participant.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.participant.detail", in: app)
+                .waitForExistence(timeout: 5)
+        )
+    }
+
+    @MainActor
     private func tabButton(
         label: String,
         in app: XCUIApplication
     ) -> XCUIElement {
         app.tabBars.buttons
             .matching(NSPredicate(format: "label == %@", label))
+            .firstMatch
+    }
+
+    @MainActor
+    private func element(
+        identifier: String,
+        in app: XCUIApplication
+    ) -> XCUIElement {
+        app.descendants(matching: .any)
+            .matching(identifier: identifier)
             .firstMatch
     }
 }
