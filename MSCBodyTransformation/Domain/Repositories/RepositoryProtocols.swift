@@ -27,6 +27,7 @@ nonisolated protocol ProgramRepository: Sendable {
 }
 
 nonisolated protocol EnrollmentRepository: Sendable {
+    func allEnrollments() async throws -> [ProgramEnrollment]
     func enrollments(participantID: UUID) async throws -> [ProgramEnrollment]
     func enrollment(
         programID: UUID,
@@ -38,6 +39,7 @@ nonisolated protocol EnrollmentRepository: Sendable {
 }
 
 nonisolated protocol SubmissionRepository: Sendable {
+    func pendingReviewCount() async throws -> Int
     func submissions(enrollmentID: UUID) async throws -> [StepSubmission]
     func reviewQueue(coachID: UUID) async throws -> [StepSubmission]
     func completeStep(
@@ -64,6 +66,11 @@ nonisolated protocol LeaderboardRepository: Sendable {
         entryID: UUID,
         points: Int
     ) async throws -> LeaderboardEntry
+    func lockTopFive(
+        programID: UUID,
+        lockedAt: Date
+    ) async throws -> [ProgramWinner]
+    func resetLockedWinnersForDebug(programID: UUID) async
 }
 
 nonisolated protocol CoachParticipantRepository: Sendable {
@@ -102,6 +109,10 @@ nonisolated protocol ManagedContentRepository: Sendable {
 }
 
 nonisolated protocol AdminPeopleRepository: Sendable {
+    func usersForAdministration() async throws -> [AppUser]
+    func participantProfilesForAdministration() async throws
+        -> [ParticipantProfile]
+    func coachProfilesForAdministration() async throws -> [CoachProfile]
     func usersAwaitingCoachApproval() async throws -> [AppUser]
     func setCoachApproval(
         userID: UUID,
@@ -109,8 +120,23 @@ nonisolated protocol AdminPeopleRepository: Sendable {
     ) async throws -> AppUser
 }
 
+nonisolated protocol AdminProgramDraftRepository: Sendable {
+    func programDraftsForAdministration() async throws
+        -> [AdminProgramDraft]
+    func programDraftForAdministration(id: UUID) async throws
+        -> AdminProgramDraft
+    func save(programDraft: AdminProgramDraft) async throws
+        -> AdminProgramDraft
+}
+
+nonisolated protocol AuditRepository: Sendable {
+    func auditEventsForAdministration() async throws -> [AuditEvent]
+    func append(auditEvent: AuditEvent) async throws -> AuditEvent
+}
+
 nonisolated protocol ParticipantDemoRepository: Sendable {
     func resetParticipantDemo(participantID: UUID) async
+    func resetParticipantProgress(participantID: UUID) async
     func markPreviousDaysComplete(
         participantID: UUID,
         throughDayNumber: Int,

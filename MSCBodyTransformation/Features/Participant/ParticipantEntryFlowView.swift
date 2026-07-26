@@ -230,6 +230,7 @@ private struct ParticipantInviteEntryView: View {
     let store: ParticipantJourneyStore
     @State private var inviteCode = "MSC7HARI"
     @State private var fieldError: String?
+    @State private var showsScanner = false
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -263,11 +264,25 @@ private struct ParticipantInviteEntryView: View {
                     preview()
                 }
                 .accessibilityIdentifier("participant.invite.preview")
+
+                Button {
+                    isFocused = false
+                    showsScanner = true
+                } label: {
+                    Label("Pindai QR undangan", systemImage: "qrcode.viewfinder")
+                }
+                .accessibilityIdentifier("participant.invite.scan")
             }
         }
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
         .onAppear { isFocused = true }
+        .sheet(isPresented: $showsScanner) {
+            LocalQRScannerSheet { token in
+                inviteCode = token
+                fieldError = nil
+            }
+        }
     }
 
     private func preview() {

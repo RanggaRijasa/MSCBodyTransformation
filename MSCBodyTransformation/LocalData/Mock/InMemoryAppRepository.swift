@@ -14,6 +14,8 @@ actor InMemoryAppRepository:
     WalletRepository,
     ManagedContentRepository,
     AdminPeopleRepository,
+    AdminProgramDraftRepository,
+    AuditRepository,
     ParticipantDemoRepository,
     CoachDemoRepository
 {
@@ -21,6 +23,7 @@ actor InMemoryAppRepository:
     private var participantProfiles: [ParticipantProfile]
     private var coachProfiles: [CoachProfile]
     private var programsStorage: [Program]
+    private var adminProgramDraftsStorage: [AdminProgramDraft]
     private var enrollmentsStorage: [ProgramEnrollment]
     private var weighInsStorage: [WeighIn]
     private var submissionsStorage: [StepSubmission]
@@ -41,6 +44,9 @@ actor InMemoryAppRepository:
         participantProfiles = seed.participantProfiles
         coachProfiles = seed.coachProfiles
         programsStorage = seed.programs
+        adminProgramDraftsStorage = seed.programs.map {
+            AdminProgramDraft(program: $0, updatedAt: $0.startDate)
+        }
         enrollmentsStorage = seed.enrollments
         weighInsStorage = seed.weighIns
         submissionsStorage = seed.submissions
@@ -171,6 +177,10 @@ actor InMemoryAppRepository:
         enrollmentsStorage.filter { $0.participantID == participantID }
     }
 
+    func allEnrollments() async throws -> [ProgramEnrollment] {
+        enrollmentsStorage.sorted { $0.enrolledAt > $1.enrolledAt }
+    }
+
     func enrollment(
         programID: UUID,
         participantID: UUID
@@ -200,6 +210,10 @@ actor InMemoryAppRepository:
         submissionsStorage
             .filter { $0.enrollmentID == enrollmentID }
             .sorted { $0.submittedAt < $1.submittedAt }
+    }
+
+    func pendingReviewCount() async throws -> Int {
+        submissionsStorage.filter { $0.status == .pending }.count
     }
 
     func reviewQueue(coachID: UUID) async throws -> [StepSubmission] {
@@ -288,15 +302,10 @@ actor InMemoryAppRepository:
     func leaderboard(
         programID: UUID
     ) async throws -> [LeaderboardEntry] {
-        leaderboardEntries
+        recalculateRanks(programID: programID)
+        return leaderboardEntries
             .filter { $0.programID == programID }
-            .sorted {
-                if $0.rank == $1.rank {
-                    return $0.participantDisplayName
-                        < $1.participantDisplayName
-                }
-                return $0.rank < $1.rank
-            }
+            .sorted { $0.rank < $1.rank }
     }
 
     func winners(programID: UUID) async throws -> [ProgramWinner] {
@@ -324,6 +333,34 @@ actor InMemoryAppRepository:
             throw DomainError.unknown
         }
         return updated
+    }
+
+    func lockTopFive(
+        programID: UUID,
+        lockedAt: Date
+    ) async throws -> [ProgramWinner] {
+        let existing = winners
+            .filter { $0.programID == programID }
+            .sorted { $0.rank < $1.rank }
+        guard existing.isEmpty else {
+            return existing
+        }
+
+        recalculateRanks(programID: programID)
+        let rankedEntries = leaderboardEntries
+            .filter { $0.programID == programID }
+            .sorted { $0.rank < $1.rank }
+        let locked = WinnerSelector().select(
+            from: rankedEntries,
+            programID: programID,
+            lockedAt: lockedAt
+        )
+        winners.append(contentsOf: locked)
+        return locked
+    }
+
+    func resetLockedWinnersForDebug(programID: UUID) async {
+        winners.removeAll { $0.programID == programID }
     }
 
     func assignedParticipants(
@@ -549,6 +586,20 @@ actor InMemoryAppRepository:
             .sorted { $0.displayName < $1.displayName }
     }
 
+    func usersForAdministration() async throws -> [AppUser] {
+        users.sorted { $0.displayName < $1.displayName }
+    }
+
+    func participantProfilesForAdministration() async throws
+        -> [ParticipantProfile]
+    {
+        participantProfiles.sorted { $0.displayName < $1.displayName }
+    }
+
+    func coachProfilesForAdministration() async throws -> [CoachProfile] {
+        coachProfiles.sorted { $0.displayName < $1.displayName }
+    }
+
     func setCoachApproval(
         userID: UUID,
         isApproved: Bool
@@ -566,6 +617,46 @@ actor InMemoryAppRepository:
             coachProfiles[coachIndex].isApproved = isApproved
         }
         return users[userIndex]
+    }
+
+    func programDraftsForAdministration() async throws
+        -> [AdminProgramDraft]
+    {
+        adminProgramDraftsStorage.sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    func programDraftForAdministration(id: UUID) async throws
+        -> AdminProgramDraft
+    {
+        guard let draft = adminProgramDraftsStorage.first(where: {
+            $0.id == id
+        }) else {
+            throw DomainError.notFound(resource: "program_draft")
+        }
+        return draft
+    }
+
+    func save(programDraft: AdminProgramDraft) async throws
+        -> AdminProgramDraft
+    {
+        if let index = adminProgramDraftsStorage.firstIndex(where: {
+            $0.id == programDraft.id
+        }) {
+            adminProgramDraftsStorage[index] = programDraft
+        } else {
+            adminProgramDraftsStorage.append(programDraft)
+        }
+        _ = try await save(program: programDraft.program())
+        return programDraft
+    }
+
+    func auditEventsForAdministration() async throws -> [AuditEvent] {
+        auditEvents.sorted { $0.createdAt > $1.createdAt }
+    }
+
+    func append(auditEvent: AuditEvent) async throws -> AuditEvent {
+        auditEvents.append(auditEvent)
+        return auditEvent
     }
 
     func resetParticipantDemo(participantID: UUID) async {
@@ -587,6 +678,33 @@ actor InMemoryAppRepository:
         where invitesStorage[index].redeemedByParticipantID == participantID {
             invitesStorage[index].status = .active
             invitesStorage[index].redeemedByParticipantID = nil
+        }
+
+        for index in leaderboardEntries.indices
+        where leaderboardEntries[index].participantID == participantID {
+            leaderboardEntries[index].progressPercentage = 0
+            leaderboardEntries[index].score.approvedStepPoints = 0
+            leaderboardEntries[index].score.weightPoints = 0
+            recalculateRanks(
+                programID: leaderboardEntries[index].programID
+            )
+        }
+    }
+
+    func resetParticipantProgress(participantID: UUID) async {
+        let enrollmentIDs = Set(
+            enrollmentsStorage
+                .filter {
+                    $0.participantID == participantID
+                        && $0.status == .active
+                }
+                .map(\.id)
+        )
+        submissionsStorage.removeAll {
+            enrollmentIDs.contains($0.enrollmentID)
+        }
+        weighInsStorage.removeAll {
+            enrollmentIDs.contains($0.enrollmentID) && $0.type == .final
         }
 
         for index in leaderboardEntries.indices
@@ -726,71 +844,75 @@ actor InMemoryAppRepository:
             return
         }
 
-        let submissions = submissionsStorage.filter {
+        let enrollmentSubmissions = submissionsStorage.filter {
             $0.enrollmentID == enrollmentID
         }
-        let steps = program.days.flatMap(\.steps)
-        let stepsByID = Dictionary(
-            uniqueKeysWithValues: steps.map { ($0.id, $0) }
-        )
-        let approvedStepIDs = Set(
-            submissions
-                .filter { $0.status == .approved }
-                .map(\.stepID)
-        )
-        leaderboardEntries[entryIndex].score.approvedStepPoints =
-            approvedStepIDs.reduce(into: 0) { points, stepID in
-                points += stepsByID[stepID]?.points ?? 0
-            }
+        let enrollmentWeighIns = weighInsStorage.filter {
+            $0.enrollmentID == enrollmentID
+        }
+        let adjustment = leaderboardEntries[entryIndex]
+            .score.adjustmentPoints
+        guard let result = try? EnrollmentScoreCalculator().calculate(
+            program: program,
+            submissions: enrollmentSubmissions,
+            weighIns: enrollmentWeighIns,
+            adjustmentPoints: adjustment
+        ) else {
+            return
+        }
+        leaderboardEntries[entryIndex].score = result.score
         leaderboardEntries[entryIndex].progressPercentage =
-            ProgramProgressCalculator().percentage(
-                totalStepCount: steps.count,
-                submissions: submissions
-            )
-
-        let weighIns = weighInsStorage.filter {
-            $0.enrollmentID == enrollmentID
-        }
-        if let initial = weighIns.first(where: { $0.type == .initial }),
-           let final = weighIns.first(where: { $0.type == .final }) {
-            leaderboardEntries[entryIndex].score.weightPoints =
-                WeightScoreCalculator().calculate(
-                    initialWeightKilograms: initial.weightKilograms,
-                    finalWeightKilograms: final.weightKilograms,
-                    pointsPerKilogram: program.weightPointsPerKilogram
-                )
-        } else {
-            leaderboardEntries[entryIndex].score.weightPoints = 0
-        }
+            result.progress.overallPercentage
         recalculateRanks(programID: program.id)
     }
 
     private func recalculateRanks(programID: UUID) {
-        let sortedIndices = leaderboardEntries.indices
-            .filter { leaderboardEntries[$0].programID == programID }
-            .sorted {
-                let left = leaderboardEntries[$0]
-                let right = leaderboardEntries[$1]
-                if left.score.totalPoints == right.score.totalPoints {
-                    return left.participantDisplayName
-                        < right.participantDisplayName
-                }
-                return left.score.totalPoints > right.score.totalPoints
+        let candidates = leaderboardEntries
+            .filter { $0.programID == programID }
+            .map {
+                LeaderboardRankingCandidate(
+                    entry: $0,
+                    completionTimestamp: completionTimestamp(for: $0),
+                    enrollmentID: enrollmentID(for: $0)
+                )
             }
-
-        var previousScore: Int?
-        var previousRank = 0
-        for (position, index) in sortedIndices.enumerated() {
-            let score = leaderboardEntries[index].score.totalPoints
-            let rank: Int
-            if score == previousScore {
-                rank = previousRank
-            } else {
-                rank = position + 1
+        let ranked = LeaderboardSorter().sort(candidates)
+        for entry in ranked {
+            if let index = leaderboardEntries.firstIndex(where: {
+                $0.id == entry.id
+            }) {
+                leaderboardEntries[index].rank = entry.rank
             }
-            leaderboardEntries[index].rank = rank
-            previousScore = score
-            previousRank = rank
         }
+    }
+
+    private func completionTimestamp(
+        for entry: LeaderboardEntry
+    ) -> Date? {
+        guard let enrollment = enrollmentsStorage.first(where: {
+            $0.programID == entry.programID
+                && $0.participantID == entry.participantID
+        }) else {
+            return nil
+        }
+        let submissionDates = submissionsStorage
+            .filter {
+                $0.enrollmentID == enrollment.id
+                    && $0.status != .rejected
+            }
+            .map { $0.reviewedAt ?? $0.submittedAt }
+        let finalWeightDate = weighInsStorage.first {
+            $0.enrollmentID == enrollment.id && $0.type == .final
+        }?.recordedAt
+        return (submissionDates + [finalWeightDate].compactMap { $0 }).max()
+    }
+
+    private func enrollmentID(
+        for entry: LeaderboardEntry
+    ) -> UUID? {
+        enrollmentsStorage.first {
+            $0.programID == entry.programID
+                && $0.participantID == entry.participantID
+        }?.id
     }
 }

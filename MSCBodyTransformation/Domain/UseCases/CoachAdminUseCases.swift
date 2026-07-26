@@ -62,7 +62,7 @@ nonisolated struct CreateLocalDraftProgramUseCase: Sendable {
             startDate: startDate,
             endDate: startDate,
             timeZoneIdentifier: timeZoneIdentifier,
-            weightPointsPerKilogram: 0,
+            weightPointsPerKilogram: 800,
             days: []
         )
         return try await repository.save(program: program)

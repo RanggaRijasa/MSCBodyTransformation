@@ -52,7 +52,13 @@ nonisolated struct ManagedContent: Codable, Equatable, Identifiable, Sendable {
     let kind: ManagedContentKind
     var title: String
     var body: String
+    var localMediaReference: String?
+    var programID: UUID?
+    var visibleFrom: Date?
+    var visibleUntil: Date?
+    var sortOrder: Int
     var isPublished: Bool
+    var isArchived: Bool
     var updatedAt: Date
 }
 
@@ -62,6 +68,13 @@ nonisolated enum AuditEventKind: String, Codable, CaseIterable, Sendable {
     case submissionReviewed = "submission_reviewed"
     case scoreAdjusted = "score_adjusted"
     case inviteRedeemed = "invite_redeemed"
+    case programPublished = "program_published"
+    case programArchived = "program_archived"
+    case coachApproved = "coach_approved"
+    case coachVisibilityChanged = "coach_visibility_changed"
+    case participantEnrolled = "participant_enrolled"
+    case managedContentUpdated = "managed_content_updated"
+    case winnersLocked = "winners_locked"
 }
 
 nonisolated struct AuditEvent: Codable, Equatable, Identifiable, Sendable {

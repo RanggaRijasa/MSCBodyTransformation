@@ -6,11 +6,15 @@ struct ShellRouteDestinationView: View {
     let router: ShellTabRouter
     let participantStore: ParticipantJourneyStore?
     let coachFeatures: CoachFeatureContainer?
+    let adminFeatures: AdminFeatureContainer?
 
     var body: some View {
         switch route {
         case .participant(.localInvite(let code)):
-            LocalInvitePlaceholderView(code: code)
+            LocalInvitePlaceholderView(
+                code: code,
+                store: participantStore
+            )
         case .participant(.programDetail):
             participantDestination {
                 ParticipantProgramView(
@@ -84,8 +88,24 @@ struct ShellRouteDestinationView: View {
                     router: router
                 )
             }
-        case .admin(.programEditor):
-            LocalDraftEditorPlaceholderView()
+        case .admin(.programEditor(let programID)):
+            adminDestination { features in
+                if let programID {
+                    AdminProgramEditorView(
+                        programID: programID,
+                        features: features
+                    )
+                } else {
+                    AdminNewProgramDestinationView(features: features)
+                }
+            }
+        case .admin(.winnerManagement(let programID)):
+            adminDestination {
+                AdminWinnerManagementView(
+                    programID: programID,
+                    features: $0
+                )
+            }
         default:
             ContentUnavailableView {
                 Label(
@@ -122,10 +142,23 @@ struct ShellRouteDestinationView: View {
                 .padding(AppSpacing.medium)
         }
     }
+
+    @ViewBuilder
+    private func adminDestination<Content: View>(
+        @ViewBuilder content: (AdminFeatureContainer) -> Content
+    ) -> some View {
+        if let adminFeatures {
+            content(adminFeatures)
+        } else {
+            LoadingStateView()
+                .padding(AppSpacing.medium)
+        }
+    }
 }
 
 private struct LocalInvitePlaceholderView: View {
     let code: String
+    let store: ParticipantJourneyStore?
 
     var body: some View {
         VStack(spacing: AppSpacing.large) {
@@ -145,36 +178,23 @@ private struct LocalInvitePlaceholderView: View {
                 .padding(AppSpacing.medium)
                 .adaptiveGlassSurface()
                 .accessibilityLabel(Text("shell.invite.code"))
+
+            Text(
+                "Kode disimpan secara lokal. Kembali ke alur peserta "
+                    + "untuk melihat pratinjau program sebelum bergabung."
+            )
+            .font(AppTypography.secondary)
+            .foregroundStyle(Color.appSecondaryText)
+            .multilineTextAlignment(.center)
         }
         .frame(maxWidth: 520)
         .padding(AppSpacing.large)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appBackground)
         .navigationTitle(Text("shell.invite.navigation_title"))
-    }
-}
-
-private struct LocalDraftEditorPlaceholderView: View {
-    @State private var title = "Program kebiasaan baru"
-    @State private var summary = ""
-
-    var body: some View {
-        Form {
-            Section("shell.draft.section.identity") {
-                TextField("shell.draft.field.title", text: $title)
-                TextField(
-                    "shell.draft.field.summary",
-                    text: $summary,
-                    axis: .vertical
-                )
-                .lineLimit(3...6)
-            }
-
-            Section {
-                StatusBadge(title: "status.draft", kind: .warning)
-            }
+        .task(id: code) {
+            store?.preservePendingInvite(code: code)
         }
-        .navigationTitle(Text("shell.draft.navigation_title"))
     }
 }
 

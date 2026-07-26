@@ -14,6 +14,8 @@ nonisolated struct AppRepositories: Sendable {
     let wallet: any WalletRepository
     let managedContent: any ManagedContentRepository
     let adminPeople: any AdminPeopleRepository
+    let adminProgramDrafts: any AdminProgramDraftRepository
+    let audit: any AuditRepository
     let participantDemo: any ParticipantDemoRepository
     let coachDemo: any CoachDemoRepository
 
@@ -31,6 +33,8 @@ nonisolated struct AppRepositories: Sendable {
         wallet = repository
         managedContent = repository
         adminPeople = repository
+        adminProgramDrafts = repository
+        audit = repository
         participantDemo = repository
         coachDemo = repository
     }

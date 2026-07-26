@@ -34,37 +34,37 @@ Ini mewakili 80 poin per 0,1 kg dan harus dapat dikonfigurasi per program.
 
 Buat pure services:
 
-- [ ] `StepScoreCalculator`
-- [ ] `WeightScoreCalculator`
-- [ ] `EnrollmentScoreCalculator`
-- [ ] `ProgressCalculator`
-- [ ] `ProgramDayResolver`
-- [ ] `VisibilityPolicyEvaluator`
-- [ ] `LeaderboardSorter`
-- [ ] `WinnerSelector`
+- [x] `StepScoreCalculator`
+- [x] `WeightScoreCalculator`
+- [x] `EnrollmentScoreCalculator`
+- [x] `ProgressCalculator`
+- [x] `ProgramDayResolver`
+- [x] `VisibilityPolicyEvaluator`
+- [x] `LeaderboardSorter`
+- [x] `WinnerSelector`
 
 Semua service harus deterministic dan mudah diuji.
 
 ## Step scoring rules
 
-- [ ] Approved submission mendapat published step points.
-- [ ] Pending submission mendapat zero authoritative points.
-- [ ] Rejected submission mendapat zero points.
-- [ ] Duplicate submission tidak menggandakan poin.
-- [ ] Optional step dapat memberi poin bila completed.
-- [ ] Inactive step tidak dihitung.
-- [ ] Client input points tidak pernah diterima sebagai source.
-- [ ] Local mock mengambil points dari fixture `ProgramStep`.
+- [x] Approved submission mendapat published step points.
+- [x] Pending submission mendapat zero authoritative points.
+- [x] Rejected submission mendapat zero points.
+- [x] Duplicate submission tidak menggandakan poin.
+- [x] Optional step dapat memberi poin bila completed.
+- [x] Inactive step tidak dihitung.
+- [x] Client input points tidak pernah diterima sebagai source.
+- [x] Local mock mengambil points dari fixture `ProgramStep`.
 
 ## Weight scoring rules
 
-- [ ] Initial dan final weight memakai `Decimal`.
-- [ ] Weight loss negatif menjadi zero points.
-- [ ] Multiplier harus positif.
-- [ ] Rounding rule didokumentasikan dan konsisten.
-- [ ] Missing final weight menghasilkan zero weight points dan incomplete state.
-- [ ] Weight values tidak ditampilkan pada public leaderboard.
-- [ ] Admin adjustment dipisahkan dari weight points.
+- [x] Initial dan final weight memakai `Decimal`.
+- [x] Weight loss negatif menjadi zero points.
+- [x] Multiplier harus positif.
+- [x] Rounding rule didokumentasikan dan konsisten.
+- [x] Missing final weight menghasilkan zero weight points dan incomplete state.
+- [x] Weight values tidak ditampilkan pada public leaderboard.
+- [x] Admin adjustment dipisahkan dari weight points.
 
 ## Progress rules
 
@@ -90,87 +90,87 @@ Jangan menyamakan progress dengan total points.
 
 ## Leaderboard behavior
 
-- [ ] Current user rank.
-- [ ] Top five emphasis.
-- [ ] Full ranking.
-- [ ] Provisional state while scoring open.
-- [ ] Final locked snapshot.
-- [ ] Participant display name privacy decision.
-- [ ] Placeholder avatar.
-- [ ] Equal score tie presentation.
-- [ ] Ranking remains deterministic.
-- [ ] Winner banner integration with local content.
+- [x] Current user rank.
+- [x] Top five emphasis.
+- [x] Full ranking.
+- [x] Provisional state while scoring open.
+- [x] Final locked snapshot.
+- [x] Participant display name privacy decision.
+- [x] Placeholder avatar.
+- [x] Equal score tie presentation.
+- [x] Ranking remains deterministic.
+- [x] Winner banner integration with local content.
 
 ## Winner lock local simulation
 
-- [ ] Admin can preview top five.
-- [ ] Confirmation required.
-- [ ] Create local immutable winner snapshot.
-- [ ] Later mock score changes do not silently alter locked winners.
-- [ ] Display warning when scores change after lock.
-- [ ] Reset available only in Debug fixture tooling.
+- [x] Admin can preview top five.
+- [x] Confirmation required.
+- [x] Create local immutable winner snapshot.
+- [x] Later mock score changes do not silently alter locked winners.
+- [x] Display warning when scores change after lock.
+- [x] Reset available only in Debug fixture tooling.
 
 ## Time and visibility simulation
 
-- [ ] Store sample program timezone as IANA identifier.
-- [ ] Use injected clock.
-- [ ] Resolve active day using program timezone.
-- [ ] Past policy: hidden, read-only, open.
-- [ ] Future policy: hidden, read-only, open.
-- [ ] Device date override for Debug.
-- [ ] Do not hard-code Asia/Makassar in service; use program value.
+- [x] Store sample program timezone as IANA identifier.
+- [x] Use injected clock.
+- [x] Resolve active day using program timezone.
+- [x] Past policy: hidden, read-only, open.
+- [x] Future policy: hidden, read-only, open.
+- [x] Device date override for Debug.
+- [x] Do not hard-code Asia/Makassar in service; use program value.
 
 ## Test matrix
 
 ### Weight
 
-- [ ] 80.0 to 79.9.
-- [ ] 80.0 to 79.0.
-- [ ] No loss.
-- [ ] Weight gain.
-- [ ] Decimal precision.
-- [ ] Custom multiplier.
-- [ ] Missing final.
+- [x] 80.0 to 79.9.
+- [x] 80.0 to 79.0.
+- [x] No loss.
+- [x] Weight gain.
+- [x] Decimal precision.
+- [x] Custom multiplier.
+- [x] Missing final.
 
 ### Step
 
-- [ ] All approved.
-- [ ] Pending.
-- [ ] Rejected.
-- [ ] Mixed.
-- [ ] Duplicate completion.
-- [ ] Optional step.
-- [ ] Zero-point step.
-- [ ] Invalid negative point fixture rejected.
+- [x] All approved.
+- [x] Pending.
+- [x] Rejected.
+- [x] Mixed.
+- [x] Duplicate completion.
+- [x] Optional step.
+- [x] Zero-point step.
+- [x] Invalid negative point fixture rejected.
 
 ### Ranking
 
-- [ ] Different total points.
-- [ ] Same total, different step points.
-- [ ] Same step points, different weight points.
-- [ ] Same points, different completion time.
-- [ ] Fully equal values use deterministic UUID.
-- [ ] Top five with fewer than five participants.
-- [ ] Winner lock stability.
+- [x] Different total points.
+- [x] Same total, different step points.
+- [x] Same step points, different weight points.
+- [x] Same points, different completion time.
+- [x] Fully equal values use deterministic UUID.
+- [x] Top five with fewer than five participants.
+- [x] Winner lock stability.
 
 ### Time
 
-- [ ] Program timezone differs from device.
-- [ ] Day boundary.
-- [ ] Daylight-saving timezone fixture.
-- [ ] Before start.
-- [ ] After end.
-- [ ] Hidden future day.
-- [ ] Read-only past day.
+- [x] Program timezone differs from device.
+- [x] Day boundary.
+- [x] Daylight-saving timezone fixture.
+- [x] Before start.
+- [x] After end.
+- [x] Hidden future day.
+- [x] Read-only past day.
 
 ## UI integration
 
-- [ ] Participant score updates after local completion.
-- [ ] Coach review updates ranking.
-- [ ] Final weigh-in updates weight points.
-- [ ] Admin adjustment updates total but remains separate.
-- [ ] Leaderboard animates gently and respects Reduce Motion.
-- [ ] Do not show fake "server verified" label in local demo.
+- [x] Participant score updates after local completion.
+- [x] Coach review updates ranking.
+- [x] Final weigh-in updates weight points.
+- [x] Admin adjustment updates total but remains separate.
+- [x] Leaderboard animates gently and respects Reduce Motion.
+- [x] Do not show fake "server verified" label in local demo.
 
 ## Larangan scope
 
@@ -185,13 +185,30 @@ Jangan:
 
 ## Exit criteria
 
-- [ ] Domain scoring tests lengkap dan lulus.
-- [ ] Leaderboard deterministic.
-- [ ] Participant, coach, dan admin UI menggunakan service yang sama.
-- [ ] Local winner lock bekerja.
-- [ ] Scoring specification siap diterjemahkan ke server operation.
-- [ ] Clean build.
+- [x] Domain scoring tests lengkap dan lulus.
+- [x] Leaderboard deterministic.
+- [x] Participant, coach, dan admin UI menggunakan service yang sama.
+- [x] Local winner lock bekerja.
+- [x] Scoring specification siap diterjemahkan ke server operation.
+- [x] Clean build.
 
 ## Progress log
 
 ### Log
+
+#### 2026-07-26 — Scoring, progress, ranking, dan winner lock lokal
+
+- Files changed: service scoring domain, adapter aturan program, repository
+  in-memory, use case hari aktif, Participant store dan leaderboard, Admin
+  winner management, fixture multiplier, test scoring, dan UI test.
+- Assumptions: semua `ProgramStep` yang masuk ke program terbit dianggap
+  langkah aktif; Admin draft menyaring `isActive == false` sebelum menjadi
+  `Program`. Nama peserta pada leaderboard adalah nama tampilan publik.
+- Build command:
+  `xcodebuild -project MSCBodyTransformation.xcodeproj -scheme MSCBodyTransformation -configuration Debug -destination 'platform=iOS Simulator,id=C63135B7-AF6A-42C0-8993-DF4C72589FE1' SWIFT_VERSION=6 SWIFT_STRICT_CONCURRENCY=complete IPHONEOS_DEPLOYMENT_TARGET=17.0 build`.
+- Test command: seluruh target Swift Testing, UI winner lock/adjustment, dan
+  journey Coach.
+- Result: 16/16 test fokus Phase 07 lulus; seluruh 76 unit test lulus; UI
+  lock snapshot dan journey Coach lulus; build bersih tanpa warning.
+- Remaining blockers: score lokal adalah executable specification dan belum
+  authoritative sampai diterjemahkan ke operation server pada fase backend.

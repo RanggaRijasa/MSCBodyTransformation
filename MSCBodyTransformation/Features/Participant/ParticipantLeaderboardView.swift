@@ -3,6 +3,8 @@ import SwiftUI
 @MainActor
 struct ParticipantLeaderboardView: View {
     let store: ParticipantJourneyStore
+    @Environment(\.accessibilityReduceMotion)
+    private var accessibilityReduceMotion
 
     var body: some View {
         if store.currentEnrollment != nil,
@@ -17,6 +19,12 @@ struct ParticipantLeaderboardView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(Color.appBackground)
+            .animation(
+                accessibilityReduceMotion
+                    ? nil
+                    : .easeInOut(duration: 0.25),
+                value: snapshot.leaderboard
+            )
             .accessibilityIdentifier("participant.leaderboard")
         } else {
             EmptyStateView(
@@ -56,6 +64,13 @@ struct ParticipantLeaderboardView: View {
                     .font(AppTypography.secondary)
                     .foregroundStyle(Color.appSecondaryText)
             }
+            Label(
+                "Nama pada papan peringkat adalah nama tampilan publik. "
+                    + "Nilai berat badan tidak ditampilkan.",
+                systemImage: "hand.raised.fill"
+            )
+            .font(AppTypography.secondary)
+            .foregroundStyle(Color.appSecondaryText)
         }
     }
 
@@ -176,6 +191,10 @@ struct ParticipantLeaderboardView: View {
                 value: score.weightPoints
             )
             scoreRow(
+                title: "Penyesuaian poin",
+                value: score.adjustmentPoints
+            )
+            scoreRow(
                 title: "participant.leaderboard.total_points",
                 value: score.totalPoints
             )
@@ -199,7 +218,7 @@ struct ParticipantLeaderboardView: View {
 
     private func hasTie(_ entry: LeaderboardEntry) -> Bool {
         (store.snapshot?.leaderboard.filter {
-            $0.rank == entry.rank
+            $0.score.totalPoints == entry.score.totalPoints
         }.count ?? 0) > 1
     }
 }

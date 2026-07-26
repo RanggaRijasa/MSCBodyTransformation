@@ -5,21 +5,15 @@ nonisolated struct ProgramProgressCalculator: Sendable {
         totalStepCount: Int,
         submissions: [StepSubmission]
     ) -> Int {
-        guard totalStepCount > 0 else {
-            return 0
-        }
-
         let completedStepCount = Set(
             submissions
                 .filter { $0.status != .rejected }
                 .map(\.stepID)
         ).count
-        let boundedCompletedCount = min(completedStepCount, totalStepCount)
-
-        let percentage =
-            (Decimal(boundedCompletedCount) / Decimal(totalStepCount) * 100)
-                .rounded(scale: 0)
-        return NSDecimalNumber(decimal: percentage).intValue
+        return ProgressCalculator().percentage(
+            completed: completedStepCount,
+            total: totalStepCount
+        )
     }
 }
 
@@ -29,32 +23,13 @@ nonisolated struct ProgramDayAccessCalculator: Sendable {
         now: Date,
         timeZoneIdentifier: String
     ) -> ProgramDayAccess {
-        switch day.visibilityMode {
-        case .hidden:
-            return .hidden
-        case .readOnly:
-            return .readOnly
-        case .standard:
-            break
-        }
-
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone =
-            TimeZone(identifier: timeZoneIdentifier) ?? .gmt
-        let comparison = calendar.compare(
-            day.scheduledDate,
-            to: now,
-            toGranularity: .day
+        VisibilityPolicyEvaluator().access(
+            for: day,
+            now: now,
+            timeZoneIdentifier: timeZoneIdentifier,
+            pastPolicy: .readOnly,
+            futurePolicy: .locked
         )
-
-        switch comparison {
-        case .orderedDescending:
-            return .locked
-        case .orderedAscending:
-            return .readOnly
-        case .orderedSame:
-            return .available
-        }
     }
 }
 
@@ -64,9 +39,13 @@ nonisolated struct WeightScoreCalculator: Sendable {
         finalWeightKilograms: Decimal,
         pointsPerKilogram: Decimal
     ) -> Int {
-        let loss = max(initialWeightKilograms - finalWeightKilograms, 0)
-        let points = (loss * pointsPerKilogram).rounded(scale: 0)
-        return NSDecimalNumber(decimal: points).intValue
+        (
+            try? score(
+                initialWeightKilograms: initialWeightKilograms,
+                finalWeightKilograms: finalWeightKilograms,
+                pointsPerKilogram: pointsPerKilogram
+            ).points
+        ) ?? 0
     }
 }
 

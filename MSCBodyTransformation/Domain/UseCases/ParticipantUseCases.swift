@@ -16,13 +16,11 @@ nonisolated struct LoadTodayProgramUseCase: Sendable {
             return nil
         }
 
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone =
-            TimeZone(identifier: program.timeZoneIdentifier) ?? .gmt
         let now = clock.now()
-        let day = program.days.first {
-            calendar.isDate($0.scheduledDate, inSameDayAs: now)
-        }
+        let day = ProgramDayResolver().activeDay(
+            in: program,
+            at: now
+        )
 
         return TodayProgram(
             program: program,

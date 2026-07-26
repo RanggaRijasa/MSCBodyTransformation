@@ -49,13 +49,10 @@ struct RootView: View {
                 debugLanding
             }
         }
-        .task(id: selectedRole) {
-            await switchDebugSession()
-        }
 #else
         RoleAppShellView(
             role: .participant,
-            scenario: .participantActive
+            scenario: .participantDayOne
         )
 #endif
     }
@@ -83,6 +80,9 @@ struct RootView: View {
         .tint(.brandPrimary)
         .onChange(of: selectedRole) { _, role in
             selectedScenario = .defaultScenario(for: role.userRole)
+        }
+        .task(id: selectedRole) {
+            await switchDebugSession()
         }
     }
 
@@ -137,7 +137,9 @@ struct RootView: View {
                 "root.scenario_picker.label",
                 selection: $selectedScenario
             ) {
-                ForEach(AppDemoScenario.allCases) { scenario in
+                ForEach(
+                    AppDemoScenario.scenarios(for: selectedRole.userRole)
+                ) { scenario in
                     Text(
                         LocalizedStringKey(
                             scenario.titleLocalizationKey

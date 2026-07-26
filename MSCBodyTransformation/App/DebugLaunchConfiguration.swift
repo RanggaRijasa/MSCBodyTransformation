@@ -11,7 +11,7 @@ nonisolated struct DebugLaunchConfiguration: Equatable, Sendable {
             .flatMap(DemoRole.init(rawValue:))
             ?? .participant
         scenario = Self.value(after: "-DemoScenario", in: arguments)
-            .flatMap(AppDemoScenario.init(rawValue:))
+            .flatMap(Self.scenario(named:))
             ?? AppDemoScenario.defaultScenario(for: role.userRole)
         skipsLanding = arguments.contains("-SkipDemoLanding")
     }
@@ -28,6 +28,19 @@ nonisolated struct DebugLaunchConfiguration: Equatable, Sendable {
             return nil
         }
         return arguments[valueIndex]
+    }
+
+    private static func scenario(named value: String) -> AppDemoScenario? {
+        switch value {
+        case "participant_active":
+            .participantDayOne
+        case "admin_draft_editor":
+            .adminDraftCMS
+        case "error":
+            .repositoryError
+        default:
+            AppDemoScenario(rawValue: value)
+        }
     }
 }
 #endif

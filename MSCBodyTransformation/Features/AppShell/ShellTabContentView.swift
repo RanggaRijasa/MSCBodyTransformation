@@ -7,6 +7,8 @@ struct ShellTabContentView: View {
     let router: ShellTabRouter
     let participantStore: ParticipantJourneyStore?
     let coachFeatures: CoachFeatureContainer?
+    let adminFeatures: AdminFeatureContainer?
+    @State private var didRetryRepositoryError = false
 
     var body: some View {
         content
@@ -38,22 +40,40 @@ struct ShellTabContentView: View {
             stateContainer {
                 LoadingStateView()
             }
-        case .error:
-            stateContainer {
-                ErrorStateView(error: .unknown)
+        case .repositoryError:
+            if didRetryRepositoryError {
+                loadedContent(showsOfflineBanner: false)
+            } else {
+                stateContainer {
+                    ErrorStateView(error: .unknown) {
+                        didRetryRepositoryError = true
+                    }
+                }
             }
-        case .empty:
+        case .permissionDenied:
             stateContainer {
-                EmptyStateView(
-                    title: "state.empty.title",
-                    message: "state.empty.message",
-                    systemImage: "tray"
-                )
+                ErrorStateView(error: .permissionDenied)
+            }
+        case .loggedOut:
+            stateContainer {
+                ContentUnavailableView {
+                    Label(
+                        "Sesi berakhir",
+                        systemImage: "person.crop.circle.badge.xmark"
+                    )
+                } description: {
+                    Text("Masuk kembali untuk melanjutkan demo lokal.")
+                }
+                .accessibilityIdentifier("state.logged-out")
             }
         case .offline:
             loadedContent(showsOfflineBanner: true)
-        case .participantOnboarding, .participantActive,
-             .coachReviewQueue, .adminDraftEditor:
+        case .participantOnboarding, .participantNoProgram,
+             .participantDayOne, .participantMidProgram,
+             .participantFinalWeighIn, .participantFinalLeaderboard,
+             .coachWalletZero, .coachActiveParticipants,
+             .coachReviewQueue, .adminDraftCMS, .adminActiveProgram,
+             .adminWinnerLock:
             loadedContent(showsOfflineBanner: false)
         }
     }
@@ -88,8 +108,12 @@ struct ShellTabContentView: View {
                 router: router,
                 showsOfflineBanner: showsOfflineBanner
             )
-        } else if tab == .admin(.settings) {
-            AdminSettingsPlaceholderView(
+        } else if case .admin(let adminTab) = tab,
+                  let adminFeatures {
+            AdminTabRootView(
+                tab: adminTab,
+                features: adminFeatures,
+                router: router,
                 showsOfflineBanner: showsOfflineBanner
             )
         } else {
@@ -142,16 +166,6 @@ struct ShellTabContentView: View {
                         in: tab
                     )
                 }
-            }
-        case .admin(.programs):
-            PrimaryActionBar(
-                title: "action.open_draft",
-                systemImage: "square.and.pencil"
-            ) {
-                router.navigate(
-                    to: .admin(.programEditor(ShellPlaceholderID.program)),
-                    in: tab
-                )
             }
         default:
             EmptyView()
@@ -461,32 +475,6 @@ private struct AdminShellSections: View {
         case .settings:
             EmptyView()
         }
-    }
-}
-
-private struct AdminSettingsPlaceholderView: View {
-    let showsOfflineBanner: Bool
-    @State private var notificationsEnabled = true
-
-    var body: some View {
-        Form {
-            if showsOfflineBanner {
-                OfflineBanner()
-            }
-
-            Section("shell.admin.settings.section") {
-                Toggle(
-                    "shell.admin.settings.notifications",
-                    isOn: $notificationsEnabled
-                )
-                LabeledContent(
-                    "shell.admin.settings.timezone",
-                    value: "WITA"
-                )
-            }
-        }
-        .scrollContentBackground(.hidden)
-        .background(Color.appBackground)
     }
 }
 

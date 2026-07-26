@@ -5,6 +5,7 @@ nonisolated enum ProgramStatus: String, Codable, CaseIterable, Sendable {
     case scheduled
     case active
     case completed
+    case archived
 }
 
 nonisolated enum ProgramDayVisibilityMode: String, Codable, CaseIterable, Sendable {

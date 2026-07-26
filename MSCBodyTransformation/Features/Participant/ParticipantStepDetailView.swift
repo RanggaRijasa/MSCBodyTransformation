@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 @MainActor
@@ -5,7 +6,9 @@ struct ParticipantStepDetailView: View {
     let store: ParticipantJourneyStore
     let stepID: UUID
 
-    @State private var localPhotoReference: String?
+    @State private var evidenceMedia = LocalEvidenceMediaState()
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var showsCamera = false
     @State private var textAnswer = ""
     @State private var photoError: String?
     @State private var textError: String?
@@ -22,6 +25,16 @@ struct ParticipantStepDetailView: View {
         }
         .navigationTitle(Text("participant.step.navigation_title"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showsCamera) {
+            NativeCameraCaptureSheet { data in
+                Task {
+                    await evidenceMedia.importCameraData(data)
+                }
+            }
+        }
+        .task {
+            await evidenceMedia.cleanupOrphans()
+        }
     }
 
     private func stepContent(_ step: ProgramStep) -> some View {
@@ -65,6 +78,13 @@ struct ParticipantStepDetailView: View {
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
         .scrollDismissesKeyboard(.interactively)
+        .onChange(of: selectedPhotoItem) { _, item in
+            guard let item else { return }
+            Task {
+                await evidenceMedia.importPhoto(item)
+                selectedPhotoItem = nil
+            }
+        }
         .accessibilityIdentifier("participant.step.detail")
     }
 
@@ -72,19 +92,19 @@ struct ParticipantStepDetailView: View {
     private func instructionMediaSection(_ step: ProgramStep) -> some View {
         if let media = step.instructionMedia {
             Section("participant.step.instruction_media") {
-                MediaThumbnail(
-                    title: LocalizedStringKey(media.accessibilityLabel),
-                    systemImage: media.kind == .image
-                        ? "photo.fill"
-                        : "play.rectangle.fill",
-                    kindLabel: media.kind == .image
-                        ? "participant.media.image_instruction"
-                        : "participant.media.video_placeholder"
-                )
                 if media.kind == .video {
-                    Text("participant.media.video_local_notice")
-                        .font(AppTypography.secondary)
-                        .foregroundStyle(Color.appSecondaryText)
+                    LocalVideoPlayerView(
+                        resourceName: media.resourceName,
+                        textAlternative: media.accessibilityLabel
+                    )
+                } else {
+                    MediaThumbnail(
+                        title: LocalizedStringKey(
+                            media.accessibilityLabel
+                        ),
+                        systemImage: "photo.fill",
+                        kindLabel: "participant.media.image_instruction"
+                    )
                 }
             }
         }
@@ -119,12 +139,22 @@ struct ParticipantStepDetailView: View {
         _ step: ProgramStep,
         submission: StepSubmission?
     ) -> some View {
-        Section {
+        let hasDraftEvidence = evidenceMedia.result != nil
+
+        return Section {
             EvidenceStatusView(status: submission?.status)
 
             if requiresPhoto(step) {
-                if localPhotoReference != nil
-                    || submission?.evidence.contains(where: {
+                if let result = evidenceMedia.result {
+                    LocalMediaThumbnailView(result: result)
+                    LabeledContent("Ukuran hasil") {
+                        Text(
+                            "\(result.width) × \(result.height) px"
+                        )
+                        .monospacedDigit()
+                    }
+                    LabeledContent("Format", value: result.mimeType)
+                } else if submission?.evidence.contains(where: {
                         $0.kind == .photo
                     }) == true {
                     MediaThumbnail(
@@ -134,25 +164,104 @@ struct ParticipantStepDetailView: View {
                     )
                 }
 
-                Button {
-                    localPhotoReference =
-                        "local-demo://evidence/sample-photo"
-                    photoError = nil
-                } label: {
-                    Label(
-                        localPhotoReference == nil
-                            ? "participant.evidence.attach_action"
-                            : "participant.evidence.replace_action",
-                        systemImage: "photo.badge.plus"
+                if evidenceMedia.isProcessing {
+                    ProgressView(
+                        value: evidenceMedia.progress,
+                        total: 1
+                    ) {
+                        Text("Memproses bukti foto…")
+                    }
+                    .accessibilityIdentifier(
+                        "participant.evidence.processing"
                     )
+                }
+
+                PhotosPicker(
+                    selection: $selectedPhotoItem,
+                    matching: .images,
+                    photoLibrary: .shared()
+                ) {
+                    Label(
+                        hasDraftEvidence
+                            ? "Ganti dari foto"
+                            : "Pilih dari foto",
+                        systemImage: "photo.on.rectangle"
+                    )
+                    .frame(minHeight: 44)
                 }
                 .disabled(
                     submission?.status == .approved
                         || submission?.status == .pending
+                        || evidenceMedia.isProcessing
+                )
+                .accessibilityIdentifier(
+                    "participant.evidence.photo-picker"
+                )
+
+                Button {
+                    showsCamera = true
+                } label: {
+                    Label("Ambil foto", systemImage: "camera.fill")
+                        .frame(minHeight: 44)
+                }
+                .disabled(
+                    submission?.status == .approved
+                        || submission?.status == .pending
+                        || evidenceMedia.isProcessing
+                )
+                .accessibilityIdentifier("participant.evidence.camera")
+
+#if DEBUG
+                Button {
+                    Task {
+                        await evidenceMedia.useGeneratedSample()
+                        photoError = nil
+                    }
+                } label: {
+                    Label(
+                        hasDraftEvidence
+                            ? "Ganti dengan foto demo lokal"
+                            : "Gunakan foto demo lokal",
+                        systemImage: "photo.badge.plus"
+                    )
+                    .frame(minHeight: 44)
+                }
+                .disabled(
+                    submission?.status == .approved
+                        || submission?.status == .pending
+                        || evidenceMedia.isProcessing
                 )
                 .accessibilityIdentifier(
                     "participant.evidence.use-sample"
                 )
+#endif
+
+                if evidenceMedia.result != nil {
+                    Button("Hapus foto", role: .destructive) {
+                        evidenceMedia.remove()
+                    }
+                    .disabled(evidenceMedia.isProcessing)
+                    .accessibilityIdentifier(
+                        "participant.evidence.remove"
+                    )
+                }
+
+                if let mediaError = evidenceMedia.error {
+                    Label(
+                        mediaErrorMessage(mediaError),
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .foregroundStyle(Color.appDestructive)
+                    Button("Coba lagi") {
+                        Task { await evidenceMedia.retry() }
+                    }
+                    .disabled(evidenceMedia.isProcessing)
+                    .accessibilityIdentifier(
+                        "participant.evidence.retry"
+                    )
+                }
+
+                photoAccessExplanation
 
                 if let photoError {
                     Text(photoError)
@@ -239,6 +348,7 @@ struct ParticipantStepDetailView: View {
                 )
             }
             .disabled(store.isPerformingAction)
+            .disabled(evidenceMedia.isProcessing)
             .accessibilityIdentifier("participant.step.complete")
         }
     }
@@ -247,7 +357,8 @@ struct ParticipantStepDetailView: View {
         do {
             try await store.completeStep(
                 step,
-                localPhotoReference: localPhotoReference,
+                localPhotoReference:
+                    evidenceMedia.result?.localURL.absoluteString,
                 textAnswer: textAnswer.isEmpty ? nil : textAnswer
             )
             photoError = nil
@@ -280,6 +391,50 @@ struct ParticipantStepDetailView: View {
     private func requiresText(_ step: ProgramStep) -> Bool {
         step.requirements.contains {
             $0.kind == .textAnswer && $0.isRequired
+        }
+    }
+
+    @ViewBuilder
+    private var photoAccessExplanation: some View {
+        switch evidenceMedia.libraryAccess {
+        case .limited:
+            Label(
+                "Akses foto terbatas. Anda tetap dapat memilih foto lain.",
+                systemImage: "photo.badge.checkmark"
+            )
+            .font(AppTypography.secondary)
+            .foregroundStyle(Color.appSecondaryText)
+        case .denied, .restricted:
+            Label(
+                "Akses pustaka dibatasi. Gunakan pemilih foto, kamera, "
+                    + "atau foto demo lokal.",
+                systemImage: "photo.badge.exclamationmark"
+            )
+            .font(AppTypography.secondary)
+            .foregroundStyle(Color.appSecondaryText)
+        case .full, .notDetermined:
+            EmptyView()
+        }
+    }
+
+    private func mediaErrorMessage(
+        _ error: LocalMediaError
+    ) -> String {
+        switch error {
+        case .unsupportedMIMEType:
+            "Pilih foto berformat JPEG, PNG, HEIC, atau HEIF."
+        case .inputTooLarge:
+            "Ukuran foto terlalu besar. Pilih foto hingga 20 MB."
+        case .invalidImage:
+            "Foto tidak dapat dibaca. Pilih foto lain."
+        case .processingFailed:
+            "Foto gagal diproses. Coba lagi."
+        case .permissionDenied:
+            "Akses foto ditolak. Gunakan kamera atau foto demo lokal."
+        case .cameraUnavailable:
+            "Kamera tidak tersedia pada perangkat ini."
+        case .cameraUsageDescriptionMissing:
+            "Kamera belum dikonfigurasi untuk build ini."
         }
     }
 }

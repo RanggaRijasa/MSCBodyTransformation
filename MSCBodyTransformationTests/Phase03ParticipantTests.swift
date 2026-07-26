@@ -234,7 +234,7 @@ struct Phase03ParticipantTests {
                 programID: program.id
             ).first { $0.participantID == enrollment.participantID }
         )
-        #expect(entry.score.weightPoints == 25)
+        #expect(entry.score.weightPoints == 2_000)
     }
 
     @Test("Berat akhir ditolak sebelum hari terakhir")

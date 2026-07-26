@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @MainActor
 struct CoachInviteView: View {
@@ -7,6 +8,7 @@ struct CoachInviteView: View {
 
     @State private var actionError: String?
     @State private var inviteToRevoke: CoachInvite?
+    @State private var sharePayload: CoachInviteSharePayload?
 
     var body: some View {
         @Bindable var state = state
@@ -72,6 +74,9 @@ struct CoachInviteView: View {
         } message: {
             Text("coach.invite.revoke.confirm.message")
         }
+        .sheet(item: $sharePayload) { payload in
+            NativeShareSheet(activityItems: payload.activityItems)
+        }
         .accessibilityIdentifier("coach.invite")
     }
 
@@ -83,7 +88,7 @@ struct CoachInviteView: View {
             walletSection(snapshot.wallet)
             composerSection(snapshot, bindableState: bindableState)
             if let invite = state.latestGeneratedInvite {
-                generatedInviteSection(invite)
+                generatedInviteSection(invite, snapshot: snapshot)
             }
             storePreviewSection
             historySection(snapshot)
@@ -106,7 +111,7 @@ struct CoachInviteView: View {
     }
 
     private func walletSection(_ wallet: CoachWallet) -> some View {
-        Section {
+        return Section {
             LabeledContent("metric.seat_credits") {
                 Text(
                     wallet.availableSeatCredits,
@@ -184,12 +189,20 @@ struct CoachInviteView: View {
     }
 
     private func generatedInviteSection(
-        _ invite: CoachInvite
+        _ invite: CoachInvite,
+        snapshot: CoachInviteSnapshot
     ) -> some View {
-        Section {
+        let programTitle = snapshot.programs.first {
+            $0.id == invite.programID
+        }?.title ?? String(localized: "coach.program.none")
+        let payload = localInviteURLString(invite)
+
+        return Section {
             VStack(spacing: AppSpacing.medium) {
                 CoachQRCodeView(
-                    payload: "mscbody://invite/\(invite.code)"
+                    payload: payload,
+                    programTitle: programTitle,
+                    coachName: snapshot.profile.displayName
                 )
                 Text(invite.code)
                     .font(AppTypography.metric.monospacedDigit())
@@ -200,9 +213,13 @@ struct CoachInviteView: View {
                 )
                 .font(AppTypography.secondary)
                 .foregroundStyle(Color.appSecondaryText)
-                ShareLink(
-                    item: "mscbody://invite/\(invite.code)"
-                ) {
+                Button {
+                    share(
+                        invite: invite,
+                        programTitle: programTitle,
+                        coachName: snapshot.profile.displayName
+                    )
+                } label: {
                     Label(
                         "coach.invite.share",
                         systemImage: "square.and.arrow.up"
@@ -308,6 +325,43 @@ struct CoachInviteView: View {
             in: .coach(.invite)
         )
     }
+
+    private func localInviteURLString(_ invite: CoachInvite) -> String {
+        (
+            try? LocalInvitePayloadParser()
+                .url(forOpaqueToken: invite.code)
+                .absoluteString
+        ) ?? ""
+    }
+
+    private func share(
+        invite: CoachInvite,
+        programTitle: String,
+        coachName: String
+    ) {
+        let payload = localInviteURLString(invite)
+        guard !payload.isEmpty,
+              let image = LocalQRCodeGenerator().image(
+                  payload: payload
+              ) else {
+            actionError = "QR undangan belum dapat dibagikan."
+            return
+        }
+        let message =
+            "Undangan program \(programTitle) dari \(coachName). "
+            + "Buka \(payload) atau pindai QR terlampir."
+        sharePayload = CoachInviteSharePayload(
+            id: invite.id,
+            activityItems: [message, UIImage(cgImage: image)]
+        )
+        actionError = nil
+    }
+}
+
+@MainActor
+private struct CoachInviteSharePayload: Identifiable {
+    let id: UUID
+    let activityItems: [Any]
 }
 
 private struct CoachInviteHistoryRow: View {

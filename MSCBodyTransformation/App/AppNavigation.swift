@@ -25,6 +25,7 @@ nonisolated enum AdminRoute: Hashable, Sendable {
     case programEditor(UUID?)
     case person(UUID)
     case managedContent(UUID)
+    case winnerManagement(UUID)
     case settings
 }
 
@@ -113,18 +114,8 @@ final class ShellTabRouter {
 
 nonisolated struct LocalInviteDeepLinkParser: Sendable {
     func inviteCode(from url: URL) -> String? {
-        guard url.scheme?.lowercased() == "mscbody",
-              url.host?.lowercased() == "invite" else {
-            return nil
-        }
-        let code = url.pathComponents
-            .filter { $0 != "/" }
-            .first?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .uppercased()
-        guard let code, !code.isEmpty else {
-            return nil
-        }
-        return code
+        try? LocalInvitePayloadParser()
+            .payload(from: url)
+            .opaqueToken
     }
 }

@@ -47,6 +47,7 @@ final class ParticipantJourneyStore {
     var debugDateOverride: Date?
     var showsOfflineSimulation = false
     var showsFinalLeaderboard = false
+    var hidesActiveProgramForDemo = false
     var isPerformingAction = false
 
     init(
@@ -66,11 +67,17 @@ final class ParticipantJourneyStore {
     }
 
     var currentProgram: Program? {
-        snapshot?.activeProgram
+        guard !hidesActiveProgramForDemo else {
+            return nil
+        }
+        return snapshot?.activeProgram
     }
 
     var currentEnrollment: ProgramEnrollment? {
-        snapshot?.activeEnrollment
+        guard !hidesActiveProgramForDemo else {
+            return nil
+        }
+        return snapshot?.activeEnrollment
     }
 
     var todayDay: ProgramDay? {
@@ -82,16 +89,10 @@ final class ParticipantJourneyStore {
                 $0.dayNumber == selectedDayNumber
             }
         }
-
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone =
-            TimeZone(identifier: program.timeZoneIdentifier) ?? .gmt
-        return program.days.first {
-            calendar.isDate(
-                $0.scheduledDate,
-                inSameDayAs: effectiveDate
-            )
-        }
+        return ProgramDayResolver().activeDay(
+            in: program,
+            at: effectiveDate
+        )
     }
 
     var effectiveDate: Date {
@@ -121,12 +122,11 @@ final class ParticipantJourneyStore {
         guard let day = todayDay else {
             return false
         }
-        return day.steps.allSatisfy { step in
-            guard let submission = submission(for: step.id) else {
-                return false
-            }
-            return submission.status != .rejected
-        }
+        return ProgressCalculator().calculate(
+            requiredSteps: day.steps,
+            currentDaySteps: day.steps,
+            submissions: snapshot?.submissions ?? []
+        ).isCurrentDayComplete
     }
 
     var initialWeighIn: WeighIn? {
@@ -259,6 +259,14 @@ final class ParticipantJourneyStore {
         entryStage = .invite
     }
 
+    func preservePendingInvite(code: String) {
+        let normalized = code
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
+        guard !normalized.isEmpty else { return }
+        pendingInviteCode = normalized
+    }
+
     func previewInvite(code: String) throws {
         let normalized = code
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -272,7 +280,7 @@ final class ParticipantJourneyStore {
         guard currentProgram != nil else {
             throw DomainError.notFound(resource: "program")
         }
-        pendingInviteCode = normalized
+        preservePendingInvite(code: normalized)
         entryStage = .confirmInvite
     }
 
@@ -453,6 +461,18 @@ final class ParticipantJourneyStore {
         debugDateOverride = nil
         showsFinalLeaderboard = false
         try? await reloadSnapshot()
+    }
+
+    func prepareDayOneDemo() async {
+        guard let repository = environment.repositories?.participantDemo,
+              let participantID = snapshot?.profile.id else {
+            return
+        }
+        await repository.resetParticipantProgress(
+            participantID: participantID
+        )
+        try? await reloadSnapshot()
+        selectDay(1)
     }
 
     func markPreviousDaysComplete() async throws {

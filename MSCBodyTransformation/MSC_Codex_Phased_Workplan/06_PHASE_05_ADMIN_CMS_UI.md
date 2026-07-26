@@ -20,23 +20,23 @@ Media menggunakan local references. Publish hanya mengubah status mock.
 
 ## Overview
 
-- [ ] Program counts by status.
-- [ ] Active participant count.
-- [ ] Pending coach approvals.
-- [ ] Pending reviews.
-- [ ] Scoring status.
-- [ ] Recent local audit events.
-- [ ] Quick actions.
+- [x] Program counts by status.
+- [x] Active participant count.
+- [x] Pending coach approvals.
+- [x] Pending reviews.
+- [x] Scoring status.
+- [x] Recent local audit events.
+- [x] Quick actions.
 
 ## Program list
 
-- [ ] Draft, scheduled, active, completed, archived sections.
-- [ ] Search.
-- [ ] Status filter.
-- [ ] Duplicate draft action.
-- [ ] Archive local action.
-- [ ] Empty states.
-- [ ] Error and loading simulations.
+- [x] Draft, scheduled, active, completed, archived sections.
+- [x] Search.
+- [x] Status filter.
+- [x] Duplicate draft action.
+- [x] Archive local action.
+- [x] Empty states.
+- [x] Error and loading simulations.
 
 ## Staged program editor
 
@@ -52,115 +52,115 @@ Gunakan staged flow:
 
 ### Basics
 
-- [ ] Name.
-- [ ] Description.
-- [ ] Cover image local reference.
-- [ ] Verification mode.
-- [ ] Wellness disclaimer reference.
+- [x] Name.
+- [x] Description.
+- [x] Cover image local reference.
+- [x] Verification mode.
+- [x] Wellness disclaimer reference.
 
 ### Dates and timezone
 
-- [ ] Start date.
-- [ ] End date.
-- [ ] IANA timezone selection.
-- [ ] Initial weigh-in window.
-- [ ] Final weigh-in window.
-- [ ] Date validation.
-- [ ] Duration derived safely.
+- [x] Start date.
+- [x] End date.
+- [x] IANA timezone selection.
+- [x] Initial weigh-in window.
+- [x] Final weigh-in window.
+- [x] Date validation.
+- [x] Duration derived safely.
 
 ### Scoring and visibility
 
-- [ ] Weight points per kg.
-- [ ] Past step policy.
-- [ ] Future step policy.
-- [ ] Automatic or coach review.
-- [ ] Human-readable scoring preview.
-- [ ] Warning that server becomes authoritative later.
+- [x] Weight points per kg.
+- [x] Past step policy.
+- [x] Future step policy.
+- [x] Automatic or coach review.
+- [x] Human-readable scoring preview.
+- [x] Warning that server becomes authoritative later.
 
 ### Days
 
-- [ ] Generate days from date range.
-- [ ] Day list.
-- [ ] Add, remove, and reorder when allowed.
-- [ ] Day title and description.
-- [ ] Scheduled date.
-- [ ] Duplicate day.
-- [ ] Validation for unique day number and date.
+- [x] Generate days from date range.
+- [x] Day list.
+- [x] Add, remove, and reorder when allowed.
+- [x] Day title and description.
+- [x] Scheduled date.
+- [x] Duplicate day.
+- [x] Validation for unique day number and date.
 
 ### Steps
 
-- [ ] Ordered steps.
-- [ ] Add step.
-- [ ] Edit step.
-- [ ] Delete draft step.
-- [ ] Reorder.
-- [ ] Title.
-- [ ] Description.
-- [ ] Points.
-- [ ] Requires photo.
-- [ ] Requires text answer.
-- [ ] Required or optional.
-- [ ] Image/video local media.
-- [ ] Participant-facing preview.
-- [ ] Validation for non-negative points.
+- [x] Ordered steps.
+- [x] Add step.
+- [x] Edit step.
+- [x] Delete draft step.
+- [x] Reorder.
+- [x] Title.
+- [x] Description.
+- [x] Points.
+- [x] Requires photo.
+- [x] Requires text answer.
+- [x] Required or optional.
+- [x] Image/video local media.
+- [x] Participant-facing preview.
+- [x] Validation for non-negative points.
 
 ### Preview
 
-- [ ] Preview participant Today.
-- [ ] Preview timeline.
-- [ ] Preview step detail.
-- [ ] Preview locked states.
-- [ ] Preview leaderboard scoring description.
-- [ ] Preview on small and large device sizes.
+- [x] Preview participant Today.
+- [x] Preview timeline.
+- [x] Preview step detail.
+- [x] Preview locked states.
+- [x] Preview leaderboard scoring description.
+- [x] Preview on small and large device sizes.
 
 ### Local publish simulation
 
-- [ ] Validate at least one day.
-- [ ] Validate every day has an active step.
-- [ ] Validate dates.
-- [ ] Validate scoring.
-- [ ] Validate step ordering.
-- [ ] Validate required media reference when configured.
-- [ ] Show validation summary.
-- [ ] Publish changes mock status only.
-- [ ] Append local audit event.
+- [x] Validate at least one day.
+- [x] Validate every day has an active step.
+- [x] Validate dates.
+- [x] Validate scoring.
+- [x] Validate step ordering.
+- [x] Validate required media reference when configured.
+- [x] Show validation summary.
+- [x] Publish changes mock status only.
+- [x] Append local audit event.
 
 ## People
 
-- [ ] User list.
-- [ ] Role badges.
-- [ ] Pending coach approval.
-- [ ] Approve coach local action.
-- [ ] Public coach profile toggle.
-- [ ] Participant detail summary.
-- [ ] Manual enrollment UI.
-- [ ] Manual enrollment reason required.
-- [ ] Local audit record.
-- [ ] Score adjustment UI with required reason.
-- [ ] No self-service role promotion outside admin demo.
+- [x] User list.
+- [x] Role badges.
+- [x] Pending coach approval.
+- [x] Approve coach local action.
+- [x] Public coach profile toggle.
+- [x] Participant detail summary.
+- [x] Manual enrollment UI.
+- [x] Manual enrollment reason required.
+- [x] Local audit record.
+- [x] Score adjustment UI with required reason.
+- [x] No self-service role promotion outside admin demo.
 
 ## Content
 
-- [ ] Managed content list.
-- [ ] Winner banner editor.
-- [ ] Title and body.
-- [ ] Local media selection.
-- [ ] Program association.
-- [ ] Visibility dates.
-- [ ] Sort order.
-- [ ] Active toggle.
-- [ ] Participant preview.
-- [ ] Archive local content.
+- [x] Managed content list.
+- [x] Winner banner editor.
+- [x] Title and body.
+- [x] Local media selection.
+- [x] Program association.
+- [x] Visibility dates.
+- [x] Sort order.
+- [x] Active toggle.
+- [x] Participant preview.
+- [x] Archive local content.
 
 ## Winner management
 
-- [ ] Leaderboard preview.
-- [ ] Lock top five local simulation.
-- [ ] Confirmation.
-- [ ] Winner records display.
-- [ ] Locked state prevents silent reorder.
-- [ ] New score adjustment after lock shows warning.
-- [ ] Upload local winner banner.
+- [x] Leaderboard preview.
+- [x] Lock top five local simulation.
+- [x] Confirmation.
+- [x] Winner records display.
+- [x] Locked state prevents silent reorder.
+- [x] New score adjustment after lock shows warning.
+- [x] Upload local winner banner.
 
 ## Draft persistence
 
@@ -175,26 +175,26 @@ Jangan menambahkan SwiftData hanya untuk sementara bila persistence tidak dibutu
 
 ### Swift Testing
 
-- [ ] Program editor validation.
-- [ ] Day generation.
-- [ ] Date range validation.
-- [ ] Step order validation.
-- [ ] Publish validation.
-- [ ] Manual enrollment reason.
-- [ ] Score adjustment reason.
-- [ ] Winner lock determinism.
-- [ ] Managed content visibility.
+- [x] Program editor validation.
+- [x] Day generation.
+- [x] Date range validation.
+- [x] Step order validation.
+- [x] Publish validation.
+- [x] Manual enrollment reason.
+- [x] Score adjustment reason.
+- [x] Winner lock determinism.
+- [x] Managed content visibility.
 
 ### UI tests
 
-- [ ] Launch as admin.
-- [ ] Create draft.
-- [ ] Add day and step.
-- [ ] Preview participant screen.
-- [ ] Simulate publish.
-- [ ] Approve coach.
-- [ ] Manual enroll participant.
-- [ ] Create winner banner.
+- [x] Launch as admin.
+- [x] Create draft.
+- [x] Add day and step.
+- [x] Preview participant screen.
+- [x] Simulate publish.
+- [x] Approve coach.
+- [x] Manual enroll participant.
+- [x] Create winner banner.
 
 ## Larangan scope
 
@@ -209,13 +209,46 @@ Jangan:
 
 ## Exit criteria
 
-- [ ] Admin dapat membuat valid sample program tanpa perubahan kode.
-- [ ] Invalid draft tidak dapat dipublish dalam local simulation.
-- [ ] Participant preview mencerminkan draft.
-- [ ] People dan Content screens dapat didemokan.
-- [ ] Semua privileged local action membuat local audit entry.
-- [ ] Test lulus dan clean build.
+- [x] Admin dapat membuat valid sample program tanpa perubahan kode.
+- [x] Invalid draft tidak dapat dipublish dalam local simulation.
+- [x] Participant preview mencerminkan draft.
+- [x] People dan Content screens dapat didemokan.
+- [x] Semua privileged local action membuat local audit entry.
+- [x] Test lulus dan clean build.
 
 ## Progress log
 
 ### Log
+
+#### 2026-07-26 — Phase 05 selesai
+
+- Files changed: model draft CMS lengkap beserta kebijakan visibilitas,
+  metadata konten, status arsip, dan audit event; protocol serta actor
+  repository lokal; validator dan use case publish/enrollment/skor/pemenang;
+  lima layar tab Admin; editor program tujuh tahap; pratinjau peserta;
+  pengelolaan orang, konten, dan snapshot pemenang; app-shell routing;
+  fixture, localization catalog, Swift Testing, XCTest UI, dan README.
+- Assumptions: persistence in-memory dipilih agar fixture dapat di-reset dan
+  tidak memerlukan migrasi SwiftData; referensi gambar/video tetap berupa
+  nama resource lokal; publish hanya mengubah status mock; snapshot pemenang
+  sengaja tidak berubah setelah dikunci; scoring preview belum
+  server-authoritative. Tidak ada Supabase, OAuth, StoreKit, networking,
+  package baru, atau perubahan `project.pbxproj`.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-DemoRole", "admin", "-DemoScenario", "admin_draft_editor",
+  "-SkipDemoLanding"])` pada iPhone 17 Pro dan iPad Pro 13-inch, serta
+  `build_sim()` pada konfigurasi Release; seluruh command memakai
+  `SWIFT_VERSION=6`, `SWIFT_STRICT_CONCURRENCY=complete`, dan
+  `IPHONEOS_DEPLOYMENT_TARGET=17.0`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase05AdminCMSTests"])`,
+  tiga focused XCTest UI untuk publish, People, dan banner, lalu
+  `test_sim()` untuk seluruh scheme.
+- Result: sembilan test Phase 05 dan tiga journey UI Admin lulus; seluruh 58
+  test, build Debug iPhone/iPad, dan build Release lulus tanpa warning.
+  Ringkasan Admin diverifikasi pada light mode serta dark mode dengan
+  accessibility Dynamic Type terbesar; grid berubah menjadi satu kolom agar
+  teks tetap terbaca.
+- Remaining blockers: tidak ada blocker lokal. Upload media, backend/RLS,
+  scoring server-authoritative, dan autentikasi production tetap ditunda ke
+  phase yang ditetapkan.

@@ -14,191 +14,209 @@ Semua test menggunakan mock repositories, fixtures, local media, dan launch argu
 
 Buat Debug-only scenario launcher:
 
-- [ ] Logged out.
-- [ ] Participant onboarding.
-- [ ] Participant no program.
-- [ ] Participant day 1.
-- [ ] Participant mid-program.
-- [ ] Participant final weigh-in.
-- [ ] Participant final leaderboard.
-- [ ] Coach wallet zero.
-- [ ] Coach active participants.
-- [ ] Coach review queue.
-- [ ] Admin draft CMS.
-- [ ] Admin active program.
-- [ ] Admin winner lock.
-- [ ] Loading.
-- [ ] Offline.
-- [ ] Permission denied.
-- [ ] Generic repository error.
+- [x] Logged out.
+- [x] Participant onboarding.
+- [x] Participant no program.
+- [x] Participant day 1.
+- [x] Participant mid-program.
+- [x] Participant final weigh-in.
+- [x] Participant final leaderboard.
+- [x] Coach wallet zero.
+- [x] Coach active participants.
+- [x] Coach review queue.
+- [x] Admin draft CMS.
+- [x] Admin active program.
+- [x] Admin winner lock.
+- [x] Loading.
+- [x] Offline.
+- [x] Permission denied.
+- [x] Generic repository error.
 
 Setiap scenario harus deterministic.
 
 ## Bahasa dan localization audit
 
-- [ ] Seluruh copy production-facing berbahasa Indonesia.
-- [ ] Tidak ada English placeholder yang tertinggal.
-- [ ] Angka, berat, tanggal, waktu, dan harga menggunakan locale `id-ID`.
-- [ ] Text Bahasa Indonesia tidak terpotong pada Dynamic Type besar.
-- [ ] Istilah mengikuti `UI_REFERENCE_SHEET.md`.
+- [x] Seluruh copy production-facing berbahasa Indonesia.
+- [x] Tidak ada English placeholder yang tertinggal.
+- [x] Angka, berat, tanggal, waktu, dan harga menggunakan locale `id-ID`.
+- [x] Text Bahasa Indonesia tidak terpotong pada Dynamic Type besar.
+- [x] Istilah mengikuti `UI_REFERENCE_SHEET.md`.
 
 ## Accessibility audit
 
 ### Dynamic Type
 
-- [ ] Test standard sizes.
-- [ ] Test largest accessibility sizes.
-- [ ] No clipped primary action.
-- [ ] No horizontal text truncation for required content.
-- [ ] Forms remain navigable.
-- [ ] Leaderboard remains understandable without compressed columns.
+- [x] Test standard sizes.
+- [x] Test largest accessibility sizes.
+- [x] No clipped primary action.
+- [x] No horizontal text truncation for required content.
+- [x] Forms remain navigable.
+- [x] Leaderboard remains understandable without compressed columns.
 
 ### VoiceOver
 
-- [ ] Logical reading order.
-- [ ] Icon-only button labels.
-- [ ] Progress value and context.
-- [ ] Rank value.
-- [ ] Submission state.
-- [ ] Locked day explanation.
-- [ ] Evidence image accessible name.
-- [ ] Decorative images hidden.
-- [ ] QR has useful description without exposing token.
-- [ ] Validation associated with field.
+- [x] Logical reading order.
+- [x] Icon-only button labels.
+- [x] Progress value and context.
+- [x] Rank value.
+- [x] Submission state.
+- [x] Locked day explanation.
+- [x] Evidence image accessible name.
+- [x] Decorative images hidden.
+- [x] QR has useful description without exposing token.
+- [x] Validation associated with field.
 
 ### Visual accessibility
 
-- [ ] Light mode.
-- [ ] Dark mode.
-- [ ] Increase Contrast.
-- [ ] Reduce Transparency.
-- [ ] Differentiate Without Color.
-- [ ] Minimum target size.
-- [ ] System colors remain legible.
+- [x] Light mode.
+- [x] Dark mode.
+- [x] Increase Contrast.
+- [x] Reduce Transparency.
+- [x] Differentiate Without Color.
+- [x] Minimum target size.
+- [x] System colors remain legible.
 
 ### Motion
 
-- [ ] Reduce Motion disables unnecessary celebration.
-- [ ] Leaderboard changes do not cause disorienting motion.
-- [ ] Navigation uses system behavior.
-- [ ] Loading indicators remain accessible.
+- [x] Reduce Motion disables unnecessary celebration.
+- [x] Leaderboard changes do not cause disorienting motion.
+- [x] Navigation uses system behavior.
+- [x] Loading indicators remain accessible.
 
 ## Reliability
 
-- [ ] Cancellation-safe async tasks.
-- [ ] Retry action for recoverable errors.
-- [ ] Debounce search where needed.
-- [ ] No duplicate repository loads caused by body recomputation.
-- [ ] Stable list identity.
-- [ ] No unbounded image memory.
-- [ ] Local temporary files cleaned.
-- [ ] Debug fixture reset works.
-- [ ] App survives background/foreground.
-- [ ] Fake session restoration.
+- [x] Cancellation-safe async tasks.
+- [x] Retry action for recoverable errors.
+- [x] Debounce search where needed.
+- [x] No duplicate repository loads caused by body recomputation.
+- [x] Stable list identity.
+- [x] No unbounded image memory.
+- [x] Local temporary files cleaned.
+- [x] Debug fixture reset works.
+- [x] App survives background/foreground.
+- [x] Fake session restoration.
 
 ## Performance
 
-- [ ] Use lazy containers.
-- [ ] Thumbnail instead of original image in lists.
-- [ ] Avoid expensive work on main actor.
+- [x] Use lazy containers.
+- [x] Thumbnail instead of original image in lists.
+- [x] Avoid expensive work on main actor.
 - [ ] Profile participant Today scrolling.
 - [ ] Profile coach participant list.
 - [ ] Profile admin day/step editor.
 - [ ] Profile Liquid Glass candidates on iOS 26 runtime.
-- [ ] Remove glass where it causes avoidable performance cost.
+- [x] Remove glass where it causes avoidable performance cost.
 
 ## Swift Testing completion
 
 Required suites:
 
-- [ ] Domain models.
-- [ ] Fixture decoding.
-- [ ] Validation.
-- [ ] Scoring.
-- [ ] Ranking.
-- [ ] Timezone and visibility.
-- [ ] Participant feature states.
-- [ ] Coach feature states.
-- [ ] Admin editor.
-- [ ] QR parser.
-- [ ] Media decisions.
-- [ ] Role navigation.
-- [ ] Error mapping.
+- [x] Domain models.
+- [x] Fixture decoding.
+- [x] Validation.
+- [x] Scoring.
+- [x] Ranking.
+- [x] Timezone and visibility.
+- [x] Participant feature states.
+- [x] Coach feature states.
+- [x] Admin editor.
+- [x] QR parser.
+- [x] Media decisions.
+- [x] Role navigation.
+- [x] Error mapping.
 
 ## XCTest UI flows
 
-- [ ] Participant full local flow.
-- [ ] Coach review flow.
-- [ ] Coach invite generation.
-- [ ] Admin draft creation.
-- [ ] Admin participant preview.
-- [ ] Admin manual enrollment local simulation.
-- [ ] Leaderboard and winner display.
-- [ ] Role switch test.
-- [ ] Dark mode launch.
-- [ ] Accessibility size launch.
+- [x] Participant full local flow.
+- [x] Coach review flow.
+- [x] Coach invite generation.
+- [x] Admin draft creation.
+- [x] Admin participant preview.
+- [x] Admin manual enrollment local simulation.
+- [x] Leaderboard and winner display.
+- [x] Role switch test.
+- [x] Dark mode launch.
+- [x] Accessibility size launch.
 
 Use launch arguments untuk fixture scenario, jangan menulis test yang bergantung pada test sebelumnya.
 
 ## Device matrix
 
 - [ ] Small supported iPhone simulator iOS 17.
-- [ ] Standard current simulator.
-- [ ] iOS 26 simulator untuk Liquid Glass.
-- [ ] iPad simulator.
+- [x] Standard current simulator.
+- [x] iOS 26 simulator untuk Liquid Glass.
+- [x] iPad simulator.
 - [ ] Physical device untuk camera and scanning sanity.
-- [ ] Offline mode.
+- [x] Offline mode.
 
 ## Track A demo checklist
 
 Participant:
 
-- [ ] Join local program.
-- [ ] Submit initial weight.
-- [ ] Complete step with local photo.
-- [ ] See points and progress.
-- [ ] Submit final weight.
-- [ ] See final rank.
+- [x] Join local program.
+- [x] Submit initial weight.
+- [x] Complete step with local photo.
+- [x] See points and progress.
+- [x] Submit final weight.
+- [x] See final rank.
 
 Coach:
 
-- [ ] View dashboard.
-- [ ] View participant.
-- [ ] Review evidence.
-- [ ] Generate QR.
-- [ ] Open store preview.
+- [x] View dashboard.
+- [x] View participant.
+- [x] Review evidence.
+- [x] Generate QR.
+- [x] Open store preview.
 
 Admin:
 
-- [ ] Create program draft.
-- [ ] Add days and steps.
-- [ ] Preview participant UI.
-- [ ] Simulate publish.
-- [ ] Manual enroll.
-- [ ] Lock winners.
-- [ ] Add winner banner.
+- [x] Create program draft.
+- [x] Add days and steps.
+- [x] Preview participant UI.
+- [x] Simulate publish.
+- [x] Manual enroll.
+- [x] Lock winners.
+- [x] Add winner banner.
 
 ## Documentation deliverables
 
-- [ ] `DEMO_GUIDE.md`.
-- [ ] `ARCHITECTURE.md`.
-- [ ] `DOMAIN_GLOSSARY.md`.
-- [ ] `MOCK_DATA_GUIDE.md`.
-- [ ] `UI_SCREEN_INVENTORY.md`.
-- [ ] `BACKEND_ADAPTER_CHECKLIST.md`.
-- [ ] Screenshots optional, but no snapshot test dependency required.
+- [x] `DEMO_GUIDE.md`.
+- [x] `ARCHITECTURE.md`.
+- [x] `DOMAIN_GLOSSARY.md`.
+- [x] `MOCK_DATA_GUIDE.md`.
+- [x] `UI_SCREEN_INVENTORY.md`.
+- [x] `BACKEND_ADAPTER_CHECKLIST.md`.
+- [x] Screenshots optional, but no snapshot test dependency required.
 
 ## Exit criteria
 
-- [ ] Semua Track A flows dapat digunakan tanpa jaringan.
-- [ ] No critical accessibility blockers.
-- [ ] Critical UI tests lulus.
-- [ ] Unit tests lulus.
-- [ ] No Supabase dependency.
-- [ ] No OAuth configuration.
-- [ ] No live StoreKit transaction.
-- [ ] UI siap menerima real repository adapters.
+- [x] Semua Track A flows dapat digunakan tanpa jaringan.
+- [x] No critical accessibility blockers.
+- [x] Critical UI tests lulus.
+- [x] Unit tests lulus.
+- [x] No Supabase dependency.
+- [x] No OAuth configuration.
+- [x] No live StoreKit transaction.
+- [x] UI siap menerima real repository adapters.
 
 ## Progress log
 
 ### Log
+
+#### 2026-07-26 — implementasi dan verifikasi lokal
+
+- Files changed: katalog dan launcher skenario Debug, persiapan state per peran,
+  reset progres hari pertama, audit copy/lokalisasi, UI test aksesibilitas dan
+  reliabilitas, test Phase 08, README, serta enam dokumen handoff di root.
+- Assumptions: pencarian fixture kecil tidak memerlukan debounce; ETTrace tidak
+  ditautkan karena project melarang perubahan `project.pbxproj`.
+- Build command: XcodeBuildMCP `build_sim` dengan Swift 6 strict concurrency
+  pada iPhone 17 Pro Debug/Release, iPhone 17e iOS 26.5, dan iPad Pro 13-inch
+  iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk seluruh
+  `MSCBodyTransformationTests` dan seluruh 15 UI test dalam tiga kelompok.
+- Result: 83 unit test dan 15 UI test lulus; Debug, Release, small iPhone, dan
+  iPad build lulus tanpa compiler error.
+- Remaining blockers: runtime iOS 17 dan perangkat fisik tidak tersedia.
+  Profil ETTrace memerlukan temporary framework linking ke app target, yang
+  tidak dilakukan karena perubahan Xcode project dilarang.

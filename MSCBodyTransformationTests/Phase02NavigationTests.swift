@@ -90,7 +90,7 @@ struct Phase02NavigationTests {
     @Test("Deep link lokal menghasilkan kode undangan")
     func localInviteDeepLinkParsesCode() throws {
         let url = try #require(
-            URL(string: "mscbody://invite/msc7hari")
+            URL(string: "msc-demo://join/msc7hari")
         )
 
         #expect(
@@ -112,7 +112,7 @@ struct Phase02NavigationTests {
         )
 
         #expect(configuration.role == .admin)
-        #expect(configuration.scenario == .adminDraftEditor)
+        #expect(configuration.scenario == .adminDraftCMS)
         #expect(configuration.skipsLanding)
     }
 #endif

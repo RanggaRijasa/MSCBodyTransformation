@@ -111,14 +111,23 @@ nonisolated enum AppTab: Hashable, Identifiable, Sendable {
 }
 
 nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
+    case loggedOut = "logged_out"
     case loading
-    case error
-    case empty
     case offline
+    case permissionDenied = "permission_denied"
+    case repositoryError = "repository_error"
     case participantOnboarding = "participant_onboarding"
-    case participantActive = "participant_active"
+    case participantNoProgram = "participant_no_program"
+    case participantDayOne = "participant_day_1"
+    case participantMidProgram = "participant_mid_program"
+    case participantFinalWeighIn = "participant_final_weigh_in"
+    case participantFinalLeaderboard = "participant_final_leaderboard"
+    case coachWalletZero = "coach_wallet_zero"
+    case coachActiveParticipants = "coach_active_participants"
     case coachReviewQueue = "coach_review_queue"
-    case adminDraftEditor = "admin_draft_editor"
+    case adminDraftCMS = "admin_draft_cms"
+    case adminActiveProgram = "admin_active_program"
+    case adminWinnerLock = "admin_winner_lock"
 
     var id: String { rawValue }
 
@@ -126,14 +135,50 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         "scenario.\(rawValue)"
     }
 
+    func supports(_ role: UserRole) -> Bool {
+        switch self {
+        case .loggedOut, .loading, .offline, .permissionDenied,
+             .repositoryError:
+            true
+        case .participantOnboarding, .participantNoProgram,
+             .participantDayOne, .participantMidProgram,
+             .participantFinalWeighIn, .participantFinalLeaderboard:
+            role == .participant
+        case .coachWalletZero, .coachActiveParticipants,
+             .coachReviewQueue:
+            role == .coach
+        case .adminDraftCMS, .adminActiveProgram, .adminWinnerLock:
+            role == .admin
+        }
+    }
+
+    static func scenarios(for role: UserRole) -> [Self] {
+        allCases.filter { $0.supports(role) }
+    }
+
     static func defaultScenario(for role: UserRole) -> Self {
         switch role {
         case .participant:
-            .participantActive
+            .participantDayOne
         case .coach:
             .coachReviewQueue
         case .admin:
-            .adminDraftEditor
+            .adminDraftCMS
+        }
+    }
+
+    func initialTab(for role: UserRole) -> AppTab {
+        switch self {
+        case .participantFinalLeaderboard:
+            .participant(.leaderboard)
+        case .coachWalletZero:
+            .coach(.invite)
+        case .coachActiveParticipants:
+            .coach(.participants)
+        case .adminDraftCMS, .adminActiveProgram:
+            .admin(.programs)
+        default:
+            AppTab.tabs(for: role).first ?? .participant(.today)
         }
     }
 }
