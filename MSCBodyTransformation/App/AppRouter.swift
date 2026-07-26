@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendable {
+nonisolated enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendable {
     case participant
     case coach
     case admin
@@ -42,8 +42,8 @@ enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendable {
     }
 }
 
-enum AppRoute: Hashable {
-    case localDemo(DemoRole)
+nonisolated enum AppRoute: Hashable {
+    case localDemo(DemoRole, AppDemoScenario)
 }
 
 @MainActor
@@ -55,8 +55,11 @@ final class AppRouter {
         self.path = path
     }
 
-    func enterLocalDemo(as role: DemoRole) {
-        path.append(.localDemo(role))
+    func enterLocalDemo(
+        as role: DemoRole,
+        scenario: AppDemoScenario
+    ) {
+        path.append(.localDemo(role, scenario))
     }
 
     func reset() {

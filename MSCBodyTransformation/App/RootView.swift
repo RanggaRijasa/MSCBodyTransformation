@@ -1,3 +1,4 @@
+import Foundation
 import OSLog
 import SwiftUI
 
@@ -8,26 +9,66 @@ struct RootView: View {
     @Environment(\.appEnvironment) private var appEnvironment
 
 #if DEBUG
-    @State private var selectedRole = DemoRole.participant
+    @State private var selectedRole: DemoRole
+    @State private var selectedScenario: AppDemoScenario
     @State private var sessionSwitchState = DemoSessionSwitchState.switching
+    @State private var activeDemo: DemoShellLaunch?
 #endif
 
-    var body: some View {
-        @Bindable var router = router
+    init(
+        router: AppRouter,
+        launchArguments: [String] = ProcessInfo.processInfo.arguments
+    ) {
+        self.router = router
+#if DEBUG
+        let launchConfiguration = DebugLaunchConfiguration(
+            arguments: launchArguments
+        )
+        _selectedRole = State(initialValue: launchConfiguration.role)
+        _selectedScenario = State(initialValue: launchConfiguration.scenario)
+        _activeDemo = State(
+            initialValue: launchConfiguration.skipsLanding
+                ? DemoShellLaunch(
+                    role: launchConfiguration.role.userRole,
+                    scenario: launchConfiguration.scenario
+                )
+                : nil
+        )
+#endif
+    }
 
-        NavigationStack(path: $router.path) {
+    var body: some View {
+#if DEBUG
+        Group {
+            if let activeDemo {
+                RoleAppShellView(
+                    role: activeDemo.role,
+                    scenario: activeDemo.scenario
+                )
+            } else {
+                debugLanding
+            }
+        }
+        .task(id: selectedRole) {
+            await switchDebugSession()
+        }
+#else
+        RoleAppShellView(
+            role: .participant,
+            scenario: .participantActive
+        )
+#endif
+    }
+
+#if DEBUG
+    private var debugLanding: some View {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.large) {
                     header
                     localModeStatus
-
-#if DEBUG
-                    roleSelection
+                    demoConfiguration
                     enterDemoButton
-#else
-                    releaseFoundationStatus
-#endif
-
                     configurationDetails
                 }
                 .frame(maxWidth: 680, alignment: .leading)
@@ -36,63 +77,52 @@ struct RootView: View {
                 .frame(maxWidth: .infinity)
             }
             .background(Color.appBackground.ignoresSafeArea())
-            .navigationDestination(for: AppRoute.self) { route in
-                switch route {
-                case .localDemo(let role):
-                    DemoPlaceholderView(role: role)
-                }
-            }
             .navigationTitle(Text("navigation.home"))
             .navigationBarTitleDisplayMode(.inline)
         }
         .tint(.brandPrimary)
-#if DEBUG
-        .task(id: selectedRole) {
-            await switchDebugSession()
+        .onChange(of: selectedRole) { _, role in
+            selectedScenario = .defaultScenario(for: role.userRole)
         }
-#endif
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: AppSpacing.small) {
             Image(systemName: "figure.run.circle.fill")
-                .font(.system(size: 56))
+                .font(.largeTitle)
                 .foregroundStyle(Color.brandPrimary)
                 .accessibilityHidden(true)
 
             Text("app.title")
-                .font(.largeTitle.weight(.bold))
+                .font(AppTypography.screenTitle)
                 .foregroundStyle(Color.appPrimaryText)
                 .accessibilityIdentifier("root.title")
 
             Text("app.subtitle")
-                .font(.body)
+                .font(AppTypography.body)
                 .foregroundStyle(Color.appSecondaryText)
         }
     }
 
     private var localModeStatus: some View {
-        Label("configuration.mode.local_demo", systemImage: "iphone.and.arrow.forward")
-            .font(.headline)
-            .foregroundStyle(Color.appPrimaryText)
-            .padding(AppSpacing.medium)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .adaptiveDemoSurface()
-            .accessibilityIdentifier("root.local-mode")
+        Label(
+            "configuration.mode.local_demo",
+            systemImage: "iphone.and.arrow.forward"
+        )
+        .font(AppTypography.cardTitle)
+        .foregroundStyle(Color.appPrimaryText)
+        .padding(AppSpacing.medium)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .adaptiveGlassSurface()
+        .accessibilityIdentifier("root.local-mode")
     }
 
-#if DEBUG
-    private var roleSelection: some View {
+    private var demoConfiguration: some View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-                Text("root.role_picker.title")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(Color.appPrimaryText)
-
-                Text("root.role_picker.description")
-                    .font(.body)
-                    .foregroundStyle(Color.appSecondaryText)
-            }
+            SectionHeader(
+                title: "root.role_picker.title",
+                subtitle: "root.role_picker.description"
+            )
 
             Picker("root.role_picker.label", selection: $selectedRole) {
                 ForEach(DemoRole.allCases) { role in
@@ -103,29 +133,33 @@ struct RootView: View {
             .pickerStyle(.segmented)
             .accessibilityIdentifier("root.role-picker")
 
-            HStack(spacing: AppSpacing.xSmall) {
-                Image(systemName: selectedRole.systemImage)
-                    .accessibilityHidden(true)
-
-                Text("root.current_role")
-
-                Text(LocalizedStringKey(selectedRole.titleLocalizationKey))
-                    .fontWeight(.semibold)
+            Picker(
+                "root.scenario_picker.label",
+                selection: $selectedScenario
+            ) {
+                ForEach(AppDemoScenario.allCases) { scenario in
+                    Text(
+                        LocalizedStringKey(
+                            scenario.titleLocalizationKey
+                        )
+                    )
+                    .tag(scenario)
+                }
             }
-            .font(.subheadline)
-            .foregroundStyle(Color.appPrimaryText)
-            .animation(.default, value: selectedRole)
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .accessibilityIdentifier("root.scenario-picker")
 
             sessionStatus
         }
         .padding(AppSpacing.medium)
-        .adaptiveDemoSurface()
+        .adaptiveGlassSurface()
     }
 
     private var enterDemoButton: some View {
         Button {
-            AppLog.navigation.info("Membuka placeholder demo lokal.")
-            router.enterLocalDemo(as: selectedRole)
+            AppLog.navigation.info("Membuka app shell demo lokal.")
+            openSelectedDemo()
         } label: {
             Label("root.enter_demo", systemImage: "arrow.right")
         }
@@ -154,6 +188,48 @@ struct RootView: View {
             )
             .foregroundStyle(Color.appSecondaryText)
         }
+    }
+
+    private var configurationDetails: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            Text("root.configuration.title")
+                .font(AppTypography.cardTitle)
+                .foregroundStyle(Color.appPrimaryText)
+
+            configurationRow(
+                title: "root.configuration.build",
+                value: appEnvironment.configuration.build == .debug
+                    ? "configuration.build.debug"
+                    : "configuration.build.release"
+            )
+            configurationRow(
+                title: "root.configuration.locale",
+                value: appEnvironment.configuration.localeIdentifier
+            )
+        }
+        .padding(AppSpacing.medium)
+        .background(
+            Color.appSurface,
+            in: RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+        )
+    }
+
+    private func configurationRow(
+        title: LocalizedStringKey,
+        value: String
+    ) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: AppSpacing.medium) {
+            Text(title)
+                .foregroundStyle(Color.appSecondaryText)
+            Spacer(minLength: AppSpacing.medium)
+            Text(LocalizedStringKey(value))
+                .foregroundStyle(Color.appPrimaryText)
+                .multilineTextAlignment(.trailing)
+        }
+        .font(AppTypography.secondary)
     }
 
     private func switchDebugSession() async {
@@ -185,60 +261,14 @@ struct RootView: View {
             sessionSwitchState = .failed(.unknown)
         }
     }
-#endif
 
-    private var releaseFoundationStatus: some View {
-        Label("root.release_foundation", systemImage: "checkmark.seal")
-            .font(.body)
-            .foregroundStyle(Color.appPrimaryText)
-            .padding(AppSpacing.medium)
-            .adaptiveDemoSurface()
-    }
-
-    private var configurationDetails: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.small) {
-            Text("root.configuration.title")
-                .font(.headline)
-                .foregroundStyle(Color.appPrimaryText)
-
-            configurationRow(
-                title: "root.configuration.build",
-                value: appEnvironment.configuration.build == .debug
-                    ? "configuration.build.debug"
-                    : "configuration.build.release"
-            )
-
-            configurationRow(
-                title: "root.configuration.locale",
-                value: appEnvironment.configuration.localeIdentifier
-            )
-        }
-        .padding(AppSpacing.medium)
-        .background(
-            Color.appSurface,
-            in: RoundedRectangle(
-                cornerRadius: AppRadius.large,
-                style: .continuous
-            )
+    private func openSelectedDemo() {
+        activeDemo = DemoShellLaunch(
+            role: selectedRole.userRole,
+            scenario: selectedScenario
         )
     }
-
-    private func configurationRow(
-        title: LocalizedStringKey,
-        value: String
-    ) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: AppSpacing.medium) {
-            Text(title)
-                .foregroundStyle(Color.appSecondaryText)
-
-            Spacer(minLength: AppSpacing.medium)
-
-            Text(LocalizedStringKey(value))
-                .foregroundStyle(Color.appPrimaryText)
-                .multilineTextAlignment(.trailing)
-        }
-        .font(.subheadline)
-    }
+#endif
 }
 
 #if DEBUG
@@ -251,23 +281,28 @@ private enum DemoSessionSwitchState: Equatable {
         self == .ready(role)
     }
 }
+
+private struct DemoShellLaunch: Equatable {
+    let role: UserRole
+    let scenario: AppDemoScenario
+}
 #endif
 
-#Preview("Terang") {
-    RootView(router: AppRouter())
+#Preview("Root — terang") {
+    RootView(router: AppRouter(), launchArguments: [])
         .environment(\.appEnvironment, .preview)
         .environment(\.locale, Locale(identifier: "id-ID"))
 }
 
-#Preview("Gelap") {
-    RootView(router: AppRouter())
+#Preview("Root — gelap") {
+    RootView(router: AppRouter(), launchArguments: [])
         .environment(\.appEnvironment, .preview)
         .environment(\.locale, Locale(identifier: "id-ID"))
         .preferredColorScheme(.dark)
 }
 
-#Preview("Teks aksesibilitas") {
-    RootView(router: AppRouter())
+#Preview("Root — teks aksesibilitas") {
+    RootView(router: AppRouter(), launchArguments: [])
         .environment(\.appEnvironment, .preview)
         .environment(\.locale, Locale(identifier: "id-ID"))
         .dynamicTypeSize(.accessibility5)

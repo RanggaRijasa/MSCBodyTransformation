@@ -10,7 +10,9 @@ struct PrimaryActionButtonStyle: ButtonStyle {
             .padding(.horizontal, AppSpacing.medium)
             .foregroundStyle(.white)
             .background(
-                Color.brandPrimary.opacity(configuration.isPressed ? 0.82 : 1),
+                configuration.isPressed
+                    ? Color.brandPrimaryPressed
+                    : Color.brandPrimary,
                 in: RoundedRectangle(
                     cornerRadius: AppRadius.medium,
                     style: .continuous

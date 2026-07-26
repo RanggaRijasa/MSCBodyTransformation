@@ -1,9 +1,10 @@
 # MSC Body Transformation
 
-Aplikasi native iOS dan iPadOS untuk program transformasi tubuh. Phase 00 dan
-Phase 01 menyediakan fondasi, model domain, repository protocol, use case,
-fixture JSON, serta data demo lokal yang dapat dibangun dan dijalankan tanpa
-internet maupun layanan eksternal.
+Aplikasi native iOS dan iPadOS untuk program transformasi tubuh. Phase 00
+sampai Phase 02 menyediakan fondasi, model domain, repository protocol, use
+case, fixture JSON, semantic design system, shared components, serta app shell
+role-aware yang dapat dibangun dan dijalankan tanpa internet maupun layanan
+eksternal.
 
 ## Kebutuhan lokal
 
@@ -84,8 +85,17 @@ lokal dengan aman untuk konkurensi, lalu diekspos melalui protocol di
 `AppEnvironment`. Debug role switcher mengganti fake session Peserta, Coach,
 atau Admin.
 
-## Batasan Phase 01
+## App shell Phase 02
+
+Build Debug menyediakan pilihan peran Peserta, Coach, dan Admin, ditambah
+scenario loading, error, empty, offline, participant active, coach review
+queue, serta admin draft editor. Setiap peran memiliki lima tab dan
+`NavigationStack` terpisah per tab. Surface interaktif menggunakan Liquid
+Glass secara selektif di iOS 26+, dengan fallback SwiftUI native untuk iOS 17
+sampai iOS 25.
+
+## Batasan Phase 02
 
 Supabase, OAuth, StoreKit production, App Store Connect, networking, dan
-package pihak ketiga belum digunakan. Design system dan app shell lengkap
-tetap menjadi scope Phase 02.
+package pihak ketiga belum digunakan. Participant journey lengkap tetap
+menjadi scope Phase 03.
