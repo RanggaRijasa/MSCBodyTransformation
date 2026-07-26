@@ -1,0 +1,406 @@
+{
+  "sourceLanguage" : "id",
+  "strings" : {
+    "app.subtitle" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi program transformasi tubuh"
+          }
+        }
+      }
+    },
+    "app.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MSC Body Transformation"
+          }
+        }
+      }
+    },
+    "configuration.build.debug" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debug"
+          }
+        }
+      }
+    },
+    "configuration.build.release" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rilis"
+          }
+        }
+      }
+    },
+    "configuration.mode.local_demo" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode pengembangan lokal"
+          }
+        }
+      }
+    },
+    "demo.placeholder.description" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fondasi aplikasi siap. Fitur untuk peran ini akan ditambahkan pada fase yang sesuai."
+          }
+        }
+      }
+    },
+    "demo.placeholder.offline" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berjalan tanpa koneksi internet"
+          }
+        }
+      }
+    },
+    "demo.placeholder.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Area demo lokal"
+          }
+        }
+      }
+    },
+    "error.conflict.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data sudah berubah. Muat ulang, lalu coba lagi."
+          }
+        }
+      }
+    },
+    "error.conflict.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perubahan tidak dapat disimpan"
+          }
+        }
+      }
+    },
+    "error.not_found.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data yang dicari tidak tersedia."
+          }
+        }
+      }
+    },
+    "error.not_found.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data tidak ditemukan"
+          }
+        }
+      }
+    },
+    "error.offline.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periksa koneksi, lalu coba lagi."
+          }
+        }
+      }
+    },
+    "error.offline.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada koneksi"
+          }
+        }
+      }
+    },
+    "error.permission.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun ini tidak memiliki izin untuk tindakan tersebut."
+          }
+        }
+      }
+    },
+    "error.permission.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses tidak tersedia"
+          }
+        }
+      }
+    },
+    "error.session_expired.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masuk kembali untuk melanjutkan."
+          }
+        }
+      }
+    },
+    "error.session_expired.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi berakhir"
+          }
+        }
+      }
+    },
+    "error.timeout.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proses memerlukan waktu terlalu lama. Coba lagi."
+          }
+        }
+      }
+    },
+    "error.timeout.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waktu proses habis"
+          }
+        }
+      }
+    },
+    "error.unknown.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coba lagi. Jika masalah berlanjut, kembali ke beranda."
+          }
+        }
+      }
+    },
+    "error.unknown.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terjadi kendala"
+          }
+        }
+      }
+    },
+    "error.validation.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periksa isian yang ditandai, lalu coba lagi."
+          }
+        }
+      }
+    },
+    "error.validation.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data belum lengkap"
+          }
+        }
+      }
+    },
+    "navigation.home" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beranda"
+          }
+        }
+      }
+    },
+    "role.admin" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin"
+          }
+        }
+      }
+    },
+    "role.coach" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach"
+          }
+        }
+      }
+    },
+    "role.participant" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peserta"
+          }
+        }
+      }
+    },
+    "root.configuration.build" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Build"
+          }
+        }
+      }
+    },
+    "root.configuration.locale" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locale"
+          }
+        }
+      }
+    },
+    "root.configuration.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurasi"
+          }
+        }
+      }
+    },
+    "root.current_role" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peran saat ini:"
+          }
+        }
+      }
+    },
+    "root.enter_demo" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masuk ke demo"
+          }
+        }
+      }
+    },
+    "root.release_foundation" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fondasi aplikasi siap untuk pengembangan fitur."
+          }
+        }
+      }
+    },
+    "root.role_picker.description" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih peran untuk melihat struktur aplikasi."
+          }
+        }
+      }
+    },
+    "root.role_picker.label" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peran demo"
+          }
+        }
+      }
+    },
+    "root.role_picker.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih peran"
+          }
+        }
+      }
+    },
+    "root.session.ready" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi demo siap"
+          }
+        }
+      }
+    },
+    "root.session.switching" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menyiapkan sesi demo"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,36 @@
+{
+  "users": [
+    {"id":"00000000-0000-0000-0000-000000000001","email":"peserta@demo.local","displayName":"Ayu Lestari","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000002","email":"bima@demo.local","displayName":"Bima Putra","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000003","email":"citra@demo.local","displayName":"Citra Dewi","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000004","email":"dimas@demo.local","displayName":"Dimas Arta","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000005","email":"eka@demo.local","displayName":"Eka Sari","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000006","email":"farhan@demo.local","displayName":"Farhan Rizki","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000007","email":"gita@demo.local","displayName":"Gita Maharani","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000008","email":"hadi@demo.local","displayName":"Hadi Pratama","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000009","email":"intan@demo.local","displayName":"Intan Permata","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000010","email":"joko@demo.local","displayName":"Joko Saputra","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000011","email":"karina@demo.local","displayName":"Karina Wati","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000012","email":"lukman@demo.local","displayName":"Lukman Hakim","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-06-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000101","email":"coach@demo.local","displayName":"Coach Raka","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-05-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000102","email":"maya@demo.local","displayName":"Coach Maya","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-05-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000103","email":"niko@demo.local","displayName":"Coach Niko","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-05-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000104","email":"sinta@demo.local","displayName":"Coach Sinta","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-05-01T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000105","email":"tio@demo.local","displayName":"Tio Pranata","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":true,"createdAt":"2026-07-20T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000201","email":"admin@demo.local","displayName":"Admin MSC","role":"admin","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-01-01T00:00:00Z"}
+  ],
+  "participantProfiles": [
+    {"id":"20000000-0000-0000-0000-000000000001","userID":"00000000-0000-0000-0000-000000000001","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Ayu Lestari","city":"Denpasar"},
+    {"id":"20000000-0000-0000-0000-000000000002","userID":"00000000-0000-0000-0000-000000000002","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Bima Putra","city":"Badung"},
+    {"id":"20000000-0000-0000-0000-000000000003","userID":"00000000-0000-0000-0000-000000000003","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Citra Dewi","city":"Gianyar"},
+    {"id":"20000000-0000-0000-0000-000000000004","userID":"00000000-0000-0000-0000-000000000004","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Dimas Arta","city":"Tabanan"},
+    {"id":"20000000-0000-0000-0000-000000000005","userID":"00000000-0000-0000-0000-000000000005","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Eka Sari","city":"Denpasar"},
+    {"id":"20000000-0000-0000-0000-000000000006","userID":"00000000-0000-0000-0000-000000000006","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Farhan Rizki","city":"Badung"},
+    {"id":"20000000-0000-0000-0000-000000000007","userID":"00000000-0000-0000-0000-000000000007","coachID":"30000000-0000-0000-0000-000000000102","displayName":"Gita Maharani","city":"Makassar"},
+    {"id":"20000000-0000-0000-0000-000000000008","userID":"00000000-0000-0000-0000-000000000008","coachID":"30000000-0000-0000-0000-000000000102","displayName":"Hadi Pratama","city":"Makassar"},
+    {"id":"20000000-0000-0000-0000-000000000009","userID":"00000000-0000-0000-0000-000000000009","coachID":"30000000-0000-0000-0000-000000000103","displayName":"Intan Permata","city":"Surabaya"},
+    {"id":"20000000-0000-0000-0000-000000000010","userID":"00000000-0000-0000-0000-000000000010","coachID":"30000000-0000-0000-0000-000000000103","displayName":"Joko Saputra","city":"Surabaya"},
+    {"id":"20000000-0000-0000-0000-000000000011","userID":"00000000-0000-0000-0000-000000000011","coachID":"30000000-0000-0000-0000-000000000104","displayName":"Karina Wati","city":"Jakarta"},
+    {"id":"20000000-0000-0000-0000-000000000012","userID":"00000000-0000-0000-0000-000000000012","coachID":"30000000-0000-0000-0000-000000000104","displayName":"Lukman Hakim","city":"Jakarta"}
+  ]
+}

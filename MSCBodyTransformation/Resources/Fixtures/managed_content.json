@@ -1,0 +1,10 @@
+{
+  "content": [
+    {"id":"70000000-0000-0000-0000-000000000001","kind":"winner_banner","title":"Selamat kepada para pemenang","body":"Lihat lima peserta dengan poin tertinggi dari program yang telah selesai.","isPublished":true,"updatedAt":"2026-06-17T00:00:00Z"},
+    {"id":"70000000-0000-0000-0000-000000000002","kind":"wellness_disclaimer","title":"Informasi program","body":"Program ini mendukung kebiasaan hidup sehat dan bukan pengganti diagnosis atau perawatan medis.","isPublished":true,"updatedAt":"2026-07-01T00:00:00Z"}
+  ],
+  "auditEvents": [
+    {"id":"71000000-0000-0000-0000-000000000001","kind":"program_created","actorUserID":"00000000-0000-0000-0000-000000000201","subjectID":"10000000-0000-0000-0000-000000000002","summary":"Draft program lokal dibuat.","createdAt":"2026-07-20T00:00:00Z"},
+    {"id":"71000000-0000-0000-0000-000000000002","kind":"score_adjusted","actorUserID":"00000000-0000-0000-0000-000000000201","subjectID":"60000000-0000-0000-0000-000000000006","summary":"Penyesuaian poin demo dicatat terpisah.","createdAt":"2026-07-21T00:00:00Z"}
+  ]
+}

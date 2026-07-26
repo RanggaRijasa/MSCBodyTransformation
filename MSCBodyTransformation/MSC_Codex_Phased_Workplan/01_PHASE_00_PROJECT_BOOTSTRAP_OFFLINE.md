@@ -80,51 +80,51 @@ MSCBodyTransformation/
 
 ### Project settings
 
-- [ ] Buat atau periksa Xcode project.
+- [x] Buat atau periksa Xcode project.
 - [ ] Set deployment target iOS 17.0.
 - [ ] Set Swift language mode yang kompatibel dengan Swift 6.
 - [ ] Aktifkan strict concurrency checking secara bertahap.
-- [ ] Pastikan iPhone dan iPad device families tidak menghasilkan layout crash.
+- [x] Pastikan iPhone dan iPad device families tidak menghasilkan layout crash.
 - [ ] Tambahkan Debug, Staging, dan Release configuration.
-- [ ] Pastikan secrets tidak dimasukkan ke `.xcconfig` yang dikomit.
-- [ ] Tambahkan `.gitignore` yang sesuai Xcode.
-- [ ] Pastikan `Package.resolved` belum berisi dependency yang tidak dibutuhkan.
+- [x] Pastikan secrets tidak dimasukkan ke `.xcconfig` yang dikomit.
+- [x] Tambahkan `.gitignore` yang sesuai Xcode.
+- [x] Pastikan `Package.resolved` belum berisi dependency yang tidak dibutuhkan.
 
 ### App wiring
 
-- [ ] Buat `MSCBodyTransformationApp`.
-- [ ] Buat `AppEnvironment` sebagai root dependency container.
-- [ ] Buat `AppConfiguration` dengan mode `.localDemo`.
-- [ ] Buat `AppRouter` tanpa global mutable singleton.
-- [ ] Buat `RootView`.
-- [ ] RootView menampilkan status build, current demo role, dan tombol masuk ke demo placeholder.
-- [ ] Gunakan `@Environment` atau explicit injection untuk dependency bersama.
+- [x] Buat `MSCBodyTransformationApp`.
+- [x] Buat `AppEnvironment` sebagai root dependency container.
+- [x] Buat `AppConfiguration` dengan mode `.localDemo`.
+- [x] Buat `AppRouter` tanpa global mutable singleton.
+- [x] Buat `RootView`.
+- [x] RootView menampilkan status build, current demo role, dan tombol masuk ke demo placeholder.
+- [x] Gunakan `@Environment` atau explicit injection untuk dependency bersama.
 
 ### Core testability
 
-- [ ] Buat `AppClock` protocol.
-- [ ] Buat `SystemClock`.
-- [ ] Buat `FixedClock` untuk test dan preview.
-- [ ] Buat `IdentifierGenerating` protocol.
-- [ ] Buat production UUID generator.
-- [ ] Buat deterministic UUID generator untuk test.
-- [ ] Buat OSLog categories tanpa data pribadi.
+- [x] Buat `AppClock` protocol.
+- [x] Buat `SystemClock`.
+- [x] Buat `FixedClock` untuk test dan preview.
+- [x] Buat `IdentifierGenerating` protocol.
+- [x] Buat production UUID generator.
+- [x] Buat deterministic UUID generator untuk test.
+- [x] Buat OSLog categories tanpa data pribadi.
 
 ### Test targets
 
-- [ ] Tambahkan Swift Testing unit test target.
-- [ ] Tambahkan XCTest UI test target.
-- [ ] Buat satu smoke test aplikasi.
-- [ ] Buat satu UI launch test.
-- [ ] Pastikan test dapat dijalankan tanpa jaringan.
+- [x] Tambahkan Swift Testing unit test target.
+- [x] Tambahkan XCTest UI test target.
+- [x] Buat satu smoke test aplikasi.
+- [x] Buat satu UI launch test.
+- [x] Pastikan test dapat dijalankan tanpa jaringan.
 
 ### Developer documentation
 
-- [ ] Buat `README.md` untuk build lokal.
-- [ ] Buat `CONTRIBUTING.md`.
-- [ ] Dokumentasikan format file dan naming.
-- [ ] Dokumentasikan larangan secret.
-- [ ] Dokumentasikan command build dan test yang benar berdasarkan scheme aktual.
+- [x] Buat `README.md` untuk build lokal.
+- [x] Buat `CONTRIBUTING.md`.
+- [x] Dokumentasikan format file dan naming.
+- [x] Dokumentasikan larangan secret.
+- [x] Dokumentasikan command build dan test yang benar berdasarkan scheme aktual.
 
 ## Larangan scope
 
@@ -156,16 +156,37 @@ Jalankan unit test dan UI smoke test.
 
 ## Exit criteria
 
-- [ ] Clean build pada simulator.
-- [ ] App launch tanpa crash.
-- [ ] Unit test target berjalan.
-- [ ] UI test target berjalan.
-- [ ] Tidak ada third-party dependency.
-- [ ] Tidak ada secret.
-- [ ] Root dependency container dapat diganti untuk preview dan test.
+- [x] Clean build pada simulator.
+- [x] App launch tanpa crash.
+- [x] Unit test target berjalan.
+- [x] UI test target berjalan.
+- [x] Tidak ada third-party dependency.
+- [x] Tidak ada secret.
+- [x] Root dependency container dapat diganti untuk preview dan test.
 
 ## Progress log
 
 Tambahkan catatan tanggal, perubahan, command yang dijalankan, hasil build, hasil test, dan blocker di bawah ini.
 
 ### Log
+
+#### 26 Juli 2026 — Fondasi demo lokal
+
+- Files changed: fondasi `App`, clock, generator UUID, logging, placeholder
+  demo lokal, shared UI styles, semantic color assets, string catalog, privacy
+  manifest, unit/UI smoke tests, `README.md`, dan `CONTRIBUTING.md`.
+- Assumptions: folder test target yang sudah ada tetap digunakan di root
+  repository; folder kosong untuk fase berikutnya dibuat tanpa marker resource
+  karena project memakai filesystem-synchronized groups.
+- Build command:
+  `xcodebuild -project MSCBodyTransformation.xcodeproj -scheme MSCBodyTransformation -configuration Debug -destination 'platform=iOS Simulator,id=C63135B7-AF6A-42C0-8993-DF4C72589FE1' SWIFT_VERSION=6 SWIFT_STRICT_CONCURRENCY=complete IPHONEOS_DEPLOYMENT_TARGET=17.0 clean build`
+- Test command: command build yang sama dengan
+  `-only-testing:MSCBodyTransformationTests test`, lalu
+  `-only-testing:MSCBodyTransformationUITests test`.
+- Result: build Swift 6 dengan strict concurrency complete dan deployment
+  target override iOS 17 berhasil. App berhasil diluncurkan pada iPhone 17 Pro
+  dan iPad Pro 13-inch (M5), light/dark mode terverifikasi. Unit test 3 lulus;
+  UI test target lulus tanpa kegagalan.
+- Remaining blockers: deployment target project masih 26.5,
+  `SWIFT_VERSION` masih 5.0, dan konfigurasi Staging belum ada. Ketiganya
+  memerlukan perubahan `project.pbxproj`, yang tidak diizinkan pada task ini.

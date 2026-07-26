@@ -1,14 +1,6 @@
-//
-//  MSCBodyTransformationUITestsLaunchTests.swift
-//  MSCBodyTransformationUITests
-//
-//  Created by Rangga Rijasa on 26/07/26.
-//
-
 import XCTest
 
 final class MSCBodyTransformationUITestsLaunchTests: XCTestCase {
-
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
     }
@@ -20,15 +12,16 @@ final class MSCBodyTransformationUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID"
+        ]
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        XCTAssertTrue(app.staticTexts["root.title"].waitForExistence(timeout: 5))
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = "Launch Screen"
+        attachment.name = "Layar awal demo lokal"
         attachment.lifetime = .keepAlways
         add(attachment)
     }
