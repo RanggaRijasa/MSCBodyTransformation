@@ -5,9 +5,12 @@ struct RoleAppShellView: View {
     let role: UserRole
     let scenario: AppDemoScenario
 
+    @Environment(\.appEnvironment) private var appEnvironment
+
     private let tabs: [AppTab]
     @State private var selectedTab: AppTab
     @State private var router = ShellTabRouter()
+    @State private var participantStore: ParticipantJourneyStore?
 
     init(role: UserRole, scenario: AppDemoScenario) {
         self.role = role
@@ -28,12 +31,14 @@ struct RoleAppShellView: View {
                     ShellTabContentView(
                         tab: tab,
                         scenario: scenario,
-                        router: router
+                        router: router,
+                        participantStore: participantStore
                     )
                     .navigationDestination(for: ShellRoute.self) { route in
                         ShellRouteDestinationView(
                             route: route,
-                            router: router
+                            router: router,
+                            participantStore: participantStore
                         )
                     }
                 }
@@ -69,6 +74,9 @@ struct RoleAppShellView: View {
             }
         }
         .onOpenURL(perform: handleDeepLink)
+        .task(id: "\(role.rawValue).\(scenario.rawValue)") {
+            await prepareParticipantStoreIfNeeded()
+        }
     }
 
     private func handleDeepLink(_ url: URL) {
@@ -86,6 +94,23 @@ struct RoleAppShellView: View {
             to: .participant(.localInvite(code)),
             in: todayTab
         )
+    }
+
+    private func prepareParticipantStoreIfNeeded() async {
+        guard role == .participant else {
+            participantStore = nil
+            return
+        }
+        guard participantStore == nil else {
+            return
+        }
+
+        let store = ParticipantJourneyStore(
+            environment: appEnvironment,
+            startsWithoutEnrollment: scenario == .participantOnboarding
+        )
+        participantStore = store
+        await store.load()
     }
 }
 

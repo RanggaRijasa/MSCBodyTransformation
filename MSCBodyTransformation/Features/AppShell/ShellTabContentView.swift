@@ -5,6 +5,7 @@ struct ShellTabContentView: View {
     let tab: AppTab
     let scenario: AppDemoScenario
     let router: ShellTabRouter
+    let participantStore: ParticipantJourneyStore?
 
     var body: some View {
         content
@@ -50,7 +51,8 @@ struct ShellTabContentView: View {
             }
         case .offline:
             loadedContent(showsOfflineBanner: true)
-        case .participantActive, .coachReviewQueue, .adminDraftEditor:
+        case .participantOnboarding, .participantActive,
+             .coachReviewQueue, .adminDraftEditor:
             loadedContent(showsOfflineBanner: false)
         }
     }
@@ -69,7 +71,15 @@ struct ShellTabContentView: View {
 
     @ViewBuilder
     private func loadedContent(showsOfflineBanner: Bool) -> some View {
-        if tab == .admin(.settings) {
+        if case .participant(let participantTab) = tab,
+           let participantStore {
+            ParticipantTabRootView(
+                tab: participantTab,
+                store: participantStore,
+                router: router,
+                showsOfflineBanner: showsOfflineBanner
+            )
+        } else if tab == .admin(.settings) {
             AdminSettingsPlaceholderView(
                 showsOfflineBanner: showsOfflineBanner
             )
@@ -110,16 +120,19 @@ struct ShellTabContentView: View {
     private var contextualAction: some View {
         switch tab {
         case .participant(.today):
-            PrimaryActionBar(
-                title: "action.view_program",
-                systemImage: "arrow.right"
-            ) {
-                router.navigate(
-                    to: .participant(
-                        .programDetail(ShellPlaceholderID.program)
-                    ),
-                    in: tab
-                )
+            if participantStore?.currentEnrollment != nil,
+               participantStore?.entryStage == .complete {
+                PrimaryActionBar(
+                    title: "action.view_program",
+                    systemImage: "arrow.right"
+                ) {
+                    router.navigate(
+                        to: .participant(
+                            .programDetail(ShellPlaceholderID.program)
+                        ),
+                        in: tab
+                    )
+                }
             }
         case .coach(.invite):
             PrimaryActionBar(

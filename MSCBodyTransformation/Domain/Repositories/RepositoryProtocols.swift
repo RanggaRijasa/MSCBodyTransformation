@@ -9,6 +9,8 @@ nonisolated protocol SessionRepository: Sendable {
 nonisolated protocol ProfileRepository: Sendable {
     func user(id: UUID) async throws -> AppUser
     func participantProfile(userID: UUID) async throws -> ParticipantProfile
+    func save(participantProfile: ParticipantProfile) async throws
+        -> ParticipantProfile
     func coachProfile(userID: UUID) async throws -> CoachProfile
 }
 
@@ -56,6 +58,7 @@ nonisolated protocol WeighInRepository: Sendable {
 
 nonisolated protocol LeaderboardRepository: Sendable {
     func leaderboard(programID: UUID) async throws -> [LeaderboardEntry]
+    func winners(programID: UUID) async throws -> [ProgramWinner]
     func applyScoreAdjustment(
         entryID: UUID,
         points: Int
@@ -95,4 +98,18 @@ nonisolated protocol AdminPeopleRepository: Sendable {
         userID: UUID,
         isApproved: Bool
     ) async throws -> AppUser
+}
+
+nonisolated protocol ParticipantDemoRepository: Sendable {
+    func resetParticipantDemo(participantID: UUID) async
+    func markPreviousDaysComplete(
+        participantID: UUID,
+        throughDayNumber: Int,
+        completedAt: Date
+    ) async throws
+    func simulateRejectedSubmission(
+        participantID: UUID,
+        dayNumber: Int,
+        completedAt: Date
+    ) async throws -> StepSubmission?
 }

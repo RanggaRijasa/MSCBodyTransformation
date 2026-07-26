@@ -4,6 +4,8 @@ import SwiftUI
 
 nonisolated enum ParticipantRoute: Hashable, Sendable {
     case programDetail(UUID)
+    case stepDetail(UUID)
+    case weighIn(WeighInType)
     case leaderboard
     case coach(UUID)
     case profile

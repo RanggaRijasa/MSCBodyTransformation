@@ -4,11 +4,52 @@ import SwiftUI
 struct ShellRouteDestinationView: View {
     let route: ShellRoute
     let router: ShellTabRouter
+    let participantStore: ParticipantJourneyStore?
 
     var body: some View {
         switch route {
         case .participant(.localInvite(let code)):
             LocalInvitePlaceholderView(code: code)
+        case .participant(.programDetail):
+            participantDestination {
+                ParticipantProgramView(
+                    store: $0,
+                    router: router
+                )
+            }
+        case .participant(.stepDetail(let stepID)):
+            participantDestination {
+                ParticipantStepDetailView(
+                    store: $0,
+                    stepID: stepID
+                )
+            }
+        case .participant(.weighIn(let type)):
+            participantDestination {
+                ParticipantWeighInView(
+                    store: $0,
+                    type: type,
+                    presentation: .pushed
+                )
+            }
+        case .participant(.leaderboard):
+            participantDestination {
+                ParticipantLeaderboardView(store: $0)
+            }
+        case .participant(.coach(let coachID)):
+            participantDestination {
+                ParticipantCoachDetailView(
+                    store: $0,
+                    coachID: coachID
+                )
+            }
+        case .participant(.profile):
+            participantDestination {
+                ParticipantProfileView(
+                    store: $0,
+                    router: router
+                )
+            }
         case .admin(.programEditor):
             LocalDraftEditorPlaceholderView()
         default:
@@ -21,6 +62,18 @@ struct ShellRouteDestinationView: View {
                 Text("shell.destination.message")
             }
             .navigationTitle(Text("shell.destination.navigation_title"))
+        }
+    }
+
+    @ViewBuilder
+    private func participantDestination<Content: View>(
+        @ViewBuilder content: (ParticipantJourneyStore) -> Content
+    ) -> some View {
+        if let participantStore {
+            content(participantStore)
+        } else {
+            LoadingStateView()
+                .padding(AppSpacing.medium)
         }
     }
 }

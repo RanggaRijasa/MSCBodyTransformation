@@ -14,6 +14,7 @@ nonisolated struct AppRepositories: Sendable {
     let wallet: any WalletRepository
     let managedContent: any ManagedContentRepository
     let adminPeople: any AdminPeopleRepository
+    let participantDemo: any ParticipantDemoRepository
 
     init(repository: InMemoryAppRepository) {
         session = repository
@@ -29,5 +30,6 @@ nonisolated struct AppRepositories: Sendable {
         wallet = repository
         managedContent = repository
         adminPeople = repository
+        participantDemo = repository
     }
 }

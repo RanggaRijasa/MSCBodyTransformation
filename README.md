@@ -1,10 +1,10 @@
 # MSC Body Transformation
 
 Aplikasi native iOS dan iPadOS untuk program transformasi tubuh. Phase 00
-sampai Phase 02 menyediakan fondasi, model domain, repository protocol, use
-case, fixture JSON, semantic design system, shared components, serta app shell
-role-aware yang dapat dibangun dan dijalankan tanpa internet maupun layanan
-eksternal.
+sampai Phase 03 menyediakan fondasi, model domain, repository protocol, use
+case, fixture JSON, semantic design system, app shell role-aware, serta
+participant journey lokal yang dapat dibangun dan dijalankan tanpa internet
+maupun layanan eksternal.
 
 ## Kebutuhan lokal
 
@@ -94,8 +94,18 @@ queue, serta admin draft editor. Setiap peran memiliki lima tab dan
 Glass secara selektif di iOS 26+, dengan fallback SwiftUI native untuk iOS 17
 sampai iOS 25.
 
-## Batasan Phase 02
+## Participant journey Phase 03
+
+Peserta dapat menjalankan onboarding demo, bergabung dengan kode `MSC7HARI`,
+mengisi berat badan awal dan akhir, melihat program harian, menambahkan bukti
+foto contoh lokal, menyelesaikan langkah, serta melihat progres dan papan
+peringkat berubah. Tab Program, Coach, dan Profil menyediakan timeline,
+direktori coach, riwayat enrollment, pengaturan, dan alat simulasi khusus
+Debug.
+
+## Batasan Phase 03
 
 Supabase, OAuth, StoreKit production, App Store Connect, networking, dan
-package pihak ketiga belum digunakan. Participant journey lengkap tetap
-menjadi scope Phase 03.
+package pihak ketiga belum digunakan. Foto tetap berupa referensi demo lokal
+dan video berupa placeholder sampai workflow media native Phase 06. Coach
+experience lengkap menjadi scope Phase 04.

@@ -115,6 +115,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
     case error
     case empty
     case offline
+    case participantOnboarding = "participant_onboarding"
     case participantActive = "participant_active"
     case coachReviewQueue = "coach_review_queue"
     case adminDraftEditor = "admin_draft_editor"

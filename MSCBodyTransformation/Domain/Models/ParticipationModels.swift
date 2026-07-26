@@ -16,7 +16,13 @@ nonisolated struct ProgramEnrollment: Codable, Equatable, Identifiable, Sendable
     let enrolledAt: Date
 }
 
-nonisolated enum WeighInType: String, Codable, CaseIterable, Sendable {
+nonisolated enum WeighInType:
+    String,
+    Codable,
+    CaseIterable,
+    Hashable,
+    Sendable
+{
     case initial
     case final
 }

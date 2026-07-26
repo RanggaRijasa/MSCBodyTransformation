@@ -12,7 +12,8 @@ struct Phase01FixtureTests {
         #expect(seed.participantProfiles.count == 12)
         #expect(seed.coachProfiles.filter(\.isPublic).count == 4)
         #expect(seed.programs.count == 4)
-        #expect(seed.enrollments.count == 12)
+        #expect(seed.enrollments.count == 13)
+        #expect(seed.enrollments.contains { $0.status == .completed })
         #expect(seed.leaderboardEntries.count == 12)
         #expect(seed.managedContent.contains { $0.kind == .winnerBanner })
 
