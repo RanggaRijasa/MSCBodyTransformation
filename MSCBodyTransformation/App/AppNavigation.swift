@@ -3,7 +3,8 @@ import Observation
 import SwiftUI
 
 nonisolated enum ParticipantRoute: Hashable, Sendable {
-    case programDetail(UUID)
+    case joinProgram
+    case programDetail(UUID, ParticipantTab)
     case stepDetail(UUID)
     case weighIn(WeighInType)
     case leaderboard

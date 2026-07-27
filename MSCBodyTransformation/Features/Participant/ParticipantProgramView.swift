@@ -17,7 +17,7 @@ struct ParticipantProgramView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(Color.appBackground)
-            .accessibilityIdentifier("participant.program")
+            .accessibilityIdentifier("participant.program.detail")
             .navigationTitle(
                 programID == nil
                     ? Text("tab.participant.program")
@@ -49,7 +49,7 @@ struct ParticipantProgramView: View {
             )
             LabeledContent("participant.program.duration") {
                 let dayCount = Text(
-                    program.days.count,
+                    program.durationInDays,
                     format: .number.locale(ParticipantFormatting.locale)
                 )
                 Text("\(dayCount) \(Text("participant.program.days_suffix"))")

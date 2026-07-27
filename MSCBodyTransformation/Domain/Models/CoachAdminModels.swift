@@ -41,6 +41,11 @@ nonisolated struct CoachInvite: Codable, Equatable, Identifiable, Sendable {
     var redeemedByParticipantID: UUID?
 }
 
+nonisolated struct ProgramInvitePreview: Equatable, Sendable {
+    let invite: CoachInvite
+    let program: Program
+}
+
 nonisolated enum ManagedContentKind: String, Codable, CaseIterable, Sendable {
     case winnerBanner = "winner_banner"
     case announcement

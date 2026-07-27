@@ -22,11 +22,13 @@ struct LocalQRScannerSheet: View {
                 case .checking:
                     ProgressView("Menyiapkan pemindai…")
                 case .visionKit:
-                    DataScannerQRCodeView(onScan: handleScan)
-                        .ignoresSafeArea()
+                    scannerSurface {
+                        DataScannerQRCodeView(onScan: handleScan)
+                    }
                 case .avFoundation:
-                    AVFoundationQRCodeView(onScan: handleScan)
-                        .ignoresSafeArea()
+                    scannerSurface {
+                        AVFoundationQRCodeView(onScan: handleScan)
+                    }
                 case .unavailable:
                     unsupportedView(
                         title: "Pemindai tidak tersedia",
@@ -78,6 +80,18 @@ struct LocalQRScannerSheet: View {
         }
         .task { await prepareScanner() }
         .accessibilityIdentifier("participant.qr.scanner")
+    }
+
+    private func scannerSurface<Scanner: View>(
+        @ViewBuilder scanner: () -> Scanner
+    ) -> some View {
+        ZStack {
+            scanner()
+                .ignoresSafeArea()
+
+            QRScannerOverlay()
+        }
+        .background(Color.black)
     }
 
     private func unsupportedView(
@@ -167,6 +181,118 @@ private extension LocalQRScannerSheet {
     }
 }
 
+private struct QRScannerOverlay: View {
+    @Environment(\.accessibilityReduceMotion)
+    private var reduceMotion
+
+    @State private var scanLinePosition: CGFloat = -1
+
+    var body: some View {
+        GeometryReader { proxy in
+            let frameSize = min(
+                max(proxy.size.width - (AppSpacing.xLarge * 2), 220),
+                320
+            )
+
+            VStack(spacing: AppSpacing.large) {
+                Spacer()
+
+                ZStack {
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                    .fill(Color.black.opacity(0.08))
+
+                    ScannerCornerShape()
+                        .stroke(
+                            Color.white,
+                            style: StrokeStyle(
+                                lineWidth: 5,
+                                lineCap: .round,
+                                lineJoin: .round
+                            )
+                        )
+
+                    if !reduceMotion {
+                        Rectangle()
+                            .fill(Color.brandPrimary)
+                            .frame(height: 2)
+                            .shadow(
+                                color: Color.brandPrimary.opacity(0.8),
+                                radius: AppSpacing.xSmall
+                            )
+                            .padding(.horizontal, AppSpacing.medium)
+                            .offset(
+                                y: scanLinePosition
+                                    * ((frameSize / 2) - AppSpacing.large)
+                            )
+                    }
+                }
+                .frame(width: frameSize, height: frameSize)
+                .accessibilityHidden(true)
+
+                Text("participant.invite.scan_message")
+                    .font(.headline)
+                    .foregroundStyle(Color.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.xLarge)
+                    .padding(.vertical, AppSpacing.small)
+                    .background(
+                        Color.black.opacity(0.62),
+                        in: Capsule()
+                    )
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black.opacity(0.18))
+        }
+        .allowsHitTesting(false)
+        .onAppear {
+            guard !reduceMotion else { return }
+            scanLinePosition = -1
+            withAnimation(
+                .easeInOut(duration: 1.8)
+                    .repeatForever(autoreverses: true)
+            ) {
+                scanLinePosition = 1
+            }
+        }
+    }
+}
+
+private struct ScannerCornerShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let cornerLength = min(rect.width, rect.height) * 0.22
+        var path = Path()
+
+        path.move(to: CGPoint(x: 0, y: cornerLength))
+        path.addLine(to: CGPoint(x: 0, y: 0))
+        path.addLine(to: CGPoint(x: cornerLength, y: 0))
+
+        path.move(to: CGPoint(x: rect.maxX - cornerLength, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX, y: cornerLength))
+
+        path.move(to: CGPoint(x: rect.maxX, y: rect.maxY - cornerLength))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(
+            to: CGPoint(x: rect.maxX - cornerLength, y: rect.maxY)
+        )
+
+        path.move(
+            to: CGPoint(x: cornerLength, y: rect.maxY)
+        )
+        path.addLine(to: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(
+            to: CGPoint(x: 0, y: rect.maxY - cornerLength)
+        )
+
+        return path
+    }
+}
+
 @available(iOS 16.0, *)
 @MainActor
 private struct DataScannerQRCodeView: UIViewControllerRepresentable {
@@ -198,7 +324,10 @@ private struct DataScannerQRCodeView: UIViewControllerRepresentable {
     func updateUIViewController(
         _ uiViewController: DataScannerViewController,
         context: Context
-    ) {}
+    ) {
+        guard !uiViewController.isScanning else { return }
+        try? uiViewController.startScanning()
+    }
 
     static func dismantleUIViewController(
         _ uiViewController: DataScannerViewController,
@@ -276,19 +405,30 @@ private struct AVFoundationQRCodeView: UIViewControllerRepresentable {
 
         func configure(_ controller: QRPreviewController) {
             let session = capture.session
+            session.beginConfiguration()
+            session.sessionPreset = .high
+
             guard let device = AVCaptureDevice.default(
-                for: .video
+                .builtInWideAngleCamera,
+                for: .video,
+                position: .back
             ),
             let input = try? AVCaptureDeviceInput(device: device),
             session.canAddInput(input) else {
+                session.commitConfiguration()
                 return
             }
             session.addInput(input)
             let output = AVCaptureMetadataOutput()
-            guard session.canAddOutput(output) else { return }
+            guard session.canAddOutput(output) else {
+                session.commitConfiguration()
+                return
+            }
             session.addOutput(output)
             output.setMetadataObjectsDelegate(self, queue: .main)
             output.metadataObjectTypes = [.qr]
+            session.commitConfiguration()
+
             controller.previewLayer.session = session
             capture.start()
         }

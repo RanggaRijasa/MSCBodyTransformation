@@ -284,6 +284,24 @@ final class ParticipantJourneyStore {
         entryStage = .confirmInvite
     }
 
+    func loadInvitePreview(
+        code: String
+    ) async throws -> ProgramInvitePreview {
+        guard let repositories = environment.repositories else {
+            throw DomainError.unknown
+        }
+        isPerformingAction = true
+        defer { isPerformingAction = false }
+
+        let preview = try await PreviewLocalInviteUseCase(
+            invites: repositories.invites,
+            programs: repositories.programs,
+            clock: environment.clock
+        )(code: code)
+        preservePendingInvite(code: preview.invite.code)
+        return preview
+    }
+
     func joinPendingInvite() async throws {
         guard let repositories = environment.repositories,
               let participantID = snapshot?.profile.id else {

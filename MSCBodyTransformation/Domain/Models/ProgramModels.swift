@@ -81,4 +81,14 @@ nonisolated struct Program: Codable, Equatable, Identifiable, Sendable {
     var timeZoneIdentifier: String
     var weightPointsPerKilogram: Decimal
     var days: [ProgramDay]
+
+    var durationInDays: Int {
+        if !days.isEmpty {
+            return days.count
+        }
+
+        let secondsPerDay: TimeInterval = 24 * 60 * 60
+        let interval = max(endDate.timeIntervalSince(startDate), 0)
+        return max(Int(ceil(interval / secondsPerDay)), 1)
+    }
 }

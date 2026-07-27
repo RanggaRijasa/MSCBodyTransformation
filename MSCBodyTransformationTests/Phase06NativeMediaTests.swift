@@ -149,6 +149,26 @@ struct Phase06NativeMediaTests {
         #expect(payload.opaqueToken == "MSC7HARI")
     }
 
+    @Test("Pratinjau undangan memetakan kode ke program")
+    func invitePreviewMapsCodeToProgram() async throws {
+        let repository = InMemoryAppRepository(
+            seed: try MockSeedData.load()
+        )
+        let preview = try await PreviewLocalInviteUseCase(
+            invites: repository,
+            programs: repository,
+            clock: FixedClock(
+                now: try Date.ISO8601FormatStyle().parse(
+                    "2026-07-27T00:00:00Z"
+                )
+            )
+        )(code: " msc7hari ")
+
+        #expect(preview.invite.code == "MSC7HARI")
+        #expect(preview.program.id == preview.invite.programID)
+        #expect(preview.program.title == "Transformasi 7 hari")
+    }
+
     @Test("Parser hanya menerima scheme dan host lokal yang disetujui")
     func approvedSchemeAndHost() {
         #expect(throws: DomainError.self) {

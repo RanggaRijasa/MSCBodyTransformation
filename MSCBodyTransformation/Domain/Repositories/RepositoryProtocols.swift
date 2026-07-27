@@ -85,6 +85,7 @@ nonisolated protocol CoachParticipantRepository: Sendable {
 
 nonisolated protocol InviteRepository: Sendable {
     func invites(coachID: UUID) async throws -> [CoachInvite]
+    func activeInvite(code: String, now: Date) async throws -> CoachInvite
     func createInvite(_ invite: CoachInvite) async throws -> CoachInvite
     func revokeInvite(
         id: UUID,

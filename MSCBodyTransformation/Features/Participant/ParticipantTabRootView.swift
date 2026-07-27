@@ -51,7 +51,7 @@ struct ParticipantTabRootView: View {
         case .today:
             ParticipantHomeView(store: store, router: router)
         case .program:
-            ParticipantProgramView(store: store, router: router)
+            ParticipantProgramCatalogView(store: store, router: router)
         case .leaderboard:
             ParticipantLeaderboardView(store: store)
         case .coaches:

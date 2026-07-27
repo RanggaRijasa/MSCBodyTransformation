@@ -147,6 +147,31 @@ nonisolated struct RedeemLocalInviteUseCase: Sendable {
     }
 }
 
+nonisolated struct PreviewLocalInviteUseCase: Sendable {
+    let invites: any InviteRepository
+    let programs: any ProgramRepository
+    let clock: any AppClock
+
+    func callAsFunction(code: String) async throws -> ProgramInvitePreview {
+        let normalizedCode = code
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
+        guard !normalizedCode.isEmpty else {
+            throw DomainError.validation(
+                field: "inviteCode",
+                reason: "Kode undangan wajib diisi."
+            )
+        }
+
+        let invite = try await invites.activeInvite(
+            code: normalizedCode,
+            now: clock.now()
+        )
+        let program = try await programs.program(id: invite.programID)
+        return ProgramInvitePreview(invite: invite, program: program)
+    }
+}
+
 nonisolated struct ApplyLocalScoreAdjustmentUseCase: Sendable {
     let repository: any LeaderboardRepository
 

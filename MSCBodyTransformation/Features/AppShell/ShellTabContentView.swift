@@ -181,7 +181,10 @@ private struct ParticipantShellSections: View {
                 Button {
                     router.navigate(
                         to: .participant(
-                            .programDetail(ShellPlaceholderID.program)
+                            .programDetail(
+                                ShellPlaceholderID.program,
+                                .program
+                            )
                         ),
                         in: .participant(.program)
                     )

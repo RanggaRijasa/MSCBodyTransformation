@@ -71,7 +71,7 @@ struct Phase02NavigationTests {
             in: today
         )
         router.navigate(
-            to: .participant(.programDetail(programID)),
+            to: .participant(.programDetail(programID, .program)),
             in: program
         )
 
@@ -82,7 +82,7 @@ struct Phase02NavigationTests {
         )
         #expect(
             router.path(for: program) == [
-                .participant(.programDetail(programID))
+                .participant(.programDetail(programID, .program))
             ]
         )
     }

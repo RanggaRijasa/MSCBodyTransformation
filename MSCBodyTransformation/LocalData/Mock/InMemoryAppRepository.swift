@@ -389,6 +389,20 @@ actor InMemoryAppRepository:
             .sorted { $0.createdAt > $1.createdAt }
     }
 
+    func activeInvite(code: String, now: Date) async throws -> CoachInvite {
+        guard let invite = invitesStorage.first(where: {
+            $0.code.caseInsensitiveCompare(code) == .orderedSame
+        }) else {
+            throw DomainError.notFound(resource: "invite")
+        }
+        guard invite.status == .active, invite.expiresAt >= now else {
+            throw DomainError.conflict(
+                reason: "Undangan sudah tidak dapat digunakan."
+            )
+        }
+        return invite
+    }
+
     func createInvite(_ invite: CoachInvite) async throws -> CoachInvite {
         guard !invitesStorage.contains(where: { $0.code == invite.code }) else {
             throw DomainError.conflict(

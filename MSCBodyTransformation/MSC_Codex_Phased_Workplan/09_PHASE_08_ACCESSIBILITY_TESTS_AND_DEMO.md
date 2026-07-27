@@ -295,3 +295,103 @@ Admin:
   Leaderboard tetap tegas tanpa gradient coral/pastel.
 - Remaining blockers: tidak ada untuk konsistensi warna ini. Item berikutnya
   tetap profiling scrolling Participant Home.
+
+#### 2026-07-27 — katalog Program Participant
+
+- Files changed: katalog dan poster Program Participant; root dan destination
+  navigation tab; detail Program; model durasi Program; katalog lokalisasi;
+  navigation test; serta UI test alur katalog ke detail.
+- Assumptions: filter `Aktif` memuat program aktif dan terjadwal, filter
+  `Riwayat` memuat program selesai dan diarsipkan, sedangkan draft tidak
+  ditampilkan kepada Participant. Poster lokal menggunakan native SwiftUI
+  dengan rasio 16:9 sampai aset poster final tersedia.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5 dengan
+  skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` dengan
+  `-only-testing:MSCBodyTransformationTests/Phase02NavigationTests` dan
+  `-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build lulus tanpa warning atau error; 5 navigation test dan satu UI
+  test lulus. Runtime snapshot mengonfirmasi filter Aktif/Riwayat, durasi tujuh
+  hari, dan pemilihan poster membuka detail di navigation stack tab Program.
+- Remaining blockers: tidak ada untuk katalog Program. Item berikutnya tetap
+  profiling scrolling Participant Home.
+
+#### 2026-07-27 — penyederhanaan header katalog Program
+
+- Files changed: `ParticipantProgramCatalogView.swift` dan
+  `Localizable.xcstrings`.
+- Assumptions: navigation title `Program` dan filter Aktif/Riwayat sudah cukup
+  menjelaskan konteks sehingga section title dan subtitle tidak diperlukan.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5 dengan
+  skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` dengan
+  `-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build lulus tanpa warning atau error dan satu UI test lulus. Runtime
+  screenshot mengonfirmasi poster langsung tampil setelah filter.
+- Remaining blockers: tidak ada. Item berikutnya tetap profiling scrolling
+  Participant Home.
+
+#### 2026-07-27 — ukuran filter katalog Program
+
+- Files changed: `ParticipantProgramCatalogView.swift`.
+- Assumptions: segmented control tetap memakai `Picker` native SwiftUI dengan
+  label headline dan tinggi sentuh minimum 44 poin; jarak ke poster memakai
+  token spacing 16 poin.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5 dengan
+  skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` dengan
+  `-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build lulus tanpa warning atau error dan satu UI test lulus. Runtime
+  screenshot mengonfirmasi control lebih tinggi dan poster tidak menempel.
+- Remaining blockers: tidak ada. Item berikutnya tetap profiling scrolling
+  Participant Home.
+
+#### 2026-07-27 — katalog berdasarkan enrollment dan alur Gabung
+
+- Files changed: katalog dan halaman Gabung Program Participant; route dan
+  destination navigation; store Participant; model, protocol, use case, dan
+  mock repository pratinjau undangan; katalog lokalisasi; Phase 06 unit test;
+  serta UI test katalog Program.
+- Assumptions: tab Program hanya menampilkan program yang memiliki enrollment
+  milik Participant. Pemindaian QR, input kode, pratinjau undangan, dan
+  konfirmasi lokal memakai fondasi Phase 06; validasi authoritative oleh server
+  dan Universal Link tetap ditunda ke Phase 11 dan fase backend terkait.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5 dengan
+  skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` dengan
+  `-only-testing:MSCBodyTransformationTests/Phase06NativeMediaTests` dan
+  `-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build lulus tanpa warning atau error; 11 unit test dan satu UI test
+  lulus. Runtime snapshot mengonfirmasi tab Aktif hanya menampilkan program
+  terdaftar, tab Riwayat menampilkan enrollment selesai, serta tombol Gabung
+  membuka alur QR/kode dan pratinjau program native SwiftUI.
+- Remaining blockers: pemindaian kamera fisik belum diverifikasi pada device;
+  konfigurasi Universal Link dan redemption server ditunda. Item Phase 08
+  berikutnya tetap profiling scrolling Participant Home.
+
+#### 2026-07-27 — header tetap dan overlay pemindai QR
+
+- Files changed: `ParticipantProgramCatalogView.swift`,
+  `NativeQRScannerView.swift`, konfigurasi Info.plist generated pada
+  `project.pbxproj`, dan UI test katalog Program.
+- Assumptions: judul Program, tombol Gabung, dan segmented control tetap di
+  luar area scroll; hanya daftar poster yang dapat digulir. Kamera memakai
+  VisionKit dengan fallback AVFoundation dan overlay frame/scan line native
+  SwiftUI yang menghormati Reduce Motion.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5 dengan
+  skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase06NativeMediaTests` serta
+  `MSCBodyTransformationUITests/testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build lulus tanpa warning atau error; 11 unit test dan satu UI test
+  lulus. Runtime screenshot mengonfirmasi tombol Gabung sejajar dengan judul
+  Program dan hanya daftar poster yang menjadi scroll view.
+- Remaining blockers: pemindaian fisik tetap perlu diverifikasi pada iPhone.
+  Generated Info.plist Debug sudah diverifikasi memuat deskripsi penggunaan
+  kamera; konfigurasi yang sama juga dipasang pada Release. Item Phase 08
+  berikutnya tetap profiling scrolling Participant Home.

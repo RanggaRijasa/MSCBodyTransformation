@@ -11,17 +11,20 @@ struct ShellRouteDestinationView: View {
     var body: some View {
         switch route {
         case .participant(.localInvite(let code)):
-            LocalInvitePlaceholderView(
-                code: code,
-                store: participantStore
-            )
-        case .participant(.programDetail(let programID)):
+            participantDestination {
+                ParticipantJoinProgramView(store: $0, initialCode: code)
+            }
+        case .participant(.joinProgram):
+            participantDestination {
+                ParticipantJoinProgramView(store: $0)
+            }
+        case .participant(.programDetail(let programID, let sourceTab)):
             participantDestination {
                 ParticipantProgramView(
                     store: $0,
                     router: router,
                     programID: programID,
-                    navigationTab: .today
+                    navigationTab: sourceTab
                 )
             }
         case .participant(.stepDetail(let stepID)):
@@ -154,48 +157,6 @@ struct ShellRouteDestinationView: View {
         } else {
             LoadingStateView()
                 .padding(AppSpacing.medium)
-        }
-    }
-}
-
-private struct LocalInvitePlaceholderView: View {
-    let code: String
-    let store: ParticipantJourneyStore?
-
-    var body: some View {
-        VStack(spacing: AppSpacing.large) {
-            Image(systemName: "ticket.fill")
-                .font(.largeTitle)
-                .foregroundStyle(Color.brandPrimary)
-                .accessibilityHidden(true)
-
-            SectionHeader(
-                title: "shell.invite.title",
-                subtitle: "shell.invite.message"
-            )
-
-            Text(code)
-                .font(AppTypography.metric)
-                .foregroundStyle(Color.appPrimaryText)
-                .padding(AppSpacing.medium)
-                .adaptiveGlassSurface()
-                .accessibilityLabel(Text("shell.invite.code"))
-
-            Text(
-                "Kode disimpan secara lokal. Kembali ke alur peserta "
-                    + "untuk melihat pratinjau program sebelum bergabung."
-            )
-            .font(AppTypography.secondary)
-            .foregroundStyle(Color.appSecondaryText)
-            .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: 520)
-        .padding(AppSpacing.large)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.appBackground)
-        .navigationTitle(Text("shell.invite.navigation_title"))
-        .task(id: code) {
-            store?.preservePendingInvite(code: code)
         }
     }
 }

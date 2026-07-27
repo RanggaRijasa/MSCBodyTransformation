@@ -42,6 +42,84 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testParticipantSelectsProgramBeforeOpeningDetail() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "participant",
+            "-DemoScenario", "participant_active",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let programTab = tabButton(label: "Program", in: app)
+        XCTAssertTrue(programTab.waitForExistence(timeout: 8))
+        programTab.tap()
+
+        XCTAssertTrue(
+            element(identifier: "participant.program.catalog", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        XCTAssertFalse(
+            app.buttons[
+                "participant.program.select."
+                    + "10000000-0000-0000-0000-000000000003"
+            ].exists
+        )
+
+        let historyFilter = app.segmentedControls.buttons["Riwayat"]
+        XCTAssertTrue(historyFilter.waitForExistence(timeout: 5))
+        historyFilter.tap()
+        XCTAssertTrue(
+            app.buttons[
+                "participant.program.select."
+                    + "10000000-0000-0000-0000-000000000004"
+            ].waitForExistence(timeout: 5)
+        )
+
+        let availableFilter = app.segmentedControls.buttons["Aktif"]
+        XCTAssertTrue(availableFilter.waitForExistence(timeout: 5))
+        availableFilter.tap()
+
+        let joinProgram = app.buttons["participant.program.join"]
+        XCTAssertTrue(joinProgram.waitForExistence(timeout: 5))
+        joinProgram.tap()
+        XCTAssertTrue(
+            app.navigationBars["Gabung program"]
+                .waitForExistence(timeout: 5)
+        )
+
+        app.buttons["participant.join.scan"].tap()
+        XCTAssertTrue(
+            element(identifier: "participant.qr.scanner", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        app.buttons["participant.qr.use-demo"].tap()
+        XCTAssertTrue(
+            element(identifier: "participant.join.preview.result", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        app.navigationBars["Gabung program"].buttons["BackButton"].tap()
+
+        let activeProgram = app.buttons[
+            "participant.program.select."
+                + "10000000-0000-0000-0000-000000000001"
+        ]
+        XCTAssertTrue(activeProgram.waitForExistence(timeout: 5))
+        activeProgram.tap()
+
+        XCTAssertTrue(
+            element(identifier: "participant.program.detail", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            app.navigationBars["Transformasi 7 hari"].exists
+        )
+    }
+
+    @MainActor
     func testDebugLaunchArgumentsOpenAdminShell() throws {
         let app = XCUIApplication()
         app.launchArguments = [
