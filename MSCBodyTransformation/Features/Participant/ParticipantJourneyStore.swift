@@ -302,6 +302,12 @@ final class ParticipantJourneyStore {
             participantID: participantID
         )
         try await reloadSnapshot()
+        if shouldStartWithoutEnrollment,
+           let firstDayNumber = currentProgram?.days
+               .sorted(by: { $0.dayNumber < $1.dayNumber })
+               .first?.dayNumber {
+            selectDay(firstDayNumber)
+        }
         entryStage = initialWeighIn == nil ? .initialWeighIn : .complete
     }
 

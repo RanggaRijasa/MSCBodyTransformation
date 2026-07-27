@@ -28,9 +28,6 @@ struct ShellTabContentView: View {
                     .accessibilityIdentifier("shell.scenario-info")
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                contextualAction
-            }
     }
 
     @ViewBuilder
@@ -149,28 +146,6 @@ struct ShellTabContentView: View {
         }
     }
 
-    @ViewBuilder
-    private var contextualAction: some View {
-        switch tab {
-        case .participant(.today):
-            if participantStore?.currentEnrollment != nil,
-               participantStore?.entryStage == .complete {
-                PrimaryActionBar(
-                    title: "action.view_program",
-                    systemImage: "arrow.right"
-                ) {
-                    router.navigate(
-                        to: .participant(
-                            .programDetail(ShellPlaceholderID.program)
-                        ),
-                        in: tab
-                    )
-                }
-            }
-        default:
-            EmptyView()
-        }
-    }
 }
 
 private struct ParticipantShellSections: View {

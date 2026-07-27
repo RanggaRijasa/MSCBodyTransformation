@@ -4,10 +4,11 @@ import SwiftUI
 struct ParticipantProgramView: View {
     let store: ParticipantJourneyStore
     let router: ShellTabRouter
+    var programID: UUID?
+    var navigationTab: ParticipantTab = .program
 
     var body: some View {
-        if store.currentEnrollment != nil,
-           let program = store.currentProgram {
+        if let program = selectedProgram {
             List {
                 overviewSection(program)
                 scoringSection(program)
@@ -17,6 +18,12 @@ struct ParticipantProgramView: View {
             .scrollContentBackground(.hidden)
             .background(Color.appBackground)
             .accessibilityIdentifier("participant.program")
+            .navigationTitle(
+                programID == nil
+                    ? Text("tab.participant.program")
+                    : Text(program.title)
+            )
+            .navigationBarTitleDisplayMode(programID == nil ? .large : .inline)
         } else {
             EmptyStateView(
                 title: "participant.program.empty.title",
@@ -31,9 +38,9 @@ struct ParticipantProgramView: View {
             ProgramCard(
                 title: LocalizedStringKey(program.title),
                 summary: program.summary,
-                statusTitle: "status.active",
-                statusKind: .success,
-                progress: Double(store.overallProgress) / 100
+                statusTitle: programStatusTitle(program.status),
+                statusKind: programStatusKind(program.status),
+                progress: programProgress(program)
             )
 
             LabeledContent(
@@ -48,12 +55,12 @@ struct ParticipantProgramView: View {
                 Text("\(dayCount) \(Text("participant.program.days_suffix"))")
             }
 
-            if let coachID = store.currentEnrollment?.coachID,
+            if let coachID = selectedEnrollment?.coachID,
                let coach = store.coach(id: coachID) {
                 Button {
                     router.navigate(
                         to: .participant(.coach(coach.id)),
-                        in: .participant(.program)
+                        in: .participant(navigationTab)
                     )
                 } label: {
                     HStack(spacing: AppSpacing.medium) {
@@ -106,10 +113,21 @@ struct ParticipantProgramView: View {
 
     private func timelineSection(_ program: Program) -> some View {
         Section {
-            ForEach(program.days.sorted(by: {
-                $0.dayNumber < $1.dayNumber
-            })) { day in
-                timelineRow(day)
+            if program.days.isEmpty {
+                ContentUnavailableView {
+                    Label(
+                        "participant.program.timeline.empty.title",
+                        systemImage: "calendar"
+                    )
+                } description: {
+                    Text("participant.program.timeline.empty.message")
+                }
+            } else {
+                ForEach(program.days.sorted(by: {
+                    $0.dayNumber < $1.dayNumber
+                })) { day in
+                    timelineRow(day, program: program)
+                }
             }
         } header: {
             Text("participant.program.timeline")
@@ -119,8 +137,11 @@ struct ParticipantProgramView: View {
     }
 
     @ViewBuilder
-    private func timelineRow(_ day: ProgramDay) -> some View {
-        let access = store.access(for: day)
+    private func timelineRow(
+        _ day: ProgramDay,
+        program: Program
+    ) -> some View {
+        let access = access(for: day, in: program)
         let isHidden = access == .hidden
 
         VStack(alignment: .leading, spacing: AppSpacing.small) {
@@ -139,7 +160,7 @@ struct ParticipantProgramView: View {
                         )
                     )
                     Text("\(Text("participant.day.label")) \(dayNumber)")
-                    .font(AppTypography.cardTitle)
+                        .font(AppTypography.cardTitle)
 
                     Text(
                         isHidden
@@ -155,8 +176,7 @@ struct ParticipantProgramView: View {
                         Text(
                             ParticipantFormatting.date(
                                 day.scheduledDate,
-                                timeZoneIdentifier: store.currentProgram?
-                                    .timeZoneIdentifier
+                                timeZoneIdentifier: program.timeZoneIdentifier
                             )
                         )
                         .font(AppTypography.label)
@@ -173,25 +193,111 @@ struct ParticipantProgramView: View {
             if !isHidden && access != .locked {
                 ForEach(day.steps.sorted(by: { $0.order < $1.order })) {
                     step in
-                    Button {
-                        router.navigate(
-                            to: .participant(.stepDetail(step.id)),
-                            in: .participant(.program)
-                        )
-                    } label: {
-                        Label(step.title, systemImage: "chevron.right")
+                    if program.id == store.currentProgram?.id {
+                        Button {
+                            router.navigate(
+                                to: .participant(.stepDetail(step.id)),
+                                in: .participant(navigationTab)
+                            )
+                        } label: {
+                            Label(step.title, systemImage: "chevron.right")
+                                .labelStyle(.titleAndIcon)
+                                .foregroundStyle(Color.appPrimaryText)
+                                .frame(
+                                    maxWidth: .infinity,
+                                    alignment: .leading
+                                )
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.leading, 60)
+                    } else {
+                        Label(step.title, systemImage: "checklist")
                             .labelStyle(.titleAndIcon)
                             .foregroundStyle(Color.appPrimaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
+                            .padding(.leading, 60)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.leading, 60)
                 }
             }
         }
         .padding(.vertical, AppSpacing.xSmall)
         .accessibilityElement(children: .contain)
+    }
+
+    private var selectedProgram: Program? {
+        if let programID,
+           let program = store.snapshot?.programs.first(where: {
+               $0.id == programID
+           }) {
+            return program
+        }
+        return store.currentProgram
+    }
+
+    private var selectedEnrollment: ProgramEnrollment? {
+        guard let selectedProgram else {
+            return nil
+        }
+        return store.snapshot?.enrollments.first {
+            $0.programID == selectedProgram.id
+        }
+    }
+
+    private func access(
+        for day: ProgramDay,
+        in program: Program
+    ) -> ProgramDayAccess {
+        if program.id == store.currentProgram?.id {
+            return store.access(for: day)
+        }
+        return ProgramDayAccessCalculator().access(
+            for: day,
+            now: store.effectiveDate,
+            timeZoneIdentifier: program.timeZoneIdentifier
+        )
+    }
+
+    private func programProgress(_ program: Program) -> Double? {
+        guard program.id == store.currentProgram?.id,
+              store.currentEnrollment != nil else {
+            return nil
+        }
+        return Double(store.overallProgress) / 100
+    }
+
+    private func programStatusTitle(
+        _ status: ProgramStatus
+    ) -> LocalizedStringKey {
+        switch status {
+        case .draft:
+            "status.draft"
+        case .scheduled:
+            "participant.home.program.status.scheduled"
+        case .active:
+            "status.active"
+        case .completed:
+            "participant.home.program.status.completed"
+        case .archived:
+            "status.archived"
+        }
+    }
+
+    private func programStatusKind(
+        _ status: ProgramStatus
+    ) -> AppStatusKind {
+        switch status {
+        case .draft:
+            .pending
+        case .scheduled:
+            .information
+        case .active:
+            .success
+        case .completed:
+            .neutral
+        case .archived:
+            .locked
+        }
     }
 
     private func dayStatusKey(_ access: ProgramDayAccess) -> String {

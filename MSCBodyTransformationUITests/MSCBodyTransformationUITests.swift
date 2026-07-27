@@ -24,7 +24,15 @@ final class MSCBodyTransformationUITests: XCTestCase {
         enterDemoButton.tap()
 
         XCTAssertTrue(
-            tabButton(label: "Hari ini", in: app)
+            tabButton(label: "Home", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            element(identifier: "participant.home", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            element(identifier: "participant.home.profile", in: app)
                 .waitForExistence(timeout: 5)
         )
         XCTAssertTrue(tabButton(label: "Program", in: app).exists)
@@ -117,13 +125,12 @@ final class MSCBodyTransformationUITests: XCTestCase {
         confirm.tap()
 
         XCTAssertTrue(
-            app.staticTexts["Berat badan awal"]
+            element(identifier: "participant.home", in: app)
                 .waitForExistence(timeout: 8)
         )
 
         let firstStep = app.buttons["participant.step.open.1"]
-        if !firstStep.waitForExistence(timeout: 2) {
-            app.swipeUp()
+        for _ in 0..<3 where !firstStep.waitForExistence(timeout: 1) {
             app.swipeUp()
         }
         XCTAssertTrue(firstStep.waitForExistence(timeout: 5))
@@ -132,6 +139,9 @@ final class MSCBodyTransformationUITests: XCTestCase {
         let sampleEvidence = app.buttons[
             "participant.evidence.use-sample"
         ]
+        for _ in 0..<3 where !sampleEvidence.waitForExistence(timeout: 1) {
+            app.swipeUp()
+        }
         XCTAssertTrue(sampleEvidence.waitForExistence(timeout: 5))
 
         let camera = app.buttons["participant.evidence.camera"]
@@ -160,7 +170,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(
-            app.staticTexts["5%"].waitForExistence(timeout: 5)
+            app.staticTexts["1/3"].waitForExistence(timeout: 5)
         )
 
         let secondStep = app.buttons["participant.step.open.2"]

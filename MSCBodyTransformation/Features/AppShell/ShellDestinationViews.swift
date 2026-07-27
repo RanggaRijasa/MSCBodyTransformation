@@ -15,11 +15,13 @@ struct ShellRouteDestinationView: View {
                 code: code,
                 store: participantStore
             )
-        case .participant(.programDetail):
+        case .participant(.programDetail(let programID)):
             participantDestination {
                 ParticipantProgramView(
                     store: $0,
-                    router: router
+                    router: router,
+                    programID: programID,
+                    navigationTab: .today
                 )
             }
         case .participant(.stepDetail(let stepID)):

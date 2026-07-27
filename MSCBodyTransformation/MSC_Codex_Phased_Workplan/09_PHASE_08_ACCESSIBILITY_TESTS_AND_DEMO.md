@@ -101,7 +101,7 @@ Setiap scenario harus deterministic.
 - [x] Use lazy containers.
 - [x] Thumbnail instead of original image in lists.
 - [x] Avoid expensive work on main actor.
-- [ ] Profile participant Today scrolling.
+- [ ] Profile participant Home scrolling.
 - [ ] Profile coach participant list.
 - [ ] Profile admin day/step editor.
 - [ ] Profile Liquid Glass candidates on iOS 26 runtime.
@@ -233,4 +233,65 @@ Admin:
   `-only-testing:MSCBodyTransformationTests/Phase08AccessibilityReliabilityTests`.
 - Result: build lulus tanpa warning atau error; 7 test Phase 08 lulus.
 - Remaining blockers: tidak ada untuk migrasi ini. Item berikutnya yang belum
-  dicentang adalah profiling scrolling Participant Today.
+  dicentang adalah profiling scrolling Participant Home (pengganti Today).
+
+#### 2026-07-27 — redesain Participant Home
+
+- Files changed: `ParticipantTodayView.swift` diganti dengan
+  `ParticipantHomeView.swift`; tab dan destination shell Participant; detail
+  program; state onboarding demo; katalog lokalisasi; serta UI test Participant.
+- Assumptions: poster program dibuat native SwiftUI dalam rasio 16:9 karena
+  aset poster final belum tersedia; Fokus hari ini menampilkan satu kartu per
+  enrollment aktif dan siap menjadi carousel saat fixture memiliki lebih dari
+  satu program aktif.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 Pro iOS 26.5
+  dengan skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase03ParticipantTests`, `Phase08AccessibilityReliabilityTests`, dan
+  `MSCBodyTransformationUITests/testParticipantCompletesLocalJourneySlice`.
+- Result: build lulus tanpa warning atau error; 15 unit test terfokus dan satu
+  UI test alur Participant lengkap lulus. Runtime snapshot mengonfirmasi profil
+  berlabel `MSC Peserta`, carousel Program, Fokus hari ini, dan Leaderboard.
+- Remaining blockers: profiling scrolling Home belum dicentang. Template
+  SwiftUI Instruments tidak didukung simulator; Time Profiler dapat attach dan
+  merekam scroll, tetapi macet saat finalisasi sehingga trace tidak valid.
+  Integrasi ETTrace juga memerlukan linking framework sementara ke app target,
+  sedangkan perubahan `project.pbxproj` dilarang. Item berikutnya tetap
+  profiling scrolling Participant Home.
+
+#### 2026-07-27 — penyempurnaan carousel dan Leaderboard Home
+
+- Files changed: `ParticipantHomeView.swift`.
+- Assumptions: satu item carousel memakai seluruh lebar konten; dua item atau
+  lebih tetap memperlihatkan sebagian kartu berikutnya sebagai petunjuk swipe.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 Pro iOS 26.5
+  dengan skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` dengan
+  `-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testParticipantShellOpensAllTabs`.
+- Result: build lulus tanpa warning atau error dan satu UI test lulus. Runtime
+  screenshot mengonfirmasi kartu Fokus tunggal memenuhi lebar konten serta
+  avatar, nomor peringkat, dan nama Leaderboard sejajar; crown juara 1 menjadi
+  overlay dan tidak memengaruhi layout.
+- Remaining blockers: tidak ada untuk penyempurnaan layout ini. Item berikutnya
+  tetap profiling scrolling Participant Home.
+
+#### 2026-07-27 — konsistensi warna brand dark mode
+
+- Files changed: dark variants `BrandPrimary`, `BrandPrimaryPressed`, dan
+  `BrandAccent`; empat color set poster program; `ParticipantHomeView.swift`;
+  serta `UI_REFERENCE_SHEET.md`.
+- Assumptions: warna identitas merah dan gold harus tetap sama kuat pada light
+  dan dark mode; hanya background, surface, border, text, dan status semantic
+  yang tetap menyesuaikan appearance.
+- Build command: XcodeBuildMCP `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5 dalam
+  dark mode dengan skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` dengan
+  `-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testDarkModeFinalLeaderboardLaunch`.
+- Result: build lulus tanpa warning atau error dan satu UI test dark mode lulus.
+  Runtime screenshot mengonfirmasi avatar, CTA, tab aktif, poster, dan gold
+  Leaderboard tetap tegas tanpa gradient coral/pastel.
+- Remaining blockers: tidak ada untuk konsistensi warna ini. Item berikutnya
+  tetap profiling scrolling Participant Home.

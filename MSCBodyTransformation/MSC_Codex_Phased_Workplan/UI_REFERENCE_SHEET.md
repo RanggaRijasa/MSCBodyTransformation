@@ -166,10 +166,10 @@ Nilai berikut menjadi titik awal. Implementasikan sebagai color assets dengan An
 
 | Token | Nilai referensi | Penggunaan |
 |---|---:|---|
-| BrandPrimary | `#FF5A52` | CTA utama, tab aktif, highlight |
-| BrandPrimaryPressed | `#FF7A73` | Pressed state |
+| BrandPrimary | `#D92D20` | CTA utama, tab aktif, highlight |
+| BrandPrimaryPressed | `#B42318` | Pressed state |
 | BrandSecondary | `#F5F5F5` | Teks kuat pada dark background |
-| BrandAccent | `#FFD95A` | Rank, pencapaian, aksen |
+| BrandAccent | `#F5C542` | Rank, pencapaian, aksen |
 | AppBackground | `#0D0D0F` | Background utama |
 | AppSecondaryBackground | `#151517` | List dan form |
 | AppSurface | `#1C1C1E` | Card dan grouped surface |
@@ -183,6 +183,20 @@ Nilai berikut menjadi titik awal. Implementasikan sebagai color assets dengan An
 | AppInfo | `#78A9FF` | Informasi netral |
 
 Nilai dapat disesuaikan setelah contrast audit, tetapi peran semantic dan hubungan visualnya tidak boleh berubah tanpa keputusan desain yang terdokumentasi.
+
+Warna identitas `BrandPrimary`, `BrandPrimaryPressed`, dan `BrandAccent`
+mempertahankan nilai yang sama pada light dan dark mode agar karakter brand
+tidak berubah menjadi coral atau pastel. Background, surface, border, text, dan
+warna status tetap adaptif terhadap appearance.
+
+Poster program menggunakan token khusus yang stabil pada light dan dark mode:
+
+| Token | Nilai | Penggunaan |
+|---|---:|---|
+| ProgramPosterBase | `#111111` | Pangkal gradient poster |
+| ProgramPosterPrimary | `#D92D20` | Poster program aktif |
+| ProgramPosterInfo | `#2457A6` | Poster program terjadwal |
+| ProgramPosterAccent | `#F5C542` | Poster program selesai |
 
 ## 5. Aturan Kontras
 

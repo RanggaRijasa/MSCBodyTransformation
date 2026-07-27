@@ -62,7 +62,7 @@ nonisolated enum AppTab: Hashable, Identifiable, Sendable {
     var systemImage: String {
         switch self {
         case .participant(.today):
-            "sun.max"
+            "house.fill"
         case .participant(.program):
             "list.bullet.rectangle"
         case .participant(.leaderboard):

@@ -49,7 +49,7 @@ struct ParticipantTabRootView: View {
     private var tabContent: some View {
         switch tab {
         case .today:
-            ParticipantTodayView(store: store, router: router)
+            ParticipantHomeView(store: store, router: router)
         case .program:
             ParticipantProgramView(store: store, router: router)
         case .leaderboard:
