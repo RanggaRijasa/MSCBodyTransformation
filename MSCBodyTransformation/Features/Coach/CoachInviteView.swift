@@ -159,14 +159,11 @@ struct CoachInviteView: View {
                 in: 1...30
             ) {
                 LabeledContent("coach.invite.expiry") {
-                    (
-                        Text(
-                            state.validForDays,
-                            format: .number.locale(CoachFormatting.locale)
-                        )
-                        + Text(" ")
-                        + Text("coach.invite.days")
+                    let validityDays = Text(
+                        state.validForDays,
+                        format: .number.locale(CoachFormatting.locale)
                     )
+                    Text("\(validityDays) \(Text("coach.invite.days"))")
                     .monospacedDigit()
                 }
             }

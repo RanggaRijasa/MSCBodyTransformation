@@ -96,6 +96,17 @@ private struct CoachReviewQueueRow: View {
     let item: CoachReviewItem
 
     var body: some View {
+        let dayNumber = Text(
+            item.day.dayNumber,
+            format: .number.locale(CoachFormatting.locale)
+        )
+        let submittedAt = Text(
+            CoachFormatting.dateTime(
+                item.submission.submittedAt,
+                timeZoneIdentifier: item.program.timeZoneIdentifier
+            )
+        )
+
         HStack(alignment: .top, spacing: AppSpacing.medium) {
             UserAvatar(displayName: item.participant.displayName)
             VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
@@ -103,21 +114,8 @@ private struct CoachReviewQueueRow: View {
                     .font(AppTypography.cardTitle)
                 Text(item.step.title)
                     .font(AppTypography.body)
-                (
-                    Text("participant.day.label")
-                        + Text(" ")
-                        + Text(
-                            item.day.dayNumber,
-                            format: .number.locale(CoachFormatting.locale)
-                        )
-                        + Text(" • ")
-                        + Text(
-                            CoachFormatting.dateTime(
-                                item.submission.submittedAt,
-                                timeZoneIdentifier:
-                                    item.program.timeZoneIdentifier
-                            )
-                        )
+                Text(
+                    "\(Text("participant.day.label")) \(dayNumber) • \(submittedAt)"
                 )
                 .font(AppTypography.secondary)
                 .foregroundStyle(Color.appSecondaryText)

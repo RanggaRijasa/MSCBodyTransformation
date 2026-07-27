@@ -286,15 +286,12 @@ private struct CoachParticipantDayDisclosure: View {
             }
         } label: {
             VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                (
-                    Text("participant.day.label")
-                        + Text(" ")
-                        + Text(
-                            day.dayNumber,
-                            format: .number.locale(CoachFormatting.locale)
-                        )
-                        + Text(" — ")
-                        + Text(day.title)
+                let dayNumber = Text(
+                    day.dayNumber,
+                    format: .number.locale(CoachFormatting.locale)
+                )
+                Text(
+                    "\(Text("participant.day.label")) \(dayNumber) — \(Text(day.title))"
                 )
                 .font(AppTypography.cardTitle)
                 Text(

@@ -220,3 +220,17 @@ Admin:
 - Remaining blockers: runtime iOS 17 dan perangkat fisik tidak tersedia.
   Profil ETTrace memerlukan temporary framework linking ke app target, yang
   tidak dilakukan karena perubahan Xcode project dilarang.
+
+#### 2026-07-27 — migrasi interpolasi SwiftUI Text
+
+- Files changed: enam view Coach dan Participant yang sebelumnya menggabungkan
+  `Text` dengan operator `+`.
+- Assumptions: susunan dan style teks tetap sama; fragmen localization key dan
+  angka berformat diinterpolasikan sebagai `Text` agar tetap lokalizable.
+- Build command: XcodeBuildMCP `build_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 Pro iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` dengan
+  `-only-testing:MSCBodyTransformationTests/Phase08AccessibilityReliabilityTests`.
+- Result: build lulus tanpa warning atau error; 7 test Phase 08 lulus.
+- Remaining blockers: tidak ada untuk migrasi ini. Item berikutnya yang belum
+  dicentang adalah profiling scrolling Participant Today.

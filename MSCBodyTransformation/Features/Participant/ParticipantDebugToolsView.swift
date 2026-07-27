@@ -26,16 +26,13 @@ struct ParticipantDebugToolsView: View {
                             $0.dayNumber < $1.dayNumber
                         })
                     ) { day in
-                        (
-                            Text("participant.day.label")
-                                + Text(" ")
-                                + Text(
-                                    day.dayNumber,
-                                    format: .number.locale(
-                                        ParticipantFormatting.locale
-                                    )
-                                )
+                        let dayNumber = Text(
+                            day.dayNumber,
+                            format: .number.locale(
+                                ParticipantFormatting.locale
+                            )
                         )
+                        Text("\(Text("participant.day.label")) \(dayNumber)")
                         .tag(day.dayNumber)
                     }
                 }

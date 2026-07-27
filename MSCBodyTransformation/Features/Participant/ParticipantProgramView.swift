@@ -41,12 +41,11 @@ struct ParticipantProgramView: View {
                 value: "\(ParticipantFormatting.date(program.days.map(\.scheduledDate).min() ?? program.startDate, timeZoneIdentifier: program.timeZoneIdentifier)) – \(ParticipantFormatting.date(program.days.map(\.scheduledDate).max() ?? program.endDate, timeZoneIdentifier: program.timeZoneIdentifier))"
             )
             LabeledContent("participant.program.duration") {
-                Text(
+                let dayCount = Text(
                     program.days.count,
                     format: .number.locale(ParticipantFormatting.locale)
                 )
-                + Text(" ")
-                + Text("participant.program.days_suffix")
+                Text("\(dayCount) \(Text("participant.program.days_suffix"))")
             }
 
             if let coachID = store.currentEnrollment?.coachID,
@@ -87,14 +86,15 @@ struct ParticipantProgramView: View {
                 systemImage: "person.crop.circle.badge.checkmark"
             )
             LabeledContent("participant.program.weight_points_rate") {
-                Text(
+                let pointsPerKilogram = Text(
                     NSDecimalNumber(
                         decimal: program.weightPointsPerKilogram
                     ).intValue,
                     format: .number.locale(ParticipantFormatting.locale)
                 )
-                + Text(" ")
-                + Text("participant.program.points_per_kg_suffix")
+                Text(
+                    "\(pointsPerKilogram) \(Text("participant.program.points_per_kg_suffix"))"
+                )
             }
             Text("participant.local_score_notice")
                 .font(AppTypography.secondary)
@@ -132,16 +132,13 @@ struct ParticipantProgramView: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                    (
-                        Text("participant.day.label")
-                            + Text(" ")
-                            + Text(
-                                day.dayNumber,
-                                format: .number.locale(
-                                    ParticipantFormatting.locale
-                                )
-                            )
+                    let dayNumber = Text(
+                        day.dayNumber,
+                        format: .number.locale(
+                            ParticipantFormatting.locale
+                        )
                     )
+                    Text("\(Text("participant.day.label")) \(dayNumber)")
                     .font(AppTypography.cardTitle)
 
                     Text(

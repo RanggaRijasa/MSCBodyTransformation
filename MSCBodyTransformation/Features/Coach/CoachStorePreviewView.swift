@@ -176,17 +176,15 @@ struct CoachStorePreviewView: View {
         detail: Int,
         kind: AppStatusKind = .pending
     ) -> some View {
-        HStack {
+        let seatCount = Text(
+            detail,
+            format: .number.locale(CoachFormatting.locale)
+        )
+
+        return HStack {
             StatusBadge(title: title, kind: kind)
             Spacer()
-            (
-                Text(
-                    detail,
-                    format: .number.locale(CoachFormatting.locale)
-                )
-                + Text(" ")
-                + Text("coach.store.seat_suffix")
-            )
+            Text("\(seatCount) \(Text("coach.store.seat_suffix"))")
             .font(AppTypography.cardTitle.monospacedDigit())
         }
         .padding(AppSpacing.medium)
@@ -207,15 +205,12 @@ struct CoachStorePreviewView: View {
             )
             LazyVGrid(columns: columns, spacing: AppSpacing.small) {
                 ForEach(CoachSeatPack.samples) { pack in
+                    let seatCount = Text(
+                        pack.seatCredits,
+                        format: .number.locale(CoachFormatting.locale)
+                    )
                     VStack(alignment: .leading, spacing: AppSpacing.small) {
-                        (
-                            Text(
-                                pack.seatCredits,
-                                format: .number.locale(CoachFormatting.locale)
-                            )
-                            + Text(" ")
-                            + Text("coach.store.seat_suffix")
-                        )
+                        Text("\(seatCount) \(Text("coach.store.seat_suffix"))")
                         .font(AppTypography.metric.monospacedDigit())
                         Text(CoachFormatting.currency(pack.samplePrice))
                             .font(AppTypography.cardTitle.monospacedDigit())
