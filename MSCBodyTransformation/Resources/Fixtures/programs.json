@@ -105,6 +105,51 @@
     },
     {"id":"10000000-0000-0000-0000-000000000002","title":"Program kebiasaan baru","summary":"Draft lokal untuk latihan CMS admin.","status":"draft","startDate":"2026-08-10T00:00:00Z","endDate":"2026-08-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
     {"id":"10000000-0000-0000-0000-000000000003","title":"Gerak bersama Agustus","summary":"Program terjadwal untuk data demo admin.","status":"scheduled","startDate":"2026-08-20T00:00:00Z","endDate":"2026-08-26T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
+    {
+      "id":"10000000-0000-0000-0000-000000000005",
+      "title":"Gerak konsisten 3 hari",
+      "summary":"Program aktif kedua untuk mencoba perpindahan Papan peringkat.",
+      "status":"active",
+      "startDate":"2026-07-27T00:00:00Z",
+      "endDate":"2026-07-29T23:59:59Z",
+      "timeZoneIdentifier":"Asia/Makassar",
+      "weightPointsPerKilogram":800,
+      "days":[
+        {
+          "id":"11000000-0000-0000-0000-000000000051",
+          "programID":"10000000-0000-0000-0000-000000000005",
+          "dayNumber":1,
+          "title":"Bangun momentum",
+          "scheduledDate":"2026-07-27T00:00:00Z",
+          "visibilityMode":"standard",
+          "steps":[
+            {"id":"12000000-0000-0000-0000-000000000051","programDayID":"11000000-0000-0000-0000-000000000051","order":1,"title":"Gerak pembuka","instructions":"Lakukan aktivitas ringan sesuai kemampuan Anda.","points":15,"requirements":[],"verificationMode":"automatic"}
+          ]
+        },
+        {
+          "id":"11000000-0000-0000-0000-000000000052",
+          "programID":"10000000-0000-0000-0000-000000000005",
+          "dayNumber":2,
+          "title":"Pertahankan ritme",
+          "scheduledDate":"2026-07-28T00:00:00Z",
+          "visibilityMode":"standard",
+          "steps":[
+            {"id":"12000000-0000-0000-0000-000000000052","programDayID":"11000000-0000-0000-0000-000000000052","order":1,"title":"Aktivitas pilihan","instructions":"Pilih aktivitas ringan yang nyaman dilakukan hari ini.","points":15,"requirements":[],"verificationMode":"automatic"}
+          ]
+        },
+        {
+          "id":"11000000-0000-0000-0000-000000000053",
+          "programID":"10000000-0000-0000-0000-000000000005",
+          "dayNumber":3,
+          "title":"Tutup dengan konsisten",
+          "scheduledDate":"2026-07-29T00:00:00Z",
+          "visibilityMode":"standard",
+          "steps":[
+            {"id":"12000000-0000-0000-0000-000000000053","programDayID":"11000000-0000-0000-0000-000000000053","order":1,"title":"Refleksi gerak","instructions":"Selesaikan aktivitas ringan dan catat kebiasaan yang ingin dilanjutkan.","points":15,"requirements":[],"verificationMode":"automatic"}
+          ]
+        }
+      ]
+    },
     {"id":"10000000-0000-0000-0000-000000000004","title":"Konsisten Juni","summary":"Program selesai untuk riwayat lokal.","status":"completed","startDate":"2026-06-10T00:00:00Z","endDate":"2026-06-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]}
   ]
 }

@@ -243,3 +243,53 @@ Sesuaikan implementasi dengan API yang benar pada Xcode yang tersedia. Jangan me
 - Remaining blockers: nilai Swift 6, strict concurrency, dan deployment target
   iOS 17 belum dipersist ke Xcode project karena task tidak mengizinkan
   perubahan `project.pbxproj`.
+
+#### 2026-07-28 — tombol kembali tanpa menu riwayat
+
+- Files changed: `SharedUI/Components/NavigationControls.swift`;
+  `RoleAppShellView.swift`; destination bertingkat pada Profil Participant dan
+  editor Program Admin; `Localizable.xcstrings`; serta UI test navigasi.
+- Assumptions: tombol kembali pada destination yang didorong ke
+  `NavigationStack` harus selalu melakukan satu kali pop. Sheet yang memang
+  menggunakan aksi `Tutup` atau `Batal` tidak diubah karena tidak menampilkan
+  menu riwayat navigasi.
+- Build command: XcodeBuildMCP
+  `build_run_sim(extraArgs: ["SWIFT_VERSION=6",
+  "SWIFT_STRICT_CONCURRENCY=complete", "IPHONEOS_DEPLOYMENT_TARGET=17.0"],
+  launchArgs: ["-DemoRole", "participant", "-DemoScenario",
+  "participant_active", "-SkipDemoLanding"])` pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` dengan strict Swift 6 untuk
+  `Phase02NavigationTests`,
+  `testParticipantHomeProfileCardSelectsProfileTab`,
+  `testParticipantSelectsProgramBeforeOpeningDetail`, dan
+  `testAdminCreatesDraftAddsDayStepPreviewsAndPublishes`.
+- Result: build dan 8 hasil test terfokus lulus tanpa warning. Pemeriksaan
+  runtime pada detail Program mengonfirmasi tombol `navigation.back` dapat
+  ditekan maupun ditahan tanpa menampilkan menu riwayat; keduanya kembali satu
+  layar. Jalur destination utama, destination legal Profil, dan destination
+  bertingkat editor Program Admin menggunakan kontrol yang sama.
+- Remaining blockers: tidak ada untuk perubahan ini. Item berikutnya tetap
+  profiling scrolling Participant Home pada Phase 08.
+
+#### 2026-07-28 — responsivitas tombol kembali
+
+- Files changed: `SharedUI/Components/NavigationControls.swift`,
+  `SharedUI/Styles/AppLayout.swift`, dan UI test navigasi Participant.
+- Assumptions: kegagalan pada tekanan singkat berasal dari kombinasi hit area
+  icon yang sempit, pergerakan kecil jari, dan style toolbar iOS 26. Kontrol
+  tetap berupa `Button` SwiftUI native, tetapi memakai hit target 44 × 44 dan
+  plain button style agar tidak ada gesture visual toolbar yang bersaing.
+- Build command: XcodeBuildMCP `build_run_sim` dengan Swift 6 strict,
+  deployment target iOS 17, dan scenario `participant_active` pada iPhone 17
+  iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase02NavigationTests` dan
+  `testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build lulus tanpa warning; 6 hasil test lulus. UI test menekan tombol
+  kembali selama 0,15, 0,35, dan 1 detik; seluruh durasi kembali satu layar
+  tanpa membuka menu riwayat. Pemeriksaan runtime terpisah pada durasi 0,35
+  detik juga lulus.
+- Remaining blockers: sanity check rasa sentuhan pada iPhone fisik tetap
+  direkomendasikan karena simulator tidak mereplikasi pergerakan jari secara
+  penuh. Item berikutnya tetap profiling scrolling Participant Home pada
+  Phase 08.

@@ -111,23 +111,27 @@ struct ParticipantProfileView: View {
                     title: "participant.legal.privacy.title",
                     message: "participant.legal.privacy.message"
                 )
+                .singlePressNavigationBackButton()
             } label: {
                 Label(
                     "participant.legal.privacy.title",
                     systemImage: "hand.raised"
                 )
             }
+            .accessibilityIdentifier("participant.profile.legal.privacy")
             NavigationLink {
                 ParticipantLegalPlaceholderView(
                     title: "participant.legal.terms.title",
                     message: "participant.legal.terms.message"
                 )
+                .singlePressNavigationBackButton()
             } label: {
                 Label(
                     "participant.legal.terms.title",
                     systemImage: "doc.text"
                 )
             }
+            .accessibilityIdentifier("participant.profile.legal.terms")
             Label(
                 "participant.delete_account.info",
                 systemImage: "person.crop.circle.badge.minus"

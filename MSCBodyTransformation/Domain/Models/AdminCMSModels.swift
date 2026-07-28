@@ -11,6 +11,108 @@ nonisolated enum FutureStepPolicy: String, Codable, CaseIterable, Sendable {
     case hidden
 }
 
+nonisolated enum AdminProgramPace:
+    String,
+    Codable,
+    CaseIterable,
+    Sendable
+{
+    case selfPaced = "self_paced"
+    case scheduled
+}
+
+nonisolated enum AdminProgramDurationMode:
+    String,
+    Codable,
+    CaseIterable,
+    Sendable
+{
+    case fixedDuration = "fixed_duration"
+    case specificDates = "specific_dates"
+}
+
+nonisolated enum AdminProgramAccess:
+    String,
+    Codable,
+    CaseIterable,
+    Sendable
+{
+    case publicAccess = "public"
+    case approvalRequired = "approval_required"
+    case inviteOnly = "invite_only"
+}
+
+nonisolated enum AdminCoverMediaKind:
+    String,
+    Codable,
+    CaseIterable,
+    Sendable
+{
+    case image
+    case video
+}
+
+nonisolated enum AdminStepContentKind:
+    String,
+    Codable,
+    CaseIterable,
+    Sendable
+{
+    case article
+    case video
+    case quiz
+}
+
+nonisolated enum AdminQuizQuestionKind:
+    String,
+    Codable,
+    CaseIterable,
+    Sendable
+{
+    case shortAnswer = "short_answer"
+    case longAnswer = "long_answer"
+    case number
+    case singleChoice = "single_choice"
+    case multipleChoice = "multiple_choice"
+    case imageChoice = "image_choice"
+    case fileUpload = "file_upload"
+    case heading
+    case text
+
+    var acceptsOptions: Bool {
+        switch self {
+        case .singleChoice, .multipleChoice, .imageChoice:
+            true
+        case .shortAnswer, .longAnswer, .number, .fileUpload,
+             .heading, .text:
+            false
+        }
+    }
+
+    var isLayoutElement: Bool {
+        self == .heading || self == .text
+    }
+}
+
+nonisolated struct AdminQuizQuestionDraft:
+    Codable,
+    Equatable,
+    Identifiable,
+    Sendable
+{
+    let id: UUID
+    var order: Int
+    var kind: AdminQuizQuestionKind
+    var prompt: String
+    var isRequired: Bool
+    var options: [String]
+}
+
+nonisolated struct AdminQuizDraft: Codable, Equatable, Sendable {
+    var title: String
+    var questions: [AdminQuizQuestionDraft]
+}
+
 nonisolated struct AdminStepDraft: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
     var order: Int
@@ -25,6 +127,48 @@ nonisolated struct AdminStepDraft: Codable, Equatable, Identifiable, Sendable {
     var localMediaReference: String?
     var isActive: Bool
     var verificationMode: SubmissionVerificationMode
+    var contentKind: AdminStepContentKind
+    var isVideoRequiredToWatch: Bool
+    var isVideoAutoplayEnabled: Bool
+    var quiz: AdminQuizDraft?
+
+    init(
+        id: UUID,
+        order: Int,
+        title: String,
+        instructions: String,
+        points: Int,
+        requiresPhoto: Bool,
+        isPhotoRequired: Bool,
+        requiresTextAnswer: Bool,
+        isTextAnswerRequired: Bool,
+        mediaKind: StepInstructionMediaKind?,
+        localMediaReference: String?,
+        isActive: Bool,
+        verificationMode: SubmissionVerificationMode,
+        contentKind: AdminStepContentKind = .article,
+        isVideoRequiredToWatch: Bool = false,
+        isVideoAutoplayEnabled: Bool = false,
+        quiz: AdminQuizDraft? = nil
+    ) {
+        self.id = id
+        self.order = order
+        self.title = title
+        self.instructions = instructions
+        self.points = points
+        self.requiresPhoto = requiresPhoto
+        self.isPhotoRequired = isPhotoRequired
+        self.requiresTextAnswer = requiresTextAnswer
+        self.isTextAnswerRequired = isTextAnswerRequired
+        self.mediaKind = mediaKind
+        self.localMediaReference = localMediaReference
+        self.isActive = isActive
+        self.verificationMode = verificationMode
+        self.contentKind = contentKind
+        self.isVideoRequiredToWatch = isVideoRequiredToWatch
+        self.isVideoAutoplayEnabled = isVideoAutoplayEnabled
+        self.quiz = quiz
+    }
 }
 
 nonisolated struct AdminDayDraft: Codable, Equatable, Identifiable, Sendable {
@@ -45,9 +189,15 @@ nonisolated struct AdminProgramDraft:
     let id: UUID
     var title: String
     var summary: String
+    var category: String
     var coverLocalReference: String?
+    var coverMediaKind: AdminCoverMediaKind
+    var coverAlternativeText: String
     var verificationMode: SubmissionVerificationMode
     var wellnessDisclaimer: String
+    var pace: AdminProgramPace
+    var durationMode: AdminProgramDurationMode
+    var fixedDurationDays: Int
     var startDate: Date
     var endDate: Date
     var timeZoneIdentifier: String
@@ -56,6 +206,8 @@ nonisolated struct AdminProgramDraft:
     var weightPointsPerKilogram: Decimal
     var pastStepPolicy: PastStepPolicy
     var futureStepPolicy: FutureStepPolicy
+    var access: AdminProgramAccess
+    var participantLimit: Int?
     var status: ProgramStatus
     var days: [AdminDayDraft]
     var updatedAt: Date
@@ -77,14 +229,28 @@ nonisolated struct AdminProgramDraft:
         futureStepPolicy: FutureStepPolicy,
         status: ProgramStatus,
         days: [AdminDayDraft],
-        updatedAt: Date
+        updatedAt: Date,
+        category: String = "",
+        coverMediaKind: AdminCoverMediaKind = .image,
+        coverAlternativeText: String = "",
+        pace: AdminProgramPace = .scheduled,
+        durationMode: AdminProgramDurationMode = .specificDates,
+        fixedDurationDays: Int = 7,
+        access: AdminProgramAccess = .inviteOnly,
+        participantLimit: Int? = nil
     ) {
         self.id = id
         self.title = title
         self.summary = summary
+        self.category = category
         self.coverLocalReference = coverLocalReference
+        self.coverMediaKind = coverMediaKind
+        self.coverAlternativeText = coverAlternativeText
         self.verificationMode = verificationMode
         self.wellnessDisclaimer = wellnessDisclaimer
+        self.pace = pace
+        self.durationMode = durationMode
+        self.fixedDurationDays = fixedDurationDays
         self.startDate = startDate
         self.endDate = endDate
         self.timeZoneIdentifier = timeZoneIdentifier
@@ -93,6 +259,8 @@ nonisolated struct AdminProgramDraft:
         self.weightPointsPerKilogram = weightPointsPerKilogram
         self.pastStepPolicy = pastStepPolicy
         self.futureStepPolicy = futureStepPolicy
+        self.access = access
+        self.participantLimit = participantLimit
         self.status = status
         self.days = days
         self.updatedAt = updatedAt
@@ -113,11 +281,17 @@ nonisolated struct AdminProgramDraft:
         id = program.id
         title = program.title
         summary = program.summary
+        category = ""
         coverLocalReference = nil
+        coverMediaKind = .image
+        coverAlternativeText = ""
         verificationMode = .coachReview
         wellnessDisclaimer =
             "Program ini mendukung kebiasaan hidup sehat dan bukan "
             + "pengganti diagnosis atau perawatan medis."
+        pace = .scheduled
+        durationMode = .specificDates
+        fixedDurationDays = program.durationInDays
         startDate = program.startDate
         endDate = program.endDate
         timeZoneIdentifier = program.timeZoneIdentifier
@@ -126,6 +300,8 @@ nonisolated struct AdminProgramDraft:
         weightPointsPerKilogram = program.weightPointsPerKilogram
         pastStepPolicy = .readOnly
         futureStepPolicy = .locked
+        access = .inviteOnly
+        participantLimit = nil
         status = program.status
         days = program.days.map { day in
             AdminDayDraft(
@@ -245,15 +421,18 @@ nonisolated struct AdminProgramDraft:
 
 nonisolated enum AdminValidationField: String, Sendable {
     case title
+    case cover
     case dates
     case timeZone
     case scoring
+    case access
     case days
     case dayNumbers
     case dayDates
     case steps
     case stepOrder
     case media
+    case content
 }
 
 nonisolated struct AdminValidationIssue:

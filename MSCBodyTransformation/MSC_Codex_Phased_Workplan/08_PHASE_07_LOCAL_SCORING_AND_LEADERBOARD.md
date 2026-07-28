@@ -171,6 +171,8 @@ Jangan menyamakan progress dengan total points.
 - [x] Admin adjustment updates total but remains separate.
 - [x] Leaderboard animates gently and respects Reduce Motion.
 - [x] Do not show fake "server verified" label in local demo.
+- [x] Peserta dapat memilih di antara program aktif yang diikutinya.
+- [x] Hasil program selesai tersedia melalui arsip sekunder.
 
 ## Larangan scope
 
@@ -212,3 +214,129 @@ Jangan:
   lock snapshot dan journey Coach lulus; build bersih tanpa warning.
 - Remaining blockers: score lokal adalah executable specification dan belum
   authoritative sampai diterjemahkan ke operation server pada fase backend.
+
+#### 2026-07-27 — redesign Papan peringkat Peserta
+
+- Files changed: state pemilihan program Papan peringkat Peserta; layout
+  selector program, podium tiga besar, posisi peserta, ranking lanjutan, dan
+  sheet riwayat; localization catalog; unit/UI test; README serta inventaris
+  layar.
+- Assumptions: hanya program yang memiliki enrollment aktif yang muncul pada
+  pilihan utama. Program berstatus selesai atau arsip dengan enrollment
+  selesai ditempatkan pada Riwayat. Winner snapshot dipakai sebagai hasil
+  final bila tersedia; data berat badan tetap tidak ditampilkan.
+- Build command: XcodeBuildMCP `build_sim(extraArgs:
+  ["SWIFT_VERSION=6", "SWIFT_STRICT_CONCURRENCY=complete",
+  "IPHONEOS_DEPLOYMENT_TARGET=17.0"])` pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk 19
+  `Phase07LocalScoringTests`, seluruh target unit
+  `MSCBodyTransformationTests`, serta UI test
+  `testParticipantOpensArchivedLeaderboard`.
+- Result: build lulus tanpa warning/error; 19 test Phase 07, seluruh 96 unit
+  test, dan UI journey memilih hasil program selesai lulus. Runtime
+  inspection mengonfirmasi selector, podium, posisi peserta, serta arsip
+  dapat digunakan pada simulator.
+- Remaining blockers: pagination dan data score authoritative tetap untuk
+  fase backend. UI dan repository boundary sudah mendukung lebih dari satu
+  program aktif tanpa menambahkan dependency eksternal.
+
+#### 2026-07-27 — kapasitas tampilan poin lima digit
+
+- Files changed: komponen podium dan baris Papan peringkat Peserta; formatter
+  poin Indonesia; preview poin lima digit; unit test Phase 07.
+- Assumptions: UI perlu menampilkan sedikitnya poin belasan ribu tanpa
+  singkatan. Nilai tetap menggunakan angka lengkap dengan pemisah ribuan
+  locale `id-ID`, bukan format compact seperti `12,3 rb`.
+- Build command: XcodeBuildMCP `build_sim(extraArgs:
+  ["SWIFT_VERSION=6", "SWIFT_STRICT_CONCURRENCY=complete",
+  "IPHONEOS_DEPLOYMENT_TARGET=17.0"])` pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk 20
+  `Phase07LocalScoringTests`.
+- Result: build lulus tanpa warning/error dan 20/20 test lulus. Preview
+  memuat nilai `12.350`, `15.420`, dan `18.750`; formatter juga diverifikasi
+  sampai `98.765`. Badge poin mempertahankan satu baris, sedangkan row
+  berpindah ke susunan vertikal pada Dynamic Type aksesibilitas.
+- Remaining blockers: pagination dan score authoritative tetap untuk fase
+  backend. Tidak ada konfigurasi eksternal atau perubahan project.
+
+#### 2026-07-27 — selector program Papan peringkat
+
+- Files changed: tampilan Papan peringkat Peserta, komponen selector program,
+  katalog lokalisasi, dan UI test arsip Papan peringkat.
+- Assumptions: satu program aktif tidak membutuhkan control pemilihan; kartu
+  hanya menjadi tombol `Ganti` ketika peserta mempunyai beberapa program aktif
+  atau sedang melihat hasil program arsip.
+- Build command: XcodeBuildMCP `build_run_sim` dengan Swift 6 strict
+  concurrency pada iPhone 17 dan skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testParticipantOpensArchivedLeaderboard`.
+- Result: build lulus tanpa warning atau error; satu program aktif tampil
+  sebagai kartu informasi tanpa dropdown. UI test lulus dan memverifikasi
+  perpindahan dari arsip ke sheet native `Pilih program`, lalu kembali ke
+  program aktif.
+- Remaining blockers: fixture peserta saat ini hanya mempunyai satu program
+  aktif; dukungan beberapa program tetap diterapkan pada UI dan store. Data
+  authoritative dan pagination tetap ditunda ke fase backend.
+
+#### 2026-07-27 — fixture Papan peringkat multi-program
+
+- Files changed: fixture program, enrollment, dan leaderboard; test kontrak
+  fixture; test pemilihan program Papan peringkat; serta UI test alur arsip.
+- Assumptions: peserta demo Ayu mengikuti dua program aktif agar control
+  `Ganti` dan sheet native `Pilih program` dapat diuji langsung. Program demo
+  kedua memiliki leaderboard sendiri dan poin lima digit tanpa mengubah aturan
+  scoring.
+- Build command: XcodeBuildMCP `build_run_sim` dengan
+  `SWIFT_VERSION=6`, `SWIFT_STRICT_CONCURRENCY=complete`, dan
+  `IPHONEOS_DEPLOYMENT_TARGET=17.0` pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk `Phase01FixtureTests`,
+  `Phase07LocalScoringTests`, dan
+  `testParticipantOpensArchivedLeaderboard`.
+- Result: build dan launch lulus tanpa warning atau error; 25/25 unit test
+  fokus serta 1/1 UI test lulus. Runtime inspection mengonfirmasi sheet
+  `Pilih program` menampilkan `Gerak konsisten 3 hari` dan
+  `Transformasi 7 hari`, dengan checkmark pada program yang sedang dipilih.
+- Remaining blockers: score authoritative, enrollment produksi, dan
+  pagination tetap ditunda ke fase backend. Tidak ada konfigurasi eksternal
+  atau perubahan project Xcode.
+
+#### 2026-07-27 — keterbacaan sheet pemilihan program
+
+- Files changed: presentation dan surface daftar pada sheet native
+  `Pilih program`.
+- Assumptions: detent `.medium` dan `.large` tetap diperlukan, tetapi
+  background Liquid Glass transparan pada detent setengah tidak sesuai untuk
+  daftar teks. Sheet memakai `AppBackground` yang opaque, sedangkan row tetap
+  memakai tampilan `List` native.
+- Build command: XcodeBuildMCP `build_run_sim` dengan
+  `SWIFT_VERSION=6`, `SWIFT_STRICT_CONCURRENCY=complete`, dan
+  `IPHONEOS_DEPLOYMENT_TARGET=17.0` pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testParticipantOpensArchivedLeaderboard`.
+- Result: build dan launch lulus tanpa warning atau error; 1/1 UI test lulus.
+  Runtime inspection pada detent setengah mengonfirmasi judul, tanggal,
+  checkmark, serta tombol dapat dibaca tanpa konten Papan peringkat terlihat
+  menembus sheet. Light dan dark mode telah diperiksa.
+- Remaining blockers: tidak ada untuk perbaikan UI lokal ini. Data
+  authoritative dan pagination tetap ditunda ke fase backend.
+
+#### 2026-07-27 — sinkronisasi Papan peringkat Home
+
+- Files changed: strip Papan peringkat pada Home dan UI test perpindahan tab.
+- Assumptions: pilihan program terakhir pada tab Peringkat menjadi satu-satunya
+  sumber tampilan strip Home, termasuk bila pilihan tersebut merupakan program
+  arsip. Nama program selalu ditampilkan agar lima peserta teratas tidak
+  ambigu.
+- Build command: XcodeBuildMCP `build_run_sim` dengan
+  `SWIFT_VERSION=6`, `SWIFT_STRICT_CONCURRENCY=complete`, dan
+  `IPHONEOS_DEPLOYMENT_TARGET=17.0` pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase07LocalScoringTests` dan
+  `testParticipantHomeViewAllSelectsLeaderboardTab`.
+- Result: build dan launch lulus; 21/21 test fokus lulus. Runtime inspection
+  mengonfirmasi Home berubah ke `Gerak konsisten 3 hari` setelah program itu
+  dipilih, lalu `Lihat semua` membuka tab Peringkat dengan program yang sama
+  tetap aktif.
+- Remaining blockers: pilihan terakhir masih hidup selama session store
+  lokal berjalan dan belum dipersistenkan lintas peluncuran aplikasi. Persisten
+  akun serta data authoritative tetap ditunda ke fase backend.

@@ -33,6 +33,22 @@ nonisolated struct ParticipantJourneySnapshot: Equatable, Sendable {
     let managedContent: [ManagedContent]
 }
 
+nonisolated enum ParticipantLeaderboardLoadState: Equatable, Sendable {
+    case idle
+    case loading
+    case loaded(ParticipantLeaderboardProgramSnapshot)
+    case failed(DomainError)
+}
+
+nonisolated struct ParticipantLeaderboardProgramSnapshot:
+    Equatable,
+    Sendable
+{
+    let program: Program
+    let entries: [LeaderboardEntry]
+    let winners: [ProgramWinner]
+}
+
 @MainActor
 @Observable
 final class ParticipantJourneyStore {
@@ -47,8 +63,20 @@ final class ParticipantJourneyStore {
     var debugDateOverride: Date?
     var showsOfflineSimulation = false
     var showsFinalLeaderboard = false
-    var hidesActiveProgramForDemo = false
+    var hidesActiveProgramForDemo = false {
+        didSet {
+            guard hidesActiveProgramForDemo,
+                  case .loaded(let leaderboard) = leaderboardState,
+                  leaderboard.program.status == .active else {
+                return
+            }
+            selectedLeaderboardProgramID = nil
+            leaderboardState = .idle
+        }
+    }
     var isPerformingAction = false
+    var selectedLeaderboardProgramID: UUID?
+    var leaderboardState: ParticipantLeaderboardLoadState = .idle
 
     init(
         environment: AppEnvironment,
@@ -139,6 +167,65 @@ final class ParticipantJourneyStore {
 
     var currentLeaderboardEntry: LeaderboardEntry? {
         snapshot?.leaderboard.first { $0.isCurrentUser }
+    }
+
+    var activeLeaderboardPrograms: [Program] {
+        guard let snapshot, !hidesActiveProgramForDemo else {
+            return []
+        }
+        let activeEnrollmentProgramIDs = Set(
+            snapshot.enrollments.compactMap { enrollment in
+                enrollment.status == .active ? enrollment.programID : nil
+            }
+        )
+        return snapshot.programs
+            .filter {
+                $0.status == .active
+                    && activeEnrollmentProgramIDs.contains($0.id)
+            }
+            .sorted {
+                if $0.startDate == $1.startDate {
+                    return $0.title.localizedStandardCompare($1.title)
+                        == .orderedAscending
+                }
+                return $0.startDate > $1.startDate
+            }
+    }
+
+    var archivedLeaderboardPrograms: [Program] {
+        guard let snapshot else {
+            return []
+        }
+        let historicalProgramIDs = Set(
+            snapshot.enrollments.compactMap { enrollment in
+                switch enrollment.status {
+                case .completed:
+                    enrollment.programID
+                case .active, .pending, .cancelled:
+                    nil
+                }
+            }
+        )
+        return snapshot.programs
+            .filter {
+                ($0.status == .completed || $0.status == .archived)
+                    && historicalProgramIDs.contains($0.id)
+            }
+            .sorted {
+                if $0.endDate == $1.endDate {
+                    return $0.title.localizedStandardCompare($1.title)
+                        == .orderedAscending
+                }
+                return $0.endDate > $1.endDate
+            }
+    }
+
+    var selectedLeaderboardProgram: Program? {
+        guard let selectedLeaderboardProgramID else {
+            return nil
+        }
+        return (activeLeaderboardPrograms + archivedLeaderboardPrograms)
+            .first { $0.id == selectedLeaderboardProgramID }
     }
 
     var wellnessDisclaimer: ManagedContent? {
@@ -484,6 +571,8 @@ final class ParticipantJourneyStore {
         selectedDayNumber = nil
         debugDateOverride = nil
         showsFinalLeaderboard = false
+        selectedLeaderboardProgramID = nil
+        leaderboardState = .idle
         try? await reloadSnapshot()
     }
 
@@ -550,6 +639,67 @@ final class ParticipantJourneyStore {
         await load()
     }
 
+    func prepareLeaderboardSelection() async {
+        guard case .idle = leaderboardState else {
+            return
+        }
+        guard let program = selectedLeaderboardProgram
+                ?? activeLeaderboardPrograms.first
+                ?? archivedLeaderboardPrograms.first else {
+            return
+        }
+        await selectLeaderboardProgram(program.id)
+    }
+
+    func selectLeaderboardProgram(_ programID: UUID) async {
+        let availablePrograms =
+            activeLeaderboardPrograms + archivedLeaderboardPrograms
+        guard let program = availablePrograms.first(where: {
+            $0.id == programID
+        }), let repositories = environment.repositories else {
+            leaderboardState = .failed(.notFound(resource: "program"))
+            return
+        }
+
+        selectedLeaderboardProgramID = program.id
+        leaderboardState = .loading
+        do {
+            async let entriesTask = repositories.leaderboard.leaderboard(
+                programID: program.id
+            )
+            async let winnersTask = repositories.leaderboard.winners(
+                programID: program.id
+            )
+            let entries = try await entriesTask
+            let winners = try await winnersTask
+            guard !Task.isCancelled else {
+                return
+            }
+            leaderboardState = .loaded(
+                ParticipantLeaderboardProgramSnapshot(
+                    program: program,
+                    entries: entries,
+                    winners: winners
+                )
+            )
+        } catch is CancellationError {
+            return
+        } catch let error as DomainError {
+            leaderboardState = .failed(error)
+        } catch {
+            leaderboardState = .failed(.unknown)
+        }
+    }
+
+    func retryLeaderboardSelection() async {
+        guard let programID = selectedLeaderboardProgramID
+                ?? activeLeaderboardPrograms.first?.id
+                ?? archivedLeaderboardPrograms.first?.id else {
+            return
+        }
+        await selectLeaderboardProgram(programID)
+    }
+
     func logoutLocalDemo() async {
         await environment.repositories?.session.setDebugScenario(.loggedOut)
         entryStage = .login
@@ -570,10 +720,15 @@ final class ParticipantJourneyStore {
 
         let programs = try await programsTask
         let enrollments = try await enrollmentsTask
-        let activeProgram = programs.first { $0.status == .active }
-        let activeEnrollment = activeProgram.flatMap { program in
-            enrollments.first {
-                $0.programID == program.id && $0.status == .active
+        let activeEnrollment = enrollments.first { enrollment in
+            enrollment.status == .active
+                && programs.contains {
+                    $0.id == enrollment.programID && $0.status == .active
+                }
+        }
+        let activeProgram = activeEnrollment.flatMap { enrollment in
+            programs.first {
+                $0.id == enrollment.programID
             }
         }
 
@@ -609,21 +764,23 @@ final class ParticipantJourneyStore {
             winners = []
         }
 
-        state = .loaded(
-            ParticipantJourneySnapshot(
-                user: user,
-                profile: profile,
-                programs: programs,
-                enrollments: enrollments,
-                activeProgram: activeProgram,
-                activeEnrollment: activeEnrollment,
-                submissions: submissions,
-                weighIns: weighIns,
-                leaderboard: leaderboard,
-                winners: winners,
-                coaches: try await coachesTask,
-                managedContent: try await managedContentTask
-            )
+        let nextSnapshot = ParticipantJourneySnapshot(
+            user: user,
+            profile: profile,
+            programs: programs,
+            enrollments: enrollments,
+            activeProgram: activeProgram,
+            activeEnrollment: activeEnrollment,
+            submissions: submissions,
+            weighIns: weighIns,
+            leaderboard: leaderboard,
+            winners: winners,
+            coaches: try await coachesTask,
+            managedContent: try await managedContentTask
+        )
+        state = .loaded(nextSnapshot)
+        updateLeaderboardSelectionAfterJourneyLoad(
+            snapshot: nextSnapshot
         )
     }
 
@@ -656,5 +813,62 @@ final class ParticipantJourneyStore {
                 inSameDayAs: environment.clock.now()
             )
         }?.dayNumber ?? program.days.first?.dayNumber
+    }
+
+    private func updateLeaderboardSelectionAfterJourneyLoad(
+        snapshot: ParticipantJourneySnapshot
+    ) {
+        let enrolledProgramIDs = Set(
+            snapshot.enrollments.compactMap { enrollment in
+                switch enrollment.status {
+                case .active, .completed:
+                    enrollment.programID
+                case .pending, .cancelled:
+                    nil
+                }
+            }
+        )
+        let eligibleProgramIDs: Set<UUID> = Set(
+            snapshot.programs
+                .filter { program in
+                    enrolledProgramIDs.contains(program.id)
+                        && (
+                            program.status == .active
+                                || program.status == .completed
+                                || program.status == .archived
+                        )
+                }
+                .map(\.id)
+        )
+
+        if let selectedLeaderboardProgramID,
+           !eligibleProgramIDs.contains(selectedLeaderboardProgramID) {
+            self.selectedLeaderboardProgramID = nil
+            leaderboardState = .idle
+        }
+
+        guard selectedLeaderboardProgramID == nil,
+              let activeProgram = snapshot.activeProgram else {
+            if selectedLeaderboardProgramID == snapshot.activeProgram?.id,
+               let activeProgram = snapshot.activeProgram {
+                leaderboardState = .loaded(
+                    ParticipantLeaderboardProgramSnapshot(
+                        program: activeProgram,
+                        entries: snapshot.leaderboard,
+                        winners: snapshot.winners
+                    )
+                )
+            }
+            return
+        }
+
+        selectedLeaderboardProgramID = activeProgram.id
+        leaderboardState = .loaded(
+            ParticipantLeaderboardProgramSnapshot(
+                program: activeProgram,
+                entries: snapshot.leaderboard,
+                winners: snapshot.winners
+            )
+        )
     }
 }

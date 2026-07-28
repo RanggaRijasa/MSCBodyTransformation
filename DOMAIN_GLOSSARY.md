@@ -6,8 +6,17 @@
 | Coach | Pengguna yang mengundang, memantau, dan memeriksa Peserta. |
 | Admin | Pengguna istimewa yang mengelola program, orang, konten, skor, dan pemenang. |
 | Program | Rangkaian hari transformasi dengan aturan, jadwal, dan skor. |
-| Hari program | Satu hari terjadwal yang berisi langkah. |
-| Langkah | Aktivitas program dengan poin dan persyaratan bukti. |
+| Pola program | Cara langkah diselesaikan: mandiri atau mengikuti tanggal terjadwal. |
+| Akses program | Aturan bergabung: publik, perlu persetujuan, atau khusus undangan. |
+| Kapasitas program | Batas maksimal Peserta; kosong berarti tanpa batas pada draft lokal. |
+| Hari program | Satu hari terjadwal yang berisi banyak langkah terurut. |
+| Langkah | Aktivitas terurut dengan materi, poin, persyaratan bukti, dan nol atau lebih pertanyaan. |
+| Pertanyaan | Input atau elemen informasi terurut yang menjadi anak langsung Langkah. |
+| Kuis | Jenis Langkah yang mewajibkan minimal satu pertanyaan. |
+| Susunan program | Hierarki terurut Hari program → Langkah → Pertanyaan. |
+| Artikel | Langkah berisi petunjuk atau materi teks. |
+| Video | Langkah berisi referensi video dan aturan pemutaran. |
+| Kuis | Langkah berisi pertanyaan terurut dan elemen penjelas. |
 | Bukti | Foto lokal atau jawaban teks yang menyertai penyelesaian langkah. |
 | Submission | Catatan pengiriman bukti untuk satu langkah. Di UI disebut pengiriman atau bukti. |
 | Menunggu pemeriksaan | Bukti sudah dikirim tetapi belum disetujui Coach. |

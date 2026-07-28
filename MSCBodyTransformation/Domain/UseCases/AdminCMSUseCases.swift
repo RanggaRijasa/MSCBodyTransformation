@@ -1,11 +1,42 @@
 import Foundation
 
+nonisolated struct AdminDayScheduleSync: Equatable, Sendable {
+    let days: [AdminDayDraft]
+    let removedDays: [AdminDayDraft]
+
+    var removesContent: Bool {
+        removedDays.contains { !$0.steps.isEmpty }
+    }
+}
+
 nonisolated struct AdminProgramDraftValidator: Sendable {
     func validate(_ draft: AdminProgramDraft) -> [AdminValidationIssue] {
         var issues: [AdminValidationIssue] = []
         if draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             issues.append(
                 issue(.title, "Nama program wajib diisi.")
+            )
+        }
+        if draft.coverLocalReference?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ).isEmpty == false,
+           draft.coverAlternativeText.trimmingCharacters(
+               in: .whitespacesAndNewlines
+           ).isEmpty {
+            issues.append(
+                issue(
+                    .cover,
+                    "Teks alternatif wajib diisi saat cover digunakan."
+                )
+            )
+        }
+        if draft.durationMode == .fixedDuration,
+           !(1...365).contains(draft.fixedDurationDays) {
+            issues.append(
+                issue(
+                    .dates,
+                    "Durasi tetap harus antara 1 dan 365 hari."
+                )
             )
         }
         if draft.startDate > draft.endDate {
@@ -29,6 +60,15 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                 issue(.scoring, "Poin per kilogram harus lebih dari nol.")
             )
         }
+        if let participantLimit = draft.participantLimit,
+           participantLimit <= 0 {
+            issues.append(
+                issue(
+                    .access,
+                    "Batas peserta harus lebih dari nol."
+                )
+            )
+        }
         if draft.days.isEmpty {
             issues.append(
                 issue(.days, "Tambahkan setidaknya satu hari program.")
@@ -49,6 +89,50 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
         if Set(dayDates).count != dayDates.count {
             issues.append(
                 issue(.dayDates, "Tanggal setiap hari harus unik.")
+            )
+        }
+        if let expectedDays = try? generateDays(
+            startDate: draft.startDate,
+            endDate: draft.endDate,
+            timeZoneIdentifier: draft.timeZoneIdentifier,
+            programID: draft.id
+        ) {
+            let expectedDates = expectedDays.map {
+                calendar.startOfDay(for: $0.scheduledDate)
+            }
+            if dayDates != expectedDates {
+                issues.append(
+                    issue(
+                        .days,
+                        "Susunan hari perlu disinkronkan dengan jadwal."
+                    )
+                )
+            }
+        }
+
+        let dayIdentifiers = draft.days.map(\.id)
+        if Set(dayIdentifiers).count != dayIdentifiers.count {
+            issues.append(
+                issue(.days, "Setiap hari harus memiliki ID yang unik.")
+            )
+        }
+
+        let allSteps = draft.days.flatMap(\.steps)
+        let stepIdentifiers = allSteps.map(\.id)
+        if Set(stepIdentifiers).count != stepIdentifiers.count {
+            issues.append(
+                issue(.steps, "Setiap langkah harus memiliki ID yang unik.")
+            )
+        }
+        let questionIdentifiers = allSteps
+            .flatMap { $0.quiz?.questions ?? [] }
+            .map(\.id)
+        if Set(questionIdentifiers).count != questionIdentifiers.count {
+            issues.append(
+                issue(
+                    .content,
+                    "Setiap pertanyaan harus memiliki ID yang unik."
+                )
             )
         }
 
@@ -85,6 +169,19 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                 )
             }
             if activeSteps.contains(where: {
+                $0.title.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ).isEmpty
+            }) {
+                issues.append(
+                    issue(
+                        .content,
+                        "Semua langkah aktif pada hari ke-\(day.dayNumber) "
+                            + "memerlukan nama."
+                    )
+                )
+            }
+            if activeSteps.contains(where: {
                 $0.mediaKind != nil
                     && ($0.localMediaReference?
                         .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -97,6 +194,78 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                             + "memerlukan referensi lokal."
                     )
                 )
+            }
+            for step in activeSteps {
+                let questions = step.quiz?.questions ?? []
+                if step.contentKind == .quiz, questions.isEmpty {
+                    issues.append(
+                        issue(
+                            .content,
+                            "Kuis \(step.title) memerlukan pertanyaan."
+                        )
+                    )
+                    continue
+                }
+
+                let questionIdentifiers = questions.map(\.id)
+                if Set(questionIdentifiers).count
+                    != questionIdentifiers.count {
+                    issues.append(
+                        issue(
+                            .content,
+                            "Pertanyaan pada \(step.title) "
+                                + "harus memiliki ID yang unik."
+                        )
+                    )
+                }
+
+                let questionOrders = questions.map(\.order).sorted()
+                let expectedQuestionOrders = questions.isEmpty
+                    ? []
+                    : Array(1...questions.count)
+                if questionOrders != expectedQuestionOrders {
+                    issues.append(
+                        issue(
+                            .content,
+                            "Urutan pertanyaan pada \(step.title) "
+                                + "harus dimulai dari 1 tanpa jeda."
+                        )
+                    )
+                }
+
+                if questions.contains(where: {
+                    $0.prompt.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ).isEmpty
+                }) {
+                    issues.append(
+                        issue(
+                            .content,
+                            "Semua pertanyaan kuis \(step.title) "
+                                + "memerlukan isi."
+                        )
+                    )
+                }
+                if questions.contains(where: { question in
+                    guard question.kind.acceptsOptions else { return false }
+                    let normalizedOptions = question.options.map {
+                        $0.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        )
+                    }
+                    return normalizedOptions.count < 2
+                        || normalizedOptions.contains(where: \.isEmpty)
+                        || Set(normalizedOptions).count
+                            != normalizedOptions.count
+                }) {
+                    issues.append(
+                        issue(
+                            .content,
+                            "Pertanyaan pilihan pada \(step.title) "
+                                + "memerlukan minimal dua pilihan unik."
+                        )
+                    )
+                }
             }
         }
         return issues
@@ -149,25 +318,93 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
         }
     }
 
+    func synchronizeDays(
+        existingDays: [AdminDayDraft],
+        startDate: Date,
+        endDate: Date,
+        timeZoneIdentifier: String,
+        programID: UUID
+    ) throws -> AdminDayScheduleSync {
+        let templates = try generateDays(
+            startDate: startDate,
+            endDate: endDate,
+            timeZoneIdentifier: timeZoneIdentifier,
+            programID: programID
+        )
+        let calendar = calendar(for: timeZoneIdentifier)
+        var available = existingDays.enumerated().map {
+            (index: $0.offset, day: $0.element)
+        }
+        var synchronized: [AdminDayDraft] = []
+
+        for (targetIndex, template) in templates.enumerated() {
+            let targetDate = calendar.startOfDay(
+                for: template.scheduledDate
+            )
+            let matchIndex = available.firstIndex {
+                $0.index == targetIndex
+            } ?? available.firstIndex {
+                calendar.startOfDay(for: $0.day.scheduledDate)
+                    == targetDate
+            }
+
+            if let matchIndex {
+                var retained = available.remove(at: matchIndex).day
+                retained.dayNumber = targetIndex + 1
+                retained.scheduledDate = template.scheduledDate
+                synchronized.append(retained)
+            } else {
+                synchronized.append(template)
+            }
+        }
+
+        return AdminDayScheduleSync(
+            days: synchronized,
+            removedDays: available.map { $0.day }
+        )
+    }
+
     func normalized(_ draft: AdminProgramDraft) -> AdminProgramDraft {
         var result = draft
+        if result.durationMode == .fixedDuration {
+            let calendar = calendar(for: result.timeZoneIdentifier)
+            result.endDate = calendar.date(
+                byAdding: .day,
+                value: max(result.fixedDurationDays - 1, 0),
+                to: result.startDate
+            ) ?? result.endDate
+        }
         result.days = result.days
-            .sorted {
-                if $0.dayNumber == $1.dayNumber {
-                    return $0.scheduledDate < $1.scheduledDate
-                }
-                return $0.dayNumber < $1.dayNumber
-            }
             .enumerated()
             .map { dayIndex, day in
                 var updated = day
                 updated.dayNumber = dayIndex + 1
                 updated.steps = day.steps
-                    .sorted { $0.order < $1.order }
                     .enumerated()
                     .map { stepIndex, step in
                         var updatedStep = step
                         updatedStep.order = stepIndex + 1
+                        if updatedStep.contentKind == .video {
+                            updatedStep.mediaKind = .video
+                        }
+                        if updatedStep.contentKind == .quiz,
+                           updatedStep.quiz == nil {
+                            updatedStep.quiz = AdminQuizDraft(
+                                title: updatedStep.title,
+                                questions: []
+                            )
+                        }
+                        if var questionGroup = updatedStep.quiz {
+                            questionGroup.title = updatedStep.title
+                            questionGroup.questions = questionGroup.questions
+                                .enumerated()
+                                .map { questionIndex, question in
+                                    var updatedQuestion = question
+                                    updatedQuestion.order = questionIndex + 1
+                                    return updatedQuestion
+                                }
+                            updatedStep.quiz = questionGroup
+                        }
                         return updatedStep
                     }
                 return updated
@@ -176,16 +413,57 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
     }
 
     func childIdentifier(parent: UUID, discriminator: Int) -> UUID {
-        var bytes = parent.uuid
-        bytes.15 = UInt8(truncatingIfNeeded: discriminator)
-        bytes.14 = UInt8(truncatingIfNeeded: discriminator >> 8)
-        return UUID(uuid: bytes)
+        let parentBytes = withUnsafeBytes(of: parent.uuid) {
+            Array($0)
+        }
+        var input = parentBytes
+        var value = UInt64(bitPattern: Int64(discriminator))
+        for _ in 0..<8 {
+            input.append(UInt8(truncatingIfNeeded: value))
+            value >>= 8
+        }
+
+        let first = stableDigest(
+            input,
+            seed: 0xCBF2_9CE4_8422_2325
+        )
+        let second = stableDigest(
+            input.reversed(),
+            seed: 0x8422_2325_CBF2_9CE4
+        )
+        var bytes = withUnsafeBytes(of: first.bigEndian) {
+            Array($0)
+        }
+        bytes.append(
+            contentsOf: withUnsafeBytes(of: second.bigEndian) {
+                Array($0)
+            }
+        )
+        bytes[6] = (bytes[6] & 0x0F) | 0x50
+        bytes[8] = (bytes[8] & 0x3F) | 0x80
+        return UUID(
+            uuid: (
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5], bytes[6], bytes[7],
+                bytes[8], bytes[9], bytes[10], bytes[11],
+                bytes[12], bytes[13], bytes[14], bytes[15]
+            )
+        )
     }
 
     private func calendar(for identifier: String) -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: identifier) ?? .gmt
         return calendar
+    }
+
+    private func stableDigest<S: Sequence>(
+        _ bytes: S,
+        seed: UInt64
+    ) -> UInt64 where S.Element == UInt8 {
+        bytes.reduce(seed) { partialResult, byte in
+            (partialResult ^ UInt64(byte)) &* 0x0000_0100_0000_01B3
+        }
     }
 
     private func issue(
@@ -205,6 +483,17 @@ nonisolated struct CreateAdminProgramDraftUseCase: Sendable {
     func callAsFunction(adminID: UUID) async throws -> AdminProgramDraft {
         let now = clock.now()
         let id = identifierGenerator.makeIdentifier()
+        let firstDay = AdminDayDraft(
+            id: AdminProgramDraftValidator().childIdentifier(
+                parent: id,
+                discriminator: 1
+            ),
+            dayNumber: 1,
+            title: "Hari ke-1",
+            summary: "",
+            scheduledDate: now,
+            steps: []
+        )
         let draft = AdminProgramDraft(
             id: id,
             title: "Program baru",
@@ -223,7 +512,7 @@ nonisolated struct CreateAdminProgramDraftUseCase: Sendable {
             pastStepPolicy: .readOnly,
             futureStepPolicy: .locked,
             status: .draft,
-            days: [],
+            days: [firstDay],
             updatedAt: now
         )
         let saved = try await drafts.save(programDraft: draft)

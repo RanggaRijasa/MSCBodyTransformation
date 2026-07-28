@@ -4,6 +4,7 @@ import SwiftUI
 struct ParticipantHomeView: View {
     let store: ParticipantJourneyStore
     let router: ShellTabRouter
+    let onSelectTab: (ParticipantTab) -> Void
 
     var body: some View {
         if store.entryStage != .complete {
@@ -14,7 +15,7 @@ struct ParticipantHomeView: View {
                     profileCard(snapshot)
                     programSection(snapshot)
                     focusSection(snapshot)
-                    leaderboardSection(snapshot)
+                    leaderboardSection
                 }
                 .frame(maxWidth: 760)
                 .padding(.vertical, AppSpacing.small)
@@ -35,10 +36,7 @@ struct ParticipantHomeView: View {
         _ snapshot: ParticipantJourneySnapshot
     ) -> some View {
         Button {
-            router.navigate(
-                to: .participant(.profile),
-                in: .participant(.today)
-            )
+            onSelectTab(.profile)
         } label: {
             HStack(spacing: AppSpacing.medium) {
                 UserAvatar(
@@ -240,12 +238,11 @@ struct ParticipantHomeView: View {
     }
 
     @ViewBuilder
-    private func leaderboardSection(
-        _ snapshot: ParticipantJourneySnapshot
-    ) -> some View {
-        if store.currentEnrollment != nil {
+    private var leaderboardSection: some View {
+        if store.currentEnrollment != nil,
+           case .loaded(let leaderboardSnapshot) = store.leaderboardState {
             let entries = Array(
-                snapshot.leaderboard
+                leaderboardSnapshot.entries
                     .sorted {
                         if $0.rank == $1.rank {
                             return $0.participantDisplayName
@@ -258,14 +255,27 @@ struct ParticipantHomeView: View {
 
             if !entries.isEmpty {
                 VStack(alignment: .leading, spacing: AppSpacing.small) {
-                    ParticipantHomeSectionHeader(
-                        title: "participant.home.leaderboard.title",
-                        actionTitle: "participant.home.view_all"
+                    VStack(
+                        alignment: .leading,
+                        spacing: AppSpacing.xxSmall
                     ) {
-                        router.navigate(
-                            to: .participant(.leaderboard),
-                            in: .participant(.today)
+                        ParticipantHomeSectionHeader(
+                            title: "participant.home.leaderboard.title",
+                            actionTitle: "participant.home.view_all",
+                            actionAccessibilityIdentifier:
+                                "participant.home.leaderboard.view-all",
+                            action: {
+                                onSelectTab(.leaderboard)
+                            }
                         )
+
+                        Text(leaderboardSnapshot.program.title)
+                            .font(AppTypography.label.weight(.medium))
+                            .foregroundStyle(Color.appSecondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier(
+                                "participant.home.leaderboard.program-title"
+                            )
                     }
                     .padding(.horizontal, AppSpacing.medium)
 
@@ -449,15 +459,18 @@ struct ParticipantHomeView: View {
 private struct ParticipantHomeSectionHeader: View {
     let title: LocalizedStringKey
     let actionTitle: LocalizedStringKey?
+    let actionAccessibilityIdentifier: String?
     let action: (() -> Void)?
 
     init(
         title: LocalizedStringKey,
         actionTitle: LocalizedStringKey? = nil,
+        actionAccessibilityIdentifier: String? = nil,
         action: (() -> Void)? = nil
     ) {
         self.title = title
         self.actionTitle = actionTitle
+        self.actionAccessibilityIdentifier = actionAccessibilityIdentifier
         self.action = action
     }
 
@@ -482,6 +495,9 @@ private struct ParticipantHomeSectionHeader: View {
                     .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier(
+                    actionAccessibilityIdentifier ?? ""
+                )
             }
         }
     }
@@ -791,7 +807,11 @@ private struct ParticipantHomePreview: View {
 
     var body: some View {
         NavigationStack {
-            ParticipantHomeView(store: store, router: router)
+            ParticipantHomeView(
+                store: store,
+                router: router,
+                onSelectTab: { _ in }
+            )
                 .navigationTitle(Text("tab.participant.today"))
                 .task {
                     await store.load()
@@ -810,7 +830,11 @@ private struct ParticipantHomeEmptyPreview: View {
 
     var body: some View {
         NavigationStack {
-            ParticipantHomeView(store: store, router: router)
+            ParticipantHomeView(
+                store: store,
+                router: router,
+                onSelectTab: { _ in }
+            )
                 .navigationTitle(Text("tab.participant.today"))
                 .task {
                     await store.load()

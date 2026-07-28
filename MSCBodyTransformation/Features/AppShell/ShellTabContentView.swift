@@ -8,6 +8,7 @@ struct ShellTabContentView: View {
     let participantStore: ParticipantJourneyStore?
     let coachFeatures: CoachFeatureContainer?
     let adminFeatures: AdminFeatureContainer?
+    let onSelectTab: (AppTab) -> Void
     @State private var didRetryRepositoryError = false
 
     var body: some View {
@@ -95,7 +96,10 @@ struct ShellTabContentView: View {
                 tab: participantTab,
                 store: participantStore,
                 router: router,
-                showsOfflineBanner: showsOfflineBanner
+                showsOfflineBanner: showsOfflineBanner,
+                onSelectParticipantTab: { participantTab in
+                    onSelectTab(.participant(participantTab))
+                }
             )
         } else if case .coach(let coachTab) = tab,
                   let coachFeatures {

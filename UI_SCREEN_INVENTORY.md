@@ -14,7 +14,8 @@
   awal.
 - Detail langkah: petunjuk, gambar/video lokal, foto, jawaban, validasi.
 - Program: timeline hari serta state tersedia, read-only, terkunci, tersembunyi.
-- Papan peringkat: posisi sendiri, lima besar, ranking lengkap, pemenang final.
+- Papan peringkat: pemilih program aktif, podium tiga besar, posisi sendiri,
+  ranking lengkap, dan arsip hasil program selesai.
 - Coach: direktori dan detail publik.
 - Profil: identitas, riwayat program, pengaturan, dan alat Debug.
 
@@ -32,7 +33,19 @@
 
 - Ringkasan: metrik operasional, status skor, aksi, dan audit.
 - Program: pencarian, filter, draft, duplikasi, arsip, dan editor.
-- Editor tujuh tahap: dasar, tanggal, skor, hari, langkah, pratinjau, publikasi.
+- Ringkasan editor Program: Info program, Jadwal dan peserta, Aturan dan poin,
+  Konten, Pratinjau peserta, serta Tinjau dan publikasi.
+- Info Program: nama, kategori, deskripsi, cover gambar/video, dan teks
+  alternatif.
+- Jadwal Program: pola mandiri/terjadwal, durasi tetap/tanggal tertentu, zona
+  waktu, akses, kapasitas, serta jendela timbang.
+- Aturan Program: poin, pemeriksaan, akses hari, dan informasi wellness.
+- Perencana Konten: sinkronisasi jadwal non-destruktif dan daftar hari.
+- Editor Hari: informasi hari dan banyak langkah terurut.
+- Editor Langkah: Artikel, Video, atau Kuis; bukti, poin, dan banyak
+  pertanyaan pendamping.
+- Editor Pertanyaan: daftar dan detail jawaban singkat/panjang, angka, pilihan
+  tunggal/ganda/gambar, unggah file, judul bagian, dan teks penjelas.
 - Orang: peran, persetujuan Coach, visibilitas, dan pendaftaran manual.
 - Konten: disclaimer, banner pemenang, jadwal, urutan, publikasi, dan arsip.
 - Pemenang: ranking, penyesuaian, lock, peringatan perubahan, dan reset Debug.

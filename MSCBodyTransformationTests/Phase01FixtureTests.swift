@@ -11,10 +11,10 @@ struct Phase01FixtureTests {
         #expect(seed.users.count == 18)
         #expect(seed.participantProfiles.count == 12)
         #expect(seed.coachProfiles.filter(\.isPublic).count == 4)
-        #expect(seed.programs.count == 4)
-        #expect(seed.enrollments.count == 13)
+        #expect(seed.programs.count == 5)
+        #expect(seed.enrollments.count == 14)
         #expect(seed.enrollments.contains { $0.status == .completed })
-        #expect(seed.leaderboardEntries.count == 12)
+        #expect(seed.leaderboardEntries.count == 18)
         #expect(seed.managedContent.contains { $0.kind == .winnerBanner })
 
         let activeProgram = try #require(

@@ -300,6 +300,83 @@ struct Phase07LocalScoringTests {
         #expect(try await repository.winners(programID: programID).isEmpty)
     }
 
+    @MainActor
+    @Test("Pilihan peringkat hanya memuat program yang diikuti peserta")
+    func participantLeaderboardProgramSelection() async throws {
+        let store = ParticipantJourneyStore(environment: .preview)
+
+        await store.load()
+
+        #expect(store.activeLeaderboardPrograms.map(\.title) == [
+            "Gerak konsisten 3 hari",
+            "Transformasi 7 hari"
+        ])
+        #expect(store.archivedLeaderboardPrograms.map(\.title) == [
+            "Konsisten Juni"
+        ])
+        let currentProgram = try #require(store.snapshot?.activeProgram)
+        #expect(store.selectedLeaderboardProgramID == currentProgram.id)
+
+        let otherProgram = try #require(
+            store.activeLeaderboardPrograms.first {
+                $0.id != currentProgram.id
+            }
+        )
+        await store.selectLeaderboardProgram(otherProgram.id)
+
+        guard case .loaded(let snapshot) = store.leaderboardState else {
+            Issue.record("Peringkat program kedua tidak berhasil dimuat.")
+            return
+        }
+        #expect(snapshot.program.id == otherProgram.id)
+        #expect(!snapshot.entries.isEmpty)
+    }
+
+    @MainActor
+    @Test("Riwayat peringkat memuat snapshot pemenang program selesai")
+    func participantLeaderboardArchiveSelection() async throws {
+        let store = ParticipantJourneyStore(environment: .preview)
+        await store.load()
+        let archivedProgram = try #require(
+            store.archivedLeaderboardPrograms.first
+        )
+
+        await store.selectLeaderboardProgram(archivedProgram.id)
+
+        guard case .loaded(let snapshot) = store.leaderboardState else {
+            Issue.record("Snapshot peringkat riwayat tidak berhasil dimuat.")
+            return
+        }
+        #expect(snapshot.program.id == archivedProgram.id)
+        #expect(snapshot.winners.count == 5)
+        #expect(snapshot.winners.first?.rank == 1)
+        #expect(store.selectedLeaderboardProgramID == archivedProgram.id)
+    }
+
+    @Test("Rentang tanggal peringkat mengikuti durasi hari program")
+    func participantLeaderboardProgramDateRange() throws {
+        let activeProgram = try #require(
+            try MockSeedData.load().programs.first {
+                $0.status == .active
+            }
+        )
+
+        #expect(
+            ParticipantLeaderboardFormatting.range(activeProgram)
+                == "24 Jul 2026 – 30 Jul 2026"
+        )
+    }
+
+    @Test("Poin lima digit memakai pemisah ribuan Indonesia")
+    func participantLeaderboardFiveDigitPoints() {
+        #expect(
+            ParticipantLeaderboardFormatting.points(12_350) == "12.350"
+        )
+        #expect(
+            ParticipantLeaderboardFormatting.points(98_765) == "98.765"
+        )
+    }
+
     @Test("Resolver hari memakai timezone program bukan timezone perangkat")
     func programTimezoneDiffersFromDevice() throws {
         let scheduled = try date("2026-01-02T10:00:00Z")

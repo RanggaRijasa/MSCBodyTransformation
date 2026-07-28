@@ -120,8 +120,11 @@ transaksi atau prompt App Store.
 
 Admin dapat melihat ringkasan operasional dan audit lokal, mencari serta
 memfilter program, membuat dan menduplikasi draft, menyusun program melalui
-editor tujuh tahap, mem-preview pengalaman peserta, dan mensimulasikan
-publish. Tab Orang mendukung persetujuan Coach, visibilitas profil,
+ringkasan non-linear, lalu mengelola hierarki Program → Hari → Langkah →
+Pertanyaan. Sinkronisasi jadwal mempertahankan konten dan meminta konfirmasi
+sebelum memangkas hari berisi konten. Admin dapat mem-preview pengalaman
+peserta dan mensimulasikan publish. Tab Orang mendukung persetujuan Coach,
+visibilitas profil,
 enrollment manual beralasan, serta penyesuaian poin beralasan. Tab Konten
 menyediakan banner pemenang, jadwal visibilitas, pengarsipan, dan snapshot
 lima pemenang yang deterministik.
@@ -158,6 +161,10 @@ selesai, lalu UUID enrollment. Participant, Coach, dan Admin membaca hasil
 repository yang dihitung melalui service yang sama. Snapshot pemenang tetap
 immutable setelah dikunci; perubahan skor berikutnya menampilkan peringatan
 dan reset hanya tersedia pada build Debug.
+
+Papan peringkat Peserta memprioritaskan program aktif yang benar-benar
+diikuti, menyediakan pemilih ketika lebih dari satu program berjalan, serta
+menempatkan hasil program selesai pada sheet Riwayat yang terpisah.
 
 ## Accessibility, reliability, dan demo Phase 08
 

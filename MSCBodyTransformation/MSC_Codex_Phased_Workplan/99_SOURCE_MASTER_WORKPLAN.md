@@ -339,8 +339,8 @@ Every required step must have at least one photo evidence upload before completi
 1. Log in with an admin account.
 2. Create a draft program.
 3. Configure dates, timezone, scoring, and visibility.
-4. Add program days and ordered steps.
-5. Add descriptions, points, images, and videos.
+4. Build the hierarchy Program → Days → Ordered Steps → Ordered Questions.
+5. Add descriptions, points, images, videos, and optional step questions.
 6. Preview the participant experience.
 7. Publish the program.
 8. Assign or allow coaches.
@@ -1269,15 +1269,19 @@ https://app.example.com/join/{opaque_token}
 
 ### 14.1 Program Editor
 
-Use a staged flow:
+Use a non-linear native summary with focused destinations:
 
-1. Basics.
-2. Dates and timezone.
-3. Scoring and visibility.
-4. Days.
-5. Steps and media.
-6. Preview.
-7. Publish.
+1. Program information.
+2. Schedule and participants.
+3. Rules and scoring.
+4. Content.
+5. Participant preview.
+6. Review and publish.
+
+Content uses the hierarchy Program → Days → Steps → Questions. Each program
+supports many days, each day supports many ordered steps, and each step can
+contain many ordered questions. Schedule synchronization must preserve
+existing content and require confirmation before removing populated days.
 
 Support drafts and autosave explicit state, but do not publish automatically.
 
@@ -1922,4 +1926,3 @@ Add concise dated entries below as Codex completes meaningful slices.
 ```text
 YYYY-MM-DD — Phase X — Summary — Build/test result
 ```
-

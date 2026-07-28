@@ -36,7 +36,8 @@ struct RoleAppShellView: View {
                         router: router,
                         participantStore: participantStore,
                         coachFeatures: coachFeatures,
-                        adminFeatures: adminFeatures
+                        adminFeatures: adminFeatures,
+                        onSelectTab: selectTab
                     )
                     .navigationDestination(for: ShellRoute.self) { route in
                         ShellRouteDestinationView(
@@ -46,6 +47,7 @@ struct RoleAppShellView: View {
                             coachFeatures: coachFeatures,
                             adminFeatures: adminFeatures
                         )
+                        .singlePressNavigationBackButton()
                     }
                 }
                 .tabItem {
@@ -100,6 +102,14 @@ struct RoleAppShellView: View {
             to: .participant(.localInvite(code)),
             in: todayTab
         )
+    }
+
+    private func selectTab(_ tab: AppTab) {
+        guard tabs.contains(tab) else {
+            router.presentedAlert = .unavailableRoute
+            return
+        }
+        selectedTab = tab
     }
 
     private func prepareFeatureStateIfNeeded() async {

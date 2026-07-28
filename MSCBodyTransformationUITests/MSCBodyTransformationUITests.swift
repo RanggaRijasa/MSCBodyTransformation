@@ -42,6 +42,132 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testParticipantHomeViewAllSelectsLeaderboardTab() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "participant",
+            "-DemoScenario", "participant_active",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            element(identifier: "participant.home", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let leaderboardTab = tabButton(label: "Peringkat", in: app)
+        leaderboardTab.tap()
+        XCTAssertTrue(
+            element(identifier: "participant.leaderboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let selector = app.buttons[
+            "participant.leaderboard.program-selector"
+        ]
+        XCTAssertTrue(selector.waitForExistence(timeout: 5))
+        selector.tap()
+
+        let alternateProgram = app.buttons[
+            "participant.leaderboard.program."
+                + "10000000-0000-0000-0000-000000000005"
+        ]
+        XCTAssertTrue(alternateProgram.waitForExistence(timeout: 5))
+        alternateProgram.tap()
+        XCTAssertTrue(
+            element(identifier: "participant.leaderboard.podium", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let homeTab = tabButton(label: "Home", in: app)
+        homeTab.tap()
+        XCTAssertTrue(
+            element(identifier: "participant.home", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let programTitle = app.staticTexts[
+            "participant.home.leaderboard.program-title"
+        ]
+        XCTAssertTrue(programTitle.waitForExistence(timeout: 5))
+        XCTAssertEqual(programTitle.label, "Gerak konsisten 3 hari")
+
+        let viewAll = app.buttons[
+            "participant.home.leaderboard.view-all"
+        ]
+        for _ in 0..<4
+        where !viewAll.waitForExistence(timeout: 1) || !viewAll.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(viewAll.waitForExistence(timeout: 5))
+        XCTAssertTrue(viewAll.isHittable)
+        viewAll.tap()
+
+        XCTAssertTrue(
+            element(identifier: "participant.leaderboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(leaderboardTab.isSelected)
+        XCTAssertTrue(
+            app.buttons["participant.leaderboard.program-selector"]
+                .label
+                .contains("Gerak konsisten 3 hari")
+        )
+        XCTAssertFalse(
+            app.navigationBars["Peringkat"].buttons["BackButton"].exists
+        )
+    }
+
+    @MainActor
+    func testParticipantHomeProfileCardSelectsProfileTab() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "participant",
+            "-DemoScenario", "participant_active",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            element(identifier: "participant.home", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let profileCard = app.buttons["participant.home.profile"]
+        XCTAssertTrue(profileCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(profileCard.isHittable)
+        profileCard.tap()
+
+        XCTAssertTrue(
+            element(identifier: "participant.profile", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(tabButton(label: "Profil", in: app).isSelected)
+        XCTAssertFalse(
+            app.navigationBars["Profil"].buttons["BackButton"].exists
+        )
+
+        let privacyLink = app.buttons[
+            "participant.profile.legal.privacy"
+        ]
+        XCTAssertTrue(privacyLink.waitForExistence(timeout: 5))
+        privacyLink.tap()
+
+        let legalBackButton = app.buttons["navigation.back"]
+        XCTAssertTrue(legalBackButton.waitForExistence(timeout: 5))
+        legalBackButton.tap()
+        XCTAssertTrue(
+            element(identifier: "participant.profile", in: app)
+                .waitForExistence(timeout: 5)
+        )
+    }
+
+    @MainActor
     func testParticipantSelectsProgramBeforeOpeningDetail() throws {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -101,7 +227,9 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "participant.join.preview.result", in: app)
                 .waitForExistence(timeout: 8)
         )
-        app.navigationBars["Gabung program"].buttons["BackButton"].tap()
+        let joinBackButton = app.buttons["navigation.back"]
+        XCTAssertTrue(joinBackButton.waitForExistence(timeout: 5))
+        joinBackButton.tap()
 
         let activeProgram = app.buttons[
             "participant.program.select."
@@ -117,6 +245,30 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertTrue(
             app.navigationBars["Transformasi 7 hari"].exists
         )
+
+        for pressDuration in [0.15, 0.35, 1.0] {
+            let detailBackButton = app.buttons["navigation.back"]
+            XCTAssertTrue(detailBackButton.waitForExistence(timeout: 5))
+            detailBackButton.press(forDuration: pressDuration)
+            XCTAssertFalse(app.menus.firstMatch.exists)
+            XCTAssertTrue(
+                element(identifier: "participant.program.catalog", in: app)
+                    .waitForExistence(timeout: 5)
+            )
+
+            if pressDuration != 1 {
+                let program = app.buttons[
+                    "participant.program.select."
+                        + "10000000-0000-0000-0000-000000000001"
+                ]
+                XCTAssertTrue(program.waitForExistence(timeout: 5))
+                program.tap()
+                XCTAssertTrue(
+                    element(identifier: "participant.program.detail", in: app)
+                        .waitForExistence(timeout: 5)
+                )
+            }
+        }
     }
 
     @MainActor
@@ -471,19 +623,25 @@ final class MSCBodyTransformationUITests: XCTestCase {
         )
         app.buttons["admin.program.create"].tap()
         XCTAssertTrue(
-            element(identifier: "admin.editor.stage", in: app)
+            element(
+                identifier: "admin.program.editor.overview",
+                in: app
+            )
                 .waitForExistence(timeout: 8)
         )
 
-        selectAdminEditorStage("2. Tanggal", in: app)
-        let generate = app.buttons["admin.editor.generate-days"]
-        if !generate.waitForExistence(timeout: 3) || !generate.isHittable {
-            app.swipeUp()
-        }
-        XCTAssertTrue(generate.waitForExistence(timeout: 5))
-        generate.tap()
-
-        selectAdminEditorStage("5. Langkah", in: app)
+        app.buttons["admin.program.editor.open.content"].tap()
+        XCTAssertTrue(
+            app.buttons["navigation.back"].waitForExistence(timeout: 5)
+        )
+        let firstDay = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.day.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(firstDay.waitForExistence(timeout: 5))
+        firstDay.tap()
         let addStep = app.buttons.matching(
             NSPredicate(
                 format: "identifier BEGINSWITH %@",
@@ -492,20 +650,41 @@ final class MSCBodyTransformationUITests: XCTestCase {
         ).firstMatch
         XCTAssertTrue(addStep.waitForExistence(timeout: 5))
         addStep.tap()
+        let article = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", "Artikel")
+        ).firstMatch
+        XCTAssertTrue(article.waitForExistence(timeout: 5))
+        article.tap()
+        let createdStep = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.step.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(createdStep.waitForExistence(timeout: 5))
 
-        selectAdminEditorStage("6. Pratinjau", in: app)
+        app.buttons["navigation.back"].tap()
+        app.buttons["navigation.back"].tap()
+
+        app.buttons["admin.program.editor.open.preview"].tap()
         XCTAssertTrue(
             element(identifier: "admin.editor.preview", in: app)
                 .waitForExistence(timeout: 5)
         )
+        app.buttons["navigation.back"].tap()
 
-        selectAdminEditorStage("7. Publikasi", in: app)
+        app.buttons["admin.program.editor.open.publish"].tap()
         let publish = app.buttons["admin.editor.publish"]
         if !publish.waitForExistence(timeout: 3) || !publish.isHittable {
             app.swipeUp()
         }
         XCTAssertTrue(publish.waitForExistence(timeout: 5))
-        XCTAssertTrue(publish.isEnabled)
+        XCTAssertTrue(
+            publish.isEnabled,
+            app.staticTexts.allElementsBoundByIndex
+                .map(\.label)
+                .joined(separator: " | ")
+        )
         publish.tap()
         XCTAssertTrue(
             app.buttons["Publikasi demo selesai"]
@@ -680,6 +859,107 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testParticipantOpensArchivedLeaderboard() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "participant",
+            "-DemoScenario", "participant_active",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        tabButton(label: "Peringkat", in: app).tap()
+        XCTAssertTrue(
+            element(identifier: "participant.leaderboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            element(
+                identifier: "participant.leaderboard.program-selector",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+        let initialSelector = app.buttons[
+            "participant.leaderboard.program-selector"
+        ]
+        XCTAssertTrue(initialSelector.waitForExistence(timeout: 5))
+        initialSelector.tap()
+        XCTAssertTrue(
+            app.navigationBars["Pilih program"].waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons[
+                "participant.leaderboard.program."
+                    + "10000000-0000-0000-0000-000000000005"
+            ]
+            .waitForExistence(timeout: 5)
+        )
+        let firstActiveProgram = app.buttons[
+            "participant.leaderboard.program."
+                + "10000000-0000-0000-0000-000000000001"
+        ]
+        XCTAssertTrue(firstActiveProgram.waitForExistence(timeout: 5))
+        firstActiveProgram.tap()
+        XCTAssertTrue(
+            element(
+                identifier: "participant.leaderboard.podium",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+
+        let archive = element(
+            identifier: "participant.leaderboard.archive",
+            in: app
+        )
+        XCTAssertTrue(archive.waitForExistence(timeout: 5))
+        archive.tap()
+        XCTAssertTrue(
+            app.navigationBars["Riwayat peringkat"]
+                .waitForExistence(timeout: 5)
+        )
+
+        let completedProgram = element(
+            identifier:
+                "participant.leaderboard.archive."
+                + "10000000-0000-0000-0000-000000000004",
+            in: app
+        )
+        XCTAssertTrue(completedProgram.waitForExistence(timeout: 5))
+        completedProgram.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["Hasil akhir"].waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            app.staticTexts["Konsisten Juni"].waitForExistence(timeout: 5)
+        )
+
+        let programSelector = app.buttons[
+            "participant.leaderboard.program-selector"
+        ]
+        XCTAssertTrue(programSelector.waitForExistence(timeout: 5))
+        programSelector.tap()
+        XCTAssertTrue(
+            app.navigationBars["Pilih program"].waitForExistence(timeout: 5)
+        )
+
+        let activeProgram = app.buttons[
+            "participant.leaderboard.program."
+                + "10000000-0000-0000-0000-000000000001"
+        ]
+        XCTAssertTrue(activeProgram.waitForExistence(timeout: 5))
+        activeProgram.tap()
+        XCTAssertTrue(
+            app.staticTexts["Peringkat sementara"]
+                .waitForExistence(timeout: 8)
+        )
+    }
+
+    @MainActor
     func testLargestAccessibilitySizeKeepsTodayNavigable() throws {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -799,22 +1079,6 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 .waitForExistence(timeout: 8)
         )
         return app
-    }
-
-    @MainActor
-    private func selectAdminEditorStage(
-        _ stage: String,
-        in app: XCUIApplication
-    ) {
-        let picker = element(identifier: "admin.editor.stage", in: app)
-        XCTAssertTrue(
-            picker.waitForExistence(timeout: 5),
-            "Menu tahap tidak ditemukan sebelum memilih \(stage)."
-        )
-        picker.tap()
-        let option = app.buttons[stage]
-        XCTAssertTrue(option.waitForExistence(timeout: 5))
-        option.tap()
     }
 
     @MainActor

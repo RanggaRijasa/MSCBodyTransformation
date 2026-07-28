@@ -38,28 +38,47 @@ Media menggunakan local references. Publish hanya mengubah status mock.
 - [x] Empty states.
 - [x] Error and loading simulations.
 
-## Staged program editor
+## Program editor
 
-Gunakan staged flow:
+Gunakan ringkasan non-linear berbasis `List` dan `NavigationLink`:
 
-1. Basics
-2. Dates and timezone
-3. Scoring and visibility
-4. Days
-5. Steps and media
-6. Participant preview
-7. Publish validation
+1. Info program.
+2. Jadwal dan peserta.
+3. Aturan dan poin.
+4. Konten.
+5. Pratinjau peserta.
+6. Tinjau dan publikasi.
+
+Susunan konten mengikuti hierarki:
+
+```text
+Program
+└── Hari program (1...N)
+    └── Langkah (0...N)
+        └── Pertanyaan (0...N)
+```
+
+Identitas dan cover hanya diedit di Info program. Tanggal, zona waktu, akses,
+dan kapasitas hanya diedit di Jadwal dan peserta. Pemeriksaan, wellness,
+kebijakan hari, dan poin hanya diedit di Aturan dan poin. Pratinjau serta
+publikasi bersifat read-only.
 
 ### Basics
 
 - [x] Name.
 - [x] Description.
+- [x] Category.
 - [x] Cover image local reference.
+- [x] Cover image or video type.
+- [x] Cover alternative text.
 - [x] Verification mode.
 - [x] Wellness disclaimer reference.
 
 ### Dates and timezone
 
+- [x] Self-paced or scheduled pace.
+- [x] Fixed duration or specific dates.
+- [x] Fixed duration day count.
 - [x] Start date.
 - [x] End date.
 - [x] IANA timezone selection.
@@ -70,6 +89,8 @@ Gunakan staged flow:
 
 ### Scoring and visibility
 
+- [x] Public, approval-required, or invite-only access.
+- [x] Unlimited or limited participant capacity.
 - [x] Weight points per kg.
 - [x] Past step policy.
 - [x] Future step policy.
@@ -80,6 +101,8 @@ Gunakan staged flow:
 ### Days
 
 - [x] Generate days from date range.
+- [x] Sinkronisasi jadwal mempertahankan hari dan konten yang sudah dibuat.
+- [x] Pemangkasan hari berisi konten memerlukan konfirmasi.
 - [x] Day list.
 - [x] Add, remove, and reorder when allowed.
 - [x] Day title and description.
@@ -90,8 +113,9 @@ Gunakan staged flow:
 ### Steps
 
 - [x] Ordered steps.
-- [x] Add step.
+- [x] Add article, video, or quiz step.
 - [x] Edit step.
+- [x] Duplicate step.
 - [x] Delete draft step.
 - [x] Reorder.
 - [x] Title.
@@ -101,6 +125,12 @@ Gunakan staged flow:
 - [x] Requires text answer.
 - [x] Required or optional.
 - [x] Image/video local media.
+- [x] Video required-to-watch and autoplay settings.
+- [x] Judul langkah menjadi judul tunggal untuk Kuis dan pertanyaan terurut.
+- [x] Setiap jenis langkah dapat memiliki pertanyaan pendamping terurut.
+- [x] Short answer, long answer, number, single choice, multiple choice,
+      image choice, and file upload question types.
+- [x] Heading and text layout elements.
 - [x] Participant-facing preview.
 - [x] Validation for non-negative points.
 
@@ -184,6 +214,10 @@ Jangan menambahkan SwiftData hanya untuk sementara bila persistence tidak dibutu
 - [x] Score adjustment reason.
 - [x] Winner lock determinism.
 - [x] Managed content visibility.
+- [x] ID langkah unik pada program multi-hari.
+- [x] Sinkronisasi jadwal mempertahankan langkah dan pertanyaan.
+- [x] Pemendekan jadwal melaporkan konten yang akan dihapus.
+- [x] Reorder hari, langkah, dan pertanyaan tersimpan.
 
 ### UI tests
 
@@ -252,3 +286,56 @@ Jangan:
 - Remaining blockers: tidak ada blocker lokal. Upload media, backend/RLS,
   scoring server-authoritative, dan autentikasi production tetap ditunda ke
   phase yang ditetapkan.
+
+#### 2026-07-27 — perluasan setting dan konten Program
+
+- Files changed: model draft Admin; validator dan normalisasi jadwal;
+  state/editor Program; editor konten langkah dan kuis; presentasi label Admin;
+  unit/UI test; inventaris layar, glosarium, serta checklist backend.
+- Assumptions: referensi cover dan video tetap lokal pada Track A; pola
+  mandiri memakai tanggal acuan untuk demo; akses, kapasitas, serta pertanyaan
+  kuis tersimpan di draft Admin dan harus dipetakan secara authoritative oleh
+  adapter Phase 11 sebelum produksi.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 iOS 26.5 dengan
+  peran Admin dan skenario `admin_draft_editor`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase05AdminCMSTests` dan UI flow
+  `testAdminCreatesDraftAddsDayStepPreviewsAndPublishes`.
+- Result: build lulus tanpa warning atau error; 12 unit test Phase 05 dan satu
+  UI test alur pembuatan draft sampai publish lulus. Runtime inspection
+  mengonfirmasi form dasar, pola/durasi, akses/kapasitas, dan pemilihan konten
+  tampil sebagai kontrol native yang sesuai untuk iPhone.
+- Remaining blockers: upload cover/video server, approval akses, enforcement
+  kapasitas, dan penyimpanan respons kuis tetap ditunda ke Phase 11. Item
+  Phase 08 berikutnya tetap profiling scrolling Participant Home.
+
+#### 2026-07-27 — penyederhanaan alur editor Program
+
+- Files changed: ringkasan editor Program; form Info, Jadwal dan peserta,
+  serta Aturan dan poin; perencana Konten; editor Hari, Langkah, daftar
+  Pertanyaan, dan detail Pertanyaan; state editor; validator hierarki dan ID;
+  localization catalog; unit/UI test; README, inventaris layar, glosarium,
+  checklist adapter, serta master workplan.
+- Assumptions: pertanyaan menjadi anak Langkah dan dapat dipakai oleh Artikel,
+  Video, maupun Kuis; Kuis tetap mewajibkan minimal satu pertanyaan.
+  Penyimpanan respons peserta dan model backend authoritative tetap ditunda
+  ke fase integrasi yang ditetapkan. Tidak ada Supabase, networking, package,
+  atau perubahan `project.pbxproj`.
+- Build command: XcodeBuildMCP `build_sim(extraArgs:
+  ["SWIFT_VERSION=6", "SWIFT_STRICT_CONCURRENCY=complete",
+  "IPHONEOS_DEPLOYMENT_TARGET=17.0"])` pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk 18
+  `Phase05AdminCMSTests`, seluruh target `MSCBodyTransformationTests`
+  (93 test), dan focused UI test
+  `testAdminCreatesDraftAddsDayStepPreviewsAndPublishes`.
+- Result: build lulus tanpa warning/error; 18 test Phase 05, seluruh 93 unit
+  test, dan journey UI draft → Hari → Langkah → pratinjau → publikasi lulus.
+  Test juga memverifikasi program 5 hari dengan 15 langkah dan 60 pertanyaan,
+  ID unik antarhari, sinkronisasi non-destruktif, serta reorder. Percobaan
+  seluruh scheme melewati timeout alat setelah test build karena simulator
+  berulang kali melaporkan `DebuggerVersionStore` tanpa versi debugger;
+  focused UI test terkait tetap lulus saat dijalankan terpisah.
+- Remaining blockers: representasi respons pertanyaan pada Program peserta,
+  upload media server, enforcement akses/kapasitas, dan persistence backend
+  tetap untuk Phase 11. Item Phase 08 berikutnya tetap profiling scrolling
+  Participant Home.

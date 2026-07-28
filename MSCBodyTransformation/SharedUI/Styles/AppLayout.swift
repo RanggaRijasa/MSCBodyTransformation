@@ -16,3 +16,7 @@ enum AppRadius {
     static let large: CGFloat = 16
     static let prominent: CGFloat = 24
 }
+
+enum AppControlMetrics {
+    static let minimumTouchTarget: CGFloat = 44
+}

@@ -3,243 +3,501 @@ import SwiftUI
 @MainActor
 struct ParticipantLeaderboardView: View {
     let store: ParticipantJourneyStore
+
     @Environment(\.accessibilityReduceMotion)
     private var accessibilityReduceMotion
+    @State private var presentedSheet: PresentedSheet?
 
     var body: some View {
-        if store.currentEnrollment != nil,
-           let snapshot = store.snapshot,
-           !snapshot.leaderboard.isEmpty {
-            List {
-                statusSection
-                currentUserSection
-                topFiveSection(snapshot.leaderboard)
-                fullRankingSection(snapshot.leaderboard)
+        Group {
+            if availablePrograms.isEmpty {
+                emptyState
+            } else {
+                leaderboardContent
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .background(Color.appBackground)
-            .animation(
-                accessibilityReduceMotion
-                    ? nil
-                    : .easeInOut(duration: 0.25),
-                value: snapshot.leaderboard
-            )
-            .accessibilityIdentifier("participant.leaderboard")
-        } else {
-            EmptyStateView(
-                title: "participant.leaderboard.empty.title",
-                message: "participant.leaderboard.empty.message",
-                systemImage: "trophy"
-            )
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)
+        .task {
+            await store.prepareLeaderboardSelection()
+        }
+        .sheet(item: $presentedSheet) { sheet in
+            switch sheet {
+            case .activePrograms:
+                ParticipantLeaderboardProgramPickerView(store: store)
+            case .archive:
+                ParticipantLeaderboardArchiveView(store: store)
+            }
         }
     }
 
-    private var statusSection: some View {
-        Section {
-            if store.showsFinalLeaderboard || !store.snapshotWinners.isEmpty {
-                StatusBadge(
-                    title: "participant.leaderboard.final",
-                    kind: .success
-                )
-                if let banner = store.winnerBanner {
-                    Label {
-                        VStack(alignment: .leading) {
-                            Text(banner.title)
-                                .font(AppTypography.cardTitle)
-                            Text(banner.body)
-                                .font(AppTypography.secondary)
+    private var availablePrograms: [Program] {
+        store.activeLeaderboardPrograms + store.archivedLeaderboardPrograms
+    }
+
+    private var selectedProgram: Program? {
+        store.selectedLeaderboardProgram
+            ?? store.activeLeaderboardPrograms.first
+            ?? store.archivedLeaderboardPrograms.first
+    }
+
+    private var leaderboardContent: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: AppSpacing.large) {
+                programSelection
+
+                switch store.leaderboardState {
+                case .idle, .loading:
+                    LoadingStateView()
+                        .frame(maxWidth: .infinity, minHeight: 280)
+                case .failed(let error):
+                    ErrorStateView(error: error) {
+                        Task {
+                            await store.retryLeaderboardSelection()
                         }
-                    } icon: {
-                        Image(systemName: "trophy.fill")
-                            .foregroundStyle(Color.brandAccent)
                     }
+                    .frame(maxWidth: .infinity, minHeight: 280)
+                case .loaded(let snapshot):
+                    ranking(snapshot)
                 }
-            } else {
-                StatusBadge(
-                    title: "participant.leaderboard.provisional",
-                    kind: .information
-                )
-                Text("participant.local_score_notice")
-                    .font(AppTypography.secondary)
-                    .foregroundStyle(Color.appSecondaryText)
             }
-            Label(
-                "Nama pada papan peringkat adalah nama tampilan publik. "
-                    + "Nilai berat badan tidak ditampilkan.",
-                systemImage: "hand.raised.fill"
-            )
-            .font(AppTypography.secondary)
-            .foregroundStyle(Color.appSecondaryText)
+            .frame(maxWidth: 720)
+            .padding(.horizontal, AppSpacing.medium)
+            .padding(.vertical, AppSpacing.small)
+            .frame(maxWidth: .infinity)
+        }
+        .animation(
+            accessibilityReduceMotion ? nil : .easeInOut(duration: 0.25),
+            value: store.leaderboardState
+        )
+        .accessibilityIdentifier("participant.leaderboard")
+    }
+
+    private var programSelection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            programSelector
+
+            HStack(spacing: AppSpacing.small) {
+                if let selectedProgram {
+                    StatusBadge(
+                        title: selectedProgram.isLeaderboardArchive
+                            ? "Selesai"
+                            : "Berlangsung",
+                        kind: selectedProgram.isLeaderboardArchive
+                            ? .success
+                            : .information
+                    )
+                }
+
+                Spacer()
+
+                if !store.archivedLeaderboardPrograms.isEmpty {
+                    Button {
+                        presentedSheet = .archive
+                    } label: {
+                        Label("Riwayat", systemImage: "clock.arrow.circlepath")
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier(
+                        "participant.leaderboard.archive"
+                    )
+                }
+            }
         }
     }
 
     @ViewBuilder
-    private var currentUserSection: some View {
-        if let entry = store.currentLeaderboardEntry {
-            Section {
-                VStack(alignment: .leading, spacing: AppSpacing.medium) {
-                    HStack(spacing: AppSpacing.medium) {
-                        RankBadge(rank: entry.rank)
-                        VStack(alignment: .leading) {
-                            Text(entry.participantDisplayName)
-                                .font(AppTypography.cardTitle)
-                            Text("participant.leaderboard.current_user")
-                                .font(AppTypography.label)
-                                .foregroundStyle(Color.appSecondaryText)
+    private var programSelector: some View {
+        if canChooseActiveProgram {
+            Button {
+                presentedSheet = .activePrograms
+            } label: {
+                ParticipantLeaderboardProgramSelector(
+                    program: selectedProgram,
+                    showsSelectionControl: true
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(
+                Text("Pilih program aktif yang ingin dilihat.")
+            )
+            .accessibilityIdentifier(
+                "participant.leaderboard.program-selector"
+            )
+        } else {
+            ParticipantLeaderboardProgramSelector(
+                program: selectedProgram,
+                showsSelectionControl: false
+            )
+            .accessibilityIdentifier(
+                "participant.leaderboard.program-selector"
+            )
+        }
+    }
+
+    private var canChooseActiveProgram: Bool {
+        guard !store.activeLeaderboardPrograms.isEmpty else {
+            return false
+        }
+        return store.activeLeaderboardPrograms.count > 1
+            || selectedProgram?.isLeaderboardArchive == true
+    }
+
+    @ViewBuilder
+    private func ranking(
+        _ snapshot: ParticipantLeaderboardProgramSnapshot
+    ) -> some View {
+        let isFinal =
+            store.showsFinalLeaderboard
+            || snapshot.program.isLeaderboardArchive
+            || !snapshot.winners.isEmpty
+        let entries = displayEntries(
+            snapshot: snapshot,
+            isFinal: isFinal
+        )
+
+        if entries.isEmpty {
+            ContentUnavailableView(
+                "Peringkat belum tersedia",
+                systemImage: "trophy",
+                description: Text(
+                    isFinal
+                        ? "Hasil akhir belum dikunci untuk program ini."
+                        : "Peringkat akan muncul setelah poin peserta tersedia."
+                )
+            )
+            .frame(maxWidth: .infinity, minHeight: 320)
+        } else {
+            rankingStatus(isFinal: isFinal)
+
+            ParticipantLeaderboardPodium(
+                entries: Array(entries.prefix(3))
+            )
+
+            if let currentUser = entries.first(where: \.isCurrentUser),
+               currentUser.rank > 3 {
+                VStack(alignment: .leading, spacing: AppSpacing.small) {
+                    Text("Peringkatmu")
+                        .font(AppTypography.sectionTitle)
+                    ParticipantLeaderboardCurrentRankCard(
+                        entry: currentUser
+                    )
+                }
+            }
+
+            let remainingEntries = entries.filter {
+                $0.rank > 3 && !$0.isCurrentUser
+            }
+            if !remainingEntries.isEmpty {
+                VStack(alignment: .leading, spacing: AppSpacing.small) {
+                    Text("Peringkat lainnya")
+                        .font(AppTypography.sectionTitle)
+
+                    LazyVStack(spacing: AppSpacing.small) {
+                        ForEach(remainingEntries) { entry in
+                            ParticipantLeaderboardRankRow(entry: entry)
                         }
                     }
-
-                    scoreBreakdown(entry.score)
                 }
-                .padding(AppSpacing.medium)
-                .background(
-                    Color.brandPrimary.opacity(0.08),
-                    in: RoundedRectangle(
-                        cornerRadius: AppRadius.large,
-                        style: .continuous
-                    )
-                )
-                .overlay {
-                    RoundedRectangle(
-                        cornerRadius: AppRadius.large,
-                        style: .continuous
-                    )
-                    .stroke(Color.brandPrimary, lineWidth: 2)
-                }
-            } header: {
-                Text("participant.leaderboard.your_rank")
             }
+
+            privacyNotice(isFinal: isFinal)
         }
     }
 
-    private func topFiveSection(
-        _ entries: [LeaderboardEntry]
-    ) -> some View {
-        Section {
-            ForEach(Array(entries.prefix(5))) { entry in
-                leaderboardRow(entry, isEmphasized: true)
-            }
-        } header: {
-            Text("participant.leaderboard.top_five")
-        }
-    }
-
-    private func fullRankingSection(
-        _ entries: [LeaderboardEntry]
-    ) -> some View {
-        Section {
-            ForEach(entries) { entry in
-                leaderboardRow(entry, isEmphasized: false)
-            }
-        } header: {
-            Text("participant.leaderboard.full_ranking")
-        }
-    }
-
-    private func leaderboardRow(
-        _ entry: LeaderboardEntry,
-        isEmphasized: Bool
-    ) -> some View {
-        HStack(spacing: AppSpacing.medium) {
-            RankBadge(rank: entry.rank)
-            UserAvatar(displayName: entry.participantDisplayName)
-            VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                Text(entry.participantDisplayName)
-                    .font(AppTypography.cardTitle)
-                Text(
-                    ParticipantFormatting.percentage(
-                        entry.progressPercentage
-                    )
-                )
-                .font(AppTypography.secondary.monospacedDigit())
-                .foregroundStyle(Color.appSecondaryText)
-                if hasTie(entry) {
-                    Label(
-                        "participant.leaderboard.tie",
-                        systemImage: "equal.circle"
-                    )
-                    .font(AppTypography.label)
-                    .foregroundStyle(Color.appInfo)
-                }
-            }
-            Spacer()
+    private func rankingStatus(isFinal: Bool) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+            Text(isFinal ? "Hasil akhir" : "Peringkat sementara")
+                .font(AppTypography.cardTitle)
             Text(
-                entry.score.totalPoints,
-                format: .number.locale(ParticipantFormatting.locale)
+                isFinal
+                    ? "Hasil program ini telah selesai dan disimpan."
+                    : "Poin dapat berubah sampai program berakhir."
             )
-            .font(AppTypography.metric.monospacedDigit())
-            .foregroundStyle(
-                isEmphasized && entry.rank == 1
-                    ? Color.appWarning
-                    : Color.appPrimaryText
+            .font(AppTypography.secondary)
+            .foregroundStyle(Color.appSecondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func privacyNotice(isFinal: Bool) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            Label(
+                "Nama yang tampil adalah nama publik. "
+                    + "Nilai berat badan tidak ditampilkan.",
+                systemImage: "hand.raised.fill"
             )
-            .accessibilityLabel(Text("metric.points"))
+            if !isFinal {
+                Label(
+                    "Poin pada demo ini dihitung secara lokal.",
+                    systemImage: "iphone"
+                )
+            }
+        }
+        .font(AppTypography.label)
+        .foregroundStyle(Color.appSecondaryText)
+        .padding(.bottom, AppSpacing.large)
+    }
+
+    private func displayEntries(
+        snapshot: ParticipantLeaderboardProgramSnapshot,
+        isFinal: Bool
+    ) -> [ParticipantLeaderboardDisplayEntry] {
+        if isFinal, !snapshot.winners.isEmpty {
+            let pointCounts = Dictionary(
+                grouping: snapshot.winners,
+                by: \.totalPoints
+            )
+            .mapValues(\.count)
+            return snapshot.winners
+                .sorted {
+                    if $0.rank == $1.rank {
+                        return $0.participantDisplayName
+                            .localizedStandardCompare(
+                                $1.participantDisplayName
+                            ) == .orderedAscending
+                    }
+                    return $0.rank < $1.rank
+                }
+                .map { winner in
+                    ParticipantLeaderboardDisplayEntry(
+                        id: winner.id,
+                        participantID: winner.participantID,
+                        displayName: winner.participantDisplayName,
+                        rank: winner.rank,
+                        totalPoints: winner.totalPoints,
+                        progressPercentage: nil,
+                        isCurrentUser:
+                            winner.participantID == store.snapshot?.profile.id,
+                        hasTie: pointCounts[winner.totalPoints, default: 0] > 1
+                    )
+                }
+        }
+
+        let pointCounts = Dictionary(
+            grouping: snapshot.entries,
+            by: { $0.score.totalPoints }
+        )
+        .mapValues(\.count)
+        return snapshot.entries
+            .sorted {
+                if $0.rank == $1.rank {
+                    return $0.participantDisplayName
+                        .localizedStandardCompare(
+                            $1.participantDisplayName
+                        ) == .orderedAscending
+                }
+                return $0.rank < $1.rank
+            }
+            .map { entry in
+                ParticipantLeaderboardDisplayEntry(
+                    id: entry.id,
+                    participantID: entry.participantID,
+                    displayName: entry.participantDisplayName,
+                    rank: entry.rank,
+                    totalPoints: entry.score.totalPoints,
+                    progressPercentage: entry.progressPercentage,
+                    isCurrentUser: entry.isCurrentUser,
+                    hasTie:
+                        pointCounts[entry.score.totalPoints, default: 0] > 1
+                )
+            }
+    }
+
+    private var emptyState: some View {
+        ContentUnavailableView {
+            Label(
+                "Belum ada peringkat",
+                systemImage: "trophy"
+            )
+        } description: {
+            Text(
+                "Peringkat tersedia untuk program aktif atau program "
+                    + "selesai yang pernah kamu ikuti."
+            )
+        }
+        .accessibilityIdentifier("participant.leaderboard.empty")
+    }
+}
+
+@MainActor
+private struct ParticipantLeaderboardProgramPickerView: View {
+    let store: ParticipantJourneyStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List(store.activeLeaderboardPrograms) { program in
+                Button {
+                    Task {
+                        await store.selectLeaderboardProgram(program.id)
+                        dismiss()
+                    }
+                } label: {
+                    ParticipantLeaderboardProgramPickerRow(
+                        program: program,
+                        isSelected:
+                            program.id == store.selectedLeaderboardProgramID
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(
+                    "participant.leaderboard.program.\(program.id)"
+                )
+            }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
+            .navigationTitle("Pilih program")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Tutup") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .background(Color.appBackground)
+        .presentationBackground(Color.appBackground)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+}
+
+private struct ParticipantLeaderboardProgramPickerRow: View {
+    let program: Program
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: AppSpacing.medium) {
+            Image(systemName: "trophy.fill")
+                .font(.headline)
+                .foregroundStyle(Color.brandAccent)
+                .frame(width: 40, height: 40)
+                .background(
+                    Color.brandAccent.opacity(0.14),
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.medium,
+                        style: .continuous
+                    )
+                )
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                Text(program.title)
+                    .font(AppTypography.cardTitle)
+                    .foregroundStyle(Color.appPrimaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(ParticipantLeaderboardFormatting.range(program))
+                    .font(AppTypography.label.monospacedDigit())
+                    .foregroundStyle(Color.appSecondaryText)
+            }
+
+            Spacer(minLength: AppSpacing.small)
+
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color.brandPrimary)
+                    .accessibilityLabel(Text("Dipilih"))
+            }
         }
         .padding(.vertical, AppSpacing.xSmall)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
+}
 
-    private func scoreBreakdown(_ score: ScoreBreakdown) -> some View {
-        Grid(alignment: .leading, horizontalSpacing: AppSpacing.medium) {
-            scoreRow(
-                title: "participant.leaderboard.step_points",
-                value: score.approvedStepPoints
-            )
-            scoreRow(
-                title: "participant.leaderboard.weight_points",
-                value: score.weightPoints
-            )
-            scoreRow(
-                title: "Penyesuaian poin",
-                value: score.adjustmentPoints
-            )
-            scoreRow(
-                title: "participant.leaderboard.total_points",
-                value: score.totalPoints
-            )
+@MainActor
+private struct ParticipantLeaderboardArchiveView: View {
+    let store: ParticipantJourneyStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if store.archivedLeaderboardPrograms.isEmpty {
+                    ContentUnavailableView(
+                        "Belum ada riwayat",
+                        systemImage: "clock.arrow.circlepath",
+                        description: Text(
+                            "Program yang selesai akan tersimpan di sini."
+                        )
+                    )
+                } else {
+                    List(store.archivedLeaderboardPrograms) { program in
+                        Button {
+                            Task {
+                                await store.selectLeaderboardProgram(program.id)
+                                dismiss()
+                            }
+                        } label: {
+                            ParticipantLeaderboardArchiveRow(
+                                program: program,
+                                isSelected:
+                                    program.id
+                                    == store.selectedLeaderboardProgramID
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier(
+                            "participant.leaderboard.archive.\(program.id)"
+                        )
+                    }
+                    .listStyle(.insetGrouped)
+                }
+            }
+            .navigationTitle("Riwayat peringkat")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Tutup") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
+}
 
-    private func scoreRow(
-        title: LocalizedStringKey,
-        value: Int
-    ) -> some View {
-        GridRow {
-            Text(title)
-                .foregroundStyle(Color.appSecondaryText)
-            Text(
-                value,
-                format: .number.locale(ParticipantFormatting.locale)
-            )
-            .font(.body.monospacedDigit())
-        }
-    }
+private enum PresentedSheet: String, Identifiable {
+    case activePrograms
+    case archive
 
-    private func hasTie(_ entry: LeaderboardEntry) -> Bool {
-        (store.snapshot?.leaderboard.filter {
-            $0.score.totalPoints == entry.score.totalPoints
-        }.count ?? 0) > 1
+    var id: String { rawValue }
+}
+
+private extension Program {
+    var isLeaderboardArchive: Bool {
+        status == .completed || status == .archived
     }
 }
 
-private extension ParticipantJourneyStore {
-    var snapshotWinners: [ProgramWinner] {
-        snapshot?.winners ?? []
-    }
+#Preview("Papan peringkat — program aktif") {
+    ParticipantLeaderboardPreview(mode: .active)
 }
 
-#Preview("Papan peringkat — peserta di luar lima besar") {
-    ParticipantLeaderboardPreview(isFinal: false)
+#Preview("Papan peringkat — hasil selesai") {
+    ParticipantLeaderboardPreview(mode: .archive)
 }
 
-#Preview("Papan peringkat — pemenang final") {
-    ParticipantLeaderboardPreview(isFinal: true)
+#Preview("Papan peringkat — Dynamic Type besar") {
+    ParticipantLeaderboardPreview(mode: .active)
+        .environment(
+            \.dynamicTypeSize,
+            DynamicTypeSize.accessibility3
+        )
 }
 
 @MainActor
 private struct ParticipantLeaderboardPreview: View {
-    let isFinal: Bool
+    enum Mode {
+        case active
+        case archive
+    }
+
+    let mode: Mode
     @State private var store = ParticipantJourneyStore(
         environment: .preview
     )
@@ -247,10 +505,15 @@ private struct ParticipantLeaderboardPreview: View {
     var body: some View {
         NavigationStack {
             ParticipantLeaderboardView(store: store)
+                .navigationTitle("Peringkat")
                 .task {
                     await store.load()
-                    store.showsFinalLeaderboard = isFinal
+                    if mode == .archive,
+                       let program = store.archivedLeaderboardPrograms.first {
+                        await store.selectLeaderboardProgram(program.id)
+                    }
                 }
         }
+        .environment(\.locale, Locale(identifier: "id-ID"))
     }
 }

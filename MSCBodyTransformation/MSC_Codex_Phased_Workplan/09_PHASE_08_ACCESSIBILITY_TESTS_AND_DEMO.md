@@ -260,6 +260,24 @@ Admin:
   sedangkan perubahan `project.pbxproj` dilarang. Item berikutnya tetap
   profiling scrolling Participant Home.
 
+#### 2026-07-27 — pintasan Home menuju tab Peringkat dan Profil
+
+- Files changed: shell tab selection, Participant tab root, Participant Home,
+  serta UI test Participant.
+- Assumptions: tombol `Lihat semua` dan kartu profil harus memilih tab
+  Peringkat atau Profil yang sudah ada dan mempertahankan navigation stack
+  independen setiap tab; tidak ada route baru yang ditambahkan ke stack Home.
+- Build command: XcodeBuildMCP `build_run_sim` dengan Swift 6 strict
+  concurrency pada iPhone 17 dan skenario `participant_active`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testParticipantHomeViewAllSelectsLeaderboardTab` dan
+  `testParticipantHomeProfileCardSelectsProfileTab`.
+- Result: build lulus tanpa warning atau error; runtime mengonfirmasi tab
+  Peringkat dan Profil terpilih; dua UI test terfokus lulus dan memverifikasi
+  tidak ada tombol Back dari push navigation.
+- Remaining blockers: tidak ada untuk perubahan ini. Item berikutnya yang
+  belum dicentang tetap profiling scrolling Participant Home.
+
 #### 2026-07-27 — penyempurnaan carousel dan Leaderboard Home
 
 - Files changed: `ParticipantHomeView.swift`.

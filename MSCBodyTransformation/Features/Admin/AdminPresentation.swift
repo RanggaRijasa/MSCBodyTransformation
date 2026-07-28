@@ -40,6 +40,103 @@ nonisolated extension FutureStepPolicy {
     }
 }
 
+nonisolated extension AdminProgramPace {
+    var adminTitle: String {
+        switch self {
+        case .selfPaced: "Mandiri"
+        case .scheduled: "Terjadwal"
+        }
+    }
+}
+
+nonisolated extension AdminProgramDurationMode {
+    var adminTitle: String {
+        switch self {
+        case .fixedDuration: "Durasi tetap"
+        case .specificDates: "Tanggal tertentu"
+        }
+    }
+}
+
+nonisolated extension AdminProgramAccess {
+    var adminTitle: String {
+        switch self {
+        case .publicAccess: "Publik"
+        case .approvalRequired: "Perlu persetujuan"
+        case .inviteOnly: "Khusus undangan"
+        }
+    }
+
+    var adminDescription: String {
+        switch self {
+        case .publicAccess:
+            "Semua orang dapat melihat dan bergabung."
+        case .approvalRequired:
+            "Program terlihat, tetapi permintaan bergabung perlu disetujui."
+        case .inviteOnly:
+            "Hanya peserta yang menerima undangan yang dapat bergabung."
+        }
+    }
+}
+
+nonisolated extension AdminCoverMediaKind {
+    var adminTitle: String {
+        switch self {
+        case .image: "Gambar"
+        case .video: "Video"
+        }
+    }
+}
+
+nonisolated extension AdminStepContentKind {
+    var adminTitle: String {
+        switch self {
+        case .article: "Artikel"
+        case .video: "Video"
+        case .quiz: "Kuis"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .article: "doc.text"
+        case .video: "video"
+        case .quiz: "checklist"
+        }
+    }
+}
+
+nonisolated extension AdminQuizQuestionKind {
+    var adminTitle: String {
+        switch self {
+        case .shortAnswer: "Jawaban singkat"
+        case .longAnswer: "Jawaban panjang"
+        case .number: "Angka"
+        case .singleChoice: "Pilihan tunggal"
+        case .multipleChoice: "Pilihan ganda"
+        case .imageChoice: "Pilihan gambar"
+        case .fileUpload: "Unggah file"
+        case .heading: "Judul bagian"
+        case .text: "Teks penjelas"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .shortAnswer: "text.cursor"
+        case .longAnswer: "text.alignleft"
+        case .number: "number"
+        case .singleChoice: "circle"
+        case .multipleChoice: "checklist"
+        case .imageChoice: "photo.on.rectangle"
+        case .fileUpload: "arrow.up.doc"
+        case .heading: "textformat.size.larger"
+        case .text: "text.justify.left"
+        }
+    }
+
+}
+
 nonisolated extension StepInstructionMediaKind {
     var adminTitle: String {
         switch self {
@@ -74,20 +171,6 @@ nonisolated extension AuditEventKind {
         case .participantEnrolled: "Peserta didaftarkan"
         case .managedContentUpdated: "Konten diperbarui"
         case .winnersLocked: "Pemenang dikunci"
-        }
-    }
-}
-
-nonisolated extension AdminProgramEditorState.Stage {
-    var title: String {
-        switch self {
-        case .basics: "Dasar"
-        case .dates: "Tanggal"
-        case .scoring: "Skor"
-        case .days: "Hari"
-        case .steps: "Langkah"
-        case .preview: "Pratinjau"
-        case .publish: "Publikasi"
         }
     }
 }

@@ -189,11 +189,12 @@ final class AdminFeatureContainer {
                 summary: day.summary,
                 scheduledDate: day.scheduledDate,
                 steps: day.steps.enumerated().map { stepIndex, step in
-                    AdminStepDraft(
-                        id: validator.childIdentifier(
-                            parent: dayID,
-                            discriminator: stepIndex + 1
-                        ),
+                    let stepID = validator.childIdentifier(
+                        parent: dayID,
+                        discriminator: stepIndex + 1
+                    )
+                    return AdminStepDraft(
+                        id: stepID,
                         order: stepIndex + 1,
                         title: step.title,
                         instructions: step.instructions,
@@ -205,7 +206,34 @@ final class AdminFeatureContainer {
                         mediaKind: step.mediaKind,
                         localMediaReference: step.localMediaReference,
                         isActive: step.isActive,
-                        verificationMode: step.verificationMode
+                        verificationMode: step.verificationMode,
+                        contentKind: step.contentKind,
+                        isVideoRequiredToWatch:
+                            step.isVideoRequiredToWatch,
+                        isVideoAutoplayEnabled:
+                            step.isVideoAutoplayEnabled,
+                        quiz: step.quiz.map { questionGroup in
+                            AdminQuizDraft(
+                                title: step.title,
+                                questions: questionGroup.questions
+                                    .enumerated()
+                                    .map { questionIndex, question in
+                                        AdminQuizQuestionDraft(
+                                            id: validator.childIdentifier(
+                                                parent: stepID,
+                                                discriminator:
+                                                    questionIndex + 1_000
+                                            ),
+                                            order: questionIndex + 1,
+                                            kind: question.kind,
+                                            prompt: question.prompt,
+                                            isRequired:
+                                                question.isRequired,
+                                            options: question.options
+                                        )
+                                    }
+                            )
+                        }
                     )
                 }
             )
@@ -228,7 +256,15 @@ final class AdminFeatureContainer {
             futureStepPolicy: source.futureStepPolicy,
             status: .draft,
             days: days,
-            updatedAt: now
+            updatedAt: now,
+            category: source.category,
+            coverMediaKind: source.coverMediaKind,
+            coverAlternativeText: source.coverAlternativeText,
+            pace: source.pace,
+            durationMode: source.durationMode,
+            fixedDurationDays: source.fixedDurationDays,
+            access: source.access,
+            participantLimit: source.participantLimit
         )
         _ = try await repositories.adminProgramDrafts.save(
             programDraft: duplicate
@@ -466,27 +502,15 @@ final class AdminFeatureContainer {
 @MainActor
 @Observable
 final class AdminProgramEditorState {
-    enum Stage: Int, CaseIterable, Identifiable {
-        case basics
-        case dates
-        case scoring
-        case days
-        case steps
-        case preview
-        case publish
-
-        var id: Int { rawValue }
-    }
-
     private let programID: UUID
     private let features: AdminFeatureContainer
 
-    var stage: Stage = .basics
     var draft: AdminProgramDraft?
     var issues: [AdminValidationIssue] = []
     var error: DomainError?
     var isSaving = false
     var didPublish = false
+    private var hasLoaded = false
 
     init(programID: UUID, features: AdminFeatureContainer) {
         self.programID = programID
@@ -494,6 +518,7 @@ final class AdminProgramEditorState {
     }
 
     func load() async {
+        guard !hasLoaded else { return }
         do {
             guard let repositories = features.environment.repositories else {
                 throw features.environment.bootstrapError
@@ -501,6 +526,7 @@ final class AdminProgramEditorState {
             }
             draft = try await repositories.adminProgramDrafts
                 .programDraftForAdministration(id: programID)
+            hasLoaded = true
             updateValidation()
         } catch let domainError as DomainError {
             error = domainError
@@ -509,15 +535,34 @@ final class AdminProgramEditorState {
         }
     }
 
-    func generateDays() {
+    var scheduleSyncRemovesContent: Bool {
+        scheduleSyncPlan?.removesContent == true
+    }
+
+    var isScheduleSynchronized: Bool {
+        guard let draft,
+              let plan = scheduleSyncPlan else {
+            return false
+        }
+        let calendar = configuredCalendar(for: draft)
+        return plan.days.map {
+            calendar.startOfDay(for: $0.scheduledDate)
+        } == draft.days.map {
+            calendar.startOfDay(for: $0.scheduledDate)
+        }
+    }
+
+    func synchronizeDays() {
         guard var draft else { return }
         do {
-            draft.days = try AdminProgramDraftValidator().generateDays(
+            draft = AdminProgramDraftValidator().normalized(draft)
+            draft.days = try AdminProgramDraftValidator().synchronizeDays(
+                existingDays: draft.days,
                 startDate: draft.startDate,
                 endDate: draft.endDate,
                 timeZoneIdentifier: draft.timeZoneIdentifier,
                 programID: draft.id
-            )
+            ).days
             self.draft = draft
             updateValidation()
         } catch let domainError as DomainError {
@@ -527,31 +572,69 @@ final class AdminProgramEditorState {
         }
     }
 
-    func addStep(to dayID: UUID) {
+    func appendDay() {
+        guard var draft else { return }
+        draft.days.append(
+            AdminDayDraft(
+                id: availableIdentifier(
+                    parent: draft.id,
+                    startingAt: draft.days.count + 1,
+                    excluding: Set(draft.days.map(\.id))
+                ),
+                dayNumber: draft.days.count + 1,
+                title: "Hari ke-\(draft.days.count + 1)",
+                summary: "",
+                scheduledDate: draft.endDate,
+                steps: []
+            )
+        )
+        alignScheduleToDayCount(&draft)
+        self.draft = AdminProgramDraftValidator().normalized(draft)
+        updateValidation()
+    }
+
+    func addStep(
+        to dayID: UUID,
+        contentKind: AdminStepContentKind = .article
+    ) {
         guard var draft,
               let dayIndex = draft.days.firstIndex(where: {
                   $0.id == dayID
               }) else { return }
         let order = draft.days[dayIndex].steps.count + 1
-        let id = AdminProgramDraftValidator().childIdentifier(
+        let id = availableIdentifier(
             parent: dayID,
-            discriminator: order
+            startingAt: order,
+            excluding: Set(draft.days.flatMap(\.steps).map(\.id))
         )
+        let title: String
+        switch contentKind {
+        case .article:
+            title = "Artikel baru"
+        case .video:
+            title = "Video baru"
+        case .quiz:
+            title = "Kuis baru"
+        }
         draft.days[dayIndex].steps.append(
             AdminStepDraft(
                 id: id,
                 order: order,
-                title: "Langkah baru",
+                title: title,
                 instructions: "Tambahkan petunjuk yang jelas dan aman.",
                 points: 10,
                 requiresPhoto: false,
                 isPhotoRequired: false,
                 requiresTextAnswer: false,
                 isTextAnswerRequired: false,
-                mediaKind: nil,
+                mediaKind: contentKind == .video ? .video : nil,
                 localMediaReference: nil,
                 isActive: true,
-                verificationMode: draft.verificationMode
+                verificationMode: draft.verificationMode,
+                contentKind: contentKind,
+                quiz: contentKind == .quiz
+                    ? AdminQuizDraft(title: title, questions: [])
+                    : nil
             )
         )
         self.draft = draft
@@ -560,50 +643,66 @@ final class AdminProgramEditorState {
 
     func duplicateDay(_ dayID: UUID) {
         guard var draft,
-              let source = draft.days.first(where: { $0.id == dayID }),
-              let last = draft.days.sorted(by: {
-                  $0.dayNumber < $1.dayNumber
-              }).last else { return }
-        let number = last.dayNumber + 1
-        let id = AdminProgramDraftValidator().childIdentifier(
+              let sourceIndex = draft.days.firstIndex(where: {
+                  $0.id == dayID
+              }) else { return }
+        let source = draft.days[sourceIndex]
+        let number = sourceIndex + 2
+        let id = availableIdentifier(
             parent: draft.id,
-            discriminator: number
+            startingAt: draft.days.count + 1,
+            excluding: Set(draft.days.map(\.id))
         )
-        let date = Calendar(identifier: .gregorian).date(
-            byAdding: .day,
-            value: 1,
-            to: last.scheduledDate
-        ) ?? last.scheduledDate
-        draft.days.append(
+        let duplicatedSteps = source.steps.enumerated().map {
+            stepIndex, step in
+            let stepID = AdminProgramDraftValidator().childIdentifier(
+                parent: id,
+                discriminator: stepIndex + 1
+            )
+            return duplicatedStep(
+                step,
+                id: stepID,
+                order: stepIndex + 1
+            )
+        }
+        draft.days.insert(
             AdminDayDraft(
                 id: id,
                 dayNumber: number,
                 title: "\(source.title) — salinan",
                 summary: source.summary,
-                scheduledDate: date,
-                steps: source.steps.enumerated().map { index, step in
-                    AdminStepDraft(
-                        id: AdminProgramDraftValidator().childIdentifier(
-                            parent: id,
-                            discriminator: index + 1
-                        ),
-                        order: index + 1,
-                        title: step.title,
-                        instructions: step.instructions,
-                        points: step.points,
-                        requiresPhoto: step.requiresPhoto,
-                        isPhotoRequired: step.isPhotoRequired,
-                        requiresTextAnswer: step.requiresTextAnswer,
-                        isTextAnswerRequired: step.isTextAnswerRequired,
-                        mediaKind: step.mediaKind,
-                        localMediaReference: step.localMediaReference,
-                        isActive: step.isActive,
-                        verificationMode: step.verificationMode
-                    )
-                }
+                scheduledDate: source.scheduledDate,
+                steps: duplicatedSteps
+            ),
+            at: sourceIndex + 1
+        )
+        alignScheduleToDayCount(&draft)
+        self.draft = AdminProgramDraftValidator().normalized(draft)
+        updateValidation()
+    }
+
+    func duplicateStep(_ stepID: UUID, in dayID: UUID) {
+        guard var draft,
+              let dayIndex = draft.days.firstIndex(where: {
+                  $0.id == dayID
+              }),
+              let source = draft.days[dayIndex].steps.first(where: {
+                  $0.id == stepID
+              }) else { return }
+        let order = draft.days[dayIndex].steps.count + 1
+        let id = availableIdentifier(
+            parent: dayID,
+            startingAt: order,
+            excluding: Set(draft.days.flatMap(\.steps).map(\.id))
+        )
+        draft.days[dayIndex].steps.append(
+            duplicatedStep(
+                source,
+                id: id,
+                order: order,
+                title: "\(source.title) — salinan"
             )
         )
-        draft.endDate = max(draft.endDate, date)
         self.draft = draft
         updateValidation()
     }
@@ -611,6 +710,7 @@ final class AdminProgramEditorState {
     func removeDay(_ dayID: UUID) {
         guard var draft else { return }
         draft.days.removeAll { $0.id == dayID }
+        alignScheduleToDayCount(&draft)
         self.draft = AdminProgramDraftValidator().normalized(draft)
         updateValidation()
     }
@@ -628,6 +728,7 @@ final class AdminProgramEditorState {
     func moveDay(from offsets: IndexSet, to destination: Int) {
         guard var draft else { return }
         draft.days.move(fromOffsets: offsets, toOffset: destination)
+        alignScheduleToDayCount(&draft)
         self.draft = AdminProgramDraftValidator().normalized(draft)
         updateValidation()
     }
@@ -704,5 +805,117 @@ final class AdminProgramEditorState {
             return
         }
         issues = AdminProgramDraftValidator().validate(draft)
+    }
+
+    private var scheduleSyncPlan: AdminDayScheduleSync? {
+        guard let draft else { return nil }
+        let normalized = AdminProgramDraftValidator().normalized(draft)
+        return try? AdminProgramDraftValidator().synchronizeDays(
+            existingDays: normalized.days,
+            startDate: normalized.startDate,
+            endDate: normalized.endDate,
+            timeZoneIdentifier: normalized.timeZoneIdentifier,
+            programID: normalized.id
+        )
+    }
+
+    private func availableIdentifier(
+        parent: UUID,
+        startingAt value: Int,
+        excluding identifiers: Set<UUID>
+    ) -> UUID {
+        var discriminator = value
+        while true {
+            let identifier = AdminProgramDraftValidator().childIdentifier(
+                parent: parent,
+                discriminator: discriminator
+            )
+            if !identifiers.contains(identifier) {
+                return identifier
+            }
+            discriminator += 1
+        }
+    }
+
+    private func duplicatedStep(
+        _ source: AdminStepDraft,
+        id: UUID,
+        order: Int,
+        title: String? = nil
+    ) -> AdminStepDraft {
+        AdminStepDraft(
+            id: id,
+            order: order,
+            title: title ?? source.title,
+            instructions: source.instructions,
+            points: source.points,
+            requiresPhoto: source.requiresPhoto,
+            isPhotoRequired: source.isPhotoRequired,
+            requiresTextAnswer: source.requiresTextAnswer,
+            isTextAnswerRequired: source.isTextAnswerRequired,
+            mediaKind: source.mediaKind,
+            localMediaReference: source.localMediaReference,
+            isActive: source.isActive,
+            verificationMode: source.verificationMode,
+            contentKind: source.contentKind,
+            isVideoRequiredToWatch: source.isVideoRequiredToWatch,
+            isVideoAutoplayEnabled: source.isVideoAutoplayEnabled,
+            quiz: duplicatedQuestionGroup(source.quiz, stepID: id)
+        )
+    }
+
+    private func duplicatedQuestionGroup(
+        _ source: AdminQuizDraft?,
+        stepID: UUID
+    ) -> AdminQuizDraft? {
+        guard let source else { return nil }
+        return AdminQuizDraft(
+            title: source.title,
+            questions: source.questions.enumerated().map {
+                index, question in
+                AdminQuizQuestionDraft(
+                    id: AdminProgramDraftValidator().childIdentifier(
+                        parent: stepID,
+                        discriminator: index + 1_000
+                    ),
+                    order: index + 1,
+                    kind: question.kind,
+                    prompt: question.prompt,
+                    isRequired: question.isRequired,
+                    options: question.options
+                )
+            }
+        )
+    }
+
+    private func alignScheduleToDayCount(
+        _ draft: inout AdminProgramDraft
+    ) {
+        let count = draft.days.count
+        draft.fixedDurationDays = max(count, 1)
+        let calendar = configuredCalendar(for: draft)
+        draft.endDate = calendar.date(
+            byAdding: .day,
+            value: max(count - 1, 0),
+            to: draft.startDate
+        ) ?? draft.endDate
+        for index in draft.days.indices {
+            draft.days[index].dayNumber = index + 1
+            draft.days[index].scheduledDate = calendar.date(
+                byAdding: .day,
+                value: index,
+                to: draft.startDate
+            ) ?? draft.days[index].scheduledDate
+        }
+    }
+
+    private func configuredCalendar(
+        for draft: AdminProgramDraft
+    ) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(
+            identifier: draft.timeZoneIdentifier
+        ) ?? .gmt
+        return calendar
     }
 }

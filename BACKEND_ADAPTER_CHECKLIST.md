@@ -51,6 +51,16 @@
 ## Admin dan operasional
 
 - [ ] Validasi draft dan perubahan published program di server.
+- [ ] Simpan kategori, cover, alt text, pace, duration mode, akses, dan
+      kapasitas Program.
+- [ ] Terapkan approval dan kapasitas secara transactional saat enrollment.
+- [ ] Simpan tipe konten Artikel/Video/Kuis beserta ID dan urutan stabil untuk
+      hari, langkah, dan pertanyaan.
+- [ ] Simpan pertanyaan sebagai anak Langkah; Kuis mewajibkan pertanyaan,
+      sedangkan Artikel/Video boleh memiliki pertanyaan pendamping.
+- [ ] Terapkan perubahan susunan secara transactional dan idempoten.
+- [ ] Cegah sinkronisasi jadwal menimpa konten tanpa keputusan eksplisit.
+- [ ] Validasi upload cover/video dan respons kuis di server.
 - [ ] Lindungi persetujuan Coach, pendaftaran manual, adjustment, dan lock.
 - [ ] Simpan audit append-only untuk semua tindakan istimewa.
 - [ ] Tambahkan observability tanpa data sensitif.

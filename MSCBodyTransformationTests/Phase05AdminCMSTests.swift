@@ -47,6 +47,178 @@ struct Phase05AdminCMSTests {
         #expect(Set(days.map(\.id)).count == 3)
     }
 
+    @Test("ID langkah tetap unik pada program multi-hari")
+    func multiDayStepIdentifiersAreUnique() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        let end = try #require(
+            calendar.date(byAdding: .day, value: 9, to: fixedDate)
+        )
+        let validator = AdminProgramDraftValidator()
+        let days = try validator.generateDays(
+            startDate: fixedDate,
+            endDate: end,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: activeProgramID
+        )
+        let identifiers = days.map {
+            validator.childIdentifier(parent: $0.id, discriminator: 1)
+        }
+
+        #expect(Set(identifiers).count == 10)
+    }
+
+    @Test("Sinkronisasi jadwal mempertahankan langkah dan pertanyaan")
+    func scheduleSynchronizationPreservesNestedContent() throws {
+        let validator = AdminProgramDraftValidator()
+        let calendar = Calendar(identifier: .gregorian)
+        let initialEnd = try #require(
+            calendar.date(byAdding: .day, value: 1, to: fixedDate)
+        )
+        var days = try validator.generateDays(
+            startDate: fixedDate,
+            endDate: initialEnd,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: activeProgramID
+        )
+        let stepID = validator.childIdentifier(
+            parent: days[0].id,
+            discriminator: 1
+        )
+        days[0].steps = [
+            AdminStepDraft(
+                id: stepID,
+                order: 1,
+                title: "Refleksi",
+                instructions: "Jawab sesuai kondisi hari ini.",
+                points: 10,
+                requiresPhoto: false,
+                isPhotoRequired: false,
+                requiresTextAnswer: false,
+                isTextAnswerRequired: false,
+                mediaKind: nil,
+                localMediaReference: nil,
+                isActive: true,
+                verificationMode: .automatic,
+                contentKind: .article,
+                quiz: AdminQuizDraft(
+                    title: "Refleksi",
+                    questions: [
+                        AdminQuizQuestionDraft(
+                            id: validator.childIdentifier(
+                                parent: stepID,
+                                discriminator: 1_000
+                            ),
+                            order: 1,
+                            kind: .shortAnswer,
+                            prompt: "Apa yang terasa lebih mudah?",
+                            isRequired: true,
+                            options: []
+                        )
+                    ]
+                )
+            )
+        ]
+        let extendedEnd = try #require(
+            calendar.date(byAdding: .day, value: 3, to: fixedDate)
+        )
+
+        let sync = try validator.synchronizeDays(
+            existingDays: days,
+            startDate: fixedDate,
+            endDate: extendedEnd,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: activeProgramID
+        )
+
+        #expect(sync.days.count == 4)
+        #expect(sync.days[0].id == days[0].id)
+        #expect(sync.days[0].steps[0].id == stepID)
+        #expect(
+            sync.days[0].steps[0].quiz?.questions.first?.prompt
+                == "Apa yang terasa lebih mudah?"
+        )
+        #expect(!sync.removesContent)
+
+        let shiftedStart = try #require(
+            calendar.date(byAdding: .day, value: 10, to: fixedDate)
+        )
+        let shiftedEnd = try #require(
+            calendar.date(byAdding: .day, value: 13, to: fixedDate)
+        )
+        let shifted = try validator.synchronizeDays(
+            existingDays: sync.days,
+            startDate: shiftedStart,
+            endDate: shiftedEnd,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: activeProgramID
+        )
+        #expect(shifted.days[0].id == days[0].id)
+        #expect(shifted.days[0].steps[0].id == stepID)
+        #expect(!shifted.removesContent)
+    }
+
+    @Test("Pemendekan jadwal melaporkan konten yang akan terhapus")
+    func shorteningScheduleReportsRemovedContent() throws {
+        let validator = AdminProgramDraftValidator()
+        let calendar = Calendar(identifier: .gregorian)
+        let end = try #require(
+            calendar.date(byAdding: .day, value: 2, to: fixedDate)
+        )
+        var days = try validator.generateDays(
+            startDate: fixedDate,
+            endDate: end,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: activeProgramID
+        )
+        days[2].steps = [
+            sampleStep(
+                id: validator.childIdentifier(
+                    parent: days[2].id,
+                    discriminator: 1
+                )
+            )
+        ]
+
+        let sync = try validator.synchronizeDays(
+            existingDays: days,
+            startDate: fixedDate,
+            endDate: fixedDate,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: activeProgramID
+        )
+
+        #expect(sync.days.count == 1)
+        #expect(sync.removedDays.count == 2)
+        #expect(sync.removesContent)
+    }
+
+    @Test("Normalisasi mempertahankan hasil reorder array")
+    func normalizationPreservesReorderedHierarchy() throws {
+        var draft = try validDraft()
+        let originalDayIdentifiers = draft.days.map(\.id)
+        draft.days.reverse()
+        draft.days[0].steps.reverse()
+        let expectedStepIdentifiers = draft.days[0].steps.map(\.id)
+        let expectedOrders = expectedStepIdentifiers.isEmpty
+            ? []
+            : Array(1...expectedStepIdentifiers.count)
+
+        let normalized = AdminProgramDraftValidator().normalized(draft)
+
+        #expect(
+            normalized.days.map(\.id)
+                == Array(originalDayIdentifiers.reversed())
+        )
+        #expect(
+            normalized.days[0].steps.map(\.id)
+                == expectedStepIdentifiers
+        )
+        #expect(
+            normalized.days[0].steps.map(\.order)
+                == expectedOrders
+        )
+    }
+
     @Test("Rentang tanggal terbalik ditolak")
     func invalidDateRange() {
         do {
@@ -77,6 +249,182 @@ struct Phase05AdminCMSTests {
         let issues = AdminProgramDraftValidator().validate(draft)
 
         #expect(issues.contains { $0.field == .stepOrder })
+    }
+
+    @Test("Durasi tetap dinormalisasi dari jumlah hari")
+    func fixedDurationNormalization() throws {
+        var draft = try validDraft()
+        draft.durationMode = .fixedDuration
+        draft.fixedDurationDays = 15
+
+        let normalized = AdminProgramDraftValidator().normalized(draft)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(
+            TimeZone(identifier: draft.timeZoneIdentifier)
+        )
+        let difference = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: normalized.startDate),
+            to: calendar.startOfDay(for: normalized.endDate)
+        ).day
+
+        #expect(difference == 14)
+    }
+
+    @Test("Cover dan batas peserta memiliki validasi aksesibilitas")
+    func coverAndCapacityValidation() throws {
+        var draft = try validDraft()
+        draft.coverLocalReference = "cover_program"
+        draft.coverAlternativeText = ""
+        draft.participantLimit = 0
+
+        let fields = Set(
+            AdminProgramDraftValidator().validate(draft).map(\.field)
+        )
+
+        #expect(fields.contains(.cover))
+        #expect(fields.contains(.access))
+    }
+
+    @Test("Kuis wajib memiliki nama dan pertanyaan")
+    func quizContentValidation() throws {
+        var draft = try validDraft()
+        draft.days[0].steps[0].contentKind = .quiz
+        draft.days[0].steps[0].quiz = AdminQuizDraft(
+            title: "Kuis kebiasaan",
+            questions: []
+        )
+
+        var issues = AdminProgramDraftValidator().validate(draft)
+        #expect(issues.contains { $0.field == .content })
+
+        draft.days[0].steps[0].quiz?.questions = [
+            AdminQuizQuestionDraft(
+                id: UUID(
+                    uuidString:
+                        "91000000-0000-0000-0000-000000000001"
+                )!,
+                order: 1,
+                kind: .shortAnswer,
+                prompt: "Apa fokusmu hari ini?",
+                isRequired: true,
+                options: []
+            )
+        ]
+        issues = AdminProgramDraftValidator().validate(draft)
+        #expect(!issues.contains { $0.field == .content })
+    }
+
+    @Test("Pertanyaan pilihan memerlukan pilihan unik dan terisi")
+    func choiceQuestionValidation() throws {
+        var draft = try validDraft()
+        draft.days[0].steps[0].quiz = AdminQuizDraft(
+            title: draft.days[0].steps[0].title,
+            questions: [
+                AdminQuizQuestionDraft(
+                    id: UUID(
+                        uuidString:
+                            "91000000-0000-0000-0000-000000000002"
+                    )!,
+                    order: 1,
+                    kind: .multipleChoice,
+                    prompt: "Pilih kebiasaan yang sudah dilakukan.",
+                    isRequired: true,
+                    options: ["Minum air", " "]
+                )
+            ]
+        )
+
+        let issues = AdminProgramDraftValidator().validate(draft)
+
+        #expect(issues.contains { $0.field == .content })
+    }
+
+    @Test("Program multi-hari menyimpan banyak langkah dan pertanyaan")
+    func longProgramHierarchyPersists() async throws {
+        let repository = try makeRepository()
+        let validator = AdminProgramDraftValidator()
+        let calendar = Calendar(identifier: .gregorian)
+        let end = try #require(
+            calendar.date(byAdding: .day, value: 4, to: fixedDate)
+        )
+        var draft = try validDraft()
+        draft.status = .draft
+        draft.startDate = fixedDate
+        draft.endDate = end
+        draft.days = try validator.generateDays(
+            startDate: fixedDate,
+            endDate: end,
+            timeZoneIdentifier: draft.timeZoneIdentifier,
+            programID: draft.id
+        )
+
+        for dayIndex in draft.days.indices {
+            let dayID = draft.days[dayIndex].id
+            draft.days[dayIndex].steps = (1...3).map { stepOrder in
+                let stepID = validator.childIdentifier(
+                    parent: dayID,
+                    discriminator: stepOrder
+                )
+                let questions = (1...4).map { questionOrder in
+                    AdminQuizQuestionDraft(
+                        id: validator.childIdentifier(
+                            parent: stepID,
+                            discriminator: questionOrder + 1_000
+                        ),
+                        order: questionOrder,
+                        kind: .shortAnswer,
+                        prompt: "Pertanyaan \(questionOrder)",
+                        isRequired: true,
+                        options: []
+                    )
+                }
+                return AdminStepDraft(
+                    id: stepID,
+                    order: stepOrder,
+                    title: "Langkah \(stepOrder)",
+                    instructions: "Petunjuk langkah.",
+                    points: 10,
+                    requiresPhoto: false,
+                    isPhotoRequired: false,
+                    requiresTextAnswer: false,
+                    isTextAnswerRequired: false,
+                    mediaKind: nil,
+                    localMediaReference: nil,
+                    isActive: true,
+                    verificationMode: .automatic,
+                    contentKind: .article,
+                    quiz: AdminQuizDraft(
+                        title: "Langkah \(stepOrder)",
+                        questions: questions
+                    )
+                )
+            }
+        }
+
+        let saved = try await SaveAdminProgramDraftUseCase(
+            drafts: repository,
+            audit: repository,
+            identifierGenerator: DeterministicIdentifierGenerator(
+                identifier: UUID(
+                    uuidString:
+                        "72000000-0000-0000-0000-000000000099"
+                )!
+            ),
+            clock: FixedClock(now: fixedDate)
+        )(draft: draft, adminID: adminID)
+        let reloaded = try await repository
+            .programDraftForAdministration(id: saved.id)
+        let steps = reloaded.days.flatMap(\.steps)
+        let questions = steps.flatMap {
+            $0.quiz?.questions ?? []
+        }
+
+        #expect(reloaded.days.count == 5)
+        #expect(steps.count == 15)
+        #expect(questions.count == 60)
+        #expect(Set(steps.map(\.id)).count == 15)
+        #expect(Set(questions.map(\.id)).count == 60)
     }
 
     @Test("Publish memblokir draft invalid dan mencatat audit saat valid")
@@ -255,7 +603,39 @@ struct Phase05AdminCMSTests {
         let program = try #require(
             seed.programs.first { $0.id == activeProgramID }
         )
-        return AdminProgramDraft(program: program, updatedAt: fixedDate)
+        var draft = AdminProgramDraft(
+            program: program,
+            updatedAt: fixedDate
+        )
+        if let lastScheduledDate = draft.days.last?.scheduledDate {
+            draft.endDate = lastScheduledDate
+        }
+        draft.days = try AdminProgramDraftValidator().synchronizeDays(
+            existingDays: draft.days,
+            startDate: draft.startDate,
+            endDate: draft.endDate,
+            timeZoneIdentifier: draft.timeZoneIdentifier,
+            programID: draft.id
+        ).days
+        return draft
+    }
+
+    private func sampleStep(id: UUID) -> AdminStepDraft {
+        AdminStepDraft(
+            id: id,
+            order: 1,
+            title: "Langkah contoh",
+            instructions: "Ikuti petunjuk dengan aman.",
+            points: 10,
+            requiresPhoto: false,
+            isPhotoRequired: false,
+            requiresTextAnswer: false,
+            isTextAnswerRequired: false,
+            mediaKind: nil,
+            localMediaReference: nil,
+            isActive: true,
+            verificationMode: .automatic
+        )
     }
 
     private func makeRepository() throws -> InMemoryAppRepository {

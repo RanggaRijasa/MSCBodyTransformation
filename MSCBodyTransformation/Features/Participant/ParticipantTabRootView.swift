@@ -6,6 +6,7 @@ struct ParticipantTabRootView: View {
     let store: ParticipantJourneyStore
     let router: ShellTabRouter
     let showsOfflineBanner: Bool
+    let onSelectParticipantTab: (ParticipantTab) -> Void
 
     var body: some View {
         switch store.state {
@@ -49,7 +50,11 @@ struct ParticipantTabRootView: View {
     private var tabContent: some View {
         switch tab {
         case .today:
-            ParticipantHomeView(store: store, router: router)
+            ParticipantHomeView(
+                store: store,
+                router: router,
+                onSelectTab: onSelectParticipantTab
+            )
         case .program:
             ParticipantProgramCatalogView(store: store, router: router)
         case .leaderboard:
@@ -78,7 +83,8 @@ private struct ParticipantTabLoadingPreview: View {
             tab: .today,
             store: store,
             router: router,
-            showsOfflineBanner: false
+            showsOfflineBanner: false,
+            onSelectParticipantTab: { _ in }
         )
     }
 }
