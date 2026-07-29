@@ -20,7 +20,7 @@
     {"id":"00000000-0000-0000-0000-000000000201","email":"admin@demo.local","displayName":"Admin MSC","role":"admin","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-01-01T00:00:00Z"}
   ],
   "participantProfiles": [
-    {"id":"20000000-0000-0000-0000-000000000001","userID":"00000000-0000-0000-0000-000000000001","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Ayu Lestari","city":"Denpasar"},
+    {"id":"20000000-0000-0000-0000-000000000001","userID":"00000000-0000-0000-0000-000000000001","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Ayu Lestari","city":"Denpasar","phoneNumber":"+6281234567890","localPhotoReference":null},
     {"id":"20000000-0000-0000-0000-000000000002","userID":"00000000-0000-0000-0000-000000000002","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Bima Putra","city":"Badung"},
     {"id":"20000000-0000-0000-0000-000000000003","userID":"00000000-0000-0000-0000-000000000003","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Citra Dewi","city":"Gianyar"},
     {"id":"20000000-0000-0000-0000-000000000004","userID":"00000000-0000-0000-0000-000000000004","coachID":"30000000-0000-0000-0000-000000000101","displayName":"Dimas Arta","city":"Tabanan"},

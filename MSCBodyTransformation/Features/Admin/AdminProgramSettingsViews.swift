@@ -15,6 +15,12 @@ struct AdminProgramInformationView: View {
                     axis: .vertical
                 )
                 .lineLimit(3...8)
+                TextField(
+                    "Harga",
+                    value: $draft.price,
+                    format: .number.locale(Locale(identifier: "id-ID"))
+                )
+                .keyboardType(.numberPad)
             }
 
             Section {

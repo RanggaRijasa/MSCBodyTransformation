@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct UserAvatar: View {
     let displayName: String
@@ -17,16 +18,19 @@ struct UserAvatar: View {
 
     var body: some View {
         Group {
-            if let imageName {
-                Image(imageName)
+            if let image {
+                Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
             } else {
-                Text(initials)
-                    .font(AppTypography.cardTitle)
-                    .foregroundStyle(Color.white)
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(Color.appSecondaryText)
+                    .padding(size * 0.12)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.brandPrimary)
+                    .background(Color.appSecondaryBackground)
             }
         }
         .frame(width: size, height: size)
@@ -38,15 +42,16 @@ struct UserAvatar: View {
         .accessibilityLabel(Text(displayName))
     }
 
-    private var initials: String {
-        displayName
-            .split(separator: " ")
-            .prefix(2)
-            .compactMap(\.first)
-            .map(String.init)
-            .joined()
-            .uppercased()
+    private var image: UIImage? {
+        guard let imageName, !imageName.isEmpty else {
+            return nil
+        }
+        if FileManager.default.fileExists(atPath: imageName) {
+            return UIImage(contentsOfFile: imageName)
+        }
+        return UIImage(named: imageName)
     }
+
 }
 
 struct MediaThumbnail: View {
@@ -86,6 +91,56 @@ struct MediaThumbnail: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(title))
         .accessibilityValue(Text(kindLabel))
+    }
+}
+
+struct WinnerPosterImage: View {
+    let reference: String?
+    let alternativeText: String
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ContentUnavailableView(
+                    "Poster belum tersedia",
+                    systemImage: "photo",
+                    description: Text(
+                        "Admin perlu memilih gambar poster pemenang."
+                    )
+                )
+                .background(Color.appSecondaryBackground)
+            }
+        }
+        .aspectRatio(9.0 / 16.0, contentMode: .fit)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+        )
+        .overlay {
+            RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+            .stroke(Color.appBorder, lineWidth: 1)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(alternativeText))
+        .accessibilityAddTraits(.isImage)
+    }
+
+    private var image: UIImage? {
+        guard let reference, !reference.isEmpty else { return nil }
+        if FileManager.default.fileExists(atPath: reference),
+           let localImage = UIImage(contentsOfFile: reference) {
+            return localImage
+        }
+        return UIImage(named: reference)
     }
 }
 

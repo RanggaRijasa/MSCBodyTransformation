@@ -84,7 +84,6 @@ final class CoachProfileState {
     var city = ""
     var isPublic = true
     var notificationsEnabled = true
-    var hasLocalPhotoPlaceholder = false
     var isSaving = false
     var saveConfirmationVisible = false
 
@@ -97,15 +96,6 @@ final class CoachProfileState {
         state = .loading
         do {
             let identity = try await service.identity()
-            guard let repositories = environment.repositories else {
-                throw environment.bootstrapError ?? DomainError.unknown
-            }
-            let wallet = try await repositories.wallet.wallet(
-                coachID: identity.profile.id
-            )
-            let ledger = try await repositories.wallet.ledger(
-                walletID: wallet.id
-            )
             displayName = identity.profile.displayName
             biography = identity.profile.biography
             city = identity.profile.city
@@ -115,8 +105,7 @@ final class CoachProfileState {
             }
             state = .loaded(
                 CoachProfileSnapshot(
-                    profile: identity.profile,
-                    ledger: ledger
+                    profile: identity.profile
                 )
             )
         } catch is CancellationError {

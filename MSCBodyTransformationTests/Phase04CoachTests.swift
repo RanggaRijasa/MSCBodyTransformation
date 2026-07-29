@@ -23,7 +23,7 @@ struct Phase04CoachTests {
 
         state.query = ""
         state.reviewFilter = .pending
-        #expect(state.filteredParticipants.count == 3)
+        #expect(state.filteredParticipants.count == 2)
         #expect(
             state.filteredParticipants.allSatisfy {
                 $0.pendingReviewCount > 0
@@ -115,37 +115,16 @@ struct Phase04CoachTests {
         #expect(result.pointsAfter < result.pointsBefore)
     }
 
-    @Test("Membuat undangan tidak mengurangi kapasitas")
-    func inviteCreationKeepsWalletBalance() async throws {
-        let repository = try makeRepository()
-        let walletBefore = try await repository.wallet(coachID: coachID)
-        let programID = try #require(
-            try await repository.activeProgram()?.id
-        )
-        let invite = try await GenerateLocalInviteUseCase(
-            repository: repository,
-            identifierGenerator: DeterministicIdentifierGenerator(
-                identifier: UUID(
-                    uuidString: "33000000-0000-0000-0000-000000009999"
-                )!
-            ),
-            clock: FixedClock(
-                now: Date(timeIntervalSince1970: 1_785_028_400)
-            )
-        )(
-            coachID: coachID,
-            programID: programID
-        )
-        let walletAfter = try await repository.wallet(coachID: coachID)
+    @Test("Setiap coach memiliki identifier pendaftaran unik")
+    func coachEnrollmentIdentifiersAreUnique() throws {
+        let coaches = try MockSeedData.load().coachProfiles
+        let identifiers = coaches.map(\.enrollmentIdentifier)
 
-        #expect(invite.status == .active)
-        #expect(
-            walletAfter.availableSeatCredits
-                == walletBefore.availableSeatCredits
-        )
+        #expect(identifiers.allSatisfy { !$0.isEmpty })
+        #expect(Set(identifiers).count == coaches.count)
     }
 
-    @Test("Enrollment lokal duplikat tidak memakai kuota tambahan")
+    @Test("Enrollment lokal duplikat tetap idempotent")
     func duplicateInviteRedemptionIsIdempotent() async throws {
         let repository = try makeRepository()
         let participantID = UUID(
@@ -174,8 +153,8 @@ struct Phase04CoachTests {
         )
     }
 
-    @Test("Redemption baru memakai tepat satu kuota setelah berhasil")
-    func successfulRedemptionConsumesOneSeat() async throws {
+    @Test("Enrollment baru tidak mengubah saldo kuota lama")
+    func successfulEnrollmentDoesNotConsumeLegacySeat() async throws {
         let repository = try makeRepository()
         let participantID = UUID(
             uuidString: "20000000-0000-0000-0000-000000009998"
@@ -196,12 +175,12 @@ struct Phase04CoachTests {
         #expect(enrollment.id == enrollmentID)
         #expect(
             walletAfter.availableSeatCredits
-                == walletBefore.availableSeatCredits - 1
+                == walletBefore.availableSeatCredits
         )
     }
 
-    @Test("Wallet nol memblokir redemption dan tidak menjadi negatif")
-    func walletCannotBecomeNegative() async throws {
+    @Test("Saldo kuota lama nol tidak memblokir enrollment")
+    func legacyWalletZeroDoesNotBlockEnrollment() async throws {
         let repository = try makeRepository()
         _ = try await repository.setSeatCredits(
             coachID: coachID,
@@ -209,25 +188,17 @@ struct Phase04CoachTests {
             updatedAt: Date(timeIntervalSince1970: 1_785_028_400)
         )
 
-        do {
-            _ = try await repository.redeemInvite(
-                code: "MSC7HARI",
-                participantID: UUID(
-                    uuidString: "20000000-0000-0000-0000-000000009999"
-                )!,
-                enrollmentID: UUID(),
-                now: Date(timeIntervalSince1970: 1_785_028_400)
-            )
-            Issue.record("Redemption tanpa kuota seharusnya gagal.")
-        } catch let error as DomainError {
-            #expect(
-                error == .conflict(
-                    reason: "Kuota peserta tidak mencukupi."
-                )
-            )
-        }
+        let enrollment = try await repository.redeemInvite(
+            code: "MSC7HARI",
+            participantID: UUID(
+                uuidString: "20000000-0000-0000-0000-000000009999"
+            )!,
+            enrollmentID: UUID(),
+            now: Date(timeIntervalSince1970: 1_785_028_400)
+        )
 
         let wallet = try await repository.wallet(coachID: coachID)
+        #expect(enrollment.coachID == coachID)
         #expect(wallet.availableSeatCredits == 0)
     }
 
@@ -247,22 +218,6 @@ struct Phase04CoachTests {
         } catch let error as DomainError {
             #expect(error == .permissionDenied)
         }
-    }
-
-    @Test("Grant kuota demo menambah wallet tanpa StoreKit")
-    func localDemoCreditGrant() async throws {
-        let repository = try makeRepository()
-        let before = try await repository.wallet(coachID: coachID)
-        let after = try await repository.grantSeatCredits(
-            coachID: coachID,
-            amount: 10,
-            grantedAt: Date(timeIntervalSince1970: 1_785_028_400)
-        )
-
-        #expect(
-            after.availableSeatCredits
-                == before.availableSeatCredits + 10
-        )
     }
 
     @MainActor

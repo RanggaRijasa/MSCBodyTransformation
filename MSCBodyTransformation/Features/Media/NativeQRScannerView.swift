@@ -2,7 +2,6 @@ import AVFoundation
 import SwiftUI
 import UIKit
 import Vision
-import VisionKit
 
 @MainActor
 struct LocalQRScannerSheet: View {
@@ -10,10 +9,19 @@ struct LocalQRScannerSheet: View {
     @AppStorage("settings.hapticsEnabled")
     private var hapticsEnabled = true
 
-    let onValidInvite: (String) -> Void
+    let demoPayload: String
+    let onValidIdentifier: (String) -> Void
 
     @State private var scannerMode: ScannerMode = .checking
     @State private var validationMessage: String?
+
+    init(
+        demoPayload: String = "msc-demo://join/COACH-RAKA-7K9Q",
+        onValidIdentifier: @escaping (String) -> Void
+    ) {
+        self.demoPayload = demoPayload
+        self.onValidIdentifier = onValidIdentifier
+    }
 
     var body: some View {
         NavigationStack {
@@ -21,10 +29,6 @@ struct LocalQRScannerSheet: View {
                 switch scannerMode {
                 case .checking:
                     ProgressView("Menyiapkan pemindai…")
-                case .visionKit:
-                    scannerSurface {
-                        DataScannerQRCodeView(onScan: handleScan)
-                    }
                 case .avFoundation:
                     scannerSurface {
                         AVFoundationQRCodeView(onScan: handleScan)
@@ -33,20 +37,20 @@ struct LocalQRScannerSheet: View {
                     unsupportedView(
                         title: "Pemindai tidak tersedia",
                         message:
-                            "Gunakan input kode manual untuk melanjutkan."
+                            "Pemindaian QR memerlukan perangkat dengan kamera."
                     )
                 case .permissionDenied:
                     unsupportedView(
                         title: "Akses kamera ditolak",
                         message:
-                            "Izinkan kamera di Pengaturan, atau gunakan "
-                            + "input kode manual."
+                            "Izinkan kamera di Pengaturan untuk memindai "
+                            + "QR coach."
                     )
                 case .missingUsageDescription:
                     unsupportedView(
                         title: "Kamera belum dikonfigurasi",
                         message:
-                            "Gunakan input kode manual pada build ini."
+                            "Pemindaian QR belum tersedia pada build ini."
                     )
                 }
             }
@@ -70,7 +74,7 @@ struct LocalQRScannerSheet: View {
                     .accessibilityIdentifier("participant.qr.validation")
                 }
             }
-            .navigationTitle("Pindai QR undangan")
+            .navigationTitle("Pindai QR coach")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -105,11 +109,11 @@ struct LocalQRScannerSheet: View {
         } actions: {
 #if DEBUG
             Button("Gunakan QR demo lokal") {
-                handleScan("msc-demo://join/MSC7HARI")
+                handleScan(demoPayload)
             }
             .accessibilityIdentifier("participant.qr.use-demo")
 #endif
-            Button("Masukkan kode manual") {
+            Button("Tutup") {
                 dismiss()
             }
         }
@@ -144,10 +148,10 @@ struct LocalQRScannerSheet: View {
             scannerMode = .permissionDenied
             return
         }
-        scannerMode = DataScannerViewController.isSupported
-            && DataScannerViewController.isAvailable
-            ? .visionKit
-            : .avFoundation
+        // DataScanner dapat berpindah antar-lensa secara otomatis pada perangkat
+        // multi-camera. Enrollment memakai kamera wide fisik agar framing QR
+        // tetap stabil dan sesi capture tidak berulang kali dibangun ulang.
+        scannerMode = .avFoundation
 #endif
     }
 
@@ -160,12 +164,12 @@ struct LocalQRScannerSheet: View {
                 UINotificationFeedbackGenerator()
                     .notificationOccurred(.success)
             }
-            onValidInvite(payload.opaqueToken)
+            onValidIdentifier(payload.opaqueToken)
             dismiss()
         } catch let error as DomainError {
             validationMessage = ParticipantFormatting.fieldReason(error)
         } catch {
-            validationMessage = "QR undangan tidak valid."
+            validationMessage = "QR coach tidak valid."
         }
     }
 }
@@ -173,7 +177,6 @@ struct LocalQRScannerSheet: View {
 private extension LocalQRScannerSheet {
     enum ScannerMode: Equatable {
         case checking
-        case visionKit
         case avFoundation
         case unavailable
         case permissionDenied
@@ -184,8 +187,6 @@ private extension LocalQRScannerSheet {
 private struct QRScannerOverlay: View {
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
-
-    @State private var scanLinePosition: CGFloat = -1
 
     var body: some View {
         GeometryReader { proxy in
@@ -215,24 +216,16 @@ private struct QRScannerOverlay: View {
                         )
 
                     if !reduceMotion {
-                        Rectangle()
-                            .fill(Color.brandPrimary)
-                            .frame(height: 2)
-                            .shadow(
-                                color: Color.brandPrimary.opacity(0.8),
-                                radius: AppSpacing.xSmall
-                            )
-                            .padding(.horizontal, AppSpacing.medium)
-                            .offset(
-                                y: scanLinePosition
-                                    * ((frameSize / 2) - AppSpacing.large)
-                            )
+                        QRScannerScanLine(
+                            travelDistance:
+                                (frameSize / 2) - AppSpacing.large
+                        )
                     }
                 }
                 .frame(width: frameSize, height: frameSize)
                 .accessibilityHidden(true)
 
-                Text("participant.invite.scan_message")
+                Text("participant.qr.scan_message")
                     .font(.headline)
                     .foregroundStyle(Color.white)
                     .multilineTextAlignment(.center)
@@ -249,15 +242,25 @@ private struct QRScannerOverlay: View {
             .background(Color.black.opacity(0.18))
         }
         .allowsHitTesting(false)
-        .onAppear {
-            guard !reduceMotion else { return }
-            scanLinePosition = -1
-            withAnimation(
-                .easeInOut(duration: 1.8)
-                    .repeatForever(autoreverses: true)
-            ) {
-                scanLinePosition = 1
-            }
+    }
+}
+
+private struct QRScannerScanLine: View {
+    let travelDistance: CGFloat
+
+    var body: some View {
+        PhaseAnimator([-1.0, 1.0]) { position in
+            Rectangle()
+                .fill(Color.brandPrimary)
+                .frame(height: 2)
+                .shadow(
+                    color: Color.brandPrimary.opacity(0.8),
+                    radius: AppSpacing.xSmall
+                )
+                .padding(.horizontal, AppSpacing.medium)
+                .offset(y: position * travelDistance)
+        } animation: { _ in
+            .easeInOut(duration: 1.8)
         }
     }
 }
@@ -290,78 +293,6 @@ private struct ScannerCornerShape: Shape {
         )
 
         return path
-    }
-}
-
-@available(iOS 16.0, *)
-@MainActor
-private struct DataScannerQRCodeView: UIViewControllerRepresentable {
-    let onScan: (String) -> Void
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onScan: onScan)
-    }
-
-    func makeUIViewController(
-        context: Context
-    ) -> DataScannerViewController {
-        let controller = DataScannerViewController(
-            recognizedDataTypes: [
-                .barcode(symbologies: [.qr])
-            ],
-            qualityLevel: .balanced,
-            recognizesMultipleItems: false,
-            isHighFrameRateTrackingEnabled: false,
-            isPinchToZoomEnabled: true,
-            isGuidanceEnabled: true,
-            isHighlightingEnabled: true
-        )
-        controller.delegate = context.coordinator
-        try? controller.startScanning()
-        return controller
-    }
-
-    func updateUIViewController(
-        _ uiViewController: DataScannerViewController,
-        context: Context
-    ) {
-        guard !uiViewController.isScanning else { return }
-        try? uiViewController.startScanning()
-    }
-
-    static func dismantleUIViewController(
-        _ uiViewController: DataScannerViewController,
-        coordinator: Coordinator
-    ) {
-        uiViewController.stopScanning()
-    }
-
-    final class Coordinator:
-        NSObject,
-        DataScannerViewControllerDelegate
-    {
-        let onScan: (String) -> Void
-        var hasDeliveredValue = false
-
-        init(onScan: @escaping (String) -> Void) {
-            self.onScan = onScan
-        }
-
-        func dataScanner(
-            _ dataScanner: DataScannerViewController,
-            didAdd addedItems: [RecognizedItem],
-            allItems: [RecognizedItem]
-        ) {
-            guard !hasDeliveredValue else { return }
-            for item in addedItems {
-                if case .barcode(let barcode) = item,
-                   let value = barcode.payloadStringValue {
-                    hasDeliveredValue = true
-                    onScan(value)
-                    return
-                }
-            }
-        }
     }
 }
 
@@ -406,7 +337,7 @@ private struct AVFoundationQRCodeView: UIViewControllerRepresentable {
         func configure(_ controller: QRPreviewController) {
             let session = capture.session
             session.beginConfiguration()
-            session.sessionPreset = .high
+            session.sessionPreset = .hd1280x720
 
             guard let device = AVCaptureDevice.default(
                 .builtInWideAngleCamera,
@@ -418,6 +349,14 @@ private struct AVFoundationQRCodeView: UIViewControllerRepresentable {
                 session.commitConfiguration()
                 return
             }
+
+            do {
+                try configureStableCapture(on: device)
+            } catch {
+                // Tetap lanjut dengan perangkat wide fisik. Konfigurasi default
+                // masih dapat memindai QR tanpa beralih ke perangkat virtual.
+            }
+
             session.addInput(input)
             let output = AVCaptureMetadataOutput()
             guard session.canAddOutput(output) else {
@@ -430,7 +369,26 @@ private struct AVFoundationQRCodeView: UIViewControllerRepresentable {
             session.commitConfiguration()
 
             controller.previewLayer.session = session
+            controller.onViewWillDisappear = { [weak capture] in
+                capture?.stop()
+            }
             capture.start()
+        }
+
+        private func configureStableCapture(
+            on device: AVCaptureDevice
+        ) throws {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+
+            device.videoZoomFactor = 1
+            device.isSubjectAreaChangeMonitoringEnabled = false
+            if device.isFocusModeSupported(.continuousAutoFocus) {
+                device.focusMode = .continuousAutoFocus
+            }
+            if device.isExposureModeSupported(.continuousAutoExposure) {
+                device.exposureMode = .continuousAutoExposure
+            }
         }
 
         func stop() {
@@ -481,6 +439,7 @@ nonisolated private final class CaptureSessionController:
 @MainActor
 private final class QRPreviewController: UIViewController {
     let previewLayer = AVCaptureVideoPreviewLayer()
+    var onViewWillDisappear: (() -> Void)?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -491,5 +450,10 @@ private final class QRPreviewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         previewLayer.frame = view.bounds
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        onViewWillDisappear?()
+        super.viewWillDisappear(animated)
     }
 }

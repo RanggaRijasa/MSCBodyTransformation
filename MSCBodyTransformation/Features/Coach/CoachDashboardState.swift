@@ -21,9 +21,6 @@ final class CoachDashboardState {
             guard let repositories = environment.repositories else {
                 throw environment.bootstrapError ?? DomainError.unknown
             }
-            let wallet = try await repositories.wallet.wallet(
-                coachID: identity.profile.id
-            )
             let programs = try await repositories.programs.programs()
             let participants = try await service.participantSummaries(
                 coachID: identity.profile.id
@@ -34,7 +31,6 @@ final class CoachDashboardState {
             state = .loaded(
                 CoachDashboardSnapshot(
                     profile: identity.profile,
-                    wallet: wallet,
                     activePrograms: programs.filter {
                         $0.status == .active
                     },

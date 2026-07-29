@@ -34,6 +34,7 @@ Skenario Peserta:
 
 - `participant_onboarding`
 - `participant_no_program`
+- `participant_active`
 - `participant_day_1`
 - `participant_mid_program`
 - `participant_final_weigh_in`
@@ -51,8 +52,9 @@ Skenario Admin:
 - `admin_active_program`
 - `admin_winner_lock`
 
-Nama lama `participant_active`, `admin_draft_editor`, dan `error` tetap
-diterima agar UI test lama tidak terputus.
+Nama lama `admin_draft_editor` dan `error` tetap diterima agar UI test lama
+tidak terputus. Skenario `participant_active` mengikuti tanggal aktif saat
+aplikasi dijalankan.
 
 ## Alur demo
 
@@ -82,8 +84,8 @@ Admin:
 
 Pemilih foto, foto contoh, video lokal, QR demo, dan input manual berfungsi
 di simulator. Kamera dan pemindaian nyata memerlukan perangkat fisik serta
-`NSCameraUsageDescription` pada target Xcode. Kunci tersebut belum dipasang
-karena perubahan setting target dan `project.pbxproj` tidak termasuk scope.
+`NSCameraUsageDescription` pada target Xcode. Kunci tersebut sudah tersedia;
+uji kestabilan kamera tetap dilakukan pada perangkat fisik multi-camera.
 
 Gunakan data yang tidak sensitif. Seluruh nilai berat dan bukti pada demo
 adalah fixture lokal dan tidak diverifikasi layanan pusat.

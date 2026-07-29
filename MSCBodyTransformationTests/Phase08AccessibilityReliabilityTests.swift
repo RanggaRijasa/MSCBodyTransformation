@@ -4,10 +4,10 @@ import Testing
 
 @Suite("Phase 08 — aksesibilitas, demo, dan reliabilitas")
 struct Phase08AccessibilityReliabilityTests {
-    @Test("Launcher menyediakan seluruh 17 skenario deterministik")
+    @Test("Launcher menyediakan seluruh 18 skenario deterministik")
     func completeScenarioCatalog() {
-        #expect(AppDemoScenario.allCases.count == 17)
-        #expect(AppDemoScenario.scenarios(for: .participant).count == 11)
+        #expect(AppDemoScenario.allCases.count == 18)
+        #expect(AppDemoScenario.scenarios(for: .participant).count == 12)
         #expect(AppDemoScenario.scenarios(for: .coach).count == 8)
         #expect(AppDemoScenario.scenarios(for: .admin).count == 8)
 
@@ -58,7 +58,7 @@ struct Phase08AccessibilityReliabilityTests {
             ]
         )
 
-        #expect(participant.scenario == .participantDayOne)
+        #expect(participant.scenario == .participantActive)
         #expect(admin.scenario == .adminDraftCMS)
     }
 #endif

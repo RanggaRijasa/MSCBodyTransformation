@@ -6,13 +6,17 @@ struct ParticipantProfileView: View {
     let router: ShellTabRouter
 
     @State private var notificationsEnabled = true
-    @State private var usesDarkAppearance = false
+    @State private var presentedSheet: ParticipantProfileSheet?
+    @State private var pendingCoach: CoachProfile?
+    @State private var actionError: String?
+    @State private var isChangingCoach = false
 
     var body: some View {
         if let snapshot = store.snapshot {
             Form {
                 identitySection(snapshot)
-                enrollmentSection(snapshot)
+                profileDataSection(snapshot)
+                coachSection(snapshot)
                 settingsSection
                 legalSection
 #if DEBUG
@@ -23,6 +27,67 @@ struct ParticipantProfileView: View {
             .scrollContentBackground(.hidden)
             .background(Color.appBackground)
             .accessibilityIdentifier("participant.profile")
+            .sheet(item: $presentedSheet) { sheet in
+                switch sheet {
+                case .edit(let profile, let email):
+                    ParticipantProfileEditorSheet(
+                        store: store,
+                        profile: profile,
+                        email: email
+                    )
+                case .scanCoach:
+                    LocalQRScannerSheet(
+                        demoPayload:
+                            "msc-demo://join/COACH-MAYA-4P2L"
+                    ) { identifier in
+                        resolveCoach(identifier)
+                    }
+                }
+            }
+            .confirmationDialog(
+                "participant.profile.coach.confirm.title",
+                isPresented: Binding(
+                    get: { pendingCoach != nil },
+                    set: {
+                        if !$0 {
+                            pendingCoach = nil
+                        }
+                    }
+                ),
+                titleVisibility: .visible
+            ) {
+                if let pendingCoach {
+                    Button("participant.profile.coach.confirm.action") {
+                        changeCoach(to: pendingCoach)
+                    }
+                }
+                Button("action.cancel", role: .cancel) {
+                    pendingCoach = nil
+                }
+            } message: {
+                if let pendingCoach {
+                    Text(
+                        "Coach pendamping akan diubah menjadi "
+                            + pendingCoach.displayName
+                            + "."
+                    )
+                }
+            }
+            .alert(
+                "participant.profile.action_failed",
+                isPresented: Binding(
+                    get: { actionError != nil },
+                    set: {
+                        if !$0 {
+                            actionError = nil
+                        }
+                    }
+                )
+            ) {
+                Button("action.close", role: .cancel) {}
+            } message: {
+                Text(actionError ?? "")
+            }
         } else {
             LoadingStateView()
         }
@@ -32,14 +97,18 @@ struct ParticipantProfileView: View {
         _ snapshot: ParticipantJourneySnapshot
     ) -> some View {
         Section {
-            HStack(spacing: AppSpacing.medium) {
+            VStack(spacing: AppSpacing.medium) {
                 UserAvatar(
                     displayName: snapshot.profile.displayName,
-                    size: 72
+                    imageName: snapshot.profile.localPhotoReference,
+                    size: 96
                 )
-                VStack(alignment: .leading) {
+                .accessibilityIdentifier("participant.profile.photo")
+
+                VStack(spacing: AppSpacing.xxSmall) {
                     Text(snapshot.profile.displayName)
                         .font(AppTypography.sectionTitle)
+                        .multilineTextAlignment(.center)
                     Text(snapshot.user.email)
                         .font(AppTypography.secondary)
                         .foregroundStyle(Color.appSecondaryText)
@@ -47,46 +116,100 @@ struct ParticipantProfileView: View {
                         .font(AppTypography.secondary)
                         .foregroundStyle(Color.appSecondaryText)
                 }
+
+                Button {
+                    presentedSheet = .edit(
+                        snapshot.profile,
+                        snapshot.user.email
+                    )
+                } label: {
+                    Text("participant.profile.edit")
+                    .frame(minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.brandPrimary)
+                .accessibilityIdentifier("participant.profile.edit")
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.small)
         } header: {
             Text("participant.profile.identity")
         }
     }
 
-    private func enrollmentSection(
+    private func profileDataSection(
+        _ snapshot: ParticipantJourneySnapshot
+    ) -> some View {
+        Section("participant.profile.data") {
+            LabeledContent(
+                "participant.profile.field.name",
+                value: snapshot.profile.displayName
+            )
+            .accessibilityIdentifier("participant.profile.name")
+
+            LabeledContent(
+                "participant.profile.field.phone",
+                value: snapshot.profile.phoneNumber
+                    ?? String(
+                        localized:
+                            "participant.profile.phone.empty"
+                    )
+            )
+            .accessibilityIdentifier("participant.profile.phone")
+
+            LabeledContent(
+                "participant.profile.field.email",
+                value: snapshot.user.email
+            )
+        }
+    }
+
+    private func coachSection(
         _ snapshot: ParticipantJourneySnapshot
     ) -> some View {
         Section {
-            if snapshot.enrollments.isEmpty {
-                Text("participant.profile.enrollments.empty")
-                    .foregroundStyle(Color.appSecondaryText)
-            } else {
-                ForEach(snapshot.enrollments) { enrollment in
-                    let program = snapshot.programs.first {
-                        $0.id == enrollment.programID
+            if let coach = currentCoach(in: snapshot) {
+                HStack(spacing: AppSpacing.medium) {
+                    UserAvatar(
+                        displayName: coach.displayName,
+                        size: 56
+                    )
+                    VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                        Text(coach.displayName)
+                            .font(AppTypography.cardTitle)
+                        Text(coach.city)
+                            .font(AppTypography.secondary)
+                            .foregroundStyle(Color.appSecondaryText)
                     }
-                    VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-                        Text(
-                            program?.title
-                                ?? String(
-                                    localized:
-                                        "participant.program.unknown"
-                                )
-                        )
-                        .font(AppTypography.cardTitle)
-                        StatusBadge(
-                            title: LocalizedStringKey(
-                                enrollmentStatusKey(enrollment.status)
-                            ),
-                            kind: enrollment.status == .active
-                                ? .success
-                                : .neutral
-                        )
-                    }
+                    Spacer(minLength: 0)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("participant.profile.coach")
+            } else {
+                Label(
+                    "participant.profile.coach.empty",
+                    systemImage: "person.crop.circle.badge.questionmark"
+                )
+                .foregroundStyle(Color.appSecondaryText)
             }
+
+            Button {
+                presentedSheet = .scanCoach
+            } label: {
+                Label(
+                    "participant.profile.coach.change",
+                    systemImage: "qrcode.viewfinder"
+                )
+                .frame(minHeight: 44)
+            }
+            .disabled(isChangingCoach)
+            .accessibilityIdentifier(
+                "participant.profile.change-coach"
+            )
         } header: {
-            Text("participant.profile.enrollments")
+            Text("participant.profile.coach.section")
+        } footer: {
+            Text("participant.profile.coach.scan_help")
         }
     }
 
@@ -96,11 +219,13 @@ struct ParticipantProfileView: View {
                 "participant.profile.notifications",
                 isOn: $notificationsEnabled
             )
-            Toggle(
+            LabeledContent(
                 "participant.profile.dark_preview",
-                isOn: $usesDarkAppearance
+                value: String(
+                    localized:
+                        "participant.profile.appearance.system"
+                )
             )
-            .disabled(true)
         }
     }
 
@@ -119,6 +244,7 @@ struct ParticipantProfileView: View {
                 )
             }
             .accessibilityIdentifier("participant.profile.legal.privacy")
+
             NavigationLink {
                 ParticipantLegalPlaceholderView(
                     title: "participant.legal.terms.title",
@@ -132,6 +258,7 @@ struct ParticipantProfileView: View {
                 )
             }
             .accessibilityIdentifier("participant.profile.legal.terms")
+
             Label(
                 "participant.delete_account.info",
                 systemImage: "person.crop.circle.badge.minus"
@@ -154,10 +281,59 @@ struct ParticipantProfileView: View {
         }
     }
 
-    private func enrollmentStatusKey(
-        _ status: EnrollmentStatus
-    ) -> String {
-        "participant.enrollment.\(status.rawValue)"
+    private func currentCoach(
+        in snapshot: ParticipantJourneySnapshot
+    ) -> CoachProfile? {
+        snapshot.coaches.first {
+            $0.id == snapshot.profile.coachID
+        }
+    }
+
+    private func resolveCoach(_ identifier: String) {
+        do {
+            pendingCoach = try store.coach(
+                matchingEnrollmentIdentifier: identifier
+            )
+        } catch let error as DomainError {
+            actionError = ParticipantFormatting.fieldReason(error)
+        } catch {
+            actionError = String(
+                localized: "participant.error.generic"
+            )
+        }
+    }
+
+    private func changeCoach(to coach: CoachProfile) {
+        isChangingCoach = true
+        Task {
+            defer {
+                isChangingCoach = false
+                pendingCoach = nil
+            }
+            do {
+                try await store.changeCoach(to: coach)
+            } catch let error as DomainError {
+                actionError = ParticipantFormatting.fieldReason(error)
+            } catch {
+                actionError = String(
+                    localized: "participant.error.generic"
+                )
+            }
+        }
+    }
+}
+
+private enum ParticipantProfileSheet: Identifiable {
+    case edit(ParticipantProfile, String)
+    case scanCoach
+
+    var id: String {
+        switch self {
+        case .edit:
+            "edit"
+        case .scanCoach:
+            "scan-coach"
+        }
     }
 }
 

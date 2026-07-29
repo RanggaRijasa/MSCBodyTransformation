@@ -141,12 +141,12 @@ tanpa metadata lokasi, melihat thumbnail, mengganti, menghapus, dan mencoba
 ulang. Video petunjuk diputar dari MP4 bundle menggunakan `AVKit.VideoPlayer`
 tanpa autoplay.
 
-Undangan Coach memakai QR `msc-demo://join/{opaque-token}`, padding aman,
+Identitas Coach memakai QR `msc-demo://join/{opaque-token}`, padding aman,
 native share sheet, serta label aksesibilitas yang tidak membacakan token.
-Peserta dapat memindai lewat VisionKit dengan fallback AVFoundation, memakai
-QR demo pada simulator, atau tetap mengetik kode manual. File evidence demo
-disimpan sementara, dikecualikan dari backup, dilindungi saat memungkinkan,
-dan dibersihkan bila yatim.
+Peserta memindai dengan AVFoundation dan kamera wide fisik yang stabil,
+memakai QR demo pada simulator, dan tidak memiliki jalur input kode manual.
+File evidence demo disimpan sementara, dikecualikan dari backup, dilindungi
+saat memungkinkan, dan dibersihkan bila yatim.
 
 ## Scoring dan leaderboard Phase 07
 
@@ -168,7 +168,7 @@ menempatkan hasil program selesai pada sheet Riwayat yang terpisah.
 
 ## Accessibility, reliability, dan demo Phase 08
 
-Launcher Debug menyediakan 17 skenario deterministik untuk sesi keluar,
+Launcher Debug menyediakan 18 skenario deterministik untuk sesi keluar,
 loading, offline, izin, error repository, perjalanan Peserta, state Coach,
 dan state Admin. Unit test meliputi model, fixture, repository, validasi,
 media, QR, skor, ranking, timezone, feature state, navigasi, dan error.
@@ -182,7 +182,6 @@ adapter tersedia pada dokumen Markdown di root repository.
 
 Supabase, OAuth, StoreKit production, App Store Connect, networking, dan
 package pihak ketiga belum digunakan. Kamera dan QR scanner pada perangkat
-fisik memerlukan `NSCameraUsageDescription` pada target Xcode; konfigurasi
-tersebut belum ditambahkan karena build setting dan `project.pbxproj` berada
-di luar scope perubahan. Mock access check bukan pengganti Row Level Security
-produksi.
+fisik memakai `NSCameraUsageDescription` yang sudah dikonfigurasi pada target;
+perilaku capture tetap perlu diregresikan di perangkat fisik. Mock access
+check bukan pengganti Row Level Security produksi.

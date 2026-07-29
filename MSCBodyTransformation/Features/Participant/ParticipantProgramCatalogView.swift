@@ -6,7 +6,7 @@ struct ParticipantProgramCatalogView: View {
     let router: ShellTabRouter
 
     @State private var selectedFilter =
-        ParticipantProgramCatalogFilter.available
+        ParticipantProgramCatalogFilter.enrolled
 
     var body: some View {
         if let snapshot = store.snapshot {
@@ -59,20 +59,6 @@ struct ParticipantProgramCatalogView: View {
                 .accessibilityIdentifier("participant.program.catalog")
 
             Spacer(minLength: AppSpacing.small)
-
-            Button {
-                openJoinProgram()
-            } label: {
-                Label(
-                    "participant.program.join.action",
-                    systemImage: "plus"
-                )
-                .font(.headline)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.brandPrimary)
-            .controlSize(.large)
-            .accessibilityIdentifier("participant.program.join")
         }
         .padding(.horizontal, AppSpacing.medium)
         .padding(.top, AppSpacing.small)
@@ -101,7 +87,13 @@ struct ParticipantProgramCatalogView: View {
                         Button {
                             openProgram(program)
                         } label: {
-                            ParticipantProgramPoster(program: program)
+                            ParticipantProgramPoster(
+                                program: program,
+                                participationStatus: participationStatus(
+                                    for: program,
+                                    snapshot: snapshot
+                                )
+                            )
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier(
@@ -120,30 +112,16 @@ struct ParticipantProgramCatalogView: View {
     private func filteredPrograms(
         _ snapshot: ParticipantJourneySnapshot
     ) -> [Program] {
-        let enrollmentsByProgramID = Dictionary(
-            uniqueKeysWithValues: snapshot.enrollments.map {
-                ($0.programID, $0)
-            }
-        )
-
         return snapshot.programs
             .filter { program in
-                guard let enrollment = enrollmentsByProgramID[program.id] else {
-                    return false
-                }
                 return selectedFilter.includes(
                     program,
-                    enrollment: enrollment
+                    enrollment: snapshot.enrollments.first {
+                        $0.programID == program.id
+                    }
                 )
             }
             .sorted(by: selectedFilter.precedes)
-    }
-
-    private func openJoinProgram() {
-        router.navigate(
-            to: .participant(.joinProgram),
-            in: .participant(.program)
-        )
     }
 
     private func openProgram(_ program: Program) {
@@ -152,6 +130,16 @@ struct ParticipantProgramCatalogView: View {
             in: .participant(.program)
         )
     }
+
+    private func participationStatus(
+        for program: Program,
+        snapshot: ParticipantJourneySnapshot
+    ) -> ParticipantProgramParticipationStatus {
+        snapshot.enrollments.contains {
+            $0.programID == program.id
+                && $0.status != .cancelled
+        } ? .enrolled : .notEnrolled
+    }
 }
 
 private enum ParticipantProgramCatalogFilter:
@@ -159,6 +147,7 @@ private enum ParticipantProgramCatalogFilter:
     CaseIterable,
     Identifiable
 {
+    case enrolled
     case available
     case history
 
@@ -166,6 +155,8 @@ private enum ParticipantProgramCatalogFilter:
 
     var title: LocalizedStringKey {
         switch self {
+        case .enrolled:
+            "participant.program.catalog.filter.enrolled"
         case .available:
             "participant.program.catalog.filter.available"
         case .history:
@@ -175,6 +166,8 @@ private enum ParticipantProgramCatalogFilter:
 
     var emptyTitle: LocalizedStringKey {
         switch self {
+        case .enrolled:
+            "participant.program.catalog.enrolled.empty.title"
         case .available:
             "participant.program.catalog.available.empty.title"
         case .history:
@@ -184,6 +177,8 @@ private enum ParticipantProgramCatalogFilter:
 
     var emptyMessage: LocalizedStringKey {
         switch self {
+        case .enrolled:
+            "participant.program.catalog.enrolled.empty.message"
         case .available:
             "participant.program.catalog.available.empty.message"
         case .history:
@@ -193,6 +188,8 @@ private enum ParticipantProgramCatalogFilter:
 
     var emptySystemImage: String {
         switch self {
+        case .enrolled:
+            "checkmark.circle"
         case .available:
             "rectangle.stack"
         case .history:
@@ -202,16 +199,28 @@ private enum ParticipantProgramCatalogFilter:
 
     func includes(
         _ program: Program,
-        enrollment: ProgramEnrollment
+        enrollment: ProgramEnrollment?
     ) -> Bool {
         switch self {
-        case .available:
-            guard enrollment.status == .active
-                    || enrollment.status == .pending else {
+        case .enrolled:
+            guard let enrollment else {
                 return false
             }
-            return program.status == .active || program.status == .scheduled
+            return (enrollment.status == .pending
+                || enrollment.status == .active)
+                && (program.status == .active
+                    || program.status == .scheduled)
+        case .available:
+            let canEnroll = enrollment == nil
+                || enrollment?.status == .cancelled
+            return canEnroll
+                && (program.status == .active
+                    || program.status == .scheduled)
         case .history:
+            guard let enrollment,
+                  enrollment.status != .cancelled else {
+                return false
+            }
             return enrollment.status == .completed
                 || program.status == .completed
                 || program.status == .archived
@@ -220,7 +229,7 @@ private enum ParticipantProgramCatalogFilter:
 
     func precedes(_ lhs: Program, _ rhs: Program) -> Bool {
         switch self {
-        case .available:
+        case .enrolled, .available:
             if lhs.status == rhs.status {
                 return lhs.startDate < rhs.startDate
             }

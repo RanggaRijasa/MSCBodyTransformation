@@ -22,11 +22,14 @@ nonisolated struct ParticipantProfile: Codable, Equatable, Identifiable, Sendabl
     var coachID: UUID?
     var displayName: String
     var city: String
+    var phoneNumber: String?
+    var localPhotoReference: String?
 }
 
 nonisolated struct CoachProfile: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
     let userID: UUID
+    let enrollmentIdentifier: String
     var displayName: String
     var biography: String
     var city: String

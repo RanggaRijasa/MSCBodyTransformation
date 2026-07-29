@@ -36,6 +36,10 @@ nonisolated protocol EnrollmentRepository: Sendable {
     func createEnrollment(
         _ enrollment: ProgramEnrollment
     ) async throws -> ProgramEnrollment
+    func reassignCoach(
+        participantID: UUID,
+        coachID: UUID
+    ) async throws -> [ProgramEnrollment]
 }
 
 nonisolated protocol SubmissionRepository: Sendable {

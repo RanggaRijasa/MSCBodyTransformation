@@ -1,77 +1,57 @@
+import PhotosUI
 import SwiftUI
 
 @MainActor
 struct AdminContentView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let features: AdminFeatureContainer
-    let router: ShellTabRouter
 
     @State private var selectedContent: ManagedContent?
+    @State private var posterPendingRemoval: ManagedContent?
     @State private var error: DomainError?
 
     var body: some View {
-        List {
-            if case .loaded(let content) = features.contentState {
-                if content.isEmpty {
-                    ContentUnavailableView(
-                        "Belum ada konten",
-                        systemImage: "text.document",
-                        description: Text(
-                            "Buat banner pemenang untuk memulai."
-                        )
-                    )
-                } else {
-                    Section("Konten aplikasi") {
-                        ForEach(
-                            content.sorted {
-                                if $0.sortOrder == $1.sortOrder {
-                                    return $0.updatedAt > $1.updatedAt
-                                }
-                                return $0.sortOrder < $1.sortOrder
-                            }
-                        ) { item in
-                            contentRow(item)
-                        }
-                    }
-                }
-            } else {
-                AsyncContentView(
-                    state: features.contentState,
-                    retryAction: { Task { await features.load() } }
-                ) { _ in EmptyView() }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: AppSpacing.xLarge) {
+                addContentSection
+                galleryState
             }
-
-            Section("Pemenang") {
-                if let program = activeProgram {
-                    Button("Kelola pemenang \(program.title)") {
-                        router.navigate(
-                            to: .admin(.winnerManagement(program.id)),
-                            in: .admin(.content)
-                        )
-                    }
-                }
-            }
+            .frame(maxWidth: 760)
+            .padding(AppSpacing.medium)
+            .frame(maxWidth: .infinity)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
         .background(Color.appBackground)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    selectedContent = features.makeWinnerBanner(
-                        programID: activeProgram?.id
-                    )
-                } label: {
-                    Label("Buat banner", systemImage: "plus")
-                }
-                .accessibilityIdentifier("admin.content.create-banner")
-            }
-        }
         .sheet(item: $selectedContent) { content in
-            AdminContentEditorSheet(
+            AdminPosterEditorSheet(
                 initialContent: content,
-                programs: programs,
                 features: features
             )
+        }
+        .confirmationDialog(
+            "Hapus poster dari galeri?",
+            isPresented: Binding(
+                get: { posterPendingRemoval != nil },
+                set: {
+                    if !$0 {
+                        posterPendingRemoval = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Hapus dari galeri", role: .destructive) {
+                guard let poster = posterPendingRemoval else {
+                    return
+                }
+                posterPendingRemoval = nil
+                Task { await archive(poster) }
+            }
+            Button("Batal", role: .cancel) {
+                posterPendingRemoval = nil
+            }
+        } message: {
+            Text("admin.content.poster.remove_message")
         }
         .alert(
             "Konten tidak dapat disimpan",
@@ -87,159 +67,398 @@ struct AdminContentView: View {
         .accessibilityIdentifier("admin.content")
     }
 
-    private func contentRow(_ content: ManagedContent) -> some View {
-        Button {
-            selectedContent = content
-        } label: {
-            HStack(alignment: .top, spacing: AppSpacing.small) {
-                Image(systemName: content.kind == .winnerBanner
-                    ? "trophy.fill"
-                    : "text.document")
-                    .foregroundStyle(
-                        content.kind == .winnerBanner
-                            ? Color.brandAccent
-                            : Color.brandPrimary
+    private var addContentSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            Text("Tambah konten")
+                .font(AppTypography.sectionTitle)
+                .foregroundStyle(Color.appPrimaryText)
+
+            LazyVGrid(
+                columns: addContentColumns,
+                spacing: AppSpacing.small
+            ) {
+                AdminContentTypeButton(
+                    title: "Poster pemenang",
+                    subtitle: "Tambahkan gambar vertikal untuk galeri Home.",
+                    systemImage: "photo.stack.fill"
+                ) {
+                    selectedContent = features.makeWinnerBanner(
+                        programID: nil,
+                        sortOrder: nextPosterSortOrder
                     )
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                    Text(content.title)
-                        .font(AppTypography.cardTitle)
-                        .foregroundStyle(Color.appPrimaryText)
-                    Text(content.body)
-                        .font(AppTypography.secondary)
-                        .foregroundStyle(Color.appSecondaryText)
-                        .lineLimit(3)
-                    Text(content.isArchived
-                        ? "Diarsipkan"
-                        : content.isPublished ? "Aktif" : "Nonaktif")
-                        .font(AppTypography.label)
-                        .foregroundStyle(Color.appSecondaryText)
                 }
-                Spacer()
+                .accessibilityIdentifier("admin.content.create-banner")
             }
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .swipeActions {
-            if !content.isArchived {
-                Button("Arsipkan", role: .destructive) {
-                    var archived = content
-                    archived.isArchived = true
-                    archived.isPublished = false
-                    archived.updatedAt = features.environment.clock.now()
-                    Task {
-                        do {
-                            try await features.saveContent(archived)
-                        } catch let domainError as DomainError {
-                            error = domainError
-                        } catch {
-                            self.error = .unknown
-                        }
+    }
+
+    @ViewBuilder
+    private var galleryState: some View {
+        switch features.contentState {
+        case .loaded(let content):
+            posterGallery(posters(from: content))
+        case .empty:
+            posterGallery([])
+        case .idle, .loading:
+            ProgressView("Memuat galeri…")
+                .frame(maxWidth: .infinity, minHeight: 180)
+        case .failed(let domainError):
+            ErrorStateView(
+                error: domainError,
+                retryAction: { Task { await features.load() } }
+            )
+        case .offline:
+            VStack(spacing: AppSpacing.small) {
+                OfflineBanner()
+                Button("Coba lagi") {
+                    Task { await features.load() }
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+
+    private func posterGallery(
+        _ posters: [ManagedContent]
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            Text("Poster pemenang")
+                .font(AppTypography.sectionTitle)
+                .foregroundStyle(Color.appPrimaryText)
+
+            Text("Ketuk poster untuk mengganti gambarnya.")
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appSecondaryText)
+
+            if posters.isEmpty {
+                ContentUnavailableView(
+                    "Galeri masih kosong",
+                    systemImage: "photo.on.rectangle.angled",
+                    description: Text(
+                        "Tambahkan poster pemenang pertama dari tombol di atas."
+                    )
+                )
+                .frame(maxWidth: .infinity, minHeight: 240)
+                .background(
+                    Color.appSurface,
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+            } else {
+                LazyVGrid(
+                    columns: galleryColumns,
+                    alignment: .leading,
+                    spacing: AppSpacing.medium
+                ) {
+                    ForEach(
+                        Array(posters.enumerated()),
+                        id: \.element.id
+                    ) { index, poster in
+                        AdminPosterGalleryCell(
+                            poster: poster,
+                            position: index + 1,
+                            onEdit: {
+                                selectedContent = poster
+                            },
+                            onRemove: {
+                                posterPendingRemoval = poster
+                            }
+                        )
                     }
                 }
+                .accessibilityIdentifier("admin.content.poster-gallery")
             }
         }
     }
 
-    private var programs: [AdminProgramDraft] {
-        guard case .loaded(let programs) = features.programsState else {
-            return []
+    private var addContentColumns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize {
+            return [GridItem(.flexible())]
         }
-        return programs.filter { $0.status != .archived }
+        return [
+            GridItem(
+                .adaptive(minimum: 220, maximum: 360),
+                spacing: AppSpacing.small
+            )
+        ]
     }
 
-    private var activeProgram: AdminProgramDraft? {
-        programs.first { $0.status == .active }
+    private var galleryColumns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: AppSpacing.small),
+            GridItem(.flexible(), spacing: AppSpacing.small)
+        ]
+    }
+
+    private var currentPosters: [ManagedContent] {
+        guard case .loaded(let content) = features.contentState else {
+            return []
+        }
+        return posters(from: content)
+    }
+
+    private var nextPosterSortOrder: Int {
+        (currentPosters.map(\.sortOrder).max() ?? 0) + 1
+    }
+
+    private func posters(
+        from content: [ManagedContent]
+    ) -> [ManagedContent] {
+        content
+            .filter {
+                $0.kind == .winnerBanner && !$0.isArchived
+            }
+            .sorted {
+                if $0.sortOrder == $1.sortOrder {
+                    return $0.updatedAt > $1.updatedAt
+                }
+                return $0.sortOrder < $1.sortOrder
+            }
+    }
+
+    private func archive(_ poster: ManagedContent) async {
+        var archived = poster
+        archived.isArchived = true
+        archived.isPublished = false
+        archived.updatedAt = features.environment.clock.now()
+        do {
+            try await features.saveContent(archived)
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
     }
 }
 
-private struct AdminContentEditorSheet: View {
+private struct AdminContentTypeButton: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: AppSpacing.small) {
+                Image(systemName: systemImage)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(Color.brandPrimary)
+                    .frame(width: 48, height: 48)
+                    .background(
+                        Color.brandPrimary.opacity(0.1),
+                        in: RoundedRectangle(
+                            cornerRadius: AppRadius.medium,
+                            style: .continuous
+                        )
+                    )
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                    Text(title)
+                        .font(AppTypography.cardTitle)
+                        .foregroundStyle(Color.appPrimaryText)
+
+                    Text(subtitle)
+                        .font(AppTypography.secondary)
+                        .foregroundStyle(Color.appSecondaryText)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer(minLength: AppSpacing.xSmall)
+
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(Color.brandPrimary)
+                    .accessibilityHidden(true)
+            }
+            .padding(AppSpacing.medium)
+            .frame(maxWidth: .infinity, minHeight: 88)
+            .background(
+                Color.appSurface,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+                .stroke(Color.appBorder, lineWidth: 1)
+            }
+            .contentShape(
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct AdminPosterGalleryCell: View {
+    let poster: ManagedContent
+    let position: Int
+    let onEdit: () -> Void
+    let onRemove: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Button(action: onEdit) {
+                WinnerPosterImage(
+                    reference: poster.localMediaReference,
+                    alternativeText: poster.title
+                )
+                .contentShape(
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(
+                Text("Edit poster urutan \(position)")
+            )
+            .accessibilityIdentifier(
+                "admin.content.poster.\(poster.id)"
+            )
+
+            Menu {
+                Button("Ganti poster", action: onEdit)
+                Button(
+                    "Hapus dari galeri",
+                    role: .destructive,
+                    action: onRemove
+                )
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(Color.appPrimaryText)
+                    .frame(width: 44, height: 44)
+                    .background(.regularMaterial, in: Circle())
+            }
+            .padding(AppSpacing.xSmall)
+            .accessibilityLabel(
+                Text("Tindakan poster urutan \(position)")
+            )
+            .accessibilityIdentifier(
+                "admin.content.poster-menu.\(poster.id)"
+            )
+
+            Text(position, format: .number.locale(Locale(identifier: "id-ID")))
+                .font(AppTypography.label.monospacedDigit().weight(.bold))
+                .foregroundStyle(Color.appPrimaryText)
+                .frame(minWidth: 32, minHeight: 32)
+                .background(.regularMaterial, in: Circle())
+                .padding(AppSpacing.xSmall)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+        .shadow(color: Color.black.opacity(0.12), radius: 8, y: 4)
+    }
+}
+
+private struct AdminPosterEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
-    let programs: [AdminProgramDraft]
+
     let features: AdminFeatureContainer
 
     @State private var content: ManagedContent
     @State private var error: DomainError?
     @State private var isSaving = false
+    @State private var selectedPosterItem: PhotosPickerItem?
+    @State private var posterMedia = LocalEvidenceMediaState()
 
     init(
         initialContent: ManagedContent,
-        programs: [AdminProgramDraft],
         features: AdminFeatureContainer
     ) {
         _content = State(initialValue: initialContent)
-        self.programs = programs
         self.features = features
     }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Isi banner") {
-                    TextField("Judul", text: $content.title)
-                    TextField(
-                        "Isi",
-                        text: $content.body,
-                        axis: .vertical
+            ScrollView {
+                VStack(spacing: AppSpacing.large) {
+                    WinnerPosterImage(
+                        reference: content.localMediaReference,
+                        alternativeText: "Poster pemenang"
                     )
-                    .lineLimit(3...6)
-                    TextField(
-                        "Referensi media lokal",
-                        text: optionalStringBinding(
-                            for: \.localMediaReference
-                        )
+                    .frame(maxWidth: 240)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier(
+                        "admin.content.poster-preview"
                     )
-                }
-                Section("Penayangan") {
-                    Picker(
-                        "Program",
-                        selection: $content.programID
+
+                    if posterMedia.isProcessing {
+                        ProgressView(
+                            value: posterMedia.progress,
+                            total: 1
+                        ) {
+                            Text("Memproses poster…")
+                        }
+                    }
+
+                    PhotosPicker(
+                        selection: $selectedPosterItem,
+                        matching: .images,
+                        photoLibrary: .shared()
                     ) {
-                        Text("Semua program").tag(Optional<UUID>.none)
-                        ForEach(programs) { program in
-                            Text(program.title)
-                                .tag(Optional(program.id))
-                        }
-                    }
-                    DatePicker(
-                        "Mulai tampil",
-                        selection: optionalDateBinding(
-                            for: \.visibleFrom,
-                            fallback: features.environment.clock.now()
+                        Label(
+                            content.localMediaReference == nil
+                                ? "Pilih poster dari Foto"
+                                : "Ganti poster dari Foto",
+                            systemImage: "photo.on.rectangle"
                         )
-                    )
-                    DatePicker(
-                        "Selesai tampil",
-                        selection: optionalDateBinding(
-                            for: \.visibleUntil,
-                            fallback: features.environment.clock.now()
-                        )
-                    )
-                    Stepper(
-                        "Urutan: \(content.sortOrder.formatted(.number.locale(Locale(identifier: "id-ID"))))",
-                        value: $content.sortOrder,
-                        in: 0...100
-                    )
-                    Toggle("Aktif", isOn: $content.isPublished)
-                }
-                Section("Pratinjau peserta") {
-                    VStack(alignment: .leading, spacing: AppSpacing.small) {
-                        Label(content.title, systemImage: "trophy.fill")
-                            .font(AppTypography.sectionTitle)
-                            .foregroundStyle(Color.appPrimaryText)
-                        Text(content.body)
-                            .font(AppTypography.body)
-                            .foregroundStyle(Color.appSecondaryText)
-                        if let media = content.localMediaReference,
-                           !media.isEmpty {
-                            Label(media, systemImage: "photo")
-                                .font(AppTypography.label)
-                        }
+                        .font(AppTypography.button)
+                        .frame(maxWidth: .infinity, minHeight: 50)
                     }
-                    .padding(.vertical, AppSpacing.small)
+                    .buttonStyle(.borderedProminent)
+                    .tint(.brandPrimary)
+                    .disabled(posterMedia.isProcessing)
+                    .accessibilityIdentifier(
+                        "admin.content.poster-picker"
+                    )
+
+                    if content.localMediaReference != nil {
+                        Button("Hapus gambar", role: .destructive) {
+                            posterMedia.remove()
+                            content.localMediaReference = nil
+                            selectedPosterItem = nil
+                        }
+                        .frame(minHeight: 44)
+                    }
+
+                    if let mediaError = posterMedia.error {
+                        Label(
+                            mediaErrorMessage(mediaError),
+                            systemImage: "exclamationmark.triangle.fill"
+                        )
+                        .font(AppTypography.secondary)
+                        .foregroundStyle(Color.appDestructive)
+                    }
+
+                    Label(
+                        "admin.content.poster.editor_help",
+                        systemImage: "info.circle"
+                    )
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(Color.appSecondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .frame(maxWidth: 520)
+                .padding(AppSpacing.medium)
+                .frame(maxWidth: .infinity)
             }
-            .navigationTitle("Banner pemenang")
+            .background(Color.appBackground)
+            .navigationTitle("Poster pemenang")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -249,7 +468,11 @@ private struct AdminContentEditorSheet: View {
                     Button(isSaving ? "Menyimpan…" : "Simpan") {
                         Task { await save() }
                     }
-                    .disabled(isSaving)
+                    .disabled(
+                        isSaving
+                            || posterMedia.isProcessing
+                            || content.localMediaReference?.isEmpty != false
+                    )
                     .accessibilityIdentifier("admin.content.save-banner")
                 }
             }
@@ -264,33 +487,28 @@ private struct AdminContentEditorSheet: View {
             } message: {
                 Text(error?.localizedAdminMessage ?? "")
             }
+            .onChange(of: selectedPosterItem) { _, item in
+                guard let item else { return }
+                Task { await importPoster(item) }
+            }
         }
-    }
-
-    private func optionalStringBinding(
-        for keyPath: WritableKeyPath<ManagedContent, String?>
-    ) -> Binding<String> {
-        Binding(
-            get: { content[keyPath: keyPath] ?? "" },
-            set: { content[keyPath: keyPath] = $0.isEmpty ? nil : $0 }
-        )
-    }
-
-    private func optionalDateBinding(
-        for keyPath: WritableKeyPath<ManagedContent, Date?>,
-        fallback: Date
-    ) -> Binding<Date> {
-        Binding(
-            get: { content[keyPath: keyPath] ?? fallback },
-            set: { content[keyPath: keyPath] = $0 }
-        )
     }
 
     private func save() async {
         isSaving = true
         defer { isSaving = false }
+
+        let now = features.environment.clock.now()
         var updated = content
-        updated.updatedAt = features.environment.clock.now()
+        updated.title = "Poster pemenang \(content.sortOrder)"
+        updated.body = "Poster gambar untuk galeri Home peserta."
+        updated.programID = nil
+        updated.visibleFrom = updated.visibleFrom ?? now
+        updated.visibleUntil = nil
+        updated.isPublished = true
+        updated.isArchived = false
+        updated.updatedAt = now
+
         do {
             try await features.saveContent(updated)
             dismiss()
@@ -300,298 +518,32 @@ private struct AdminContentEditorSheet: View {
             self.error = .unknown
         }
     }
-}
 
-@MainActor
-struct AdminWinnerManagementView: View {
-    let programID: UUID
-    let features: AdminFeatureContainer
-
-    @State private var entryToAdjust: LeaderboardEntry?
-    @State private var showsLockConfirmation = false
-    @State private var error: DomainError?
-
-    var body: some View {
-        List {
-            if let message = features.lastMessage {
-                Section {
-                    Label(message, systemImage: "info.circle")
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            }
-
-            Section("Papan peringkat") {
-                AsyncContentView(
-                    state: features.leaderboardState,
-                    emptyTitle: "Belum ada peringkat",
-                    emptyMessage: "Data peserta belum tersedia."
-                ) { entries in
-                    ForEach(entries) { entry in
-                        Button {
-                            entryToAdjust = entry
-                        } label: {
-                            HStack {
-                                RankBadge(rank: entry.rank)
-                                VStack(alignment: .leading) {
-                                    Text(entry.participantDisplayName)
-                                        .foregroundStyle(
-                                            Color.appPrimaryText
-                                        )
-                                    Text(
-                                        entry.score.totalPoints.formatted(
-                                            .number.locale(
-                                                Locale(identifier: "id-ID")
-                                            )
-                                        )
-                                    )
-                                    .font(AppTypography.secondary.monospacedDigit())
-                                    .foregroundStyle(
-                                        Color.appSecondaryText
-                                    )
-                                }
-                                Spacer()
-                                Image(systemName: "plusminus")
-                                    .foregroundStyle(Color.brandPrimary)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier(
-                            "admin.winners.adjust.\(entry.id.uuidString)"
-                        )
-                    }
-                }
-            }
-
-            Section("Snapshot pemenang") {
-                switch features.winnersState {
-                case .loaded(let winners):
-                    ForEach(winners) { winner in
-                        HStack {
-                            RankBadge(rank: winner.rank)
-                            Text(winner.participantDisplayName)
-                            Spacer()
-                            Text(
-                                winner.totalPoints,
-                                format: .number.locale(
-                                    Locale(identifier: "id-ID")
-                                )
-                            )
-                            .monospacedDigit()
-                        }
-                    }
-                    Label(
-                        "Snapshot terkunci. Perubahan poin berikutnya "
-                            + "tidak mengubah urutan ini secara diam-diam.",
-                        systemImage: "lock.fill"
-                    )
-                    .font(AppTypography.secondary)
-                    .foregroundStyle(Color.appSecondaryText)
-                    if hasScoresChangedSinceLock(winners) {
-                        Label(
-                            "Skor berubah setelah snapshot dikunci. "
-                                + "Pemenang terkunci tidak diubah otomatis.",
-                            systemImage: "exclamationmark.triangle.fill"
-                        )
-                        .font(AppTypography.secondary)
-                        .foregroundStyle(Color.appWarning)
-                        .accessibilityIdentifier(
-                            "admin.winners.changed-warning"
-                        )
-                    }
-#if DEBUG
-                    Button(
-                        "Reset snapshot pemenang demo",
-                        role: .destructive
-                    ) {
-                        Task {
-                            await features.resetLockedWinners(
-                                programID: programID
-                            )
-                        }
-                    }
-                    .accessibilityIdentifier("admin.winners.reset-debug")
-#endif
-                case .empty:
-                    Button("Kunci lima pemenang") {
-                        showsLockConfirmation = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.brandPrimary)
-                    .accessibilityIdentifier("admin.winners.lock")
-                case .idle, .loading:
-                    ProgressView()
-                case .failed(let domainError):
-                    ErrorStateView(error: domainError)
-                case .offline:
-                    OfflineBanner()
-                }
-            }
-
-            Section {
-                Button("Buat banner pemenang lokal") {
-                    Task {
-                        do {
-                            try await features.saveContent(
-                                features.makeWinnerBanner(
-                                    programID: programID
-                                )
-                            )
-                        } catch let domainError as DomainError {
-                            error = domainError
-                        } catch {
-                            self.error = .unknown
-                        }
-                    }
-                }
-            } header: {
-                Text("Banner lokal")
-            } footer: {
-                Text("Media tetap berupa referensi lokal pada fase ini.")
-            }
-        }
-        .navigationTitle("Pemenang")
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(Color.appBackground)
-        .task(id: programID) {
-            await features.loadLeaderboard(programID: programID)
-        }
-        .sheet(item: $entryToAdjust) { entry in
-            AdminScoreAdjustmentSheet(
-                entry: entry,
-                features: features
-            )
-        }
-        .confirmationDialog(
-            "Kunci lima pemenang?",
-            isPresented: $showsLockConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Kunci snapshot") {
-                Task {
-                    do {
-                        try await features.lockWinners(
-                            programID: programID
-                        )
-                    } catch let domainError as DomainError {
-                        error = domainError
-                    } catch {
-                        self.error = .unknown
-                    }
-                }
-            }
-            Button("Batal", role: .cancel) {}
-        } message: {
-            Text(
-                "Urutan yang dikunci tidak berubah otomatis setelah "
-                    + "penyesuaian skor."
-            )
-        }
-        .alert(
-            "Tindakan tidak dapat diselesaikan",
-            isPresented: Binding(
-                get: { error != nil },
-                set: { if !$0 { error = nil } }
-            )
-        ) {
-            Button("Tutup", role: .cancel) {}
-        } message: {
-            Text(error?.localizedAdminMessage ?? "")
-        }
-        .accessibilityIdentifier("admin.winners")
-    }
-
-    private func hasScoresChangedSinceLock(
-        _ winners: [ProgramWinner]
-    ) -> Bool {
-        guard case .loaded(let entries) = features.leaderboardState else {
-            return false
-        }
-        return WinnerSelector().scoresChanged(
-            lockedWinners: winners,
-            currentEntries: entries
-        )
-    }
-}
-
-private struct AdminScoreAdjustmentSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let entry: LeaderboardEntry
-    let features: AdminFeatureContainer
-
-    @State private var points = 0
-    @State private var reason = ""
-    @State private var error: DomainError?
-    @State private var isSaving = false
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    LabeledContent("Peserta", value: entry.participantDisplayName)
-                    Stepper(
-                        "Poin: \(points.formatted(.number.locale(Locale(identifier: "id-ID"))))",
-                        value: $points,
-                        in: -1_000...1_000
-                    )
-                    .accessibilityIdentifier("admin.adjust.points")
-                    TextField(
-                        "Alasan penyesuaian",
-                        text: $reason,
-                        axis: .vertical
-                    )
-                    .accessibilityIdentifier("admin.adjust.reason")
-                } header: {
-                    Text("Penyesuaian poin")
-                } footer: {
-                    Text(
-                        "Penyesuaian dicatat terpisah dan wajib memiliki alasan."
-                    )
-                }
-            }
-            .navigationTitle("Sesuaikan poin")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Batal") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(isSaving ? "Menyimpan…" : "Simpan") {
-                        Task { await save() }
-                    }
-                    .disabled(isSaving)
-                    .accessibilityIdentifier("admin.adjust.save")
-                }
-            }
-            .alert(
-                "Data belum lengkap",
-                isPresented: Binding(
-                    get: { error != nil },
-                    set: { if !$0 { error = nil } }
-                )
-            ) {
-                Button("Tutup", role: .cancel) {}
-            } message: {
-                Text(error?.localizedAdminMessage ?? "")
-            }
+    private func importPoster(_ item: PhotosPickerItem) async {
+        await posterMedia.importPhoto(item)
+        if let result = posterMedia.result {
+            content.localMediaReference = result.localURL.path
         }
     }
 
-    private func save() async {
-        isSaving = true
-        defer { isSaving = false }
-        do {
-            try await features.adjustScore(
-                entryID: entry.id,
-                points: points,
-                reason: reason
-            )
-            dismiss()
-        } catch let domainError as DomainError {
-            error = domainError
-        } catch {
-            self.error = .unknown
+    private func mediaErrorMessage(
+        _ error: LocalMediaError
+    ) -> String {
+        switch error {
+        case .unsupportedMIMEType:
+            "Pilih gambar JPEG, PNG, HEIC, atau HEIF."
+        case .inputTooLarge:
+            "Ukuran poster terlalu besar. Pilih gambar hingga 20 MB."
+        case .invalidImage:
+            "Poster tidak dapat dibaca. Pilih gambar lain."
+        case .processingFailed:
+            "Poster gagal diproses. Coba lagi."
+        case .permissionDenied:
+            "Akses Foto ditolak. Periksa izin aplikasi di Pengaturan."
+        case .cameraUnavailable:
+            "Kamera tidak tersedia pada perangkat ini."
+        case .cameraUsageDescriptionMissing:
+            "Kamera belum dikonfigurasi untuk build ini."
         }
     }
-
 }

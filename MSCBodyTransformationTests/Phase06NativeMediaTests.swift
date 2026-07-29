@@ -143,10 +143,10 @@ struct Phase06NativeMediaTests {
     @Test("Parser QR mengembalikan token opaque yang dinormalisasi")
     func qrPayloadParser() throws {
         let payload = try LocalInvitePayloadParser().payload(
-            from: "msc-demo://join/msc7hari"
+            from: "msc-demo://join/coach-raka-7k9q"
         )
 
-        #expect(payload.opaqueToken == "MSC7HARI")
+        #expect(payload.opaqueToken == "COACH-RAKA-7K9Q")
     }
 
     @Test("Pratinjau undangan memetakan kode ke program")

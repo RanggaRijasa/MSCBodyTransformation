@@ -438,14 +438,17 @@ final class AdminFeatureContainer {
         await load()
     }
 
-    func makeWinnerBanner(programID: UUID?) -> ManagedContent {
+    func makeWinnerBanner(
+        programID: UUID?,
+        sortOrder: Int = 1
+    ) -> ManagedContent {
         let now = environment.clock.now()
         return ManagedContent(
             id: environment.identifierGenerator.makeIdentifier(),
             kind: .winnerBanner,
             title: "Selamat kepada para pemenang",
             body: "Lihat peserta dengan perolehan poin tertinggi.",
-            localMediaReference: "winner_banner_local",
+            localMediaReference: nil,
             programID: programID,
             visibleFrom: now,
             visibleUntil: Calendar(identifier: .gregorian).date(
@@ -453,7 +456,7 @@ final class AdminFeatureContainer {
                 value: 1,
                 to: now
             ),
-            sortOrder: 1,
+            sortOrder: sortOrder,
             isPublished: true,
             isArchived: false,
             updatedAt: now

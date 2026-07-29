@@ -9,7 +9,7 @@ The project is a native iOS and iPadOS application for multi-day body-transforma
 The app has three authenticated roles:
 
 - Participant completes daily program steps, uploads photo evidence, submits initial and final weight, earns points, and views the leaderboard.
-- Coach purchases participant-seat credits, creates program invitations, and monitors assigned participants.
+- Coach receives one unique enrollment QR identifier and monitors assigned participants.
 - Admin manages programs, people, content, enrollment fallbacks, score corrections, and final winners.
 
 Primary technical direction:
@@ -192,7 +192,7 @@ Code must be understandable, maintainable, and separated by responsibility.
   - `validateSubmissionRequirements()`
   - `calculateWeightPoints()`
   - `saveProgramDraft()`
-  - `generateLocalInvite()`
+  - `generateCoachQRCode()`
 
 ### Comments and TODOs
 
@@ -212,7 +212,7 @@ Code must be understandable, maintainable, and separated by responsibility.
 - Keep reused user-facing copy in a consistent location.
 - Keep persisted enum raw values stable and machine-readable.
 - Use `Decimal` for canonical weight calculations.
-- Use integer values for points and seat credits.
+- Use integer values for points.
 
 ### Reuse
 
@@ -248,6 +248,9 @@ Implementation rules:
 - Use Dynamic Type.
 - Do not add a custom font unless explicitly requested.
 - Use `.monospacedDigit()` for points, ranks, weights, timers, and other changing numeric values.
+- Render profile images through the shared `UserAvatar`. When no image is
+  available, use the neutral native blank-person fallback systemwide; do not
+  generate initials or role-specific colored placeholder avatars.
 - Do not shrink production text to fit.
 - Keep primary touch targets at least 44 by 44 points.
 - Use the spacing, radius, button, and state-copy guidance from `UI_REFERENCE_SHEET.md`.
@@ -268,6 +271,14 @@ Implementation rules:
 
 - Use `NavigationStack`.
 - Use a separate navigation path per tab.
+- Do not concatenate SwiftUI `Text` values with the `+` operator. It is
+  deprecated in the iOS 26 SDK. Use localized interpolation in one `Text`,
+  such as
+  `Text("\(count, format: .number) \(Text("unit.days"))")`, while preserving
+  native `FormatStyle` formatting and localization keys.
+- Treat SDK deprecation warnings in changed code as required fixes before
+  completion. Do not suppress a deprecation warning merely to obtain a clean
+  build.
 - Prefer `.sheet(item:)` when a selected model drives presentation.
 - Use enum-driven presentation for mutually exclusive sheets and alerts.
 - Use `.task` or `.task(id:)` for lifecycle-bound asynchronous loading.
@@ -318,6 +329,18 @@ Until the assigned authentication phase:
 - Do not add live OAuth callback handling.
 - Do not add provider SDKs.
 - Do not add client secrets.
+
+## Participant Enrollment Rules
+
+- Participant selects a visible active program before enrollment.
+- Participant enrollment requires scanning the coach's unique QR.
+- Do not expose a manual coach-code or invite-code field, button, fallback,
+  deep link, or copyable raw identifier in production UI.
+- Keep the coach enrollment identifier internal to the QR payload and domain
+  matching boundary.
+- If camera scanning is unavailable or denied, show an actionable unavailable
+  state and allow the participant to close the scanner; do not fall back to
+  typed codes.
 
 When authentication is implemented:
 
@@ -372,6 +395,11 @@ Weight values and evidence photos are sensitive personal data.
 - Remove unnecessary metadata, especially location metadata.
 - Use thumbnails in lists.
 - Clean temporary files.
+- Do not add `Gunakan foto demo`, `Gunakan poster demo`, generated sample
+  media, or equivalent upload shortcuts, including in Debug-only UI. Upload
+  flows must use the actual native picker or camera path; deterministic media
+  needed by tests belongs in test fixtures and must not be selectable from
+  production screens.
 - Do not place UIKit images in domain models.
 - Preserve non-diagnostic health and wellness language.
 - Do not add HealthKit in the MVP unless explicitly requested.

@@ -8,7 +8,7 @@ Dokumen ini adalah pintu masuk untuk menjalankan pengembangan aplikasi secara be
 Aplikasi native iOS dan iPadOS untuk program transformasi berat badan dengan tiga role:
 
 - Participant menyelesaikan langkah harian, mengunggah foto bukti, mengisi berat awal dan akhir, memperoleh poin, dan melihat leaderboard.
-- Coach membeli kuota peserta, membuat undangan program, dan memantau peserta.
+- Coach memiliki QR identifier unik untuk pendaftaran peserta dan memantau peserta.
 - Admin mengelola program melalui CMS di aplikasi, mengatur user, melakukan enrollment fallback, mengoreksi poin secara tercatat, dan mengunci juara 1 sampai 5.
 
 ## Keputusan teknis utama
@@ -62,7 +62,7 @@ Dikerjakan setelah Track A stabil.
 10. `10_PHASE_09_SUPABASE_FOUNDATION.md`
 11. `11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`
 12. `12_PHASE_11_REAL_DATA_AND_SERVER_OPERATIONS.md`
-13. `13_PHASE_12_STOREKIT_AND_COACH_CREDITS.md`
+13. `13_PHASE_12_STOREKIT_PROGRAM_PAYMENTS.md`
 14. `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md`
 15. `15_PHASE_14_ANDROID_HANDOFF.md`
 

@@ -50,8 +50,7 @@ Aturan:
 | Locked | Terkunci |
 | Current program | Program aktif |
 | Join program | Gabung program |
-| Invite code | Kode undangan |
-| Seat credit | Kuota peserta |
+| Coach enrollment QR | QR pendaftaran coach |
 | Purchase history | Riwayat pembelian |
 | Managed content | Konten aplikasi |
 
@@ -198,6 +197,14 @@ Poster program menggunakan token khusus yang stabil pada light dan dark mode:
 | ProgramPosterInfo | `#2457A6` | Poster program terjadwal |
 | ProgramPosterAccent | `#F5C542` | Poster program selesai |
 
+Podium menggunakan warna identitas yang tidak berubah antar-appearance:
+
+| Token | Nilai | Penggunaan |
+|---|---:|---|
+| BrandAccent | `#F5C542` | Peringkat 1, emas |
+| AppSecondaryText | adaptif | Peringkat 2, perak netral |
+| PodiumBronze | `#CD7F32` | Peringkat 3, perunggu |
+
 ## 5. Aturan Kontras
 
 - Semua teks harus memenuhi kontras yang layak terhadap background.
@@ -226,18 +233,82 @@ Poster program menggunakan token khusus yang stabil pada light dan dark mode:
 - Merah untuk CTA utama seperti `Selesaikan langkah`.
 - Kuning untuk poin, streak, rank, atau pencapaian.
 - Hitam atau dark surface untuk program hero secara terbatas.
+- Setelah header profil, urutan section konten Home adalah Program, Fokus,
+  `Leaderboard Top 5`, Pemenang, lalu Coach. Leaderboard menjadi section
+  konten ketiga, bukan ditempatkan paling bawah.
+- Katalog Program memakai tiga segmented control: `Diikuti` untuk enrollment
+  aktif atau menunggu mulai, `Tersedia` untuk program yang dapat didaftarkan,
+  dan `Riwayat` untuk program yang pernah diikuti dan sudah selesai.
+- Sorotan pemenang di Home memakai maksimal dua poster vertikal rasio 9:16
+  dalam carousel horizontal. Poster ditampilkan sebagai gambar apa adanya:
+  tanpa overlay judul, nama, tombol, CTA, atau aksi tap. Sisakan sebagian
+  poster berikutnya sebagai petunjuk swipe.
+- Direktori coach di Home memakai avatar lingkaran dengan center crop dari
+  foto profil biasa, termasuk foto vertikal dari ponsel. Jangan mensyaratkan
+  background transparan atau membuat cutout tubuh.
+- Semua avatar tanpa foto memakai satu fallback systemwide berupa ikon orang
+  kosong native `person.crop.circle.fill` pada surface netral. Jangan memakai
+  inisial nama atau lingkaran warna brand sebagai foto profil default.
+- Tampilkan beberapa coach, lalu bedakan coach pendamping peserta dengan
+  badge `Coach-mu`; jangan mengandalkan warna atau posisi saja.
 - Status memakai semantic colors.
+- Layar program yang sudah diikuti memprioritaskan aktivitas: gunakan header
+  progres yang ringkas, lalu daftar hari berbentuk accordion dengan status
+  langkah di dalamnya.
+- Buka hari yang paling relevan secara default dan biarkan hari lain tetap
+  ringkas agar peserta dapat langsung fokus pada aktivitas.
+- Hari fokus harus ditentukan dari tanggal aktif dalam timezone program.
+  Auto-open, label `Hari ini`, posisi scroll awal, dan border highlight harus
+  memakai hasil tanggal yang sama; jangan fallback ke hari pertama.
+- Kebijakan akses hari harus dipetakan konsisten dari `ProgramDayAccess`:
+  hari standar yang tanggalnya sudah tiba menampilkan langkah dan dapat
+  dikerjakan, sedangkan hari standar mendatang terkunci. Status read-only
+  hanya digunakan jika ditetapkan secara eksplisit pada konten.
+- Gunakan status hidden hanya untuk konten yang memang belum dipublikasikan.
+  Jangan menyembunyikan hari yang sudah lewat jika langkahnya sudah
+  dipublikasikan.
+- Hari yang terkunci atau disembunyikan memakai satu copy konsisten:
+  `Aktivitas belum tersedia.` Perbedaannya tetap berada pada kebijakan akses,
+  bukan pada pesan yang membingungkan peserta.
+- Jangan menaruh deskripsi panjang, aturan poin, atau profil coach di atas
+  daftar aktivitas. Informasi penawaran program tetap berada pada layar
+  detail sebelum pendaftaran.
+- Profil peserta menampilkan semua data yang dapat diubah secara eksplisit:
+  foto profil, nama tampilan, nomor HP, dan coach pendamping. Email akun
+  tetap ditampilkan sebagai data read-only.
+- Edit foto, nama, dan nomor HP memakai sheet form native. Foto dipilih
+  melalui `PhotosPicker`, diproses sebagai media lokal, dan ditampilkan dengan
+  crop lingkaran.
+- Jangan menyediakan aksi `Gunakan foto demo`, `Gunakan poster demo`, atau
+  media contoh yang dibuat dari layar upload, termasuk pada build Debug.
+  Upload harus melalui pemilih Foto atau kamera native yang sebenarnya.
+- Pergantian coach hanya dimulai dari aksi `Ganti coach`, dilanjutkan dengan
+  scan QR unik coach dan konfirmasi nama coach. Jangan menyediakan input kode
+  manual atau menampilkan identifier mentah.
+- Riwayat program tetap berada di tab Program, bukan diduplikasi di Profil,
+  agar Profil berfokus pada identitas, coach, pengaturan, privasi, dan akun.
 
 ### Coach
 
 - Dashboard tetap netral.
 - Merah untuk quick actions utama.
-- Kuning untuk saldo kuota, pending review, dan highlight penting.
+- Kuning untuk pending review dan highlight penting.
 - Evidence viewer tidak diberi overlay warna yang mengganggu foto.
 
 ### Admin
 
 - Form dan CMS memakai background system/netral.
+- Layar Konten memakai area aksi tambah yang dapat diperluas untuk jenis
+  konten berikutnya. Pada fase ini hanya ada `Poster pemenang`.
+- Poster pemenang dikelola sebagai galeri gambar vertikal dua kolom berbasis
+  `LazyVGrid` pada ponsel. Sel hanya menampilkan poster, nomor urutan, dan
+  menu tindakan; jangan mengubahnya menjadi daftar metadata.
+- Editor poster pemenang memakai `PhotosPicker` native, pratinjau 9:16,
+  serta aksi ganti dan hapus. Poster wajib dipilih sebelum konten dapat
+  disimpan.
+- Jangan menampilkan editor atau tombol `Kelola pemenang` di Konten.
+  Peringkat pemenang berasal dari leaderboard dan snapshot pemenang tetap
+  dihitung otomatis; galeri hanya mengelola gambar poster.
 - Merah hanya untuk primary publish action atau destructive action sesuai konteks.
 - Kuning untuk draft warning dan validation attention.
 - Jangan menggunakan full-red background pada form panjang.

@@ -203,6 +203,22 @@ Admin:
 
 ### Log
 
+#### 2026-07-28 — Skenario peserta aktif mengikuti tanggal
+
+- Files changed: katalog skenario demo, debug launch mapping, default
+  participant shell, panduan demo, README, test Phase 08, dan progress log.
+- Assumptions: `participant_active` adalah skenario normal berbasis injected
+  clock; `participant_day_1` tetap tersedia untuk demo hari pertama yang
+  deterministik.
+- Build command: XcodeBuildMCP `build_sim` dan `build_run_sim` pada iPhone 17
+  Pro iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase08AccessibilityReliabilityTests`.
+- Result: katalog kini memiliki 18 skenario; 7/7 test Phase 08 lulus dan
+  launcher `participant_active` tidak lagi memaksa hari pertama.
+- Remaining blockers: item berikutnya tetap profiling scrolling Participant
+  Home.
+
 #### 2026-07-26 — implementasi dan verifikasi lokal
 
 - Files changed: katalog dan launcher skenario Debug, persiapan state per peran,

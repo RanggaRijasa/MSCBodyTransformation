@@ -24,7 +24,10 @@ struct CoachProfileView: View {
                     .padding(AppSpacing.medium)
                 }
             case .loaded(let snapshot):
-                profileForm(snapshot, bindableState: $state)
+                profileForm(
+                    profile: snapshot.profile,
+                    bindableState: $state
+                )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -46,14 +49,13 @@ struct CoachProfileView: View {
     }
 
     private func profileForm(
-        _ snapshot: CoachProfileSnapshot,
+        profile: CoachProfile,
         bindableState: Bindable<CoachProfileState>
     ) -> some View {
         Form {
-            photoSection(snapshot.profile)
             identitySection(bindableState: bindableState)
             visibilitySection(bindableState: bindableState)
-            purchaseHistory(snapshot.ledger)
+            enrollmentIdentifierSection(profile)
             settingsSection(bindableState: bindableState)
             saveSection
         }
@@ -61,35 +63,6 @@ struct CoachProfileView: View {
         .background(Color.appBackground)
         .refreshable {
             await state.load()
-        }
-    }
-
-    private func photoSection(_ profile: CoachProfile) -> some View {
-        Section {
-            HStack(spacing: AppSpacing.medium) {
-                UserAvatar(
-                    displayName: profile.displayName,
-                    imageName: nil,
-                    size: 76
-                )
-                VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-                    Text("coach.profile.photo.title")
-                        .font(AppTypography.cardTitle)
-                    Text(
-                        state.hasLocalPhotoPlaceholder
-                            ? "coach.profile.photo.selected"
-                            : "coach.profile.photo.placeholder"
-                    )
-                    .font(AppTypography.secondary)
-                    .foregroundStyle(Color.appSecondaryText)
-                    Button("coach.profile.photo.action") {
-                        state.hasLocalPhotoPlaceholder.toggle()
-                    }
-                    .frame(minHeight: 44)
-                }
-            }
-        } footer: {
-            Text("coach.profile.photo.footer")
         }
     }
 
@@ -139,44 +112,19 @@ struct CoachProfileView: View {
         }
     }
 
-    private func purchaseHistory(
-        _ ledger: [CreditLedgerEntry]
+    private func enrollmentIdentifierSection(
+        _ profile: CoachProfile
     ) -> some View {
-        Section("coach.store.history.title") {
-            if ledger.isEmpty {
-                Text("coach.store.history.empty")
-                    .foregroundStyle(Color.appSecondaryText)
-            } else {
-                ForEach(ledger) { entry in
-                    LabeledContent {
-                        Text(
-                            entry.seatCreditDelta,
-                            format: .number
-                                .sign(strategy: .always())
-                                .locale(CoachFormatting.locale)
-                        )
-                        .monospacedDigit()
-                    } label: {
-                        VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                            Text(entry.note)
-                            Text(CoachFormatting.date(entry.createdAt))
-                                .font(AppTypography.secondary)
-                                .foregroundStyle(Color.appSecondaryText)
-                        }
-                    }
-                }
+        Section {
+            LabeledContent("coach.identifier.code_label") {
+                Text(profile.enrollmentIdentifier)
+                    .font(.body.monospacedDigit())
+                    .textSelection(.enabled)
             }
-            Button {
-                router.navigate(
-                    to: .coach(.storePreview),
-                    in: .coach(.profile)
-                )
-            } label: {
-                Label(
-                    "coach.action.store_preview",
-                    systemImage: "bag"
-                )
-            }
+        } header: {
+            Text("coach.identifier.profile_section")
+        } footer: {
+            Text("coach.identifier.stable_notice")
         }
     }
 

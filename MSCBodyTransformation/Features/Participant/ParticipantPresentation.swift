@@ -46,6 +46,33 @@ nonisolated struct ParticipantStepPresentation: Sendable {
     }
 }
 
+nonisolated struct ParticipantProgramDayUIState: Equatable, Sendable {
+    let showsActivities: Bool
+    let allowsStepNavigation: Bool
+    let allowsCompletion: Bool
+    let showsUnavailableMessage: Bool
+
+    init(access: ProgramDayAccess) {
+        switch access {
+        case .available:
+            showsActivities = true
+            allowsStepNavigation = true
+            allowsCompletion = true
+            showsUnavailableMessage = false
+        case .readOnly:
+            showsActivities = true
+            allowsStepNavigation = true
+            allowsCompletion = false
+            showsUnavailableMessage = false
+        case .locked, .hidden:
+            showsActivities = false
+            allowsStepNavigation = false
+            allowsCompletion = false
+            showsUnavailableMessage = true
+        }
+    }
+}
+
 nonisolated enum ParticipantFormatting {
     static let locale = Locale(identifier: "id-ID")
 
@@ -67,6 +94,14 @@ nonisolated enum ParticipantFormatting {
                 .locale(locale)
                 .precision(.fractionLength(0...2))
         ) + " kg"
+    }
+
+    static func currency(_ value: Decimal) -> String {
+        value.formatted(
+            .currency(code: "IDR")
+                .locale(locale)
+                .precision(.fractionLength(0))
+        )
     }
 
     static func date(

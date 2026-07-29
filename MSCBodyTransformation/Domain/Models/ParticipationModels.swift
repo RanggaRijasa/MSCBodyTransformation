@@ -11,7 +11,7 @@ nonisolated struct ProgramEnrollment: Codable, Equatable, Identifiable, Sendable
     let id: UUID
     let programID: UUID
     let participantID: UUID
-    let coachID: UUID?
+    var coachID: UUID?
     var status: EnrollmentStatus
     let enrolledAt: Date
 }

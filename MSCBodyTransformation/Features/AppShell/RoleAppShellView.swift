@@ -67,12 +67,6 @@ struct RoleAppShellView: View {
         }
         .alert(item: $router.presentedAlert) { alert in
             switch alert {
-            case .invalidInvite:
-                Alert(
-                    title: Text("alert.invite.invalid.title"),
-                    message: Text("alert.invite.invalid.message"),
-                    dismissButton: .default(Text("action.close"))
-                )
             case .unavailableRoute:
                 Alert(
                     title: Text("alert.route.unavailable.title"),
@@ -81,27 +75,9 @@ struct RoleAppShellView: View {
                 )
             }
         }
-        .onOpenURL(perform: handleDeepLink)
         .task(id: "\(role.rawValue).\(scenario.rawValue)") {
             await prepareFeatureStateIfNeeded()
         }
-    }
-
-    private func handleDeepLink(_ url: URL) {
-        guard role == .participant,
-              let code = LocalInviteDeepLinkParser().inviteCode(from: url),
-              let todayTab = tabs.first(where: {
-                  $0 == .participant(.today)
-              }) else {
-            router.presentedAlert = .invalidInvite
-            return
-        }
-
-        selectedTab = todayTab
-        router.navigate(
-            to: .participant(.localInvite(code)),
-            in: todayTab
-        )
     }
 
     private func selectTab(_ tab: AppTab) {
@@ -185,15 +161,6 @@ struct RoleAppShellView: View {
         }
         let features = CoachFeatureContainer(environment: appEnvironment)
         await features.prepareIdentity()
-        if scenario == .coachWalletZero,
-           let coachID = features.coachID {
-            _ = try? await appEnvironment.repositories?.coachDemo
-                .setSeatCredits(
-                    coachID: coachID,
-                    amount: 0,
-                    updatedAt: appEnvironment.clock.now()
-                )
-        }
         coachFeatures = features
     }
 
@@ -218,10 +185,6 @@ struct RoleAppShellView: View {
                 $0.status == .active
             }) {
                 try? await features.lockWinners(programID: program.id)
-                router.navigate(
-                    to: .admin(.winnerManagement(program.id)),
-                    in: .admin(.overview)
-                )
             }
         default:
             break

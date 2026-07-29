@@ -3,271 +3,341 @@ import SwiftUI
 @MainActor
 struct ParticipantJoinProgramView: View {
     let store: ParticipantJourneyStore
-    private let initialCode: String
+    let programID: UUID?
 
     @Environment(\.dismiss) private var dismiss
-    @State private var inviteCode: String
-    @State private var preview: ProgramInvitePreview?
+    @State private var selectedCoach: CoachProfile?
+    @State private var stage = JoinProgramStage.scanCoach
     @State private var fieldError: String?
     @State private var showsScanner = false
-    @FocusState private var isCodeFocused: Bool
 
     init(
         store: ParticipantJourneyStore,
-        initialCode: String = ""
+        programID: UUID?
     ) {
         self.store = store
-        self.initialCode = initialCode
-        _inviteCode = State(initialValue: initialCode)
+        self.programID = programID
     }
 
     var body: some View {
-        Form {
-            scannerSection
-            manualCodeSection
-
-            if let preview {
-                previewSection(preview)
+        Group {
+            if let program {
+                content(program)
+            } else {
+                ContentUnavailableView {
+                    Label(
+                        "participant.join.program_required.title",
+                        systemImage: "rectangle.stack.badge.plus"
+                    )
+                } description: {
+                    Text("participant.join.program_required.message")
+                } actions: {
+                    Button("action.close") {
+                        dismiss()
+                    }
+                }
             }
         }
-        .scrollContentBackground(.hidden)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appBackground)
-        .navigationTitle(Text("participant.invite.title"))
+        .navigationTitle(Text("participant.join.flow.title"))
         .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if preview != nil {
-                VStack(spacing: 0) {
-                    Divider()
-                    confirmButton
-                        .padding(.horizontal, AppSpacing.medium)
-                        .padding(.vertical, AppSpacing.small)
-                }
-                .background(Color.appBackground)
-            }
-        }
         .sheet(isPresented: $showsScanner) {
-            LocalQRScannerSheet { token in
-                inviteCode = token
-                fieldError = nil
-                Task {
-                    await loadPreview()
-                }
+            LocalQRScannerSheet { identifier in
+                loadCoachPreview(identifier: identifier)
             }
         }
-        .onChange(of: inviteCode) {
-            preview = nil
-            fieldError = nil
-        }
-        .task(id: initialCode) {
-            guard !initialCode.isEmpty else { return }
-            await loadPreview()
+        .accessibilityIdentifier("participant.join.flow")
+    }
+
+    @ViewBuilder
+    private func content(_ program: Program) -> some View {
+        switch stage {
+        case .scanCoach:
+            scannerStep(program)
+        case .confirmCoach:
+            coachConfirmationStep(program)
+        case .payment:
+            paymentStep(program)
+        case .completed:
+            completionStep(program)
         }
     }
 
-    private var scannerSection: some View {
-        Section {
-            Button {
-                isCodeFocused = false
-                showsScanner = true
-            } label: {
-                Label(
-                    "participant.invite.scan_action",
-                    systemImage: "qrcode.viewfinder"
-                )
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(PrimaryActionButtonStyle())
-            .accessibilityIdentifier("participant.join.scan")
-        } footer: {
-            Text("participant.invite.scan_message")
-        }
-    }
-
-    private var manualCodeSection: some View {
-        Section {
-            TextField(
-                "participant.invite.field",
-                text: $inviteCode
-            )
-            .textInputAutocapitalization(.characters)
-            .autocorrectionDisabled()
-            .textContentType(.oneTimeCode)
-            .submitLabel(.continue)
-            .focused($isCodeFocused)
-            .onSubmit {
-                Task {
-                    await loadPreview()
+    private func scannerStep(_ program: Program) -> some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: AppSpacing.small) {
+                    Text(program.title)
+                        .font(AppTypography.cardTitle)
+                    Text(
+                        ParticipantFormatting.currency(program.price ?? 0)
+                    )
+                    .font(AppTypography.metric.monospacedDigit())
                 }
+            } header: {
+                Text("participant.join.selected_program")
             }
-            .accessibilityIdentifier("participant.join.code")
+
+            Section {
+                Button {
+                    showsScanner = true
+                } label: {
+                    Label(
+                        "participant.join.scan_coach",
+                        systemImage: "qrcode.viewfinder"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+                .accessibilityIdentifier("participant.join.scan")
+            } header: {
+                Text("participant.join.scan_step.title")
+            } footer: {
+                Text("participant.join.scan_step.message")
+            }
 
             if let fieldError {
-                Text(fieldError)
+                Section {
+                    Label(
+                        fieldError,
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
                     .font(AppTypography.secondary)
                     .foregroundStyle(Color.appDestructive)
                     .accessibilityIdentifier(
                         "participant.join.validation"
                     )
-            }
-
-            Button {
-                Task {
-                    await loadPreview()
-                }
-            } label: {
-                if store.isPerformingAction {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Text("participant.invite.preview_action")
-                        .frame(maxWidth: .infinity)
                 }
             }
-            .buttonStyle(.bordered)
-            .disabled(
-                inviteCode.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ).isEmpty || store.isPerformingAction
-            )
-            .accessibilityIdentifier("participant.join.preview")
-        } header: {
-            Text("participant.invite.manual_title")
-        } footer: {
-            Text("participant.invite.manual_message")
         }
+        .scrollContentBackground(.hidden)
     }
 
-    private func previewSection(
-        _ preview: ProgramInvitePreview
-    ) -> some View {
-        Section {
-            ProgramCard(
-                title: LocalizedStringKey(preview.program.title),
-                summary: preview.program.summary,
-                statusTitle: programStatusTitle(preview.program.status),
-                statusKind: programStatusKind(preview.program.status),
-                progress: nil
-            )
-            .accessibilityIdentifier("participant.join.preview.result")
-
-            LabeledContent(
-                "participant.invite.code_label",
-                value: preview.invite.code
-            )
-
-            if let coach = store.coach(id: preview.invite.coachID) {
-                LabeledContent(
-                    "participant.program.assigned_coach",
-                    value: coach.displayName
+    private func coachConfirmationStep(_ program: Program) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppSpacing.large) {
+                SectionHeader(
+                    title: "participant.join.confirm_coach.title",
+                    subtitle: "participant.join.confirm_coach.message"
                 )
-            }
 
-            LabeledContent(
-                "participant.program.period",
-                value: periodText(for: preview.program)
+                if let selectedCoach {
+                    HStack(spacing: AppSpacing.medium) {
+                        UserAvatar(
+                            displayName: selectedCoach.displayName,
+                            size: 64
+                        )
+                        VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                            Text(selectedCoach.displayName)
+                                .font(AppTypography.sectionTitle)
+                            Text(selectedCoach.city)
+                                .font(AppTypography.secondary)
+                                .foregroundStyle(Color.appSecondaryText)
+                            Label(
+                                "participant.join.coach.verified",
+                                systemImage: "checkmark.seal.fill"
+                            )
+                            .font(AppTypography.label)
+                            .foregroundStyle(Color.appSuccess)
+                        }
+                    }
+                    .padding(AppSpacing.medium)
+                    .background(
+                        Color.appSurface,
+                        in: RoundedRectangle(
+                            cornerRadius: AppRadius.large,
+                            style: .continuous
+                        )
+                    )
+                    .overlay {
+                        RoundedRectangle(
+                            cornerRadius: AppRadius.large,
+                            style: .continuous
+                        )
+                        .stroke(Color.appBorder, lineWidth: 1)
+                    }
+                }
+
+                LabeledContent(
+                    "participant.join.program_label",
+                    value: program.title
+                )
+                LabeledContent(
+                    "participant.program.offer.price",
+                    value: ParticipantFormatting.currency(program.price ?? 0)
+                )
+
+                Button {
+                    stage = .payment
+                } label: {
+                    Text("participant.join.confirm_coach.action")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+                .disabled(selectedCoach == nil)
+                .accessibilityIdentifier("participant.join.confirm-coach")
+
+                Button("participant.join.scan_again") {
+                    selectedCoach = nil
+                    fieldError = nil
+                    stage = .scanCoach
+                }
+                .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .frame(maxWidth: 560, alignment: .leading)
+            .padding(AppSpacing.large)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func paymentStep(_ program: Program) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppSpacing.large) {
+                Image(systemName: "apple.logo")
+                    .font(.largeTitle)
+                    .foregroundStyle(Color.appPrimaryText)
+                    .accessibilityHidden(true)
+
+                SectionHeader(
+                    title: "participant.payment.title",
+                    subtitle: "participant.payment.message"
+                )
+
+                VStack(spacing: AppSpacing.medium) {
+                    LabeledContent(
+                        "participant.join.program_label",
+                        value: program.title
+                    )
+                    if let selectedCoach {
+                        LabeledContent(
+                            "participant.join.coach_label",
+                            value: selectedCoach.displayName
+                        )
+                    }
+                    Divider()
+                    LabeledContent(
+                        "participant.payment.total",
+                        value: ParticipantFormatting.currency(
+                            program.price ?? 0
+                        )
+                    )
+                    .font(AppTypography.cardTitle.monospacedDigit())
+                }
+                .padding(AppSpacing.medium)
+                .background(
+                    Color.appSurface,
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+
+                Label(
+                    "participant.payment.placeholder_notice",
+                    systemImage: "info.circle.fill"
+                )
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appInfo)
+
+                if let fieldError {
+                    Text(fieldError)
+                        .font(AppTypography.secondary)
+                        .foregroundStyle(Color.appDestructive)
+                }
+
+                Button {
+                    Task {
+                        await completeLocalPaymentPlaceholder()
+                    }
+                } label: {
+                    if store.isPerformingAction {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("participant.payment.demo_action")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+                .disabled(
+                    selectedCoach == nil || store.isPerformingAction
+                )
+                .accessibilityIdentifier("participant.payment.demo")
+            }
+            .frame(maxWidth: 560, alignment: .leading)
+            .padding(AppSpacing.large)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func completionStep(_ program: Program) -> some View {
+        ScrollView {
+            VStack(spacing: AppSpacing.large) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.largeTitle)
+                    .foregroundStyle(Color.appSuccess)
+                    .accessibilityHidden(true)
+                SectionHeader(
+                    title: "participant.join.completed.title",
+                    subtitle: "participant.join.completed.message"
+                )
+                Text(program.title)
+                    .font(AppTypography.sectionTitle)
+                    .multilineTextAlignment(.center)
+                Button("participant.join.completed.action") {
+                    dismiss()
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+                .accessibilityIdentifier("participant.join.completed")
+            }
+            .frame(maxWidth: 560)
+            .padding(AppSpacing.large)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private var program: Program? {
+        guard let programID else { return nil }
+        return store.snapshot?.programs.first { $0.id == programID }
+    }
+
+    private func loadCoachPreview(identifier: String) {
+        do {
+            selectedCoach = try store.coach(
+                matchingEnrollmentIdentifier: identifier
             )
-
-        } header: {
-            Text("participant.invite.preview.title")
-        } footer: {
-            Text("participant.invite.preview.message")
-        }
-    }
-
-    private var confirmButton: some View {
-        Button {
-            Task {
-                await joinProgram()
-            }
-        } label: {
-            Text("participant.join.confirm_action")
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(PrimaryActionButtonStyle())
-        .disabled(store.isPerformingAction)
-        .accessibilityIdentifier("participant.join.confirm")
-    }
-
-    private func loadPreview() async {
-        isCodeFocused = false
-        do {
-            preview = try await store.loadInvitePreview(code: inviteCode)
             fieldError = nil
+            stage = .confirmCoach
         } catch let error as DomainError {
-            preview = nil
+            selectedCoach = nil
             fieldError = ParticipantFormatting.fieldReason(error)
         } catch {
-            preview = nil
+            selectedCoach = nil
             fieldError = String(localized: "participant.error.generic")
         }
     }
 
-    private func joinProgram() async {
+    private func completeLocalPaymentPlaceholder() async {
+        guard let programID, let selectedCoach else { return }
         do {
-            try await store.joinPendingInvite()
+            try await store.joinProgram(
+                programID: programID,
+                with: selectedCoach
+            )
             fieldError = nil
-            dismiss()
+            stage = .completed
         } catch let error as DomainError {
             fieldError = ParticipantFormatting.fieldReason(error)
         } catch {
             fieldError = String(localized: "participant.error.generic")
         }
     }
+}
 
-    private func periodText(for program: Program) -> String {
-        let startDate =
-            program.days.map(\.scheduledDate).min() ?? program.startDate
-        let endDate: Date
-        if let lastScheduledDate = program.days.map(\.scheduledDate).max() {
-            endDate = lastScheduledDate
-        } else {
-            var calendar = Calendar(identifier: .gregorian)
-            calendar.timeZone =
-                TimeZone(identifier: program.timeZoneIdentifier) ?? .gmt
-            endDate = calendar.date(
-                byAdding: .day,
-                value: max(program.durationInDays - 1, 0),
-                to: startDate
-            ) ?? program.endDate
-        }
-        let start = ParticipantFormatting.date(
-            startDate,
-            timeZoneIdentifier: program.timeZoneIdentifier
-        )
-        let end = ParticipantFormatting.date(
-            endDate,
-            timeZoneIdentifier: program.timeZoneIdentifier
-        )
-        return "\(start) – \(end)"
-    }
-
-    private func programStatusTitle(
-        _ status: ProgramStatus
-    ) -> LocalizedStringKey {
-        switch status {
-        case .draft:
-            "status.draft"
-        case .scheduled:
-            "participant.home.program.status.scheduled"
-        case .active:
-            "status.active"
-        case .completed:
-            "participant.home.program.status.completed"
-        case .archived:
-            "status.archived"
-        }
-    }
-
-    private func programStatusKind(_ status: ProgramStatus) -> AppStatusKind {
-        switch status {
-        case .active:
-            .success
-        case .scheduled:
-            .information
-        case .completed, .archived:
-            .neutral
-        case .draft:
-            .warning
-        }
-    }
+private enum JoinProgramStage: Sendable {
+    case scanCoach
+    case confirmCoach
+    case payment
+    case completed
 }

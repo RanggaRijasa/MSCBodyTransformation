@@ -124,14 +124,6 @@ struct CoachDashboardView: View {
             )
             LazyVGrid(columns: metricColumns, spacing: AppSpacing.small) {
                 MetricCard(
-                    title: "metric.seat_credits",
-                    value: CoachFormatting.number(
-                        snapshot.wallet.availableSeatCredits
-                    ),
-                    systemImage: "person.badge.plus",
-                    accentColor: .brandAccent
-                )
-                MetricCard(
                     title: "metric.active_programs",
                     value: CoachFormatting.number(
                         snapshot.activePrograms.count
@@ -186,12 +178,10 @@ struct CoachDashboardView: View {
                     HStack(spacing: AppSpacing.small) {
                         reviewButton
                         inviteButton
-                        storeButton
                     }
                     VStack(spacing: AppSpacing.small) {
                         reviewButton
                         inviteButton
-                        storeButton
                     }
                 }
             }
@@ -210,7 +200,7 @@ struct CoachDashboardView: View {
 
     private var inviteButton: some View {
         compactAction(
-            title: "coach.action.create_invite",
+            title: "coach.action.show_identifier",
             systemImage: "qrcode"
         ) {
             router.navigate(
@@ -218,19 +208,6 @@ struct CoachDashboardView: View {
                 in: .coach(.dashboard)
             )
         }
-    }
-
-    private var storeButton: some View {
-        compactAction(
-            title: "coach.action.store_preview",
-            systemImage: "bag"
-        ) {
-            router.navigate(
-                to: .coach(.storePreview),
-                in: .coach(.dashboard)
-            )
-        }
-        .accessibilityIdentifier("coach.open-store")
     }
 
     private func compactAction(
