@@ -3,7 +3,6 @@ import Observation
 import Photos
 import PhotosUI
 import SwiftUI
-import UIKit
 
 nonisolated enum PhotoLibraryAccessState: Equatable, Sendable {
     case full
@@ -84,41 +83,6 @@ final class LocalEvidenceMediaState {
                 data: data,
                 declaredMIMEType: "image/jpeg",
                 source: .camera
-            )
-        )
-    }
-
-    func useGeneratedSample() async {
-        let renderer = UIGraphicsImageRenderer(
-            size: CGSize(width: 1_200, height: 900)
-        )
-        let image = renderer.image { context in
-            UIColor.systemGray6.setFill()
-            context.fill(
-                CGRect(x: 0, y: 0, width: 1_200, height: 900)
-            )
-            UIColor.systemRed.setFill()
-            context.fill(
-                CGRect(x: 80, y: 80, width: 1_040, height: 20)
-            )
-            let text = "Bukti foto demo lokal"
-            text.draw(
-                at: CGPoint(x: 80, y: 400),
-                withAttributes: [
-                    .font: UIFont.preferredFont(forTextStyle: .title1),
-                    .foregroundColor: UIColor.label
-                ]
-            )
-        }
-        guard let data = image.jpegData(compressionQuality: 0.94) else {
-            error = .processingFailed
-            return
-        }
-        await process(
-            MediaProcessingInput(
-                data: data,
-                declaredMIMEType: "image/jpeg",
-                source: .bundledSample
             )
         )
     }

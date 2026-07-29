@@ -27,7 +27,7 @@ nonisolated struct ProgramDayAccessCalculator: Sendable {
             for: day,
             now: now,
             timeZoneIdentifier: timeZoneIdentifier,
-            pastPolicy: .readOnly,
+            pastPolicy: .open,
             futurePolicy: .locked
         )
     }

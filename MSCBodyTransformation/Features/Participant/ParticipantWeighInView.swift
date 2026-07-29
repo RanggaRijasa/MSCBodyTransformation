@@ -15,7 +15,6 @@ struct ParticipantWeighInView: View {
     @State private var weightInput = ""
     @State private var fieldError: String?
     @State private var confirmation: WeighInConfirmation?
-    @State private var hasLocalEvidence = false
     @FocusState private var isWeightFocused: Bool
 
     var body: some View {
@@ -59,25 +58,6 @@ struct ParticipantWeighInView: View {
                 )
             } footer: {
                 Text("participant.weigh.decimal_hint")
-            }
-
-            Section {
-                Button {
-                    hasLocalEvidence.toggle()
-                } label: {
-                    Label(
-                        hasLocalEvidence
-                            ? "participant.weigh.evidence.attached"
-                            : "participant.weigh.evidence.action",
-                        systemImage: hasLocalEvidence
-                            ? "checkmark.circle.fill"
-                            : "photo"
-                    )
-                }
-            } header: {
-                Text("participant.weigh.evidence.title")
-            } footer: {
-                Text("participant.weigh.evidence.message")
             }
 
             Section {

@@ -596,6 +596,12 @@ struct Phase05AdminCMSTests {
         var archived = content
         archived.isArchived = true
         #expect(!validator.isVisible(archived, at: fixedDate))
+
+        var missingPoster = content
+        missingPoster.localMediaReference = nil
+        #expect(throws: DomainError.self) {
+            try validator.validate(missingPoster)
+        }
     }
 
     private func validDraft() throws -> AdminProgramDraft {

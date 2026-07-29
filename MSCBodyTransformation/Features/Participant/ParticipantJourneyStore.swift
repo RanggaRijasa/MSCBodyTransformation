@@ -5,8 +5,6 @@ nonisolated enum ParticipantEntryStage: Equatable, Sendable {
     case login
     case profile
     case disclaimer
-    case invite
-    case confirmInvite
     case initialWeighIn
     case complete
 }
@@ -29,6 +27,7 @@ nonisolated struct ParticipantJourneySnapshot: Equatable, Sendable {
     let weighIns: [WeighIn]
     let leaderboard: [LeaderboardEntry]
     let winners: [ProgramWinner]
+    let featuredWinnerPosters: [ManagedContent]
     let coaches: [CoachProfile]
     let managedContent: [ManagedContent]
 }
@@ -58,7 +57,6 @@ final class ParticipantJourneyStore {
 
     var state: ParticipantJourneyLoadState = .idle
     var entryStage: ParticipantEntryStage = .complete
-    var pendingInviteCode = "MSC7HARI"
     var selectedDayNumber: Int?
     var debugDateOverride: Date?
     var showsOfflineSimulation = false
@@ -343,77 +341,7 @@ final class ParticipantJourneyStore {
     }
 
     func acceptDisclaimer() {
-        entryStage = .invite
-    }
-
-    func preservePendingInvite(code: String) {
-        let normalized = code
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .uppercased()
-        guard !normalized.isEmpty else { return }
-        pendingInviteCode = normalized
-    }
-
-    func previewInvite(code: String) throws {
-        let normalized = code
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .uppercased()
-        guard !normalized.isEmpty else {
-            throw DomainError.validation(
-                field: "inviteCode",
-                reason: "Kode undangan wajib diisi."
-            )
-        }
-        guard currentProgram != nil else {
-            throw DomainError.notFound(resource: "program")
-        }
-        preservePendingInvite(code: normalized)
-        entryStage = .confirmInvite
-    }
-
-    func loadInvitePreview(
-        code: String
-    ) async throws -> ProgramInvitePreview {
-        guard let repositories = environment.repositories else {
-            throw DomainError.unknown
-        }
-        isPerformingAction = true
-        defer { isPerformingAction = false }
-
-        let preview = try await PreviewLocalInviteUseCase(
-            invites: repositories.invites,
-            programs: repositories.programs,
-            clock: environment.clock
-        )(code: code)
-        preservePendingInvite(code: preview.invite.code)
-        return preview
-    }
-
-    func joinPendingInvite() async throws {
-        guard let repositories = environment.repositories,
-              let participantID = snapshot?.profile.id else {
-            throw DomainError.unknown
-        }
-        isPerformingAction = true
-        defer { isPerformingAction = false }
-
-        let useCase = RedeemLocalInviteUseCase(
-            repository: repositories.invites,
-            identifierGenerator: environment.identifierGenerator,
-            clock: environment.clock
-        )
-        _ = try await useCase(
-            code: pendingInviteCode,
-            participantID: participantID
-        )
-        try await reloadSnapshot()
-        if shouldStartWithoutEnrollment,
-           let firstDayNumber = currentProgram?.days
-               .sorted(by: { $0.dayNumber < $1.dayNumber })
-               .first?.dayNumber {
-            selectDay(firstDayNumber)
-        }
-        entryStage = initialWeighIn == nil ? .initialWeighIn : .complete
+        entryStage = .complete
     }
 
     func submitWeighIn(
@@ -535,6 +463,156 @@ final class ParticipantJourneyStore {
 
     func coach(id: UUID) -> CoachProfile? {
         snapshot?.coaches.first { $0.id == id }
+    }
+
+    func enrollment(for programID: UUID) -> ProgramEnrollment? {
+        snapshot?.enrollments.first {
+            $0.programID == programID
+                && $0.status != .cancelled
+        }
+    }
+
+    func coach(matchingEnrollmentIdentifier input: String) throws
+        -> CoachProfile
+    {
+        let normalizedIdentifier = input
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
+        guard !normalizedIdentifier.isEmpty else {
+            throw DomainError.validation(
+                field: "coachIdentifier",
+                reason: "QR coach tidak valid."
+            )
+        }
+        guard let coach = snapshot?.coaches.first(where: {
+            $0.enrollmentIdentifier.uppercased() == normalizedIdentifier
+        }) else {
+            throw DomainError.notFound(resource: "coach")
+        }
+        return coach
+    }
+
+    func updateParticipantProfile(
+        displayName: String,
+        phoneNumber: String,
+        localPhotoReference: String?
+    ) async throws {
+        guard let repositories = environment.repositories,
+              var profile = snapshot?.profile else {
+            throw DomainError.unknown
+        }
+        let trimmedName = displayName.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmedName.isEmpty else {
+            throw DomainError.validation(
+                field: "displayName",
+                reason: "Nama tampilan wajib diisi."
+            )
+        }
+
+        let compactPhone = phoneNumber.filter {
+            !$0.isWhitespace && $0 != "-"
+        }
+        let phoneDigits = compactPhone.filter(\.isNumber)
+        if !compactPhone.isEmpty {
+            let hasValidCharacters = compactPhone.allSatisfy {
+                $0.isNumber || $0 == "+"
+            }
+            let plusIsValid = !compactPhone.contains("+")
+                || (
+                    compactPhone.first == "+"
+                        && compactPhone.dropFirst().allSatisfy(\.isNumber)
+                )
+            guard hasValidCharacters,
+                  plusIsValid,
+                  (8...15).contains(phoneDigits.count) else {
+                throw DomainError.validation(
+                    field: "phoneNumber",
+                    reason: "Masukkan nomor HP yang valid."
+                )
+            }
+        }
+
+        profile.displayName = trimmedName
+        profile.phoneNumber = compactPhone.isEmpty ? nil : compactPhone
+        profile.localPhotoReference = localPhotoReference.flatMap {
+            $0.isEmpty ? nil : $0
+        }
+        _ = try await repositories.profiles.save(
+            participantProfile: profile
+        )
+        try await reloadSnapshot()
+    }
+
+    func changeCoach(to coach: CoachProfile) async throws {
+        guard let repositories = environment.repositories,
+              let snapshot else {
+            throw DomainError.unknown
+        }
+        guard coach.isApproved && coach.isPublic else {
+            throw DomainError.permissionDenied
+        }
+        guard snapshot.profile.coachID != coach.id else {
+            throw DomainError.validation(
+                field: "coach",
+                reason: "Coach ini sudah menjadi pendampingmu."
+            )
+        }
+
+        var profile = snapshot.profile
+        profile.coachID = coach.id
+        _ = try await repositories.profiles.save(
+            participantProfile: profile
+        )
+        _ = try await repositories.enrollments.reassignCoach(
+            participantID: profile.id,
+            coachID: coach.id
+        )
+        try await reloadSnapshot()
+    }
+
+    func joinProgram(
+        programID: UUID,
+        with coach: CoachProfile
+    ) async throws {
+        guard let repositories = environment.repositories,
+              let snapshot else {
+            throw DomainError.unknown
+        }
+        guard let program = snapshot.programs.first(where: {
+            $0.id == programID
+        }), program.status == .active || program.status == .scheduled else {
+            throw DomainError.validation(
+                field: "program",
+                reason: "Program ini belum dapat diikuti."
+            )
+        }
+        guard coach.isApproved else {
+            throw DomainError.permissionDenied
+        }
+
+        isPerformingAction = true
+        defer { isPerformingAction = false }
+
+        _ = try await JoinProgramWithCoachUseCase(
+            enrollments: repositories.enrollments,
+            identifierGenerator: environment.identifierGenerator,
+            clock: environment.clock
+        )(
+            programID: programID,
+            participantID: snapshot.profile.id,
+            coachID: coach.id
+        )
+
+        if snapshot.profile.coachID != coach.id {
+            var profile = snapshot.profile
+            profile.coachID = coach.id
+            _ = try await repositories.profiles.save(
+                participantProfile: profile
+            )
+        }
+        try await reloadSnapshot()
     }
 
     func selectDay(_ dayNumber: Int) {
@@ -720,6 +798,7 @@ final class ParticipantJourneyStore {
 
         let programs = try await programsTask
         let enrollments = try await enrollmentsTask
+        let managedContent = try await managedContentTask
         let activeEnrollment = enrollments.first { enrollment in
             enrollment.status == .active
                 && programs.contains {
@@ -764,6 +843,22 @@ final class ParticipantJourneyStore {
             winners = []
         }
 
+        let featuredWinnerPosters = managedContent
+            .filter {
+                $0.kind == .winnerBanner
+                    && ManagedContentValidator().isVisible(
+                        $0,
+                        at: environment.clock.now()
+                    )
+                    && $0.localMediaReference?.isEmpty == false
+            }
+            .sorted {
+                if $0.sortOrder == $1.sortOrder {
+                    return $0.updatedAt > $1.updatedAt
+                }
+                return $0.sortOrder < $1.sortOrder
+            }
+
         let nextSnapshot = ParticipantJourneySnapshot(
             user: user,
             profile: profile,
@@ -775,8 +870,9 @@ final class ParticipantJourneyStore {
             weighIns: weighIns,
             leaderboard: leaderboard,
             winners: winners,
+            featuredWinnerPosters: featuredWinnerPosters,
             coaches: try await coachesTask,
-            managedContent: try await managedContentTask
+            managedContent: managedContent
         )
         state = .loaded(nextSnapshot)
         updateLeaderboardSelectionAfterJourneyLoad(

@@ -1,7 +1,21 @@
 import SwiftUI
 
+nonisolated enum ParticipantProgramParticipationStatus: Sendable {
+    case enrolled
+    case notEnrolled
+}
+
 struct ParticipantProgramPoster: View {
     let program: Program
+    let participationStatus: ParticipantProgramParticipationStatus?
+
+    init(
+        program: Program,
+        participationStatus: ParticipantProgramParticipationStatus? = nil
+    ) {
+        self.program = program
+        self.participationStatus = participationStatus
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -25,7 +39,10 @@ struct ParticipantProgramPoster: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                    Text(statusTitle)
+                    Label(
+                        topLabelTitle,
+                        systemImage: topLabelSystemImage
+                    )
                         .font(AppTypography.label)
                         .foregroundStyle(Color.white)
                         .padding(.horizontal, AppSpacing.xSmall)
@@ -120,6 +137,28 @@ struct ParticipantProgramPoster: View {
             "status.active"
         case .archived:
             "status.archived"
+        }
+    }
+
+    private var topLabelTitle: LocalizedStringKey {
+        switch participationStatus {
+        case .enrolled:
+            "participant.program.participation.enrolled"
+        case .notEnrolled:
+            "participant.program.participation.not_enrolled"
+        case nil:
+            statusTitle
+        }
+    }
+
+    private var topLabelSystemImage: String {
+        switch participationStatus {
+        case .enrolled:
+            "checkmark.circle.fill"
+        case .notEnrolled:
+            "plus.circle"
+        case nil:
+            "calendar"
         }
     }
 }

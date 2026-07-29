@@ -110,6 +110,125 @@ struct Phase03ParticipantTests {
         )
     }
 
+    @Test("Hari lampau dengan aktivitas terbit tetap dapat dibuka")
+    func publishedPastDayRemainsVisible() throws {
+        let program = try #require(
+            try MockSeedData.load().programs.first {
+                $0.status == .active
+            }
+        )
+        let publishedPastDay = try #require(
+            program.days.first { $0.dayNumber == 4 }
+        )
+        let currentDay = try #require(
+            program.days.first { $0.dayNumber == 5 }
+        )
+
+        #expect(publishedPastDay.visibilityMode == .standard)
+        #expect(!publishedPastDay.steps.isEmpty)
+        #expect(
+            ProgramDayAccessCalculator().access(
+                for: publishedPastDay,
+                now: currentDay.scheduledDate,
+                timeZoneIdentifier: program.timeZoneIdentifier
+            ) == .available
+        )
+    }
+
+    @Test("Presentasi hari mengikuti kontrak akses domain")
+    func dayPresentationContract() {
+        let available = ParticipantProgramDayUIState(access: .available)
+        let readOnly = ParticipantProgramDayUIState(access: .readOnly)
+        let locked = ParticipantProgramDayUIState(access: .locked)
+        let hidden = ParticipantProgramDayUIState(access: .hidden)
+
+        #expect(available.showsActivities)
+        #expect(available.allowsStepNavigation)
+        #expect(available.allowsCompletion)
+        #expect(!available.showsUnavailableMessage)
+
+        #expect(readOnly.showsActivities)
+        #expect(readOnly.allowsStepNavigation)
+        #expect(!readOnly.allowsCompletion)
+        #expect(!readOnly.showsUnavailableMessage)
+
+        #expect(!locked.showsActivities)
+        #expect(!locked.allowsStepNavigation)
+        #expect(!locked.allowsCompletion)
+        #expect(locked.showsUnavailableMessage)
+
+        #expect(hidden == locked)
+    }
+
+    @MainActor
+    @Test("Home memuat dua poster pemenang dan direktori coach publik")
+    func homeHighlightsLoadFromLocalRepositories() async throws {
+        let store = ParticipantJourneyStore(environment: .preview)
+
+        await store.load()
+
+        let snapshot = try #require(store.snapshot)
+        let featuredPosters = Array(
+            snapshot.featuredWinnerPosters.prefix(2)
+        )
+
+        #expect(featuredPosters.count == 2)
+        #expect(
+            featuredPosters.allSatisfy {
+                $0.kind == .winnerBanner
+                    && $0.localMediaReference?.isEmpty == false
+            }
+        )
+        #expect(featuredPosters.map(\.sortOrder) == [1, 2])
+        #expect(snapshot.coaches.count == 4)
+        #expect(
+            snapshot.coaches.allSatisfy {
+                $0.isPublic && $0.isApproved
+            }
+        )
+        #expect(
+            snapshot.coaches.contains {
+                $0.id == snapshot.activeEnrollment?.coachID
+            }
+        )
+    }
+
+    @MainActor
+    @Test("Profil dapat diperbarui dan coach diganti melalui hasil QR")
+    func participantProfileAndCoachUpdate() async throws {
+        let store = ParticipantJourneyStore(environment: .preview)
+        await store.load()
+
+        try await store.updateParticipantProfile(
+            displayName: "Ayu Baru",
+            phoneNumber: "+62 812-3456-7890",
+            localPhotoReference: "/tmp/ayu-profile.jpg"
+        )
+
+        var snapshot = try #require(store.snapshot)
+        #expect(snapshot.profile.displayName == "Ayu Baru")
+        #expect(snapshot.profile.phoneNumber == "+6281234567890")
+        #expect(
+            snapshot.profile.localPhotoReference
+                == "/tmp/ayu-profile.jpg"
+        )
+
+        let coach = try store.coach(
+            matchingEnrollmentIdentifier: "COACH-MAYA-4P2L"
+        )
+        try await store.changeCoach(to: coach)
+
+        snapshot = try #require(store.snapshot)
+        #expect(snapshot.profile.coachID == coach.id)
+        #expect(
+            snapshot.enrollments
+                .filter {
+                    $0.status == .pending || $0.status == .active
+                }
+                .allSatisfy { $0.coachID == coach.id }
+        )
+    }
+
     @Test("Workflow lokal dapat join, timbang, dan menyelesaikan langkah")
     func localParticipantCompletion() async throws {
         let seed = try MockSeedData.load()
@@ -192,6 +311,37 @@ struct Phase03ParticipantTests {
         )
         #expect(entry.progressPercentage == 5)
         #expect(entry.score.approvedStepPoints == automaticStep.points)
+    }
+
+    @Test("Program dapat diikuti melalui identifier coach tanpa kuota")
+    func joinProgramWithCoachIdentifier() async throws {
+        let seed = try MockSeedData.load()
+        let repository = InMemoryAppRepository(seed: seed)
+        let participant = try #require(seed.participantProfiles.first)
+        let coach = try #require(seed.coachProfiles.first)
+        let program = try #require(
+            seed.programs.first { $0.status == .scheduled }
+        )
+
+        let enrollment = try await JoinProgramWithCoachUseCase(
+            enrollments: repository,
+            identifierGenerator: DeterministicIdentifierGenerator(
+                identifier: UUID(
+                    uuidString:
+                        "40000000-0000-0000-0000-000000009997"
+                )!
+            ),
+            clock: FixedClock(now: currentDate)
+        )(
+            programID: program.id,
+            participantID: participant.id,
+            coachID: coach.id
+        )
+
+        #expect(enrollment.programID == program.id)
+        #expect(enrollment.coachID == coach.id)
+        #expect(coach.enrollmentIdentifier == "COACH-RAKA-7K9Q")
+        #expect(program.price == 99_000)
     }
 
     @Test("Berat akhir memperbarui poin lokal pada hari terakhir")

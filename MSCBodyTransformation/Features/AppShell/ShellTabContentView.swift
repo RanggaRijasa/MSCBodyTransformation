@@ -67,6 +67,7 @@ struct ShellTabContentView: View {
         case .offline:
             loadedContent(showsOfflineBanner: true)
         case .participantOnboarding, .participantNoProgram,
+             .participantActive,
              .participantDayOne, .participantMidProgram,
              .participantFinalWeighIn, .participantFinalLeaderboard,
              .coachWalletZero, .coachActiveParticipants,
@@ -298,27 +299,11 @@ private struct CoachShellSections: View {
             }
         case .invite:
             Section {
-                AdaptiveGlassControlGroup {
-                    HStack(spacing: AppSpacing.small) {
-                        compactAction(
-                            title: "action.show_invite",
-                            systemImage: "qrcode"
-                        ) {
-                            router.presentedSheet = .inviteCode("MSC7HARI")
-                        }
-                        compactAction(
-                            title: "action.confirm",
-                            systemImage: "checkmark.circle"
-                        ) {
-                            router.presentedSheet = .confirmation
-                        }
-                    }
-                }
                 MetricCard(
-                    title: "metric.seat_credits",
-                    value: "8",
-                    systemImage: "person.badge.plus",
-                    accentColor: .brandAccent
+                    title: "coach.identifier.code_label",
+                    value: "COACH-RAKA-7K9Q",
+                    systemImage: "qrcode",
+                    accentColor: .brandPrimary
                 )
             } header: {
                 SectionHeader(title: "shell.coach.invite.title")

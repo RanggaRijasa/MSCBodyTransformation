@@ -20,6 +20,12 @@
 
 - [ ] Implementasikan setiap protocol repository tanpa mengubah kontrak UI.
 - [ ] Gunakan server time untuk hari aktif, expiry, dan lock.
+- [ ] Simpan tanggal jadwal, timezone program, dan raw visibility mode secara
+      terpisah; jangan mengubah hari published yang sudah lewat menjadi hidden.
+- [ ] Pertahankan kontrak akses: published day dapat dikerjakan sejak
+      tanggalnya tiba, future published terkunci, read-only hanya untuk mode
+      eksplisit, dan hidden hanya untuk konten yang memang belum
+      dipublikasikan.
 - [ ] Terapkan idempotency untuk submission, enrollment, review, dan purchase.
 - [ ] Tangani pagination, cancellation, timeout, offline cache, dan retry.
 - [ ] Hindari duplicate load serta pastikan list identity tetap stabil.
@@ -41,12 +47,16 @@
 - [ ] Terapkan batas ukuran, retry, progress, cleanup, dan authorization.
 - [ ] Jangan log path privat, signed URL, berat, atau token.
 
-## Coach dan pembelian
+## Coach, enrollment, dan pembayaran program
 
-- [ ] Sinkronkan wallet dan ledger secara authoritative.
-- [ ] Kurangi satu kuota hanya setelah enrollment baru berhasil.
-- [ ] Tambahkan StoreKit dan App Store Server API pada fase produksi.
-- [ ] Verifikasi transaksi di server; jangan mempercayai saldo klien.
+- [ ] Buat satu identifier enrollment QR unik dan stabil untuk setiap coach.
+- [ ] Cocokkan QR coach di server tanpa menampilkan fallback kode manual.
+- [ ] Terapkan enrollment peserta secara idempoten setelah konfirmasi coach
+      dan pembayaran program berhasil.
+- [ ] Tambahkan StoreKit dan App Store Server API pada fase pembayaran
+      program.
+- [ ] Verifikasi transaksi di server; jangan mempercayai status pembayaran
+      dari klien.
 
 ## Admin dan operasional
 

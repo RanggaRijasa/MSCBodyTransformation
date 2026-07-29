@@ -7,12 +7,9 @@ struct CoachInviteView: View {
     let router: ShellTabRouter
 
     @State private var actionError: String?
-    @State private var inviteToRevoke: CoachInvite?
-    @State private var sharePayload: CoachInviteSharePayload?
+    @State private var sharePayload: CoachIdentifierSharePayload?
 
     var body: some View {
-        @Bindable var state = state
-
         Group {
             switch state.state {
             case .idle, .loading:
@@ -27,7 +24,7 @@ struct CoachInviteView: View {
                     .padding(AppSpacing.medium)
                 }
             case .loaded(let snapshot):
-                inviteForm(snapshot, bindableState: $state)
+                identifierContent(snapshot.profile)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -37,64 +34,89 @@ struct CoachInviteView: View {
                 await state.load()
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    openStore()
-                } label: {
-                    Label(
-                        "coach.action.store_preview",
-                        systemImage: "bag"
-                    )
-                }
-                .accessibilityIdentifier("coach.invite.open-store")
-            }
-        }
-        .confirmationDialog(
-            "coach.invite.revoke.confirm.title",
-            isPresented: Binding(
-                get: { inviteToRevoke != nil },
-                set: {
-                    if !$0 {
-                        inviteToRevoke = nil
-                    }
-                }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("coach.invite.revoke", role: .destructive) {
-                guard let invite = inviteToRevoke else {
-                    return
-                }
-                Task {
-                    await revoke(invite)
-                }
-            }
-            Button("action.cancel", role: .cancel) {}
-        } message: {
-            Text("coach.invite.revoke.confirm.message")
-        }
         .sheet(item: $sharePayload) { payload in
             NativeShareSheet(activityItems: payload.activityItems)
         }
         .accessibilityIdentifier("coach.invite")
     }
 
-    private func inviteForm(
-        _ snapshot: CoachInviteSnapshot,
-        bindableState: Bindable<CoachInviteComposerState>
-    ) -> some View {
-        Form {
-            walletSection(snapshot.wallet)
-            composerSection(snapshot, bindableState: bindableState)
-            if let invite = state.latestGeneratedInvite {
-                generatedInviteSection(invite, snapshot: snapshot)
-            }
-            storePreviewSection
-            historySection(snapshot)
-            behaviorExplanation
-            if let actionError {
-                Section {
+    private func identifierContent(_ profile: CoachProfile) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppSpacing.large) {
+                SectionHeader(
+                    title: "coach.identifier.title",
+                    subtitle: "coach.identifier.message"
+                )
+
+                VStack(spacing: AppSpacing.medium) {
+                    UserAvatar(
+                        displayName: profile.displayName,
+                        size: 64
+                    )
+                    Text(profile.displayName)
+                        .font(AppTypography.sectionTitle)
+                    Text(profile.city)
+                        .font(AppTypography.secondary)
+                        .foregroundStyle(Color.appSecondaryText)
+
+                    CoachQRCodeView(
+                        payload: qrPayload(for: profile),
+                        coachName: profile.displayName
+                    )
+
+                    Button {
+                        share(profile)
+                    } label: {
+                        Label(
+                            "coach.identifier.share",
+                            systemImage: "square.and.arrow.up"
+                        )
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.brandPrimary)
+                    .accessibilityIdentifier("coach.invite.share")
+                }
+                .padding(AppSpacing.large)
+                .background(
+                    Color.appSurface,
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+                .overlay {
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                    .stroke(Color.appBorder, lineWidth: 1)
+                }
+
+                VStack(alignment: .leading, spacing: AppSpacing.small) {
+                    Label(
+                        "coach.identifier.how_to.first",
+                        systemImage: "1.circle.fill"
+                    )
+                    Label(
+                        "coach.identifier.how_to.second",
+                        systemImage: "2.circle.fill"
+                    )
+                    Label(
+                        "coach.identifier.how_to.third",
+                        systemImage: "3.circle.fill"
+                    )
+                }
+                .font(AppTypography.body)
+
+                Label(
+                    "coach.identifier.stable_notice",
+                    systemImage: "checkmark.shield.fill"
+                )
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appSecondaryText)
+
+                if let actionError {
                     Label(
                         actionError,
                         systemImage: "exclamationmark.triangle.fill"
@@ -102,253 +124,40 @@ struct CoachInviteView: View {
                     .foregroundStyle(Color.appDestructive)
                 }
             }
+            .frame(maxWidth: 620, alignment: .leading)
+            .padding(AppSpacing.medium)
+            .frame(maxWidth: .infinity)
         }
-        .scrollContentBackground(.hidden)
-        .background(Color.appBackground)
         .refreshable {
             await state.load()
         }
     }
 
-    private func walletSection(_ wallet: CoachWallet) -> some View {
-        return Section {
-            LabeledContent("metric.seat_credits") {
-                Text(
-                    wallet.availableSeatCredits,
-                    format: .number.locale(CoachFormatting.locale)
-                )
-                .font(AppTypography.cardTitle.monospacedDigit())
-            }
-            LabeledContent("coach.invite.capacity.available") {
-                Text(
-                    wallet.availableSeatCredits,
-                    format: .number.locale(CoachFormatting.locale)
-                )
-                .monospacedDigit()
-            }
-            if wallet.availableSeatCredits == 0 {
-                Label(
-                    "coach.invite.exhausted.message",
-                    systemImage: "exclamationmark.triangle.fill"
-                )
-                .foregroundStyle(Color.appWarning)
-            }
-        } header: {
-            Text("coach.invite.capacity.title")
-        } footer: {
-            Text("coach.invite.capacity.footer")
-        }
-    }
-
-    private func composerSection(
-        _ snapshot: CoachInviteSnapshot,
-        bindableState: Bindable<CoachInviteComposerState>
-    ) -> some View {
-        Section("coach.invite.composer.title") {
-            Picker(
-                "coach.invite.program",
-                selection: bindableState.selectedProgramID
-            ) {
-                ForEach(snapshot.programs) { program in
-                    Text(program.title)
-                        .tag(Optional(program.id))
-                }
-            }
-            Stepper(
-                value: bindableState.validForDays,
-                in: 1...30
-            ) {
-                LabeledContent("coach.invite.expiry") {
-                    let validityDays = Text(
-                        state.validForDays,
-                        format: .number.locale(CoachFormatting.locale)
-                    )
-                    Text("\(validityDays) \(Text("coach.invite.days"))")
-                    .monospacedDigit()
-                }
-            }
-            Button {
-                Task {
-                    await generateInvite()
-                }
-            } label: {
-                Label(
-                    "coach.invite.generate",
-                    systemImage: "qrcode"
-                )
-            }
-            .disabled(
-                state.selectedProgramID == nil
-                    || state.isPerformingAction
-            )
-            .accessibilityIdentifier("coach.invite.generate")
-        }
-    }
-
-    private func generatedInviteSection(
-        _ invite: CoachInvite,
-        snapshot: CoachInviteSnapshot
-    ) -> some View {
-        let programTitle = snapshot.programs.first {
-            $0.id == invite.programID
-        }?.title ?? String(localized: "coach.program.none")
-        let payload = localInviteURLString(invite)
-
-        return Section {
-            VStack(spacing: AppSpacing.medium) {
-                CoachQRCodeView(
-                    payload: payload,
-                    programTitle: programTitle,
-                    coachName: snapshot.profile.displayName
-                )
-                Text(invite.code)
-                    .font(AppTypography.metric.monospacedDigit())
-                    .foregroundStyle(Color.appPrimaryText)
-                    .accessibilityLabel(Text("shell.invite.code"))
-                Text(
-                    CoachFormatting.dateTime(invite.expiresAt)
-                )
-                .font(AppTypography.secondary)
-                .foregroundStyle(Color.appSecondaryText)
-                Button {
-                    share(
-                        invite: invite,
-                        programTitle: programTitle,
-                        coachName: snapshot.profile.displayName
-                    )
-                } label: {
-                    Label(
-                        "coach.invite.share",
-                        systemImage: "square.and.arrow.up"
-                    )
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.brandPrimary)
-                .accessibilityIdentifier("coach.invite.share")
-            }
-            .frame(maxWidth: .infinity)
-        } header: {
-            Text("coach.invite.generated.title")
-        } footer: {
-            Text("coach.invite.generated.footer")
-        }
-    }
-
-    private var storePreviewSection: some View {
-        Section {
-            Button {
-                openStore()
-            } label: {
-                Label(
-                    "coach.action.store_preview",
-                    systemImage: "bag"
-                )
-            }
-            .accessibilityIdentifier("coach.invite.quick-store")
-        }
-    }
-
-    private func historySection(
-        _ snapshot: CoachInviteSnapshot
-    ) -> some View {
-        Section("coach.invite.history.title") {
-            if snapshot.invites.isEmpty {
-                Text("coach.invite.history.empty")
-                    .foregroundStyle(Color.appSecondaryText)
-            } else {
-                ForEach(snapshot.invites) { invite in
-                    CoachInviteHistoryRow(
-                        invite: invite,
-                        program: snapshot.programs.first {
-                            $0.id == invite.programID
-                        },
-                        revoke: {
-                            inviteToRevoke = invite
-                        }
-                    )
-                }
-            }
-        }
-    }
-
-    private var behaviorExplanation: some View {
-        Section("coach.invite.behavior.title") {
-            Label(
-                "coach.invite.behavior.no_decrement",
-                systemImage: "checkmark.circle"
-            )
-            Label(
-                "coach.invite.behavior.enrollment_consumes",
-                systemImage: "person.badge.plus"
-            )
-            Label(
-                "coach.invite.behavior.duplicate",
-                systemImage: "arrow.triangle.2.circlepath"
-            )
-            Label(
-                "coach.invite.behavior.production",
-                systemImage: "shippingbox"
-            )
-        }
-    }
-
-    private func generateInvite() async {
-        do {
-            try await state.generateInvite()
-            actionError = nil
-        } catch let error as DomainError {
-            actionError = CoachFormatting.reason(error)
-        } catch {
-            actionError = String(localized: "coach.error.generic")
-        }
-    }
-
-    private func revoke(_ invite: CoachInvite) async {
-        do {
-            try await state.revoke(invite)
-            actionError = nil
-            inviteToRevoke = nil
-        } catch let error as DomainError {
-            actionError = CoachFormatting.reason(error)
-        } catch {
-            actionError = String(localized: "coach.error.generic")
-        }
-    }
-
-    private func openStore() {
-        router.navigate(
-            to: .coach(.storePreview),
-            in: .coach(.invite)
-        )
-    }
-
-    private func localInviteURLString(_ invite: CoachInvite) -> String {
+    private func qrPayload(for profile: CoachProfile) -> String {
         (
             try? LocalInvitePayloadParser()
-                .url(forOpaqueToken: invite.code)
+                .url(forOpaqueToken: profile.enrollmentIdentifier)
                 .absoluteString
         ) ?? ""
     }
 
-    private func share(
-        invite: CoachInvite,
-        programTitle: String,
-        coachName: String
-    ) {
-        let payload = localInviteURLString(invite)
+    private func share(_ profile: CoachProfile) {
+        let payload = qrPayload(for: profile)
         guard !payload.isEmpty,
               let image = LocalQRCodeGenerator().image(
                   payload: payload
               ) else {
-            actionError = "QR undangan belum dapat dibagikan."
+            actionError = String(
+                localized: "coach.identifier.share_error"
+            )
             return
         }
+
         let message =
-            "Undangan program \(programTitle) dari \(coachName). "
-            + "Buka \(payload) atau pindai QR terlampir."
-        sharePayload = CoachInviteSharePayload(
-            id: invite.id,
+            "Pindai QR coach \(profile.displayName) saat mendaftar "
+            + "program MSC Body Transformation."
+        sharePayload = CoachIdentifierSharePayload(
+            id: profile.id,
             activityItems: [message, UIImage(cgImage: image)]
         )
         actionError = nil
@@ -356,59 +165,12 @@ struct CoachInviteView: View {
 }
 
 @MainActor
-private struct CoachInviteSharePayload: Identifiable {
+private struct CoachIdentifierSharePayload: Identifiable {
     let id: UUID
     let activityItems: [Any]
 }
 
-private struct CoachInviteHistoryRow: View {
-    let invite: CoachInvite
-    let program: Program?
-    let revoke: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(invite.code)
-                    .font(AppTypography.cardTitle.monospacedDigit())
-                Spacer()
-                statusBadge
-            }
-            Text(program?.title ?? String(localized: "coach.program.none"))
-                .font(AppTypography.body)
-            Text(
-                CoachFormatting.dateTime(invite.expiresAt)
-            )
-            .font(AppTypography.secondary)
-            .foregroundStyle(Color.appSecondaryText)
-            if invite.status == .active {
-                Button(
-                    "coach.invite.revoke",
-                    role: .destructive,
-                    action: revoke
-                )
-                .frame(minHeight: 44)
-            }
-        }
-        .padding(.vertical, AppSpacing.xSmall)
-    }
-
-    @ViewBuilder
-    private var statusBadge: some View {
-        switch invite.status {
-        case .active:
-            StatusBadge(title: "coach.invite.status.active", kind: .success)
-        case .redeemed:
-            StatusBadge(title: "coach.invite.status.redeemed", kind: .neutral)
-        case .expired:
-            StatusBadge(title: "coach.invite.status.expired", kind: .warning)
-        case .revoked:
-            StatusBadge(title: "coach.invite.status.revoked", kind: .error)
-        }
-    }
-}
-
-#Preview("Undangan aktif") {
+#Preview("QR pendaftaran Coach") {
     NavigationStack {
         CoachInvitePreview()
     }
@@ -417,7 +179,9 @@ private struct CoachInviteHistoryRow: View {
 
 @MainActor
 private struct CoachInvitePreview: View {
-    @State private var state = CoachInviteComposerState(environment: .preview)
+    @State private var state = CoachInviteComposerState(
+        environment: .preview
+    )
     @State private var router = ShellTabRouter()
 
     var body: some View {

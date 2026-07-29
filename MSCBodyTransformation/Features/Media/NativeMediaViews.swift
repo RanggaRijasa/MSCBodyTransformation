@@ -142,7 +142,7 @@ struct NativeCameraCaptureSheet: View {
                 case .unavailable:
                     cameraUnavailableView(
                         title: "Kamera tidak tersedia",
-                        message: "Gunakan pemilih foto atau foto demo lokal."
+                        message: "Gunakan pemilih Foto pada layar sebelumnya."
                     )
                 case .denied:
                     cameraUnavailableView(

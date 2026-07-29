@@ -1,5 +1,35 @@
 import Foundation
 
+nonisolated struct JoinProgramWithCoachUseCase: Sendable {
+    let enrollments: any EnrollmentRepository
+    let identifierGenerator: any IdentifierGenerating
+    let clock: any AppClock
+
+    func callAsFunction(
+        programID: UUID,
+        participantID: UUID,
+        coachID: UUID
+    ) async throws -> ProgramEnrollment {
+        if let existing = try await enrollments.enrollment(
+            programID: programID,
+            participantID: participantID
+        ) {
+            return existing
+        }
+
+        return try await enrollments.createEnrollment(
+            ProgramEnrollment(
+                id: identifierGenerator.makeIdentifier(),
+                programID: programID,
+                participantID: participantID,
+                coachID: coachID,
+                status: .active,
+                enrolledAt: clock.now()
+            )
+        )
+    }
+}
+
 nonisolated struct TodayProgram: Equatable, Sendable {
     let program: Program
     let day: ProgramDay?

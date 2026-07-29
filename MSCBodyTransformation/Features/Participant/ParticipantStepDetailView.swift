@@ -211,31 +211,6 @@ struct ParticipantStepDetailView: View {
                 )
                 .accessibilityIdentifier("participant.evidence.camera")
 
-#if DEBUG
-                Button {
-                    Task {
-                        await evidenceMedia.useGeneratedSample()
-                        photoError = nil
-                    }
-                } label: {
-                    Label(
-                        hasDraftEvidence
-                            ? "Ganti dengan foto demo lokal"
-                            : "Gunakan foto demo lokal",
-                        systemImage: "photo.badge.plus"
-                    )
-                    .frame(minHeight: 44)
-                }
-                .disabled(
-                    submission?.status == .approved
-                        || submission?.status == .pending
-                        || evidenceMedia.isProcessing
-                )
-                .accessibilityIdentifier(
-                    "participant.evidence.use-sample"
-                )
-#endif
-
                 if evidenceMedia.result != nil {
                     Button("Hapus foto", role: .destructive) {
                         evidenceMedia.remove()
@@ -406,8 +381,8 @@ struct ParticipantStepDetailView: View {
             .foregroundStyle(Color.appSecondaryText)
         case .denied, .restricted:
             Label(
-                "Akses pustaka dibatasi. Gunakan pemilih foto, kamera, "
-                    + "atau foto demo lokal.",
+                "Akses pustaka dibatasi. Gunakan kamera atau ubah izin "
+                    + "Foto di Pengaturan.",
                 systemImage: "photo.badge.exclamationmark"
             )
             .font(AppTypography.secondary)
@@ -430,7 +405,7 @@ struct ParticipantStepDetailView: View {
         case .processingFailed:
             "Foto gagal diproses. Coba lagi."
         case .permissionDenied:
-            "Akses foto ditolak. Gunakan kamera atau foto demo lokal."
+            "Akses foto ditolak. Gunakan kamera atau ubah izin di Pengaturan."
         case .cameraUnavailable:
             "Kamera tidak tersedia pada perangkat ini."
         case .cameraUsageDescriptionMissing:

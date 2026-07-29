@@ -118,6 +118,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
     case repositoryError = "repository_error"
     case participantOnboarding = "participant_onboarding"
     case participantNoProgram = "participant_no_program"
+    case participantActive = "participant_active"
     case participantDayOne = "participant_day_1"
     case participantMidProgram = "participant_mid_program"
     case participantFinalWeighIn = "participant_final_weigh_in"
@@ -141,6 +142,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
              .repositoryError:
             true
         case .participantOnboarding, .participantNoProgram,
+             .participantActive,
              .participantDayOne, .participantMidProgram,
              .participantFinalWeighIn, .participantFinalLeaderboard:
             role == .participant
@@ -159,7 +161,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
     static func defaultScenario(for role: UserRole) -> Self {
         switch role {
         case .participant:
-            .participantDayOne
+            .participantActive
         case .coach:
             .coachReviewQueue
         case .admin:

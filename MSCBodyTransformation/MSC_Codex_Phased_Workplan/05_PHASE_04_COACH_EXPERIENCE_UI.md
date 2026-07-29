@@ -10,6 +10,13 @@ Membangun seluruh coach-facing experience dengan mock wallet, mock programs, moc
 
 Tidak ada StoreKit transaction, Supabase, atau external QR redemption.
 
+## Keputusan produk 2026-07-28
+
+Model kuota peserta dan undangan per program tidak lagi digunakan. Setiap
+coach memiliki satu QR identifier unik yang tidak terikat program. Peserta
+memindainya setelah memilih program. UI wallet, pembelian kuota, composer
+undangan, masa berlaku, dan riwayat undangan tidak lagi menjadi alur produk.
+
 ## Screen inventory
 
 ### Dashboard
@@ -189,6 +196,22 @@ Jangan:
 ## Progress log
 
 ### Log
+
+#### 2026-07-28 — QR identifier permanen coach
+
+- Files changed: model dan fixture Coach, state dan view QR Coach, dashboard,
+  profil, repository enrollment lokal, lokalisasi, serta test Coach.
+- Assumptions: identifier demo bersifat opaque dan unik; identifier produksi
+  harus dibuat dan dilindungi server pada fase backend/auth terkait.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-DemoRole", "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP focused Phase 03, 04, dan 06, lalu seluruh target
+  `MSCBodyTransformationTests`.
+- Result: layar `QR saya` dirender dan dipindai oleh alur peserta; 29 focused
+  test, 97 seluruh unit/integration test, dan UI test Coach kritis lulus.
+- Remaining blockers: provisioning identifier coach dari backend belum
+  dikerjakan; StoreKit peserta tetap Phase 12.
 
 #### 2026-07-26 — Phase 04 selesai
 

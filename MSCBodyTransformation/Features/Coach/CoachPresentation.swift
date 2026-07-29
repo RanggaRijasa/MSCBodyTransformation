@@ -196,7 +196,6 @@ nonisolated enum CoachParticipantSort:
 
 nonisolated struct CoachDashboardSnapshot: Equatable, Sendable {
     let profile: CoachProfile
-    let wallet: CoachWallet
     let activePrograms: [Program]
     let participants: [CoachParticipantSummary]
 
@@ -242,38 +241,6 @@ nonisolated struct CoachReviewDecisionResult: Equatable, Sendable {
 
 nonisolated struct CoachInviteSnapshot: Equatable, Sendable {
     let profile: CoachProfile
-    let programs: [Program]
-    let wallet: CoachWallet
-    let invites: [CoachInvite]
-}
-
-nonisolated struct CoachStoreSnapshot: Equatable, Sendable {
-    let profile: CoachProfile
-    let wallet: CoachWallet
-    let ledger: [CreditLedgerEntry]
-}
-
-nonisolated struct CoachSeatPack: Equatable, Identifiable, Sendable {
-    let seatCredits: Int
-    let samplePrice: Decimal
-
-    var id: Int { seatCredits }
-
-    static let samples = [
-        Self(seatCredits: 10, samplePrice: 149_000),
-        Self(seatCredits: 25, samplePrice: 299_000),
-        Self(seatCredits: 50, samplePrice: 499_000)
-    ]
-}
-
-nonisolated enum CoachPurchaseState: Equatable, Sendable {
-    case loading
-    case available
-    case purchasing(CoachSeatPack)
-    case pending(CoachSeatPack)
-    case success(CoachSeatPack)
-    case cancelled
-    case failed
 }
 
 nonisolated struct CoachLeaderboardSnapshot: Equatable, Sendable {
@@ -290,5 +257,4 @@ nonisolated struct CoachLeaderboardSnapshot: Equatable, Sendable {
 
 nonisolated struct CoachProfileSnapshot: Equatable, Sendable {
     let profile: CoachProfile
-    let ledger: [CreditLedgerEntry]
 }

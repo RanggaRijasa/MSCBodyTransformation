@@ -242,8 +242,8 @@ private struct ParticipantLeaderboardPodiumPlace: View {
         .padding(.bottom, AppSpacing.small)
     }
 
-    private var style: PodiumStyle {
-        PodiumStyle(rank: entry.rank)
+    private var style: ParticipantLeaderboardRankStyle {
+        ParticipantLeaderboardRankStyle(rank: entry.rank)
     }
 }
 
@@ -330,13 +330,17 @@ struct ParticipantLeaderboardRankRow: View {
         .font(AppTypography.cardTitle.monospacedDigit())
         .foregroundStyle(
             entry.rank <= 3
-                ? PodiumStyle(rank: entry.rank).rankForegroundColor
+                ? ParticipantLeaderboardRankStyle(
+                    rank: entry.rank
+                ).rankForegroundColor
                 : Color.appPrimaryText
         )
         .frame(width: 42, height: 42)
         .background(
             entry.rank <= 3
-                ? PodiumStyle(rank: entry.rank).accentColor
+                ? ParticipantLeaderboardRankStyle(
+                    rank: entry.rank
+                ).accentColor
                 : Color.appSecondaryBackground,
             in: Circle()
         )
@@ -463,33 +467,6 @@ nonisolated enum ParticipantLeaderboardFormatting {
             value: max(durationInDays - 1, 0),
             to: startDate
         ) ?? startDate
-    }
-}
-
-private struct PodiumStyle {
-    let accentColor: Color
-    let surfaceColor: Color
-    let rankForegroundColor: Color
-
-    init(rank: Int) {
-        switch rank {
-        case 1:
-            accentColor = .brandAccent
-            surfaceColor = Color.brandAccent.opacity(0.18)
-            rankForegroundColor = .black
-        case 2:
-            accentColor = .appSecondaryText
-            surfaceColor = Color.appSecondaryText.opacity(0.1)
-            rankForegroundColor = .appBackground
-        case 3:
-            accentColor = .appWarning
-            surfaceColor = Color.appWarning.opacity(0.12)
-            rankForegroundColor = .black
-        default:
-            accentColor = .appBorder
-            surfaceColor = .appSurface
-            rankForegroundColor = .appPrimaryText
-        }
     }
 }
 

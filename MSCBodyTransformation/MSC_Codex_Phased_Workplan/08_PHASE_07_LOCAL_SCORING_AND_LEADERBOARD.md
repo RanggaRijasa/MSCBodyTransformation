@@ -198,6 +198,38 @@ Jangan:
 
 ### Log
 
+#### 2026-07-28 — Warna podium Home dan Peringkat disatukan
+
+- Files changed: shared rank style peserta, ringkasan leaderboard Home,
+  komponen podium Peringkat, dan progress log Phase 07.
+- Assumptions: tampilan Peringkat menjadi sumber visual; peringkat 1 memakai
+  `BrandAccent`, peringkat 2 memakai `AppSecondaryText`, dan peringkat 3
+  memakai `PodiumBronze`.
+- Build command: XcodeBuildMCP `build_sim` dan `build_run_sim` pada iPhone 17
+  Pro iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `MSCBodyTransformationTests/Phase07LocalScoringTests`.
+- Result: build/run lulus tanpa warning; 21/21 test Phase 07 lulus; inspeksi
+  runtime memastikan ring dan badge Home identik dengan podium utama.
+- Remaining blockers: tidak ada blocker untuk konsistensi warna ini.
+
+#### 2026-07-28 — Warna perunggu konsisten dan poin podium berbeda
+
+- Files changed: komponen podium peserta, asset `PodiumBronze`, fixture
+  leaderboard, test Phase 07, UI reference, dan progress log.
+- Assumptions: identitas peringkat 3 memakai perunggu `#CD7F32` yang sama pada
+  light dan dark mode; surface tetap adaptif melalui opacity. Fixture aktif
+  menampilkan 240, 210, dan 200 poin untuk tiga besar.
+- Build command: XcodeBuildMCP `build_sim` dan `build_run_sim` pada iPhone 17
+  Pro iOS 26.5 dengan Swift 6 strict concurrency dan deployment target iOS 17.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `MSCBodyTransformationTests/Phase07LocalScoringTests`.
+- Result: build/run lulus tanpa warning; 21/21 test Phase 07 lulus; inspeksi
+  runtime light dan dark memastikan perunggu konsisten serta poin podium
+  berbeda.
+- Remaining blockers: score authoritative tetap menunggu implementasi server
+  pada fase backend.
+
 #### 2026-07-26 — Scoring, progress, ranking, dan winner lock lokal
 
 - Files changed: service scoring domain, adapter aturan program, repository

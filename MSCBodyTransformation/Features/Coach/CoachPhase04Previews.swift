@@ -1,9 +1,9 @@
 #if DEBUG
 import SwiftUI
 
-#Preview("Coach dashboard — wallet nol") {
+#Preview("Coach dashboard — ringkasan") {
     NavigationStack {
-        CoachDashboardScenarioPreview(mode: .walletZero)
+        CoachDashboardScenarioPreview(mode: .standard)
     }
     .environment(\.locale, Locale(identifier: "id-ID"))
 }
@@ -45,24 +45,10 @@ import SwiftUI
     .environment(\.locale, Locale(identifier: "id-ID"))
 }
 
-#Preview("Undangan — kuota habis") {
-    NavigationStack {
-        CoachInviteExhaustedPreview()
-    }
-    .environment(\.locale, Locale(identifier: "id-ID"))
-}
-
-#Preview("Store Coach — status berhasil") {
-    NavigationStack {
-        CoachStoreSuccessScenarioPreview()
-    }
-    .environment(\.locale, Locale(identifier: "id-ID"))
-}
-
 @MainActor
 private struct CoachDashboardScenarioPreview: View {
     enum Mode {
-        case walletZero
+        case standard
         case noParticipants
     }
 
@@ -79,13 +65,10 @@ private struct CoachDashboardScenarioPreview: View {
                     return
                 }
                 switch mode {
-                case .walletZero:
-                    var wallet = snapshot.wallet
-                    wallet.availableSeatCredits = 0
+                case .standard:
                     state.state = .loaded(
                         CoachDashboardSnapshot(
                             profile: snapshot.profile,
-                            wallet: wallet,
                             activePrograms: snapshot.activePrograms,
                             participants: snapshot.participants
                         )
@@ -94,7 +77,6 @@ private struct CoachDashboardScenarioPreview: View {
                     state.state = .loaded(
                         CoachDashboardSnapshot(
                             profile: snapshot.profile,
-                            wallet: snapshot.wallet,
                             activePrograms: snapshot.activePrograms,
                             participants: []
                         )
@@ -145,54 +127,6 @@ private struct CoachParticipantScenarioPreview: View {
                         weighIns: summary.weighIns,
                         leaderboardEntry: summary.leaderboardEntry
                     )
-                )
-            }
-    }
-}
-
-@MainActor
-private struct CoachInviteExhaustedPreview: View {
-    private let environment: AppEnvironment
-    @State private var state: CoachInviteComposerState
-    @State private var router = ShellTabRouter()
-
-    init() {
-        let environment = AppEnvironment.preview
-        self.environment = environment
-        _state = State(
-            initialValue: CoachInviteComposerState(
-                environment: environment
-            )
-        )
-    }
-
-    var body: some View {
-        CoachInviteView(state: state, router: router)
-            .navigationTitle(Text("tab.coach.invite"))
-            .task {
-                _ = try? await environment.repositories?.coachDemo
-                    .setSeatCredits(
-                        coachID: CoachPreviewID.coach,
-                        amount: 0,
-                        updatedAt: environment.clock.now()
-                    )
-                await state.load()
-            }
-    }
-}
-
-@MainActor
-private struct CoachStoreSuccessScenarioPreview: View {
-    @State private var state = CoachStorePreviewState(
-        environment: .preview
-    )
-
-    var body: some View {
-        CoachStorePreviewView(state: state)
-            .task {
-                await state.load()
-                state.setPreviewState(
-                    .success(CoachSeatPack.samples[0])
                 )
             }
     }

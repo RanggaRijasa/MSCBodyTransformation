@@ -4,6 +4,7 @@
       "id":"10000000-0000-0000-0000-000000000001",
       "title":"Transformasi 7 hari",
       "summary":"Program demo lokal untuk membangun kebiasaan aktif secara bertahap.",
+      "price":149000,
       "status":"active",
       "startDate":"2026-07-24T00:00:00Z",
       "endDate":"2026-07-30T23:59:59Z",
@@ -40,7 +41,7 @@
           "id":"11000000-0000-0000-0000-000000000003",
           "programID":"10000000-0000-0000-0000-000000000001",
           "dayNumber":3,
-          "title":"Aktif hari ini",
+          "title":"Jaga konsistensi",
           "scheduledDate":"2026-07-26T00:00:00Z",
           "visibilityMode":"standard",
           "steps":[
@@ -53,9 +54,9 @@
           "id":"11000000-0000-0000-0000-000000000004",
           "programID":"10000000-0000-0000-0000-000000000001",
           "dayNumber":4,
-          "title":"Konten tersembunyi",
+          "title":"Bangun kebiasaan",
           "scheduledDate":"2026-07-27T00:00:00Z",
-          "visibilityMode":"hidden",
+          "visibilityMode":"standard",
           "steps":[
             {"id":"12000000-0000-0000-0000-000000000010","programDayID":"11000000-0000-0000-0000-000000000004","order":1,"title":"Latihan inti","instructions":"Konten akan dibuka sesuai pengaturan program.","points":10,"requirements":[],"verificationMode":"automatic"},
             {"id":"12000000-0000-0000-0000-000000000011","programDayID":"11000000-0000-0000-0000-000000000004","order":2,"title":"Jeda aktif","instructions":"Konten akan dibuka sesuai pengaturan program.","points":10,"requirements":[],"verificationMode":"automatic"},
@@ -103,12 +104,13 @@
         }
       ]
     },
-    {"id":"10000000-0000-0000-0000-000000000002","title":"Program kebiasaan baru","summary":"Draft lokal untuk latihan CMS admin.","status":"draft","startDate":"2026-08-10T00:00:00Z","endDate":"2026-08-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
-    {"id":"10000000-0000-0000-0000-000000000003","title":"Gerak bersama Agustus","summary":"Program terjadwal untuk data demo admin.","status":"scheduled","startDate":"2026-08-20T00:00:00Z","endDate":"2026-08-26T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
+    {"id":"10000000-0000-0000-0000-000000000002","title":"Program kebiasaan baru","summary":"Draft lokal untuk latihan CMS admin.","price":50000,"status":"draft","startDate":"2026-08-10T00:00:00Z","endDate":"2026-08-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
+    {"id":"10000000-0000-0000-0000-000000000003","title":"Gerak bersama Agustus","summary":"Program terjadwal untuk membangun rutinitas aktif bersama selama tujuh hari.","price":99000,"status":"scheduled","startDate":"2026-08-20T00:00:00Z","endDate":"2026-08-26T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
     {
       "id":"10000000-0000-0000-0000-000000000005",
       "title":"Gerak konsisten 3 hari",
       "summary":"Program aktif kedua untuk mencoba perpindahan Papan peringkat.",
+      "price":79000,
       "status":"active",
       "startDate":"2026-07-27T00:00:00Z",
       "endDate":"2026-07-29T23:59:59Z",
@@ -150,6 +152,6 @@
         }
       ]
     },
-    {"id":"10000000-0000-0000-0000-000000000004","title":"Konsisten Juni","summary":"Program selesai untuk riwayat lokal.","status":"completed","startDate":"2026-06-10T00:00:00Z","endDate":"2026-06-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]}
+    {"id":"10000000-0000-0000-0000-000000000004","title":"Konsisten Juni","summary":"Program selesai untuk riwayat lokal.","price":129000,"status":"completed","startDate":"2026-06-10T00:00:00Z","endDate":"2026-06-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]}
   ]
 }

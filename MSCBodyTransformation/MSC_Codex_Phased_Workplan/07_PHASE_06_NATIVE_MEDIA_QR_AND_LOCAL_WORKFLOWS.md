@@ -83,14 +83,15 @@ Jangan menyimpan `UIImage` dalam domain model.
 
 ## QR scanning
 
-- [x] Prefer VisionKit `DataScannerViewController` where available.
-- [x] AVFoundation barcode fallback.
+- [x] Evaluasi VisionKit `DataScannerViewController`; gunakan AVFoundation
+  fixed wide-angle untuk enrollment agar lensa tidak berpindah otomatis.
+- [x] AVFoundation barcode scanner.
 - [x] Handle simulator unsupported state.
 - [x] Parse only approved local scheme and route.
 - [x] Reject arbitrary URL.
 - [x] Show preview before redeem.
-- [x] Preserve pending local invite through fake login.
-- [x] Provide manual code entry fallback.
+- [x] Jalankan pemindaian setelah peserta memilih program dan masuk aplikasi.
+- [x] Enrollment hanya melalui QR tanpa input kode manual.
 - [x] Haptic feedback respects settings.
 
 Example local scheme:
@@ -100,6 +101,10 @@ msc-demo://join/{opaque-token}
 ```
 
 Production universal link is deferred.
+
+Mulai keputusan produk 2026-07-28, token opaque pada payload merepresentasikan
+identifier unik coach, bukan undangan program yang dapat kedaluwarsa. Program
+dipilih lebih dahulu di aplikasi peserta.
 
 ## Share sheet
 
@@ -136,7 +141,7 @@ Production universal link is deferred.
 - [x] Permission denied state.
 - [x] Camera unavailable state.
 - [x] Scan local test QR.
-- [x] Manual invite code.
+- [x] QR-only enrollment tidak menampilkan input kode manual.
 - [x] Share sheet opens.
 - [x] Video placeholder plays.
 
@@ -158,13 +163,76 @@ Jangan:
 - [x] Evidence diproses dan tampil sebagai thumbnail.
 - [x] Metadata lokasi tidak dipertahankan.
 - [x] Local QR dapat dibuat dan dipindai.
-- [x] Manual code fallback bekerja.
+- [x] Tidak ada fallback input kode manual.
 - [x] No external service required.
 - [x] Test lulus dan clean build.
 
 ## Progress log
 
 ### Log
+
+#### 2026-07-28 — Scanner QR tanpa fallback kode manual
+
+- Files changed: scanner QR, alur gabung peserta, QR coach, lokalisasi, route
+  lama, UI test, README, serta coding guidelines `AGENTS.md`.
+- Assumptions: saat kamera tidak tersedia atau izin ditolak, scanner
+  menampilkan alasan yang dapat ditindaklanjuti dan tombol Tutup; tidak ada
+  fallback untuk mengetik identifier.
+- Build command: XcodeBuildMCP `build_sim` pada iPhone 17 Pro iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk Phase 02, Phase 03, dan Phase
+  06; serta UI test peserta dan coach yang terkait QR.
+- Result: scanner, join screen, dan layar QR coach hanya mengekspos alur QR;
+  build lulus tanpa warning; 24/24 focused test dan 2/2 UI test lulus.
+- Remaining blocker: pemindaian kamera nyata tetap perlu diverifikasi pada
+  physical device; tidak ada blocker untuk penghapusan kode manual.
+
+#### 2026-07-28 — Isolasi animasi garis scanner
+
+- Files changed: `Features/Media/NativeQRScannerView.swift` dan progress log
+  Phase 06.
+- Assumptions: gerak tombol berasal dari transaksi `withAnimation` berulang
+  yang berada dalam hierarki sheet, bukan dari kebutuhan memberi navbar latar
+  tetap.
+- Build command: XcodeBuildMCP `build_sim` pada iPhone 17 Pro iOS 26.5 dengan
+  Swift 6 strict concurrency dan deployment target iOS 17.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `MSCBodyTransformationUITests/MSCBodyTransformationUITests/
+  testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: tampilan navbar dikembalikan seperti semula; animasi garis dipisahkan
+  ke `PhaseAnimator`; build lulus tanpa warning dan 1/1 UI test lulus.
+- Remaining blocker: konfirmasi visual bahwa teks Batal tidak bergerak perlu
+  dilakukan pada physical device karena simulator tidak menyediakan feed
+  kamera scanner.
+
+#### 2026-07-28 — Stabilitas kamera scanner QR coach
+
+- Files changed: `Features/Media/NativeQRScannerView.swift`, UI test katalog dan
+  scanner, dokumentasi Phase 06, README, serta panduan demo.
+- Assumptions: kestabilan framing enrollment lebih penting daripada perpindahan
+  lensa otomatis VisionKit; scanner tetap hanya memproses barcode QR.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro iOS 26.5
+  dengan Swift 6 strict concurrency dan deployment target iOS 17.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `MSCBodyTransformationTests/Phase06NativeMediaTests` dan
+  `MSCBodyTransformationUITests/MSCBodyTransformationUITests/
+  testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build/run simulator lulus tanpa warning; 11/11 test Phase 06 dan 1/1
+  UI test alur katalog–detail–scanner–konfirmasi coach lulus.
+- Remaining blocker: verifikasi akhir perpindahan lensa harus dilakukan pada
+  physical device multi-camera.
+
+#### 2026-07-28 — Scanner dipakai ulang untuk QR coach
+
+- Files changed: copy dan payload demo scanner, QR view coach, participant join
+  flow, serta test parser.
+- Assumptions: scheme lokal `msc-demo://join/{opaque-token}` dipertahankan agar
+  scanner native dapat digunakan ulang; universal link produksi tetap ditunda.
+- Build command: XcodeBuildMCP build/run pada iPhone 17 Pro iOS 26.5.
+- Test command: XcodeBuildMCP focused Phase 06 dan seluruh unit/integration.
+- Result: QR `COACH-RAKA-7K9Q` dipindai di simulator melalui fallback demo dan
+  memetakan Coach Raka; build serta test lulus.
+- Remaining blocker: scanner kamera fisik tetap membutuhkan
+  `NSCameraUsageDescription` dan pengujian device.
 
 #### 2026-07-26 — Native media, QR, dan workflow lokal
 

@@ -33,7 +33,7 @@ nonisolated struct DebugLaunchConfiguration: Equatable, Sendable {
     private static func scenario(named value: String) -> AppDemoScenario? {
         switch value {
         case "participant_active":
-            .participantDayOne
+            .participantActive
         case "admin_draft_editor":
             .adminDraftCMS
         case "error":

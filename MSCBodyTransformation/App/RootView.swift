@@ -52,7 +52,7 @@ struct RootView: View {
 #else
         RoleAppShellView(
             role: .participant,
-            scenario: .participantDayOne
+            scenario: .participantActive
         )
 #endif
     }

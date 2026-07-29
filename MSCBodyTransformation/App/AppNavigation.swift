@@ -3,21 +3,19 @@ import Observation
 import SwiftUI
 
 nonisolated enum ParticipantRoute: Hashable, Sendable {
-    case joinProgram
+    case joinProgram(UUID?)
     case programDetail(UUID, ParticipantTab)
     case stepDetail(UUID)
     case weighIn(WeighInType)
     case leaderboard
     case coach(UUID)
     case profile
-    case localInvite(String)
 }
 
 nonisolated enum CoachRoute: Hashable, Sendable {
     case participantDetail(UUID)
     case reviewQueue
     case invite
-    case storePreview
     case leaderboard
     case profile
 }
@@ -26,7 +24,6 @@ nonisolated enum AdminRoute: Hashable, Sendable {
     case programEditor(UUID?)
     case person(UUID)
     case managedContent(UUID)
-    case winnerManagement(UUID)
     case settings
 }
 
@@ -49,15 +46,12 @@ nonisolated enum ShellRoute: Hashable, Sendable {
 
 nonisolated enum ShellSheet: Identifiable, Hashable, Sendable {
     case confirmation
-    case inviteCode(String)
     case scenarioInformation(String)
 
     var id: String {
         switch self {
         case .confirmation:
             "confirmation"
-        case .inviteCode:
-            "invite_code"
         case .scenarioInformation:
             "scenario_information"
         }
@@ -65,13 +59,10 @@ nonisolated enum ShellSheet: Identifiable, Hashable, Sendable {
 }
 
 nonisolated enum ShellAlert: Identifiable, Hashable, Sendable {
-    case invalidInvite
     case unavailableRoute
 
     var id: String {
         switch self {
-        case .invalidInvite:
-            "invalid_invite"
         case .unavailableRoute:
             "unavailable_route"
         }
@@ -110,13 +101,5 @@ final class ShellTabRouter {
 
     func resetAllPaths() {
         paths.removeAll()
-    }
-}
-
-nonisolated struct LocalInviteDeepLinkParser: Sendable {
-    func inviteCode(from url: URL) -> String? {
-        try? LocalInvitePayloadParser()
-            .payload(from: url)
-            .opaqueToken
     }
 }

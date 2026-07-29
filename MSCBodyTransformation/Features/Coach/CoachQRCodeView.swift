@@ -2,7 +2,6 @@ import SwiftUI
 
 struct CoachQRCodeView: View {
     let payload: String
-    let programTitle: String
     let coachName: String
 
     var body: some View {
@@ -40,7 +39,7 @@ struct CoachQRCodeView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "QR undangan \(programTitle) dari \(coachName)"
+            "QR pendaftaran milik \(coachName)"
         )
     }
 }

@@ -91,7 +91,7 @@ struct Phase01DomainRuleTests {
                 for: past,
                 now: now,
                 timeZoneIdentifier: "Asia/Makassar"
-            ) == .readOnly
+            ) == .available
         )
     }
 

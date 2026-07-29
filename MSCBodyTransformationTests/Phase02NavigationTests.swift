@@ -67,7 +67,7 @@ struct Phase02NavigationTests {
         )
 
         router.navigate(
-            to: .participant(.localInvite("MSC7HARI")),
+            to: .participant(.joinProgram(programID)),
             in: today
         )
         router.navigate(
@@ -77,25 +77,13 @@ struct Phase02NavigationTests {
 
         #expect(
             router.path(for: today) == [
-                .participant(.localInvite("MSC7HARI"))
+                .participant(.joinProgram(programID))
             ]
         )
         #expect(
             router.path(for: program) == [
                 .participant(.programDetail(programID, .program))
             ]
-        )
-    }
-
-    @Test("Deep link lokal menghasilkan kode undangan")
-    func localInviteDeepLinkParsesCode() throws {
-        let url = try #require(
-            URL(string: "msc-demo://join/msc7hari")
-        )
-
-        #expect(
-            LocalInviteDeepLinkParser().inviteCode(from: url)
-                == "MSC7HARI"
         )
     }
 

@@ -734,6 +734,16 @@ nonisolated struct LockAdminWinnersUseCase: Sendable {
 
 nonisolated struct ManagedContentValidator: Sendable {
     func validate(_ content: ManagedContent) throws {
+        if content.kind == .winnerBanner {
+            guard let mediaReference = content.localMediaReference?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+                !mediaReference.isEmpty else {
+                throw DomainError.validation(
+                    field: "winnerPoster",
+                    reason: "Poster pemenang wajib dipilih."
+                )
+            }
+        }
         guard !content.title.trimmingCharacters(
             in: .whitespacesAndNewlines
         ).isEmpty else {

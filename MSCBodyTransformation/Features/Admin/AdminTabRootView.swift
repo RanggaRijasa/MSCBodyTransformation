@@ -17,9 +17,9 @@ struct AdminTabRootView: View {
             case .people:
                 AdminPeopleView(features: features)
             case .content:
-                AdminContentView(features: features, router: router)
+                AdminContentView(features: features)
             case .settings:
-                AdminSettingsView(features: features, router: router)
+                AdminSettingsView()
             }
         }
         .safeAreaInset(edge: .top) {
@@ -103,29 +103,14 @@ private struct AdminOverviewView: View {
                         .foregroundStyle(Color.appSecondaryText)
                     }
 
-                    HStack {
-                        Button("Kelola program") {
-                            router.navigate(
-                                to: .admin(.programEditor(nil)),
-                                in: .admin(.overview)
-                            )
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.brandPrimary)
-
-                        Button("Kelola pemenang") {
-                            if let activeID = activeProgramID {
-                                router.navigate(
-                                    to: .admin(
-                                        .winnerManagement(activeID)
-                                    ),
-                                    in: .admin(.overview)
-                                )
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(activeProgramID == nil)
+                    Button("Kelola program") {
+                        router.navigate(
+                            to: .admin(.programEditor(nil)),
+                            in: .admin(.overview)
+                        )
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.brandPrimary)
 
                     VStack(alignment: .leading, spacing: AppSpacing.small) {
                         Text("Audit lokal terbaru")
@@ -147,13 +132,6 @@ private struct AdminOverviewView: View {
         }
         .background(Color.appBackground)
         .accessibilityIdentifier("admin.overview")
-    }
-
-    private var activeProgramID: UUID? {
-        guard case .loaded(let programs) = features.programsState else {
-            return nil
-        }
-        return programs.first(where: { $0.status == .active })?.id
     }
 
     private var metricColumns: [GridItem] {
@@ -614,8 +592,6 @@ private struct AdminPersonDetailSheet: View {
 }
 
 private struct AdminSettingsView: View {
-    let features: AdminFeatureContainer
-    let router: ShellTabRouter
     @State private var notificationsEnabled = true
 
     var body: some View {
@@ -625,36 +601,10 @@ private struct AdminSettingsView: View {
                 LabeledContent("Zona waktu default", value: "Asia/Makassar")
                 LabeledContent("Mode data", value: "Fixture lokal")
             }
-            Section {
-                if let program = activeProgram {
-                    Button("Kelola pemenang \(program.title)") {
-                        router.navigate(
-                            to: .admin(.winnerManagement(program.id)),
-                            in: .admin(.settings)
-                        )
-                    }
-                } else {
-                    Text("Belum ada program aktif.")
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            } header: {
-                Text("Pemenang")
-            } footer: {
-                Text(
-                    "Tidak ada data yang dikirim ke server pada fase ini."
-                )
-            }
         }
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
         .accessibilityIdentifier("admin.settings")
-    }
-
-    private var activeProgram: AdminProgramDraft? {
-        guard case .loaded(let programs) = features.programsState else {
-            return nil
-        }
-        return programs.first { $0.status == .active }
     }
 }
 

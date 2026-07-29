@@ -75,6 +75,7 @@ nonisolated struct Program: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
     var title: String
     var summary: String
+    var price: Decimal?
     var status: ProgramStatus
     var startDate: Date
     var endDate: Date

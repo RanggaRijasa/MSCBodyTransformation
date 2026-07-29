@@ -377,6 +377,21 @@ struct Phase07LocalScoringTests {
         )
     }
 
+    @Test("Fixture podium memakai poin berbeda untuk tiga besar")
+    func participantLeaderboardPodiumUsesDistinctPoints() throws {
+        let programID = UUID(
+            uuidString: "10000000-0000-0000-0000-000000000001"
+        )!
+        let podiumPoints = try MockSeedData.load().leaderboardEntries
+            .filter { $0.programID == programID }
+            .sorted { $0.score.totalPoints > $1.score.totalPoints }
+            .prefix(3)
+            .map(\.score.totalPoints)
+
+        #expect(podiumPoints == [240, 210, 200])
+        #expect(Set(podiumPoints).count == 3)
+    }
+
     @Test("Resolver hari memakai timezone program bukan timezone perangkat")
     func programTimezoneDiffersFromDevice() throws {
         let scheduled = try date("2026-01-02T10:00:00Z")

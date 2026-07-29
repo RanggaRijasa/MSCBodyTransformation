@@ -171,26 +171,25 @@ publikasi bersifat read-only.
 
 ## Content
 
-- [x] Managed content list.
-- [x] Winner banner editor.
-- [x] Title and body.
+- [x] Mobile winner-poster gallery using a two-column native grid.
+- [x] Extensible add-content action area, currently containing only winner posters.
+- [x] Pure winner-poster image editor without title, body, or winner fields.
 - [x] Local media selection.
-- [x] Program association.
-- [x] Visibility dates.
-- [x] Sort order.
-- [x] Active toggle.
-- [x] Participant preview.
-- [x] Archive local content.
+- [x] Automatic internal metadata for local persistence.
+- [x] Visible gallery order.
+- [x] Replace poster image.
+- [x] Archive poster from the gallery with confirmation.
+- [x] Loading, empty, offline, and error states.
 
-## Winner management
+## Automatic winner calculation
 
 - [x] Leaderboard preview.
 - [x] Lock top five local simulation.
-- [x] Confirmation.
-- [x] Winner records display.
 - [x] Locked state prevents silent reorder.
 - [x] New score adjustment after lock shows warning.
-- [x] Upload local winner banner.
+- [x] Winner order remains owned by leaderboard and winner snapshot logic.
+- [x] No separate winner-management UI inside Content.
+- [x] Upload local winner poster images with native PhotosPicker.
 
 ## Draft persistence
 
@@ -228,7 +227,7 @@ Jangan menambahkan SwiftData hanya untuk sementara bila persistence tidak dibutu
 - [x] Simulate publish.
 - [x] Approve coach.
 - [x] Manual enroll participant.
-- [x] Create winner banner.
+- [x] Add a winner poster to the Content gallery.
 
 ## Larangan scope
 
@@ -253,6 +252,47 @@ Jangan:
 ## Progress log
 
 ### Log
+
+#### 2026-07-29 — Konten Admin menjadi galeri poster
+
+- Files changed: layar Konten dan editor poster Admin, navigasi dan quick
+  action Admin, factory managed content, localization catalog, UI test, serta
+  panduan UI dan phase.
+- Assumptions: pemenang ditentukan otomatis oleh leaderboard dan snapshot
+  domain. Konten hanya menyimpan gambar poster vertikal 9:16; tidak ada
+  judul, deskripsi, status publikasi, atau editor pemenang yang perlu
+  ditampilkan kepada Admin.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk seluruh
+  `MSCBodyTransformationTests` serta focused UI test
+  `testAdminPosterEditorRequiresPhotoSelection` dan
+  `testLegacyCoachAndAdminWinnerScenariosRemainNavigable`.
+- Result: galeri dua kolom, area tambah konten, editor gambar murni, aksi
+  ganti/arsip, dan penghapusan navigasi `Kelola pemenang` terverifikasi.
+  Build lulus tanpa warning, 100/100 unit test lulus, dan kedua journey UI
+  lulus.
+- Remaining blockers: upload ke storage production dan URL media publik
+  tetap ditunda ke fase adapter Supabase.
+
+#### 2026-07-29 — Upload poster pemenang native
+
+- Files changed: editor konten dan pengelolaan pemenang Admin, validator
+  managed content, pipeline media lokal, renderer poster shared, fixture,
+  unit test, UI test, dan UI reference.
+- Assumptions: poster merupakan gambar vertikal 9:16 yang sudah selesai
+  didesain; aplikasi tidak menambahkan overlay. File hasil pemilih Foto
+  diproses oleh pipeline native dan disimpan sebagai referensi lokal selama
+  Track A.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro iOS 26.5
+  untuk skenario participant dan Admin.
+- Test command: XcodeBuildMCP `test_sim` untuk seluruh
+  `MSCBodyTransformationTests` serta focused UI test
+  `testAdminPosterEditorRequiresPhotoSelection`.
+- Result: build lulus tanpa warning; 100/100 unit test lulus. UI test
+  membuktikan Simpan nonaktif tanpa poster dan gambar harus dipilih melalui
+  pemilih Foto native.
+- Remaining blockers: upload ke storage production dan URL media publik
+  tetap ditunda ke fase adapter Supabase.
 
 #### 2026-07-26 — Phase 05 selesai
 

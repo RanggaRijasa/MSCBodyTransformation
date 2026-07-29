@@ -58,6 +58,7 @@ nonisolated struct CreateLocalDraftProgramUseCase: Sendable {
             id: identifierGenerator.makeIdentifier(),
             title: trimmedTitle,
             summary: summary,
+            price: nil,
             status: .draft,
             startDate: startDate,
             endDate: startDate,

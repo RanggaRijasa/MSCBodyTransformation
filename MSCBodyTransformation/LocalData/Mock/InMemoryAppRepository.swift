@@ -204,6 +204,27 @@ actor InMemoryAppRepository:
         return enrollment
     }
 
+    func reassignCoach(
+        participantID: UUID,
+        coachID: UUID
+    ) async throws -> [ProgramEnrollment] {
+        for index in enrollmentsStorage.indices
+        where enrollmentsStorage[index].participantID == participantID
+            && (
+                enrollmentsStorage[index].status == .pending
+                    || enrollmentsStorage[index].status == .active
+            ) {
+            enrollmentsStorage[index].coachID = coachID
+        }
+        return enrollmentsStorage.filter {
+            $0.participantID == participantID
+                && (
+                    $0.status == .pending
+                        || $0.status == .active
+                )
+        }
+    }
+
     func submissions(
         enrollmentID: UUID
     ) async throws -> [StepSubmission] {
@@ -468,17 +489,6 @@ actor InMemoryAppRepository:
             return existing
         }
 
-        guard let walletIndex = wallets.firstIndex(where: {
-            $0.coachID == invite.coachID
-        }) else {
-            throw DomainError.notFound(resource: "coach_wallet")
-        }
-        guard wallets[walletIndex].availableSeatCredits > 0 else {
-            throw DomainError.conflict(
-                reason: "Kuota peserta tidak mencukupi."
-            )
-        }
-
         let enrollment = ProgramEnrollment(
             id: enrollmentID,
             programID: invite.programID,
@@ -488,18 +498,6 @@ actor InMemoryAppRepository:
             enrolledAt: now
         )
         enrollmentsStorage.append(enrollment)
-        wallets[walletIndex].availableSeatCredits -= 1
-        wallets[walletIndex].updatedAt = now
-        creditLedgerEntries.append(
-            CreditLedgerEntry(
-                id: enrollmentID,
-                walletID: wallets[walletIndex].id,
-                kind: .reservation,
-                seatCreditDelta: -1,
-                note: "Kuota terpakai setelah enrollment demo berhasil.",
-                createdAt: now
-            )
-        )
         invitesStorage[inviteIndex].status = .redeemed
         invitesStorage[inviteIndex].redeemedByParticipantID = participantID
         return enrollment

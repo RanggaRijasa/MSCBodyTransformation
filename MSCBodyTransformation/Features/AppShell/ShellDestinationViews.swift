@@ -10,13 +10,12 @@ struct ShellRouteDestinationView: View {
 
     var body: some View {
         switch route {
-        case .participant(.localInvite(let code)):
+        case .participant(.joinProgram(let programID)):
             participantDestination {
-                ParticipantJoinProgramView(store: $0, initialCode: code)
-            }
-        case .participant(.joinProgram):
-            participantDestination {
-                ParticipantJoinProgramView(store: $0)
+                ParticipantJoinProgramView(
+                    store: $0,
+                    programID: programID
+                )
             }
         case .participant(.programDetail(let programID, let sourceTab)):
             participantDestination {
@@ -78,10 +77,6 @@ struct ShellRouteDestinationView: View {
                     router: router
                 )
             }
-        case .coach(.storePreview):
-            coachDestination {
-                CoachStorePreviewView(state: $0.storePreview)
-            }
         case .coach(.leaderboard):
             coachDestination {
                 CoachLeaderboardView(state: $0.leaderboard)
@@ -103,13 +98,6 @@ struct ShellRouteDestinationView: View {
                 } else {
                     AdminNewProgramDestinationView(features: features)
                 }
-            }
-        case .admin(.winnerManagement(let programID)):
-            adminDestination {
-                AdminWinnerManagementView(
-                    programID: programID,
-                    features: $0
-                )
             }
         default:
             ContentUnavailableView {
@@ -175,52 +163,9 @@ struct ShellSheetView: View {
                 isDestructive: false,
                 confirmAction: {}
             )
-        case .inviteCode(let code):
-            InviteCodeSheet(code: code)
         case .scenarioInformation(let scenario):
             ScenarioInformationSheet(scenario: scenario)
         }
-    }
-}
-
-private struct InviteCodeSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let code: String
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: AppSpacing.large) {
-                Image(systemName: "qrcode")
-                    .font(.largeTitle)
-                    .foregroundStyle(Color.brandPrimary)
-                    .accessibilityHidden(true)
-
-                Text("sheet.invite.title")
-                    .font(AppTypography.sectionTitle)
-
-                Text(code)
-                    .font(AppTypography.metric)
-                    .padding(AppSpacing.large)
-                    .adaptiveGlassSurface()
-                    .accessibilityLabel(Text("shell.invite.code"))
-
-                Text("sheet.invite.demo_notice")
-                    .font(AppTypography.secondary)
-                    .foregroundStyle(Color.appSecondaryText)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(AppSpacing.large)
-            .navigationTitle(Text("sheet.invite.navigation_title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("action.close") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium])
     }
 }
 

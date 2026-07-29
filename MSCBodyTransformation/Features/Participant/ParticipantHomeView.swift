@@ -16,6 +16,8 @@ struct ParticipantHomeView: View {
                     programSection(snapshot)
                     focusSection(snapshot)
                     leaderboardSection
+                    winnersSection(snapshot)
+                    coachesSection(snapshot)
                 }
                 .frame(maxWidth: 760)
                 .padding(.vertical, AppSpacing.small)
@@ -41,6 +43,7 @@ struct ParticipantHomeView: View {
             HStack(spacing: AppSpacing.medium) {
                 UserAvatar(
                     displayName: snapshot.profile.displayName,
+                    imageName: snapshot.profile.localPhotoReference,
                     size: 64
                 )
 
@@ -238,6 +241,113 @@ struct ParticipantHomeView: View {
     }
 
     @ViewBuilder
+    private func winnersSection(
+        _ snapshot: ParticipantJourneySnapshot
+    ) -> some View {
+        let posters = Array(snapshot.featuredWinnerPosters.prefix(2))
+
+        if !posters.isEmpty {
+            VStack(alignment: .leading, spacing: AppSpacing.small) {
+                ParticipantHomeSectionHeader(
+                    title: "participant.home.winners.title"
+                )
+                .padding(.horizontal, AppSpacing.medium)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: AppSpacing.medium) {
+                        ForEach(posters) { poster in
+                            WinnerPosterImage(
+                                reference: poster.localMediaReference,
+                                alternativeText: poster.title
+                            )
+                            .containerRelativeFrame(.horizontal) {
+                                availableWidth,
+                                _ in
+                                winnerPosterWidth(
+                                    availableWidth: availableWidth
+                                )
+                            }
+                            .accessibilityIdentifier(
+                                "participant.home.winner.\(poster.id)"
+                            )
+                        }
+                    }
+                    .scrollTargetLayout()
+                }
+                .contentMargins(
+                    .horizontal,
+                    AppSpacing.medium,
+                    for: .scrollContent
+                )
+                .scrollTargetBehavior(.viewAligned)
+                .accessibilityIdentifier("participant.home.winners")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func coachesSection(
+        _ snapshot: ParticipantJourneySnapshot
+    ) -> some View {
+        let coaches = snapshot.coaches.sorted { lhs, rhs in
+            let lhsAssigned = lhs.id == snapshot.activeEnrollment?.coachID
+            let rhsAssigned = rhs.id == snapshot.activeEnrollment?.coachID
+            if lhsAssigned != rhsAssigned {
+                return lhsAssigned
+            }
+            return lhs.displayName.localizedStandardCompare(rhs.displayName)
+                == .orderedAscending
+        }
+
+        if !coaches.isEmpty {
+            VStack(alignment: .leading, spacing: AppSpacing.small) {
+                ParticipantHomeSectionHeader(
+                    title: "participant.home.coaches.title",
+                    actionTitle: "participant.home.coaches.view_all",
+                    actionAccessibilityIdentifier:
+                        "participant.home.coaches.view-all",
+                    action: {
+                        onSelectTab(.coaches)
+                    }
+                )
+                .padding(.horizontal, AppSpacing.medium)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(
+                        alignment: .top,
+                        spacing: AppSpacing.small
+                    ) {
+                        ForEach(coaches) { coach in
+                            Button {
+                                openCoach(coach)
+                            } label: {
+                                ParticipantHomeCoachAvatar(
+                                    coach: coach,
+                                    isAssigned:
+                                        coach.id
+                                        == snapshot.activeEnrollment?.coachID
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier(
+                                "participant.home.coach.\(coach.id)"
+                            )
+                        }
+                    }
+                    .scrollTargetLayout()
+                }
+                .contentMargins(
+                    .horizontal,
+                    AppSpacing.medium,
+                    for: .scrollContent
+                )
+                .scrollTargetBehavior(.viewAligned)
+                .accessibilityIdentifier("participant.home.coaches")
+            }
+        }
+    }
+
+    @ViewBuilder
     private var leaderboardSection: some View {
         if store.currentEnrollment != nil,
            case .loaded(let leaderboardSnapshot) = store.leaderboardState {
@@ -295,6 +405,7 @@ struct ParticipantHomeView: View {
                         for: .scrollContent
                     )
                 }
+                .accessibilityIdentifier("participant.home.leaderboard")
             }
         }
     }
@@ -310,6 +421,12 @@ struct ParticipantHomeView: View {
             max(availableWidth - AppSpacing.xLarge, 1),
             560
         )
+    }
+
+    private func winnerPosterWidth(
+        availableWidth: CGFloat
+    ) -> CGFloat {
+        min(max(availableWidth * 0.66, 232), 320)
     }
 
     private func roleTitle(_ role: UserRole) -> LocalizedStringKey {
@@ -431,6 +548,13 @@ struct ParticipantHomeView: View {
     private func openProgram(_ program: Program) {
         router.navigate(
             to: .participant(.programDetail(program.id, .today)),
+            in: .participant(.today)
+        )
+    }
+
+    private func openCoach(_ coach: CoachProfile) {
+        router.navigate(
+            to: .participant(.coach(coach.id)),
             in: .participant(.today)
         )
     }
@@ -717,20 +841,13 @@ private struct ParticipantHomeLeaderboardItem: View {
     }
 
     private var rankColor: Color {
-        switch entry.rank {
-        case 1:
-            Color.brandAccent
-        case 2:
-            Color.gray
-        case 3:
-            Color.brown
-        default:
-            Color.appBorder
-        }
+        ParticipantLeaderboardRankStyle(rank: entry.rank).accentColor
     }
 
     private var rankNumberColor: Color {
-        entry.rank <= 3 ? Color.black : Color.appPrimaryText
+        ParticipantLeaderboardRankStyle(
+            rank: entry.rank
+        ).rankForegroundColor
     }
 }
 

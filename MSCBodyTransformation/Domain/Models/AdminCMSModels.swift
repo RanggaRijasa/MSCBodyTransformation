@@ -189,6 +189,7 @@ nonisolated struct AdminProgramDraft:
     let id: UUID
     var title: String
     var summary: String
+    var price: Decimal?
     var category: String
     var coverLocalReference: String?
     var coverMediaKind: AdminCoverMediaKind
@@ -216,6 +217,7 @@ nonisolated struct AdminProgramDraft:
         id: UUID,
         title: String,
         summary: String,
+        price: Decimal? = nil,
         coverLocalReference: String?,
         verificationMode: SubmissionVerificationMode,
         wellnessDisclaimer: String,
@@ -242,6 +244,7 @@ nonisolated struct AdminProgramDraft:
         self.id = id
         self.title = title
         self.summary = summary
+        self.price = price
         self.category = category
         self.coverLocalReference = coverLocalReference
         self.coverMediaKind = coverMediaKind
@@ -281,6 +284,7 @@ nonisolated struct AdminProgramDraft:
         id = program.id
         title = program.title
         summary = program.summary
+        price = program.price
         category = ""
         coverLocalReference = nil
         coverMediaKind = .image
@@ -344,6 +348,7 @@ nonisolated struct AdminProgramDraft:
             id: id,
             title: title,
             summary: summary,
+            price: price,
             status: status,
             startDate: startDate,
             endDate: endDate,

@@ -6,7 +6,6 @@ final class CoachFeatureContainer {
     let participants: CoachParticipantsState
     let reviewQueue: CoachReviewQueueState
     let invites: CoachInviteComposerState
-    let storePreview: CoachStorePreviewState
     let leaderboard: CoachLeaderboardState
     let profile: CoachProfileState
 
@@ -19,7 +18,6 @@ final class CoachFeatureContainer {
         participants = CoachParticipantsState(environment: environment)
         reviewQueue = CoachReviewQueueState(environment: environment)
         invites = CoachInviteComposerState(environment: environment)
-        storePreview = CoachStorePreviewState(environment: environment)
         leaderboard = CoachLeaderboardState(environment: environment)
         profile = CoachProfileState(environment: environment)
     }
