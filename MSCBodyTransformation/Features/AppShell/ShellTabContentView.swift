@@ -8,8 +8,9 @@ struct ShellTabContentView: View {
     let participantStore: ParticipantJourneyStore?
     let coachFeatures: CoachFeatureContainer?
     let adminFeatures: AdminFeatureContainer?
+    let didRetryRepositoryError: Bool
+    let onRetryRepositoryError: () -> Void
     let onSelectTab: (AppTab) -> Void
-    @State private var didRetryRepositoryError = false
 
     var body: some View {
         content
@@ -44,13 +45,22 @@ struct ShellTabContentView: View {
             } else {
                 stateContainer {
                     ErrorStateView(error: .unknown) {
-                        didRetryRepositoryError = true
+                        onRetryRepositoryError()
                     }
                 }
             }
         case .permissionDenied:
-            stateContainer {
-                ErrorStateView(error: .permissionDenied)
+            if tab == permissionRecoveryTab {
+                loadedContent(showsOfflineBanner: false)
+            } else {
+                stateContainer {
+                    ErrorStateView(
+                        error: .permissionDenied,
+                        actionTitle: permissionRecoveryActionTitle
+                    ) {
+                        onSelectTab(permissionRecoveryTab)
+                    }
+                }
             }
         case .loggedOut:
             stateContainer {
@@ -87,6 +97,23 @@ struct ShellTabContentView: View {
                 .frame(maxWidth: .infinity)
         }
         .background(Color.appBackground)
+    }
+
+    private var permissionRecoveryTab: AppTab {
+        switch tab.role {
+        case .participant:
+            .participant(.profile)
+        case .coach:
+            .coach(.profile)
+        case .admin:
+            .admin(.settings)
+        }
+    }
+
+    private var permissionRecoveryActionTitle: LocalizedStringKey {
+        tab.role == .admin
+            ? "action.open_settings"
+            : "action.open_profile"
     }
 
     @ViewBuilder

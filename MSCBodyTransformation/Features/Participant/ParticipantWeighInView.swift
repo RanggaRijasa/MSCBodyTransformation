@@ -94,11 +94,19 @@ struct ParticipantWeighInView: View {
             )
         )
         .scrollDismissesKeyboard(.interactively)
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("action.done") {
-                    isWeightFocused = false
+            ToolbarItem(placement: .topBarTrailing) {
+                if isWeightFocused {
+                    Button {
+                        isWeightFocused = false
+                    } label: {
+                        Image(systemName: "keyboard.chevron.compact.down")
+                    }
+                    .accessibilityLabel(Text("action.dismiss_keyboard"))
+                    .accessibilityIdentifier(
+                        "participant.weigh.dismiss-keyboard"
+                    )
                 }
             }
         }

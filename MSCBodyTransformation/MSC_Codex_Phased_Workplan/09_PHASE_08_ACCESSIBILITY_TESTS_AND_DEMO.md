@@ -203,6 +203,37 @@ Admin:
 
 ### Log
 
+#### 2026-07-29 — Perbaikan audit heuristik Nielsen UI peserta
+
+- Files changed: shell onboarding dan shared error state; alur entry peserta;
+  Home, katalog, poster, leaderboard, timbang, dan editor profil peserta;
+  presentasi serta store peserta; katalog lokalisasi; test Phase 08 dan UI
+  test; serta progress log ini.
+- Assumptions: status final leaderboard harus berasal dari satu model
+  presentasi; skenario tanpa program tidak boleh mengekspos enrollment aktif
+  atau pending; onboarding adalah alur terfokus di luar tab shell; recovery
+  permission mengarahkan peserta ke Profil dan Admin ke Pengaturan; toolbar
+  keyboard tidak digunakan karena pada hardware keyboard iOS menempatkannya di
+  bagian bawah layar.
+- Build command: XcodeBuildMCP `build_sim` dan `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 Pro iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase08AccessibilityReliabilityTests`, `Phase03ParticipantTests`,
+  `testDarkModeFinalLeaderboardLaunch`,
+  `testLargestAccessibilitySizeKeepsTodayNavigable`,
+  `testOfflineAndPermissionScenariosAreExplicit`, dan
+  `testRepositoryErrorRetryPersistsAcrossTabs`.
+- Result: build dan build/run lulus tanpa warning; 11/11 test Phase 08,
+  13/13 test Phase 03, dan 4/4 UI test terfokus lulus. Audit runtime
+  mengonfirmasi onboarding tanpa tab dengan progres 1–4, kartu tanpa program
+  berlabel `Belum mendaftar`, leaderboard final berlabel `Selesai`, recovery
+  permission membuka Profil, retry repository berlaku lintas tab, serta form
+  timbang tanpa tab bar atau aksi `Selesai` yang ambigu. Skor audit ulang
+  Nielsen meningkat dari 24/40 menjadi 34/40.
+- Remaining blockers: tidak ada blocker untuk perbaikan ini. Item Phase 08
+  berikutnya tetap profiling scrolling Participant Home; verifikasi kamera
+  fisik tetap menunggu perangkat.
+
 #### 2026-07-28 — Skenario peserta aktif mengikuti tanggal
 
 - Files changed: katalog skenario demo, debug launch mapping, default

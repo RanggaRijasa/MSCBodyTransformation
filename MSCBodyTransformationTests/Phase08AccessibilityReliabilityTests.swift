@@ -41,6 +41,91 @@ struct Phase08AccessibilityReliabilityTests {
         )
     }
 
+    @Test("Onboarding menjelaskan tahap tanpa bergantung pada tab")
+    func participantEntryStagePresentationIsExplicit() {
+        let login = ParticipantEntryStagePresentation(stage: .login)
+        let profile = ParticipantEntryStagePresentation(stage: .profile)
+        let weighIn = ParticipantEntryStagePresentation(
+            stage: .initialWeighIn
+        )
+
+        #expect(login.currentStep == 1)
+        #expect(profile.currentStep == 2)
+        #expect(weighIn.currentStep == 4)
+        #expect(login.totalSteps == 4)
+        #expect(profile.titleKey == "participant.entry.stage.profile")
+    }
+
+    @Test("Status final leaderboard memakai satu presentasi konsisten")
+    func finalLeaderboardStatusIsConsistent() throws {
+        let seed = try MockSeedData.load()
+        let program = try #require(
+            seed.programs.first(where: { $0.status == .active })
+        )
+
+        let provisional = ParticipantLeaderboardStatusPresentation(
+            program: program,
+            showsFinalLeaderboard: false,
+            hasLockedWinners: false
+        )
+        let final = ParticipantLeaderboardStatusPresentation(
+            program: program,
+            showsFinalLeaderboard: true,
+            hasLockedWinners: false
+        )
+
+        #expect(!provisional.isFinal)
+        #expect(
+            provisional.badgeTitleKey
+                == "participant.leaderboard.status.in_progress"
+        )
+        #expect(final.isFinal)
+        #expect(
+            final.badgeTitleKey
+                == "participant.leaderboard.status.completed"
+        )
+    }
+
+    @Test("Poster program membedakan partisipasi dan status operasional")
+    func programPosterParticipationStatusIsParticipantSpecific() throws {
+        let seed = try MockSeedData.load()
+        var enrollment = try #require(
+            seed.enrollments.first(where: { $0.status == .active })
+        )
+
+        #expect(
+            ParticipantProgramParticipationStatus.make(
+                programID: enrollment.programID,
+                enrollments: [enrollment]
+            ) == .enrolled
+        )
+
+        enrollment.status = .cancelled
+        #expect(
+            ParticipantProgramParticipationStatus.make(
+                programID: enrollment.programID,
+                enrollments: [enrollment]
+            ) == .notEnrolled
+        )
+    }
+
+    @MainActor
+    @Test("Skenario tanpa program menyembunyikan enrollment aktif")
+    func noProgramScenarioHidesActiveEnrollments() async {
+        let store = ParticipantJourneyStore(environment: .preview)
+        await store.load()
+
+        store.hidesActiveProgramForDemo = true
+
+        #expect(store.currentProgram == nil)
+        #expect(store.currentEnrollment == nil)
+        #expect(
+            store.visibleEnrollments.allSatisfy {
+                $0.status == .completed || $0.status == .cancelled
+            }
+        )
+    }
+
 #if DEBUG
     @Test("Nama launch lama tetap dipetakan tanpa mengubah skenario")
     func legacyLaunchArgumentsRemainCompatible() {

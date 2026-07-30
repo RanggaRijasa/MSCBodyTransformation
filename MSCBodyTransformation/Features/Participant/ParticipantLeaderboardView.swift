@@ -78,12 +78,12 @@ struct ParticipantLeaderboardView: View {
             programSelector
 
             HStack(spacing: AppSpacing.small) {
-                if let selectedProgram {
+                if let presentation = selectedProgramStatusPresentation {
                     StatusBadge(
-                        title: selectedProgram.isLeaderboardArchive
-                            ? "Selesai"
-                            : "Berlangsung",
-                        kind: selectedProgram.isLeaderboardArchive
+                        title: LocalizedStringKey(
+                            presentation.badgeTitleKey
+                        ),
+                        kind: presentation.isFinal
                             ? .success
                             : .information
                     )
@@ -147,10 +147,12 @@ struct ParticipantLeaderboardView: View {
     private func ranking(
         _ snapshot: ParticipantLeaderboardProgramSnapshot
     ) -> some View {
-        let isFinal =
-            store.showsFinalLeaderboard
-            || snapshot.program.isLeaderboardArchive
-            || !snapshot.winners.isEmpty
+        let statusPresentation = ParticipantLeaderboardStatusPresentation(
+            program: snapshot.program,
+            showsFinalLeaderboard: store.showsFinalLeaderboard,
+            hasLockedWinners: !snapshot.winners.isEmpty
+        )
+        let isFinal = statusPresentation.isFinal
         let entries = displayEntries(
             snapshot: snapshot,
             isFinal: isFinal
@@ -168,7 +170,7 @@ struct ParticipantLeaderboardView: View {
             )
             .frame(maxWidth: .infinity, minHeight: 320)
         } else {
-            rankingStatus(isFinal: isFinal)
+            rankingStatus(statusPresentation)
 
             ParticipantLeaderboardPodium(
                 entries: Array(entries.prefix(3))
@@ -205,19 +207,37 @@ struct ParticipantLeaderboardView: View {
         }
     }
 
-    private func rankingStatus(isFinal: Bool) -> some View {
+    private func rankingStatus(
+        _ presentation: ParticipantLeaderboardStatusPresentation
+    ) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-            Text(isFinal ? "Hasil akhir" : "Peringkat sementara")
+            Text(LocalizedStringKey(presentation.statusTitleKey))
                 .font(AppTypography.cardTitle)
-            Text(
-                isFinal
-                    ? "Hasil program ini telah selesai dan disimpan."
-                    : "Poin dapat berubah sampai program berakhir."
-            )
+            Text(LocalizedStringKey(presentation.statusMessageKey))
             .font(AppTypography.secondary)
             .foregroundStyle(Color.appSecondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var selectedProgramStatusPresentation:
+        ParticipantLeaderboardStatusPresentation?
+    {
+        guard let selectedProgram else {
+            return nil
+        }
+        let hasLockedWinners: Bool
+        if case .loaded(let snapshot) = store.leaderboardState,
+           snapshot.program.id == selectedProgram.id {
+            hasLockedWinners = !snapshot.winners.isEmpty
+        } else {
+            hasLockedWinners = false
+        }
+        return ParticipantLeaderboardStatusPresentation(
+            program: selectedProgram,
+            showsFinalLeaderboard: store.showsFinalLeaderboard,
+            hasLockedWinners: hasLockedWinners
+        )
     }
 
     private func privacyNotice(isFinal: Bool) -> some View {
@@ -466,12 +486,6 @@ private enum PresentedSheet: String, Identifiable {
     case archive
 
     var id: String { rawValue }
-}
-
-private extension Program {
-    var isLeaderboardArchive: Bool {
-        status == .completed || status == .archived
-    }
 }
 
 #Preview("Papan peringkat — program aktif") {

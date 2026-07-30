@@ -24,7 +24,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
         enterDemoButton.tap()
 
         XCTAssertTrue(
-            tabButton(label: "Home", in: app)
+            tabButton(label: "Beranda", in: app)
                 .waitForExistence(timeout: 5)
         )
         XCTAssertTrue(
@@ -82,7 +82,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 .waitForExistence(timeout: 8)
         )
 
-        let homeTab = tabButton(label: "Home", in: app)
+        let homeTab = tabButton(label: "Beranda", in: app)
         homeTab.tap()
         XCTAssertTrue(
             element(identifier: "participant.home", in: app)
@@ -991,6 +991,10 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 .waitForExistence(timeout: 8)
         )
         XCTAssertTrue(tabButton(label: "Peringkat", in: app).isSelected)
+        XCTAssertTrue(
+            app.staticTexts["Selesai"].waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(app.staticTexts["Berlangsung"].exists)
     }
 
     @MainActor
@@ -1115,6 +1119,11 @@ final class MSCBodyTransformationUITests: XCTestCase {
         let login = app.buttons["participant.login"]
         XCTAssertTrue(login.waitForExistence(timeout: 8))
         XCTAssertTrue(login.isHittable)
+        XCTAssertTrue(
+            element(identifier: "participant.entry.progress", in: app)
+                .exists
+        )
+        XCTAssertEqual(app.tabBars.count, 0)
         login.tap()
 
         let continueButton = app.buttons["participant.profile.continue"]
@@ -1154,6 +1163,40 @@ final class MSCBodyTransformationUITests: XCTestCase {
         permissionApp.launch()
         XCTAssertTrue(
             permissionApp.staticTexts["Akses tidak tersedia"]
+                .waitForExistence(timeout: 8)
+        )
+        let openProfile = permissionApp.buttons["Buka profil"]
+        XCTAssertTrue(openProfile.waitForExistence(timeout: 5))
+        openProfile.tap()
+        XCTAssertTrue(
+            element(identifier: "participant.profile", in: permissionApp)
+                .waitForExistence(timeout: 8)
+        )
+    }
+
+    @MainActor
+    func testRepositoryErrorRetryPersistsAcrossTabs() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "participant",
+            "-DemoScenario", "repository_error",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let retry = app.buttons["Coba lagi"]
+        XCTAssertTrue(retry.waitForExistence(timeout: 8))
+        retry.tap()
+        XCTAssertTrue(
+            element(identifier: "participant.home", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        tabButton(label: "Profil", in: app).tap()
+        XCTAssertTrue(
+            element(identifier: "participant.profile", in: app)
                 .waitForExistence(timeout: 8)
         )
     }

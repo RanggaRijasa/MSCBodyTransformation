@@ -73,6 +73,68 @@ nonisolated struct ParticipantProgramDayUIState: Equatable, Sendable {
     }
 }
 
+nonisolated struct ParticipantEntryStagePresentation: Equatable, Sendable {
+    let currentStep: Int
+    let totalSteps: Int
+    let titleKey: String
+
+    init(stage: ParticipantEntryStage) {
+        totalSteps = 4
+        switch stage {
+        case .login:
+            currentStep = 1
+            titleKey = "participant.entry.stage.login"
+        case .profile:
+            currentStep = 2
+            titleKey = "participant.entry.stage.profile"
+        case .disclaimer:
+            currentStep = 3
+            titleKey = "participant.entry.stage.disclaimer"
+        case .initialWeighIn:
+            currentStep = 4
+            titleKey = "participant.entry.stage.initial_weigh_in"
+        case .complete:
+            currentStep = 4
+            titleKey = "participant.entry.stage.complete"
+        }
+    }
+}
+
+nonisolated struct ParticipantLeaderboardStatusPresentation:
+    Equatable,
+    Sendable
+{
+    let isFinal: Bool
+    let badgeTitleKey: String
+    let statusTitleKey: String
+    let statusMessageKey: String
+
+    init(
+        program: Program,
+        showsFinalLeaderboard: Bool,
+        hasLockedWinners: Bool
+    ) {
+        isFinal = showsFinalLeaderboard
+            || program.isLeaderboardArchive
+            || hasLockedWinners
+        badgeTitleKey = isFinal
+            ? "participant.leaderboard.status.completed"
+            : "participant.leaderboard.status.in_progress"
+        statusTitleKey = isFinal
+            ? "participant.leaderboard.status.final.title"
+            : "participant.leaderboard.status.provisional.title"
+        statusMessageKey = isFinal
+            ? "participant.leaderboard.status.final.message"
+            : "participant.leaderboard.status.provisional.message"
+    }
+}
+
+nonisolated extension Program {
+    var isLeaderboardArchive: Bool {
+        status == .completed || status == .archived
+    }
+}
+
 nonisolated enum ParticipantFormatting {
     static let locale = Locale(identifier: "id-ID")
 

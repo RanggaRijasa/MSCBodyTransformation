@@ -133,7 +133,13 @@ struct ParticipantHomeView: View {
                             Button {
                                 openProgram(program)
                             } label: {
-                                ParticipantProgramPoster(program: program)
+                                ParticipantProgramPoster(
+                                    program: program,
+                                    participationStatus: .make(
+                                        programID: program.id,
+                                        enrollments: store.visibleEnrollments
+                                    )
+                                )
                             }
                             .buttonStyle(.plain)
                             .containerRelativeFrame(.horizontal) {
