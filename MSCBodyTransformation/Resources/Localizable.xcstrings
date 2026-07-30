@@ -220,7 +220,18 @@
         }
       }
     },
+    "action.dismiss_keyboard" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup papan ketik"
+          }
+        }
+      }
+    },
     "action.done" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -237,6 +248,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buka draft"
+          }
+        }
+      }
+    },
+    "action.open_profile" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka profil"
+          }
+        }
+      }
+    },
+    "action.open_settings" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka pengaturan"
           }
         }
       }
@@ -428,9 +459,6 @@
 
     },
     "Berat awal: %@ jam" : {
-
-    },
-    "Berlangsung" : {
 
     },
     "Buat draft" : {
@@ -2523,7 +2551,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Akun ini tidak memiliki izin untuk tindakan tersebut."
+            "value" : "Akun ini tidak memiliki izin untuk tindakan tersebut. Periksa profil atau hubungi admin jika akses seharusnya tersedia."
           }
         }
       }
@@ -2589,7 +2617,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Coba lagi. Jika masalah berlanjut, kembali ke beranda."
+            "value" : "Coba lagi untuk memuat data terbaru."
           }
         }
       }
@@ -2717,13 +2745,7 @@
     "Hari tidak tersedia" : {
 
     },
-    "Hasil akhir" : {
-
-    },
     "Hasil akhir belum dikunci untuk program ini." : {
-
-    },
-    "Hasil program ini telah selesai dan disimpan." : {
 
     },
     "Identitas program" : {
@@ -2991,7 +3013,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Coach Anda"
+            "value" : "Coach-mu"
           }
         }
       }
@@ -3268,7 +3290,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Program Anda siap dibuka dari tab Home."
+            "value" : "Program Anda siap dibuka dari tab Beranda."
           }
         }
       }
@@ -3279,6 +3301,81 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Persiapan selesai"
+          }
+        }
+      }
+    },
+    "participant.entry.progress.of" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dari"
+          }
+        }
+      }
+    },
+    "participant.entry.progress.step" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langkah"
+          }
+        }
+      }
+    },
+    "participant.entry.stage.complete" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selesai"
+          }
+        }
+      }
+    },
+    "participant.entry.stage.disclaimer" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informasi penting"
+          }
+        }
+      }
+    },
+    "participant.entry.stage.initial_weigh_in" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timbang awal"
+          }
+        }
+      }
+    },
+    "participant.entry.stage.login" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masuk"
+          }
+        }
+      }
+    },
+    "participant.entry.stage.profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil peserta"
           }
         }
       }
@@ -3448,7 +3545,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fokus harian akan muncul saat program aktif dimulai."
+            "value" : "Fokus harian akan muncul setelah Anda mengikuti program."
           }
         }
       }
@@ -3950,6 +4047,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hasil sementara"
+          }
+        }
+      }
+    },
+    "participant.leaderboard.status.completed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selesai"
+          }
+        }
+      }
+    },
+    "participant.leaderboard.status.final.message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasil program ini telah selesai dan disimpan."
+          }
+        }
+      }
+    },
+    "participant.leaderboard.status.final.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasil akhir"
+          }
+        }
+      }
+    },
+    "participant.leaderboard.status.in_progress" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berlangsung"
+          }
+        }
+      }
+    },
+    "participant.leaderboard.status.provisional.message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poin dapat berubah sampai program berakhir."
+          }
+        }
+      }
+    },
+    "participant.leaderboard.status.provisional.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peringkat sementara"
           }
         }
       }
@@ -5415,9 +5578,6 @@
     "Peringkat lainnya" : {
 
     },
-    "Peringkat sementara" : {
-
-    },
     "Peringkatmu" : {
 
     },
@@ -5489,9 +5649,6 @@
 
     },
     "Poin dan pemeriksaan" : {
-
-    },
-    "Poin dapat berubah sampai program berakhir." : {
 
     },
     "Poin langkah" : {
@@ -6794,7 +6951,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Home"
+            "value" : "Beranda"
           }
         }
       }

@@ -116,7 +116,7 @@ struct ParticipantProgramCatalogView: View {
             .filter { program in
                 return selectedFilter.includes(
                     program,
-                    enrollment: snapshot.enrollments.first {
+                    enrollment: store.visibleEnrollments.first {
                         $0.programID == program.id
                     }
                 )
@@ -135,10 +135,10 @@ struct ParticipantProgramCatalogView: View {
         for program: Program,
         snapshot: ParticipantJourneySnapshot
     ) -> ParticipantProgramParticipationStatus {
-        snapshot.enrollments.contains {
-            $0.programID == program.id
-                && $0.status != .cancelled
-        } ? .enrolled : .notEnrolled
+        .make(
+            programID: program.id,
+            enrollments: snapshot.enrollments
+        )
     }
 }
 

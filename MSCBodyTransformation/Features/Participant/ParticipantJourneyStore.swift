@@ -106,6 +106,18 @@ final class ParticipantJourneyStore {
         return snapshot?.activeEnrollment
     }
 
+    var visibleEnrollments: [ProgramEnrollment] {
+        guard let snapshot else {
+            return []
+        }
+        guard hidesActiveProgramForDemo else {
+            return snapshot.enrollments
+        }
+        return snapshot.enrollments.filter {
+            $0.status == .completed || $0.status == .cancelled
+        }
+    }
+
     var todayDay: ProgramDay? {
         guard let program = currentProgram else {
             return nil

@@ -13,6 +13,7 @@ struct RoleAppShellView: View {
     @State private var participantStore: ParticipantJourneyStore?
     @State private var coachFeatures: CoachFeatureContainer?
     @State private var adminFeatures: AdminFeatureContainer?
+    @State private var didRetryRepositoryError = false
 
     init(role: UserRole, scenario: AppDemoScenario) {
         self.role = role
@@ -27,6 +28,48 @@ struct RoleAppShellView: View {
     var body: some View {
         @Bindable var router = router
 
+        shellContent
+            .tint(.brandPrimary)
+            .accessibilityIdentifier("shell.\(role.rawValue)")
+            .sheet(item: $router.presentedSheet) { sheet in
+                ShellSheetView(sheet: sheet)
+            }
+            .alert(item: $router.presentedAlert) { alert in
+                switch alert {
+                case .unavailableRoute:
+                    Alert(
+                        title: Text("alert.route.unavailable.title"),
+                        message: Text("alert.route.unavailable.message"),
+                        dismissButton: .default(Text("action.close"))
+                    )
+                }
+            }
+            .task(id: "\(role.rawValue).\(scenario.rawValue)") {
+                await prepareFeatureStateIfNeeded()
+            }
+    }
+
+    @ViewBuilder
+    private var shellContent: some View {
+        if role == .participant,
+           let participantStore,
+           participantStore.entryStage != .complete {
+            participantEntryShell(participantStore)
+        } else if role == .participant,
+                  scenario == .participantOnboarding,
+                  participantStore == nil {
+            NavigationStack {
+                LoadingStateView()
+                    .padding(AppSpacing.large)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.appBackground)
+            }
+        } else {
+            tabShell
+        }
+    }
+
+    private var tabShell: some View {
         TabView(selection: $selectedTab) {
             ForEach(tabs) { tab in
                 NavigationStack(path: router.binding(for: tab)) {
@@ -37,6 +80,10 @@ struct RoleAppShellView: View {
                         participantStore: participantStore,
                         coachFeatures: coachFeatures,
                         adminFeatures: adminFeatures,
+                        didRetryRepositoryError: didRetryRepositoryError,
+                        onRetryRepositoryError: {
+                            didRetryRepositoryError = true
+                        },
                         onSelectTab: selectTab
                     )
                     .navigationDestination(for: ShellRoute.self) { route in
@@ -60,23 +107,29 @@ struct RoleAppShellView: View {
                 .tag(tab)
             }
         }
-        .tint(.brandPrimary)
-        .accessibilityIdentifier("shell.\(role.rawValue)")
-        .sheet(item: $router.presentedSheet) { sheet in
-            ShellSheetView(sheet: sheet)
-        }
-        .alert(item: $router.presentedAlert) { alert in
-            switch alert {
-            case .unavailableRoute:
-                Alert(
-                    title: Text("alert.route.unavailable.title"),
-                    message: Text("alert.route.unavailable.message"),
-                    dismissButton: .default(Text("action.close"))
-                )
-            }
-        }
-        .task(id: "\(role.rawValue).\(scenario.rawValue)") {
-            await prepareFeatureStateIfNeeded()
+    }
+
+    private func participantEntryShell(
+        _ store: ParticipantJourneyStore
+    ) -> some View {
+        NavigationStack {
+            ParticipantEntryFlowView(store: store)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            router.presentedSheet = .scenarioInformation(
+                                scenario.rawValue
+                            )
+                        } label: {
+                            Image(systemName: "info.circle")
+                        }
+                        .accessibilityLabel(
+                            Text("action.scenario_information")
+                        )
+                        .accessibilityIdentifier("shell.scenario-info")
+                    }
+                }
         }
     }
 

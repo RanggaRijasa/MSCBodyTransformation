@@ -1,8 +1,20 @@
 import SwiftUI
 
-nonisolated enum ParticipantProgramParticipationStatus: Sendable {
+nonisolated enum ParticipantProgramParticipationStatus:
+    Equatable,
+    Sendable
+{
     case enrolled
     case notEnrolled
+
+    static func make(
+        programID: UUID,
+        enrollments: [ProgramEnrollment]
+    ) -> Self {
+        enrollments.contains {
+            $0.programID == programID && $0.status != .cancelled
+        } ? .enrolled : .notEnrolled
+    }
 }
 
 struct ParticipantProgramPoster: View {

@@ -182,24 +182,30 @@ struct ParticipantProfileEditorSheet: View {
 
     private var identitySection: some View {
         Section("participant.profile.data") {
-            TextField(
-                "participant.profile.field.name",
-                text: $displayName
-            )
-            .textContentType(.name)
-            .accessibilityIdentifier(
-                "participant.profile.editor.name"
-            )
+            LabeledContent("participant.profile.field.name") {
+                TextField(
+                    "participant.profile.field.name",
+                    text: $displayName
+                )
+                .multilineTextAlignment(.trailing)
+                .textContentType(.name)
+                .accessibilityIdentifier(
+                    "participant.profile.editor.name"
+                )
+            }
 
-            TextField(
-                "participant.profile.field.phone",
-                text: $phoneNumber
-            )
-            .keyboardType(.phonePad)
-            .textContentType(.telephoneNumber)
-            .accessibilityIdentifier(
-                "participant.profile.editor.phone"
-            )
+            LabeledContent("participant.profile.field.phone") {
+                TextField(
+                    "participant.profile.field.phone",
+                    text: $phoneNumber
+                )
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.phonePad)
+                .textContentType(.telephoneNumber)
+                .accessibilityIdentifier(
+                    "participant.profile.editor.phone"
+                )
+            }
 
             LabeledContent(
                 "participant.profile.field.email",

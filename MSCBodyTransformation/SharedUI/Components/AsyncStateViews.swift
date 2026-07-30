@@ -103,10 +103,16 @@ struct EmptyStateView: View {
 
 struct ErrorStateView: View {
     let error: DomainError
+    let actionTitle: LocalizedStringKey
     let retryAction: (() -> Void)?
 
-    init(error: DomainError, retryAction: (() -> Void)? = nil) {
+    init(
+        error: DomainError,
+        actionTitle: LocalizedStringKey = "action.retry",
+        retryAction: (() -> Void)? = nil
+    ) {
         self.error = error
+        self.actionTitle = actionTitle
         self.retryAction = retryAction
     }
 
@@ -122,7 +128,7 @@ struct ErrorStateView: View {
             Text(LocalizedStringKey(message.messageKey))
         } actions: {
             if let retryAction {
-                Button("action.retry", action: retryAction)
+                Button(actionTitle, action: retryAction)
                     .buttonStyle(.borderedProminent)
                     .tint(.brandPrimary)
             }
