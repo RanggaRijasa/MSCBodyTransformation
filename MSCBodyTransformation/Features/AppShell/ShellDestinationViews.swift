@@ -11,30 +11,30 @@ struct ShellRouteDestinationView: View {
     var body: some View {
         switch route {
         case .participant(.joinProgram(let programID)):
-            participantDestination {
+            journeyDestination {
                 ParticipantJoinProgramView(
                     store: $0,
                     programID: programID
                 )
             }
         case .participant(.programDetail(let programID, let sourceTab)):
-            participantDestination {
+            journeyDestination {
                 ParticipantProgramView(
                     store: $0,
                     router: router,
                     programID: programID,
-                    navigationTab: sourceTab
+                    navigationContext: .participant(sourceTab)
                 )
             }
         case .participant(.stepDetail(let stepID)):
-            participantDestination {
+            journeyDestination {
                 ParticipantStepDetailView(
                     store: $0,
                     stepID: stepID
                 )
             }
         case .participant(.weighIn(let type)):
-            participantDestination {
+            journeyDestination {
                 ParticipantWeighInView(
                     store: $0,
                     type: type,
@@ -42,21 +42,29 @@ struct ShellRouteDestinationView: View {
                 )
             }
         case .participant(.leaderboard):
-            participantDestination {
+            journeyDestination {
                 ParticipantLeaderboardView(store: $0)
             }
         case .participant(.coach(let coachID)):
-            participantDestination {
+            journeyDestination {
                 ParticipantCoachDetailView(
                     store: $0,
                     coachID: coachID
                 )
             }
         case .participant(.profile):
-            participantDestination {
+            journeyDestination {
                 ParticipantProfileView(
                     store: $0,
                     router: router
+                )
+            }
+        case .coach(.participants(let destination)):
+            coachDestination {
+                CoachParticipantsView(
+                    state: $0.participants,
+                    router: router,
+                    destination: destination
                 )
             }
         case .coach(.participantDetail(let participantID)):
@@ -77,9 +85,33 @@ struct ShellRouteDestinationView: View {
                     router: router
                 )
             }
+        case .coach(.programDetail(let programID)):
+            journeyDestination {
+                ParticipantProgramView(
+                    store: $0,
+                    router: router,
+                    programID: programID,
+                    navigationContext: .coach
+                )
+            }
+        case .coach(.joinProgram(let programID)):
+            journeyDestination {
+                ParticipantJoinProgramView(
+                    store: $0,
+                    programID: programID
+                )
+            }
+        case .coach(.stepDetail(let stepID)):
+            journeyDestination {
+                ParticipantStepDetailView(
+                    store: $0,
+                    stepID: stepID
+                )
+            }
         case .coach(.leaderboard):
             coachDestination {
                 CoachLeaderboardView(state: $0.leaderboard)
+                    .navigationTitle(Text("tab.coach.leaderboard"))
             }
         case .coach(.profile):
             coachDestination {
@@ -113,7 +145,7 @@ struct ShellRouteDestinationView: View {
     }
 
     @ViewBuilder
-    private func participantDestination<Content: View>(
+    private func journeyDestination<Content: View>(
         @ViewBuilder content: (ParticipantJourneyStore) -> Content
     ) -> some View {
         if let participantStore {

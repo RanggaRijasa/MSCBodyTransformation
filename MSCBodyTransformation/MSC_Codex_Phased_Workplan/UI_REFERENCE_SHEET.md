@@ -23,6 +23,12 @@ Aturan:
 - Jangan menjanjikan hasil penurunan berat badan tertentu.
 - Gunakan `Localizable.xcstrings` sejak awal meskipun MVP baru memiliki satu bahasa.
 - Jangan menulis copy reusable langsung berulang kali di dalam View.
+- Seluruh UI yang dimiliki aplikasi tetap memakai locale `id-ID` walaupun
+  bahasa perangkat bukan Bahasa Indonesia. UI yang sepenuhnya dimiliki sistem,
+  seperti pemilih Foto atau dialog izin, boleh mengikuti bahasa perangkat.
+- Istilah Inggris hanya dipakai untuk nama produk, teknologi, atau istilah
+  fitur yang memang disetujui; jangan membiarkan bahasa perangkat mengubah
+  copy aplikasi menjadi bahasa lain atau menampilkan localization key.
 
 ### Istilah utama
 

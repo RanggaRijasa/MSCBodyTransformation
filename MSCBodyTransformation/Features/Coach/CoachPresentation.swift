@@ -59,16 +59,45 @@ nonisolated enum CoachFormatting {
         )
     }
 
+    static func relativeDate(_ value: Date) -> String {
+        value.formatted(
+            .relative(
+                presentation: .numeric,
+                unitsStyle: .wide
+            )
+            .locale(locale)
+        )
+    }
+
+    static func relativeActivity(_ value: Date) -> String {
+        String(
+            format: String(
+                localized: "coach.participants.activity_format",
+                defaultValue: "Aktif %@"
+            ),
+            relativeDate(value)
+        )
+    }
+
     static func reason(_ error: DomainError) -> String {
         switch error {
         case .validation(_, let reason), .conflict(let reason):
             reason
         case .permissionDenied:
-            String(localized: "coach.error.permission")
+            String(
+                localized: "coach.error.permission",
+                defaultValue: "Anda tidak memiliki akses ke peserta ini."
+            )
         case .offline:
-            String(localized: "state.offline.message")
+            String(
+                localized: "error.offline.message",
+                defaultValue: "Periksa koneksi, lalu coba lagi."
+            )
         default:
-            String(localized: "coach.error.generic")
+            String(
+                localized: "coach.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
         }
     }
 }
@@ -126,6 +155,35 @@ nonisolated struct CoachParticipantSummary:
             .flatMap(\.steps)
             .filter { !submittedStepIDs.contains($0.id) }
             .count
+    }
+
+    var totalStepCount: Int {
+        program?.days.flatMap(\.steps).count ?? 0
+    }
+
+    var completedStepCount: Int {
+        let programStepIDs = Set(
+            program?.days.flatMap(\.steps).map(\.id) ?? []
+        )
+        return Set(
+            submissions
+                .map(\.stepID)
+                .filter(programStepIDs.contains)
+        ).count
+    }
+
+    var evidenceCount: Int {
+        submissions.map(\.evidence.count).reduce(0, +)
+    }
+
+    var activeDayCount: Int {
+        guard let program else {
+            return 0
+        }
+        let submittedStepIDs = Set(submissions.map(\.stepID))
+        return program.days.filter { day in
+            day.steps.contains { submittedStepIDs.contains($0.id) }
+        }.count
     }
 
     var isComplete: Bool {
@@ -218,6 +276,10 @@ nonisolated struct CoachDashboardSnapshot: Equatable, Sendable {
     var pendingReviewCount: Int {
         participants.map(\.pendingReviewCount).reduce(0, +)
     }
+
+    var needsAttentionCount: Int {
+        participants.filter(\.isFallingBehind).count
+    }
 }
 
 nonisolated struct CoachReviewItem: Equatable, Identifiable, Sendable {
@@ -233,6 +295,7 @@ nonisolated struct CoachReviewItem: Equatable, Identifiable, Sendable {
 }
 
 nonisolated struct CoachReviewDecisionResult: Equatable, Sendable {
+    let submissionID: UUID
     let participantName: String
     let status: SubmissionStatus
     let pointsBefore: Int
@@ -256,5 +319,6 @@ nonisolated struct CoachLeaderboardSnapshot: Equatable, Sendable {
 }
 
 nonisolated struct CoachProfileSnapshot: Equatable, Sendable {
+    let user: AppUser
     let profile: CoachProfile
 }

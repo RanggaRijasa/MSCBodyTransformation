@@ -28,9 +28,12 @@ struct CoachParticipantDetailDestinationView: View {
 
 @MainActor
 struct CoachParticipantDetailView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let state: CoachParticipantDetailState
 
     @State private var selectedEvidence: SubmissionEvidence?
+    @State private var isSupportingDataExpanded = false
 
     var body: some View {
         Group {
@@ -53,7 +56,7 @@ struct CoachParticipantDetailView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.appBackground)
         .navigationTitle(Text("coach.participant.detail.title"))
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .task {
             if state.state == .idle {
                 await state.load()
@@ -68,204 +71,803 @@ struct CoachParticipantDetailView: View {
     private func detail(
         _ summary: CoachParticipantSummary
     ) -> some View {
-        List {
-            privateDataWarning
-            profileSection(summary)
-            enrollmentSection(summary)
-            weightSection(summary)
-            scoreSection(summary)
-            timelineSection(summary)
-        }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(Color.appBackground)
-        .refreshable {
-            await state.load()
-        }
-    }
-
-    private var privateDataWarning: some View {
-        Section {
-            Label {
-                Text("coach.participant.private_data.message")
-            } icon: {
-                Image(systemName: "lock.shield.fill")
-                    .foregroundStyle(Color.appWarning)
-            }
-            .font(AppTypography.secondary)
-            .foregroundStyle(Color.appPrimaryText)
-        } footer: {
-            Text("coach.participant.private_data.footer")
-        }
-    }
-
-    private func profileSection(
-        _ summary: CoachParticipantSummary
-    ) -> some View {
-        Section("coach.participant.profile.title") {
-            HStack(spacing: AppSpacing.medium) {
-                UserAvatar(
-                    displayName: summary.profile.displayName,
-                    size: 64
-                )
-                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                    Text(summary.profile.displayName)
-                        .font(AppTypography.cardTitle)
-                    Text(summary.profile.city)
-                        .foregroundStyle(Color.appSecondaryText)
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: AppSpacing.large) {
+                    profileCard(summary)
+                    progressCard(summary)
+                    summarySection(summary)
+                    recentActivitySection(summary)
+                    actionButtons(proxy: proxy)
+                    evidenceSection(summary)
+                        .id(CoachParticipantDetailSection.evidence)
+                    progressDetailSection(summary)
+                        .id(CoachParticipantDetailSection.progress)
+                    supportingDataSection(summary)
+                    privacyNotice
                 }
+                .frame(maxWidth: 720, alignment: .leading)
+                .padding(AppSpacing.medium)
+                .padding(.bottom, AppSpacing.large)
+                .frame(maxWidth: .infinity)
             }
-            .accessibilityElement(children: .combine)
+            .refreshable {
+                await state.load()
+            }
         }
     }
 
-    private func enrollmentSection(
+    private func profileCard(
         _ summary: CoachParticipantSummary
     ) -> some View {
-        Section("coach.participant.enrollment.title") {
-            LabeledContent(
-                "coach.participant.program",
-                value: summary.program?.title
-                    ?? String(localized: "coach.program.none")
+        HStack(spacing: AppSpacing.medium) {
+            UserAvatar(
+                displayName: summary.profile.displayName,
+                imageName: summary.profile.localPhotoReference,
+                size: 88
             )
-            if let enrollment = summary.enrollment {
-                LabeledContent("coach.participant.enrolled_at") {
-                    Text(CoachFormatting.date(enrollment.enrolledAt))
-                }
-                LabeledContent("coach.participant.enrollment_status") {
-                    StatusBadge(
-                        title: LocalizedStringKey(
-                            "coach.enrollment.\(enrollment.status.rawValue)"
-                        ),
-                        kind: enrollment.status == .completed
-                            ? .success
-                            : .neutral
+
+            VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+                Text(summary.profile.displayName)
+                    .font(AppTypography.sectionTitle)
+                    .foregroundStyle(Color.appPrimaryText)
+
+                Label(summary.profile.city, systemImage: "mappin")
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(Color.appSecondaryText)
+
+                enrollmentStatus(summary)
+
+                Divider()
+
+                Label {
+                    Text(
+                        summary.program?.title
+                            ?? String(
+                                localized: "coach.program.none",
+                                defaultValue: "Belum ada program"
+                            )
                     )
+                } icon: {
+                    Image(systemName: "checklist")
                 }
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appSecondaryText)
             }
-            LabeledContent("metric.progress") {
+        }
+        .padding(AppSpacing.medium)
+        .background(
+            Color.appSurface,
+            in: RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+        )
+        .overlay {
+            RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+            .stroke(Color.appBorder, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func enrollmentStatus(
+        _ summary: CoachParticipantSummary
+    ) -> some View {
+        switch summary.enrollment?.status {
+        case .active:
+            StatusBadge(title: "coach.enrollment.active", kind: .success)
+        case .completed:
+            StatusBadge(title: "status.completed", kind: .success)
+        case .pending:
+            StatusBadge(title: "coach.enrollment.pending", kind: .pending)
+        case .cancelled:
+            StatusBadge(title: "coach.enrollment.cancelled", kind: .neutral)
+        case .none:
+            StatusBadge(title: "coach.program.none", kind: .neutral)
+        }
+    }
+
+    private func progressCard(
+        _ summary: CoachParticipantSummary
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.medium) {
+            Text("coach.participant.progress.title")
+                .font(AppTypography.cardTitle)
+                .foregroundStyle(Color.appPrimaryText)
+
+            HStack(spacing: AppSpacing.medium) {
+                ProgressView(
+                    value: Double(summary.progressPercentage),
+                    total: 100
+                )
+                .tint(Color.brandPrimary)
+
                 Text(
                     CoachFormatting.percentage(
                         summary.progressPercentage
                     )
                 )
-                .monospacedDigit()
+                .font(AppTypography.sectionTitle.monospacedDigit())
+                .foregroundStyle(Color.appPrimaryText)
             }
-            LabeledContent("coach.metric.missing_steps") {
-                Text(CoachFormatting.number(summary.missingStepCount))
-                    .monospacedDigit()
-            }
-        }
-    }
 
-    private func weightSection(
-        _ summary: CoachParticipantSummary
-    ) -> some View {
-        Section {
-            LabeledContent("participant.weigh.initial.label") {
-                if let weight = summary.initialWeighIn {
-                    Text(
-                        CoachFormatting.weight(
-                            weight.weightKilograms
-                        )
-                    )
-                    .monospacedDigit()
-                } else {
-                    Text("coach.weight.unavailable")
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            }
-            LabeledContent("participant.weigh.final.label") {
-                if let weight = summary.finalWeighIn {
-                    Text(
-                        CoachFormatting.weight(
-                            weight.weightKilograms
-                        )
-                    )
-                    .monospacedDigit()
-                } else {
-                    Text("coach.weight.unavailable")
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            }
-        } header: {
-            Text("coach.participant.weight.title")
-        } footer: {
-            Text("coach.participant.weight.footer")
-        }
-    }
-
-    private func scoreSection(
-        _ summary: CoachParticipantSummary
-    ) -> some View {
-        let score = summary.leaderboardEntry?.score
-            ?? ScoreBreakdown(
-                approvedStepPoints: 0,
-                weightPoints: 0,
-                adjustmentPoints: 0
-            )
-        return Section("coach.participant.score.title") {
-            scoreRow(
-                title: "coach.score.step",
-                value: score.approvedStepPoints
-            )
-            scoreRow(
-                title: "coach.score.weight",
-                value: score.weightPoints
-            )
-            scoreRow(
-                title: "coach.score.adjustment",
-                value: score.adjustmentPoints
-            )
-            scoreRow(
-                title: "metric.points",
-                value: score.totalPoints,
-                isEmphasized: true
-            )
-        }
-    }
-
-    private func scoreRow(
-        title: LocalizedStringKey,
-        value: Int,
-        isEmphasized: Bool = false
-    ) -> some View {
-        LabeledContent(title) {
-            Text(CoachFormatting.number(value))
-                .font(
-                    isEmphasized
-                        ? AppTypography.cardTitle.monospacedDigit()
-                        : AppTypography.body.monospacedDigit()
+            Text(
+                String(
+                    format: String(
+                        localized:
+                            "coach.participant.progress.day_format",
+                        defaultValue: "Hari %lld dari %lld"
+                    ),
+                    currentProgramDay(summary),
+                    summary.program?.durationInDays ?? 0
                 )
+            )
+            .font(AppTypography.body)
+            .foregroundStyle(Color.appPrimaryText)
+
+            Text(
+                String(
+                    format: String(
+                        localized:
+                            "coach.participant.progress.steps_format",
+                        defaultValue:
+                            "%lld dari %lld langkah selesai"
+                    ),
+                    summary.completedStepCount,
+                    summary.totalStepCount
+                )
+            )
+            .font(AppTypography.secondary.monospacedDigit())
+            .foregroundStyle(Color.appSecondaryText)
+        }
+        .padding(AppSpacing.medium)
+        .background(
+            Color.appSurface,
+            in: RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+        )
+        .overlay {
+            RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+            .stroke(Color.appBorder, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func currentProgramDay(
+        _ summary: CoachParticipantSummary
+    ) -> Int {
+        guard let program = summary.program else {
+            return 0
+        }
+        let sortedDays = program.days.sorted {
+            $0.scheduledDate < $1.scheduledDate
+        }
+        return sortedDays.last {
+            $0.scheduledDate <= Date.now
+        }?.dayNumber ?? sortedDays.first?.dayNumber ?? 0
+    }
+
+    private func summarySection(
+        _ summary: CoachParticipantSummary
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            SectionHeader(title: "coach.participant.summary.title")
+
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(spacing: 0) {
+                        summaryMetrics(summary)
+                    }
+                } else {
+                    HStack(spacing: 0) {
+                        summaryMetrics(summary)
+                    }
+                }
+            }
+            .padding(.vertical, AppSpacing.medium)
+            .background(
+                Color.appSurface,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+                .stroke(Color.appBorder, lineWidth: 1)
+            }
         }
     }
 
-    private func timelineSection(
+    @ViewBuilder
+    private func summaryMetrics(
         _ summary: CoachParticipantSummary
     ) -> some View {
-        Section("coach.participant.timeline.title") {
-            if let program = summary.program {
-                ForEach(
-                    program.days.sorted { $0.dayNumber < $1.dayNumber }
-                ) { day in
-                    CoachParticipantDayDisclosure(
-                        day: day,
-                        submissions: summary.submissions,
-                        selectEvidence: { selectedEvidence = $0 }
+        CoachParticipantDetailMetric(
+            value: CoachFormatting.number(summary.points),
+            title: "metric.points",
+            systemImage: "star"
+        )
+
+        detailMetricDivider
+
+        CoachParticipantDetailMetric(
+            value: CoachFormatting.number(summary.activeDayCount),
+            title: "coach.participant.summary.active_days",
+            systemImage: "calendar"
+        )
+
+        detailMetricDivider
+
+        CoachParticipantDetailMetric(
+            value: CoachFormatting.number(summary.evidenceCount),
+            title: "coach.participant.summary.evidence",
+            systemImage: "photo"
+        )
+    }
+
+    @ViewBuilder
+    private var detailMetricDivider: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            Divider()
+                .padding(.horizontal, AppSpacing.medium)
+        } else {
+            Divider()
+                .padding(.vertical, AppSpacing.xSmall)
+        }
+    }
+
+    private func recentActivitySection(
+        _ summary: CoachParticipantSummary
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            SectionHeader(title: "coach.participant.activity.title")
+
+            VStack(spacing: 0) {
+                if recentSubmissions(summary).isEmpty {
+                    Text("coach.participant.activity.empty")
+                        .font(AppTypography.secondary)
+                        .foregroundStyle(Color.appSecondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(AppSpacing.medium)
+                } else {
+                    ForEach(
+                        Array(recentSubmissions(summary).enumerated()),
+                        id: \.element.id
+                    ) { index, submission in
+                        recentActivityRow(
+                            submission,
+                            summary: summary
+                        )
+
+                        if index < recentSubmissions(summary).count - 1 {
+                            Divider()
+                                .padding(.leading, 60)
+                        }
+                    }
+                }
+            }
+            .background(
+                Color.appSurface,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+                .stroke(Color.appBorder, lineWidth: 1)
+            }
+        }
+    }
+
+    private func recentSubmissions(
+        _ summary: CoachParticipantSummary
+    ) -> [StepSubmission] {
+        Array(
+            summary.submissions
+                .sorted { $0.submittedAt > $1.submittedAt }
+                .prefix(2)
+        )
+    }
+
+    private func recentActivityRow(
+        _ submission: StepSubmission,
+        summary: CoachParticipantSummary
+    ) -> some View {
+        HStack(spacing: AppSpacing.medium) {
+            Image(systemName: submissionStatusImage(submission.status))
+                .font(.title3)
+                .foregroundStyle(submissionStatusColor(submission.status))
+                .frame(width: 44, height: 44)
+                .background(
+                    submissionStatusColor(submission.status).opacity(0.1),
+                    in: Circle()
+                )
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                Text(stepTitle(submission.stepID, summary: summary))
+                    .font(AppTypography.cardTitle)
+                    .foregroundStyle(Color.appPrimaryText)
+
+                Text(submissionStatusTitle(submission.status))
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(Color.appSecondaryText)
+            }
+
+            Spacer()
+        }
+        .padding(AppSpacing.medium)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func actionButtons(
+        proxy: ScrollViewProxy
+    ) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: AppSpacing.small) {
+                evidenceButton(proxy: proxy)
+                progressButton(proxy: proxy)
+            }
+
+            VStack(spacing: AppSpacing.small) {
+                progressButton(proxy: proxy)
+                evidenceButton(proxy: proxy)
+            }
+        }
+    }
+
+    private func evidenceButton(
+        proxy: ScrollViewProxy
+    ) -> some View {
+        Button {
+            withAnimation {
+                proxy.scrollTo(
+                    CoachParticipantDetailSection.evidence,
+                    anchor: .top
+                )
+            }
+        } label: {
+            Text("coach.participant.action.evidence")
+                .font(AppTypography.button)
+                .frame(maxWidth: .infinity, minHeight: 50)
+                .foregroundStyle(Color.brandPrimary)
+                .overlay {
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.medium,
+                        style: .continuous
                     )
+                    .stroke(Color.brandPrimary, lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("coach.participant.action.evidence")
+    }
+
+    private func progressButton(
+        proxy: ScrollViewProxy
+    ) -> some View {
+        Button {
+            withAnimation {
+                proxy.scrollTo(
+                    CoachParticipantDetailSection.progress,
+                    anchor: .top
+                )
+            }
+        } label: {
+            Text("coach.participant.action.progress")
+        }
+        .buttonStyle(PrimaryActionButtonStyle())
+        .accessibilityIdentifier("coach.participant.action.progress")
+    }
+
+    private func evidenceSection(
+        _ summary: CoachParticipantSummary
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            SectionHeader(title: "coach.participant.evidence.title")
+
+            if summary.submissions.isEmpty {
+                ContentUnavailableView(
+                    "coach.participant.evidence.empty.title",
+                    systemImage: "photo.badge.plus",
+                    description: Text(
+                        "coach.participant.evidence.empty.message"
+                    )
+                )
+                .padding(AppSpacing.medium)
+                .frame(maxWidth: .infinity)
+                .background(
+                    Color.appSurface,
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(
+                        Array(
+                            summary.submissions
+                                .sorted {
+                                    $0.submittedAt > $1.submittedAt
+                                }
+                                .enumerated()
+                        ),
+                        id: \.element.id
+                    ) { index, submission in
+                        evidenceRow(
+                            submission,
+                            summary: summary
+                        )
+
+                        if index < summary.submissions.count - 1 {
+                            Divider()
+                                .padding(.leading, AppSpacing.medium)
+                        }
+                    }
+                }
+                .background(
+                    Color.appSurface,
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+                .overlay {
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                    .stroke(Color.appBorder, lineWidth: 1)
+                }
+            }
+        }
+    }
+
+    private func evidenceRow(
+        _ submission: StepSubmission,
+        summary: CoachParticipantSummary
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                    Text(stepTitle(submission.stepID, summary: summary))
+                        .font(AppTypography.cardTitle)
+                        .foregroundStyle(Color.appPrimaryText)
+
+                    Text(
+                        CoachFormatting.dateTime(
+                            submission.submittedAt,
+                            timeZoneIdentifier:
+                                summary.program?.timeZoneIdentifier
+                                    ?? "Asia/Makassar"
+                        )
+                    )
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(Color.appSecondaryText)
+                }
+
+                Spacer(minLength: AppSpacing.small)
+
+                submissionStatusBadge(submission.status)
+            }
+
+            ForEach(submission.evidence) { evidence in
+                switch evidence.kind {
+                case .photo:
+                    Button {
+                        selectedEvidence = evidence
+                    } label: {
+                        MediaThumbnail(
+                            title: "coach.evidence.thumbnail",
+                            systemImage: "photo.fill",
+                            kindLabel: "coach.evidence.photo"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("coach.evidence.open")
+                case .text:
+                    if let answer = evidence.textValue {
+                        VStack(
+                            alignment: .leading,
+                            spacing: AppSpacing.xxSmall
+                        ) {
+                            Text("coach.evidence.answer")
+                                .font(AppTypography.label)
+                                .foregroundStyle(
+                                    Color.appSecondaryText
+                                )
+                            Text(answer)
+                                .font(AppTypography.body)
+                                .foregroundStyle(Color.appPrimaryText)
+                        }
+                        .padding(AppSpacing.medium)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            Color.appSecondaryBackground,
+                            in: RoundedRectangle(
+                                cornerRadius: AppRadius.medium,
+                                style: .continuous
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        .padding(AppSpacing.medium)
+    }
+
+    private func progressDetailSection(
+        _ summary: CoachParticipantSummary
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            SectionHeader(title: "coach.participant.progress.detail.title")
+
+            if let program = summary.program {
+                VStack(spacing: 0) {
+                    ForEach(
+                        Array(
+                            program.days
+                                .sorted {
+                                    $0.dayNumber < $1.dayNumber
+                                }
+                                .enumerated()
+                        ),
+                        id: \.element.id
+                    ) { index, day in
+                        CoachParticipantProgressDayDisclosure(
+                            day: day,
+                            submissions: summary.submissions
+                        )
+
+                        if index < program.days.count - 1 {
+                            Divider()
+                                .padding(.leading, AppSpacing.medium)
+                        }
+                    }
+                }
+                .background(
+                    Color.appSurface,
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+                .overlay {
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                    .stroke(Color.appBorder, lineWidth: 1)
                 }
             } else {
                 Text("coach.participant.timeline.empty")
+                    .font(AppTypography.secondary)
                     .foregroundStyle(Color.appSecondaryText)
             }
         }
     }
+
+    private func supportingDataSection(
+        _ summary: CoachParticipantSummary
+    ) -> some View {
+        DisclosureGroup(
+            isExpanded: $isSupportingDataExpanded
+        ) {
+            VStack(spacing: AppSpacing.small) {
+                supportingDataRow(
+                    title: "participant.weigh.initial.label",
+                    value: summary.initialWeighIn.map {
+                        CoachFormatting.weight($0.weightKilograms)
+                    } ?? String(
+                        localized: "coach.weight.unavailable",
+                        defaultValue: "Belum tersedia"
+                    )
+                )
+                Divider()
+                supportingDataRow(
+                    title: "participant.weigh.final.label",
+                    value: summary.finalWeighIn.map {
+                        CoachFormatting.weight($0.weightKilograms)
+                    } ?? String(
+                        localized: "coach.weight.unavailable",
+                        defaultValue: "Belum tersedia"
+                    )
+                )
+                Divider()
+                supportingDataRow(
+                    title: "metric.points",
+                    value: CoachFormatting.number(summary.points)
+                )
+            }
+            .padding(.top, AppSpacing.medium)
+        } label: {
+            Label(
+                "coach.participant.supporting_data.title",
+                systemImage: "chart.bar.doc.horizontal"
+            )
+            .font(AppTypography.cardTitle)
+            .foregroundStyle(Color.appPrimaryText)
+        }
+        .padding(AppSpacing.medium)
+        .background(
+            Color.appSurface,
+            in: RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+        )
+        .overlay {
+            RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+            .stroke(Color.appBorder, lineWidth: 1)
+        }
+    }
+
+    private func supportingDataRow(
+        title: LocalizedStringKey,
+        value: String
+    ) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appSecondaryText)
+            Spacer()
+            Text(value)
+                .font(AppTypography.body.monospacedDigit())
+                .foregroundStyle(Color.appPrimaryText)
+                .multilineTextAlignment(.trailing)
+        }
+    }
+
+    private var privacyNotice: some View {
+        Label {
+            Text("coach.participant.private_data.message")
+        } icon: {
+            Image(systemName: "lock.shield")
+                .foregroundStyle(Color.appWarning)
+        }
+        .font(AppTypography.label)
+        .foregroundStyle(Color.appSecondaryText)
+        .padding(AppSpacing.medium)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.appSurface,
+            in: RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+        )
+    }
+
+    private func stepTitle(
+        _ stepID: UUID,
+        summary: CoachParticipantSummary
+    ) -> String {
+        summary.program?
+            .days
+            .flatMap(\.steps)
+            .first { $0.id == stepID }?
+            .title
+            ?? String(
+                localized: "coach.participant.activity.unknown_step",
+                defaultValue: "Langkah program"
+            )
+    }
+
+    private func submissionStatusTitle(
+        _ status: SubmissionStatus
+    ) -> LocalizedStringKey {
+        switch status {
+        case .pending:
+            "status.pending"
+        case .approved:
+            "status.approved"
+        case .rejected:
+            "status.rejected"
+        }
+    }
+
+    private func submissionStatusImage(
+        _ status: SubmissionStatus
+    ) -> String {
+        switch status {
+        case .pending:
+            "clock"
+        case .approved:
+            "checkmark"
+        case .rejected:
+            "xmark"
+        }
+    }
+
+    private func submissionStatusColor(
+        _ status: SubmissionStatus
+    ) -> Color {
+        switch status {
+        case .pending:
+            .appWarning
+        case .approved:
+            .appSuccess
+        case .rejected:
+            .appDestructive
+        }
+    }
+
+    @ViewBuilder
+    private func submissionStatusBadge(
+        _ status: SubmissionStatus
+    ) -> some View {
+        switch status {
+        case .pending:
+            StatusBadge(title: "status.pending", kind: .pending)
+        case .approved:
+            StatusBadge(title: "status.approved", kind: .success)
+        case .rejected:
+            StatusBadge(title: "status.rejected", kind: .error)
+        }
+    }
 }
 
-private struct CoachParticipantDayDisclosure: View {
+private enum CoachParticipantDetailSection: Hashable {
+    case evidence
+    case progress
+}
+
+private struct CoachParticipantDetailMetric: View {
+    let value: String
+    let title: LocalizedStringKey
+    let systemImage: String
+
+    var body: some View {
+        VStack(spacing: AppSpacing.xSmall) {
+            Image(systemName: systemImage)
+                .font(.title3)
+                .foregroundStyle(Color.brandPrimary)
+                .frame(width: 40, height: 40)
+                .background(
+                    Color.brandPrimary.opacity(0.08),
+                    in: Circle()
+                )
+                .accessibilityHidden(true)
+
+            Text(value)
+                .font(AppTypography.sectionTitle.monospacedDigit())
+                .foregroundStyle(Color.appPrimaryText)
+
+            Text(title)
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appSecondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, AppSpacing.xSmall)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct CoachParticipantProgressDayDisclosure: View {
     let day: ProgramDay
     let submissions: [StepSubmission]
-    let selectEvidence: (SubmissionEvidence) -> Void
 
     private var completedCount: Int {
         day.steps.filter { step in
@@ -275,29 +877,42 @@ private struct CoachParticipantDayDisclosure: View {
 
     var body: some View {
         DisclosureGroup {
-            ForEach(day.steps.sorted { $0.order < $1.order }) { step in
-                CoachParticipantStepReviewRow(
-                    step: step,
-                    submission: submissions.first {
-                        $0.stepID == step.id
-                    },
-                    selectEvidence: selectEvidence
-                )
+            VStack(spacing: AppSpacing.small) {
+                ForEach(day.steps.sorted { $0.order < $1.order }) { step in
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(step.title)
+                            .font(AppTypography.body)
+                            .foregroundStyle(Color.appPrimaryText)
+
+                        Spacer(minLength: AppSpacing.small)
+
+                        stepStatus(
+                            submissions.first {
+                                $0.stepID == step.id
+                            }
+                        )
+                    }
+                }
             }
+            .padding(.top, AppSpacing.small)
         } label: {
-            VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                let dayNumber = Text(
-                    day.dayNumber,
-                    format: .number.locale(CoachFormatting.locale)
-                )
+            VStack(
+                alignment: .leading,
+                spacing: AppSpacing.xxSmall
+            ) {
                 Text(
-                    "\(Text("participant.day.label")) \(dayNumber) — \(Text(day.title))"
+                    "\(Text("participant.day.label")) \(Text(day.dayNumber, format: .number.locale(CoachFormatting.locale))) — \(Text(day.title))"
                 )
                 .font(AppTypography.cardTitle)
+                .foregroundStyle(Color.appPrimaryText)
+
                 Text(
                     String(
                         format: String(
-                            localized: "coach.timeline.completion_format"
+                            localized:
+                                "coach.timeline.completion_format",
+                            defaultValue:
+                                "%lld dari %lld langkah dikirim"
                         ),
                         completedCount,
                         day.steps.count
@@ -307,72 +922,13 @@ private struct CoachParticipantDayDisclosure: View {
                 .foregroundStyle(Color.appSecondaryText)
             }
         }
-    }
-}
-
-private struct CoachParticipantStepReviewRow: View {
-    let step: ProgramStep
-    let submission: StepSubmission?
-    let selectEvidence: (SubmissionEvidence) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.small) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(step.title)
-                    .font(AppTypography.cardTitle)
-                Spacer()
-                statusBadge
-            }
-            Text(step.instructions)
-                .font(AppTypography.secondary)
-                .foregroundStyle(Color.appSecondaryText)
-
-            if let submission {
-                ForEach(submission.evidence) { evidence in
-                    switch evidence.kind {
-                    case .photo:
-                        Button {
-                            selectEvidence(evidence)
-                        } label: {
-                            MediaThumbnail(
-                                title: "coach.evidence.thumbnail",
-                                systemImage: "photo.fill",
-                                kindLabel: "coach.evidence.photo"
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("coach.evidence.open")
-                    case .text:
-                        if let answer = evidence.textValue {
-                            VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                                Text("coach.evidence.answer")
-                                    .font(AppTypography.label)
-                                    .foregroundStyle(Color.appSecondaryText)
-                                Text(answer)
-                                    .font(AppTypography.body)
-                            }
-                        }
-                    }
-                }
-                if let note = submission.reviewNote, !note.isEmpty {
-                    Label(note, systemImage: "text.bubble")
-                        .font(AppTypography.secondary)
-                        .foregroundStyle(Color.appSecondaryText)
-                }
-            } else {
-                Label(
-                    "coach.step.missing",
-                    systemImage: "exclamationmark.circle"
-                )
-                .font(AppTypography.secondary)
-                .foregroundStyle(Color.appWarning)
-            }
-        }
-        .padding(.vertical, AppSpacing.xSmall)
+        .padding(AppSpacing.medium)
     }
 
     @ViewBuilder
-    private var statusBadge: some View {
+    private func stepStatus(
+        _ submission: StepSubmission?
+    ) -> some View {
         if let submission {
             switch submission.status {
             case .pending:
@@ -383,10 +939,7 @@ private struct CoachParticipantStepReviewRow: View {
                 StatusBadge(title: "status.rejected", kind: .error)
             }
         } else {
-            StatusBadge(
-                title: "coach.step.missing",
-                kind: .warning
-            )
+            StatusBadge(title: "coach.step.missing", kind: .neutral)
         }
     }
 }
@@ -419,7 +972,9 @@ struct CoachEvidenceViewer: View {
             .padding(AppSpacing.large)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.appBackground)
-            .navigationTitle(Text("coach.evidence.viewer.navigation_title"))
+            .navigationTitle(
+                Text("coach.evidence.viewer.navigation_title")
+            )
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

@@ -4,6 +4,8 @@ import SwiftUI
 struct ParticipantProgramCatalogView: View {
     let store: ParticipantJourneyStore
     let router: ShellTabRouter
+    var navigationContext: ProgramParticipationNavigationContext =
+        .participant(.program)
 
     @State private var selectedFilter =
         ParticipantProgramCatalogFilter.enrolled
@@ -126,8 +128,10 @@ struct ParticipantProgramCatalogView: View {
 
     private func openProgram(_ program: Program) {
         router.navigate(
-            to: .participant(.programDetail(program.id, .program)),
-            in: .participant(.program)
+            to: navigationContext.programDetailRoute(
+                programID: program.id
+            ),
+            in: navigationContext.tab
         )
     }
 

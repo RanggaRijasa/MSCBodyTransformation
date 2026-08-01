@@ -5,7 +5,8 @@ struct ParticipantProgramView: View {
     let store: ParticipantJourneyStore
     let router: ShellTabRouter
     var programID: UUID?
-    var navigationTab: ParticipantTab = .program
+    var navigationContext: ProgramParticipationNavigationContext =
+        .participant(.program)
 
     var body: some View {
         Group {
@@ -33,7 +34,7 @@ struct ParticipantProgramView: View {
                 program: program,
                 store: store,
                 router: router,
-                navigationTab: navigationTab
+                navigationContext: navigationContext
             )
         }
     }
@@ -57,8 +58,8 @@ struct ParticipantProgramView: View {
 
     private func openEnrollment(for program: Program) {
         router.navigate(
-            to: .participant(.joinProgram(program.id)),
-            in: .participant(navigationTab)
+            to: navigationContext.joinProgramRoute(programID: program.id),
+            in: navigationContext.tab
         )
     }
 }

@@ -12,12 +12,66 @@ nonisolated enum ParticipantRoute: Hashable, Sendable {
     case profile
 }
 
+nonisolated enum CoachParticipantsDestination: Hashable, Sendable {
+    case all
+    case needsAttention
+    case program(UUID)
+}
+
 nonisolated enum CoachRoute: Hashable, Sendable {
+    case participants(CoachParticipantsDestination)
     case participantDetail(UUID)
     case reviewQueue
     case invite
+    case programDetail(UUID)
+    case joinProgram(UUID?)
+    case stepDetail(UUID)
     case leaderboard
     case profile
+}
+
+nonisolated enum ProgramParticipationNavigationContext:
+    Hashable,
+    Sendable
+{
+    case participant(ParticipantTab)
+    case coach
+
+    var tab: AppTab {
+        switch self {
+        case .participant(let tab):
+            .participant(tab)
+        case .coach:
+            .coach(.program)
+        }
+    }
+
+    func programDetailRoute(programID: UUID) -> ShellRoute {
+        switch self {
+        case .participant(let tab):
+            .participant(.programDetail(programID, tab))
+        case .coach:
+            .coach(.programDetail(programID))
+        }
+    }
+
+    func joinProgramRoute(programID: UUID?) -> ShellRoute {
+        switch self {
+        case .participant:
+            .participant(.joinProgram(programID))
+        case .coach:
+            .coach(.joinProgram(programID))
+        }
+    }
+
+    func stepDetailRoute(stepID: UUID) -> ShellRoute {
+        switch self {
+        case .participant:
+            .participant(.stepDetail(stepID))
+        case .coach:
+            .coach(.stepDetail(stepID))
+        }
+    }
 }
 
 nonisolated enum AdminRoute: Hashable, Sendable {

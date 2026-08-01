@@ -77,6 +77,27 @@ When generating or editing code:
 - Use native `FormatStyle` APIs rather than manually formatted strings.
 - Preserve explicit program timezones and show WITA or another relevant zone when needed.
 - Test Indonesian text wrapping at large Dynamic Type sizes.
+- App-owned UI must remain in Bahasa Indonesia regardless of the device
+  language. Keep `AppConfiguration.indonesianLocaleIdentifier` set to `id-ID`
+  and inject its `Locale` at the root `WindowGroup`; do not fall back to
+  `Locale.current` for app copy or product formatting.
+- English is allowed only for approved product names, technology names, or
+  established feature terms such as `Coach`. System-owned surfaces such as
+  the native photo picker or permission dialog may continue to follow the
+  device language.
+- Every runtime `String(localized:)` call must include a Bahasa Indonesia
+  `defaultValue`, including search prompts, filter summaries, formatted copy,
+  and strings passed into `String(format:)`. Do not assume an `id` entry in
+  `Localizable.xcstrings` will be used as fallback while the Xcode project
+  development region is `en`.
+- Before completing localization or UI-copy changes, launch the affected flow
+  at least once with a non-Indonesian app locale such as
+  `-AppleLanguages (en) -AppleLocale en_US`. Verify that no localization key
+  such as `feature.section.label` is visible. Add or update a focused UI test
+  for dynamic localized strings when practical.
+- A visible localization key is a release-blocking UI defect. Fix the catalog
+  entry and the runtime fallback; do not hide it with layout changes or
+  screenshot-only workarounds.
 
 ## Phase Discipline
 

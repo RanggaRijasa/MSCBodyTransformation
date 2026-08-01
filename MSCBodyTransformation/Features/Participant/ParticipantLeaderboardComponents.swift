@@ -12,6 +12,7 @@ nonisolated struct ParticipantLeaderboardDisplayEntry:
     let totalPoints: Int
     let progressPercentage: Int?
     let isCurrentUser: Bool
+    var isAssignedToCoach = false
     let hasTie: Bool
 }
 
@@ -88,28 +89,109 @@ struct ParticipantLeaderboardProgramSelector: View {
 
 struct ParticipantLeaderboardPodium: View {
     let entries: [ParticipantLeaderboardDisplayEntry]
+    let interactionAccessibilityPrefix: String?
+    let onSelectEntry: ((ParticipantLeaderboardDisplayEntry) -> Void)?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    init(
+        entries: [ParticipantLeaderboardDisplayEntry],
+        interactionAccessibilityPrefix: String? = nil,
+        onSelectEntry: ((ParticipantLeaderboardDisplayEntry) -> Void)? = nil
+    ) {
+        self.entries = entries
+        self.interactionAccessibilityPrefix =
+            interactionAccessibilityPrefix
+        self.onSelectEntry = onSelectEntry
+    }
+
+    @ViewBuilder
     var body: some View {
-        Group {
-            if dynamicTypeSize.isAccessibilitySize {
-                VStack(spacing: AppSpacing.small) {
-                    ForEach(entries) { entry in
-                        ParticipantLeaderboardRankRow(
-                            entry: entry,
-                            showsProgress: false
-                        )
-                    }
+        if onSelectEntry == nil {
+            podiumContent
+                .accessibilityIdentifier("participant.leaderboard.podium")
+        } else {
+            podiumContent
+        }
+    }
+
+    @ViewBuilder
+    private var podiumContent: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(spacing: AppSpacing.small) {
+                ForEach(entries) { entry in
+                    accessibilityRankEntry(entry)
                 }
-            } else {
-                HStack(alignment: .bottom, spacing: AppSpacing.xSmall) {
-                    ForEach(visualOrder) { entry in
-                        ParticipantLeaderboardPodiumPlace(entry: entry)
-                    }
+            }
+        } else {
+            HStack(alignment: .bottom, spacing: AppSpacing.xSmall) {
+                ForEach(visualOrder) { entry in
+                    podiumEntry(entry)
                 }
             }
         }
-        .accessibilityIdentifier("participant.leaderboard.podium")
+    }
+
+    @ViewBuilder
+    private func podiumEntry(
+        _ entry: ParticipantLeaderboardDisplayEntry
+    ) -> some View {
+        if entry.isAssignedToCoach, let onSelectEntry {
+            Button {
+                onSelectEntry(entry)
+            } label: {
+                ParticipantLeaderboardPodiumPlace(entry: entry)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .accessibilityHint(
+                Text("coach.leaderboard.score_detail.hint")
+            )
+            .accessibilityIdentifier(
+                interactionIdentifier(for: entry, placement: "podium")
+            )
+        } else {
+            ParticipantLeaderboardPodiumPlace(entry: entry)
+        }
+    }
+
+    @ViewBuilder
+    private func accessibilityRankEntry(
+        _ entry: ParticipantLeaderboardDisplayEntry
+    ) -> some View {
+        if entry.isAssignedToCoach, let onSelectEntry {
+            Button {
+                onSelectEntry(entry)
+            } label: {
+                ParticipantLeaderboardRankRow(
+                    entry: entry,
+                    showsProgress: false
+                )
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .accessibilityHint(
+                Text("coach.leaderboard.score_detail.hint")
+            )
+            .accessibilityIdentifier(
+                interactionIdentifier(for: entry, placement: "podium")
+            )
+        } else {
+            ParticipantLeaderboardRankRow(
+                entry: entry,
+                showsProgress: false
+            )
+        }
+    }
+
+    private func interactionIdentifier(
+        for entry: ParticipantLeaderboardDisplayEntry,
+        placement: String
+    ) -> String {
+        let prefix =
+            interactionAccessibilityPrefix ?? "participant.leaderboard"
+        return "\(prefix).\(placement).\(entry.participantID.uuidString)"
     }
 
     private var visualOrder: [ParticipantLeaderboardDisplayEntry] {
@@ -152,8 +234,8 @@ private struct ParticipantLeaderboardPodiumPlace: View {
                     .font(AppTypography.label)
                     .foregroundStyle(Color.appSecondaryText)
 
-                if entry.isCurrentUser {
-                    Text("Kamu")
+                if let markerTitle {
+                    Text(LocalizedStringKey(markerTitle))
                         .font(AppTypography.label.weight(.semibold))
                         .foregroundStyle(Color.brandPrimary)
                         .padding(.horizontal, AppSpacing.xSmall)
@@ -245,6 +327,16 @@ private struct ParticipantLeaderboardPodiumPlace: View {
     private var style: ParticipantLeaderboardRankStyle {
         ParticipantLeaderboardRankStyle(rank: entry.rank)
     }
+
+    private var markerTitle: String? {
+        if entry.isCurrentUser {
+            return "Kamu"
+        }
+        if entry.isAssignedToCoach {
+            return "coach.leaderboard.assigned_marker"
+        }
+        return nil
+    }
 }
 
 struct ParticipantLeaderboardCurrentRankCard: View {
@@ -296,7 +388,7 @@ struct ParticipantLeaderboardRankRow: View {
         }
         .padding(AppSpacing.medium)
         .background(
-            isCurrentUserCard
+            isHighlighted
                 ? Color.brandPrimary.opacity(0.08)
                 : Color.appSurface,
             in: RoundedRectangle(
@@ -310,8 +402,8 @@ struct ParticipantLeaderboardRankRow: View {
                 style: .continuous
             )
             .stroke(
-                isCurrentUserCard ? Color.brandPrimary : Color.appBorder,
-                lineWidth: isCurrentUserCard ? 2 : 1
+                isHighlighted ? Color.brandPrimary : Color.appBorder,
+                lineWidth: isHighlighted ? 2 : 1
             )
         }
         .accessibilityElement(children: .combine)
@@ -366,6 +458,15 @@ struct ParticipantLeaderboardRankRow: View {
                     .font(AppTypography.label)
                     .foregroundStyle(Color.appInfo)
             }
+
+            if entry.isAssignedToCoach {
+                Label(
+                    "coach.leaderboard.assigned_marker",
+                    systemImage: "person.crop.circle.badge.checkmark"
+                )
+                .font(AppTypography.label)
+                .foregroundStyle(Color.brandPrimary)
+            }
         }
     }
 
@@ -388,6 +489,10 @@ struct ParticipantLeaderboardRankRow: View {
         .padding(.vertical, AppSpacing.xSmall)
         .background(Color.appSecondaryBackground, in: Capsule())
         .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var isHighlighted: Bool {
+        isCurrentUserCard || entry.isCurrentUser || entry.isAssignedToCoach
     }
 }
 

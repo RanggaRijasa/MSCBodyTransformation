@@ -35,6 +35,28 @@ nonisolated struct ReviewLocalSubmissionUseCase: Sendable {
     }
 }
 
+nonisolated struct RateLocalSubmissionUseCase: Sendable {
+    let repository: any SubmissionRepository
+
+    func callAsFunction(
+        submissionID: UUID,
+        reviewerID: UUID,
+        rating: Int
+    ) async throws -> StepSubmission {
+        guard (1...5).contains(rating) else {
+            throw DomainError.validation(
+                field: "coachRating",
+                reason: "Penilaian harus antara 1 sampai 5 bintang."
+            )
+        }
+        return try await repository.saveCoachRating(
+            submissionID: submissionID,
+            reviewerID: reviewerID,
+            rating: rating
+        )
+    }
+}
+
 nonisolated struct CreateLocalDraftProgramUseCase: Sendable {
     let repository: any ProgramRepository
     let identifierGenerator: any IdentifierGenerating

@@ -73,36 +73,45 @@ nonisolated struct CoachDataService: Sendable {
     func reviewItems(
         coachID: UUID
     ) async throws -> [CoachReviewItem] {
-        guard let repositories = environment.repositories else {
-            throw environment.bootstrapError ?? DomainError.unknown
-        }
-        let queue = try await repositories.submissions.reviewQueue(
-            coachID: coachID
-        )
         let summaries = try await participantSummaries(coachID: coachID)
 
-        return queue.compactMap { submission in
-            guard let summary = summaries.first(where: {
-                $0.enrollment?.id == submission.enrollmentID
-            }), let enrollment = summary.enrollment,
-              let program = summary.program,
-              let day = program.days.first(where: { day in
-                  day.steps.contains(where: { $0.id == submission.stepID })
-              }),
-              let step = day.steps.first(where: {
-                  $0.id == submission.stepID
-              }) else {
-                return nil
+        return summaries.flatMap { summary -> [CoachReviewItem] in
+            guard let enrollment = summary.enrollment,
+                  let program = summary.program else {
+                return []
             }
-            return CoachReviewItem(
-                submission: submission,
-                participant: summary.profile,
-                enrollment: enrollment,
-                program: program,
-                day: day,
-                step: step,
-                scoreBeforeReview: summary.points
-            )
+            return summary.submissions.compactMap { submission in
+                guard !submission.evidence.isEmpty,
+                      let day = program.days.first(where: { day in
+                          day.steps.contains {
+                              $0.id == submission.stepID
+                          }
+                      }),
+                      let step = day.steps.first(where: {
+                          $0.id == submission.stepID
+                      }) else {
+                    return nil
+                }
+                return CoachReviewItem(
+                    submission: submission,
+                    participant: summary.profile,
+                    enrollment: enrollment,
+                    program: program,
+                    day: day,
+                    step: step,
+                    scoreBeforeReview: summary.points
+                )
+            }
+        }
+        .sorted { lhs, rhs in
+            let lhsNeedsAction = lhs.submission.status == .pending
+                && lhs.step.verificationMode == .coachReview
+            let rhsNeedsAction = rhs.submission.status == .pending
+                && rhs.step.verificationMode == .coachReview
+            if lhsNeedsAction != rhsNeedsAction {
+                return lhsNeedsAction
+            }
+            return lhs.submission.submittedAt > rhs.submission.submittedAt
         }
     }
 

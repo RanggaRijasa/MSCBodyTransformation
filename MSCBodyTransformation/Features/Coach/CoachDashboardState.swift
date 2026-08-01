@@ -102,6 +102,24 @@ final class CoachParticipantsState {
             .sorted(by: orderedBefore)
     }
 
+    func prepare(for destination: CoachParticipantsDestination) {
+        query = ""
+        reviewFilter = .all
+        sort = .progress
+
+        switch destination {
+        case .all:
+            selectedProgramID = nil
+            completionFilter = .all
+        case .needsAttention:
+            selectedProgramID = nil
+            completionFilter = .fallingBehind
+        case .program(let programID):
+            selectedProgramID = programID
+            completionFilter = .all
+        }
+    }
+
     func load() async {
         state = .loading
         do {

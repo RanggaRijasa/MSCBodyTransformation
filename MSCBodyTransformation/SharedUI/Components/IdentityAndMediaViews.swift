@@ -54,6 +54,81 @@ struct UserAvatar: View {
 
 }
 
+struct HomeProfileCard: View {
+    let displayName: String
+    let imageName: String?
+    let badgeTitle: LocalizedStringKey
+    let accessibilityHint: LocalizedStringKey
+    let accessibilityIdentifier: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: AppSpacing.medium) {
+                UserAvatar(
+                    displayName: displayName,
+                    imageName: imageName,
+                    size: 64
+                )
+
+                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                    Text("participant.home.greeting")
+                        .font(AppTypography.secondary)
+                        .foregroundStyle(Color.appSecondaryText)
+
+                    Text(displayName)
+                        .font(AppTypography.sectionTitle)
+                        .foregroundStyle(Color.appPrimaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(badgeTitle)
+                        .font(AppTypography.label)
+                        .foregroundStyle(Color.brandPrimary)
+                        .padding(.horizontal, AppSpacing.xSmall)
+                        .padding(.vertical, AppSpacing.xxSmall)
+                        .background(
+                            Color.brandPrimary.opacity(0.1),
+                            in: Capsule()
+                        )
+                }
+
+                Spacer(minLength: AppSpacing.xSmall)
+
+                Image(systemName: "chevron.right")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.brandPrimary)
+                    .frame(width: 44, height: 44)
+                    .accessibilityHidden(true)
+            }
+            .padding(AppSpacing.medium)
+            .background(
+                Color.appSurface,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+                .stroke(Color.appBorder, lineWidth: 1)
+            }
+            .contentShape(
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(Text(accessibilityHint))
+        .accessibilityIdentifier(accessibilityIdentifier)
+    }
+}
+
 struct MediaThumbnail: View {
     let title: LocalizedStringKey
     let systemImage: String

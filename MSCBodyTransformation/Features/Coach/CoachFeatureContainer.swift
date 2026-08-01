@@ -52,6 +52,13 @@ final class CoachFeatureContainer {
         )
     }
 
+    func saveRating(
+        item: CoachReviewItem,
+        rating: Int
+    ) async throws {
+        try await reviewQueue.saveRating(item: item, rating: rating)
+    }
+
     func makeParticipantDetailState(
         participantID: UUID
     ) -> CoachParticipantDetailState? {

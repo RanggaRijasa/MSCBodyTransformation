@@ -42,6 +42,156 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testCoachLeaderboardAndProfileUseParticipantInformationArchitecture()
+        throws
+    {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        XCTAssertFalse(tabButton(label: "Peserta", in: app).exists)
+        XCTAssertFalse(tabButton(label: "Peringkat", in: app).exists)
+        let leaderboardAction = app.buttons[
+            "coach.dashboard.action.leaderboard"
+        ]
+        XCTAssertTrue(leaderboardAction.waitForExistence(timeout: 8))
+        leaderboardAction.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.leaderboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            app.buttons["coach.leaderboard.program-selector"]
+                .waitForExistence(timeout: 5)
+        )
+        let assignedPodiumCards = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.leaderboard.podium."
+            )
+        )
+        XCTAssertGreaterThan(assignedPodiumCards.count, 0)
+        XCTAssertGreaterThan(
+            app.staticTexts
+                .matching(NSPredicate(format: "label == %@", "Pesertamu"))
+                .count,
+            0
+        )
+        XCTAssertFalse(app.staticTexts["Rincian poin"].exists)
+
+        let assignedPodiumCard = assignedPodiumCards.firstMatch
+        XCTAssertTrue(assignedPodiumCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(assignedPodiumCard.isHittable)
+        assignedPodiumCard.tap()
+
+        XCTAssertTrue(
+            element(
+                identifier: "coach.leaderboard.score-detail-modal",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(app.staticTexts["Poin langkah"].exists)
+        app.navigationBars["Rincian poin"].buttons["Tutup"].tap()
+
+        let assignedRankCard = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.leaderboard.rank."
+            )
+        ).firstMatch
+        for _ in 0..<6
+        where !assignedRankCard.waitForExistence(timeout: 1)
+            || !assignedRankCard.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(assignedRankCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(assignedRankCard.isHittable)
+        assignedRankCard.tap()
+
+        XCTAssertTrue(
+            element(
+                identifier: "coach.leaderboard.score-detail-modal",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(app.staticTexts["Poin langkah"].exists)
+        app.navigationBars["Rincian poin"].buttons["Tutup"].tap()
+
+        tabButton(label: "Profil", in: app).tap()
+        XCTAssertTrue(
+            element(identifier: "coach.profile", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(app.staticTexts["coach@demo.local"].exists)
+
+        let editProfile = app.buttons["coach.profile.edit"]
+        XCTAssertTrue(editProfile.waitForExistence(timeout: 5))
+        editProfile.tap()
+
+        XCTAssertTrue(
+            app.textFields["coach.profile.editor.name"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons["coach.profile.editor.photo-picker"].exists
+        )
+        XCTAssertTrue(
+            app.textFields["coach.profile.editor.biography"].exists
+        )
+        app.buttons["Batal"].tap()
+    }
+
+    @MainActor
+    func testParticipantLeaderboardDoesNotExposeCoachScoreDetails() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "participant",
+            "-DemoScenario", "participant_active",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        tabButton(label: "Peringkat", in: app).tap()
+        XCTAssertTrue(
+            element(identifier: "participant.leaderboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            element(identifier: "participant.leaderboard.podium", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertEqual(
+            app.buttons.matching(
+                NSPredicate(
+                    format: "identifier BEGINSWITH %@",
+                    "coach.leaderboard.podium."
+                )
+            ).count,
+            0
+        )
+        XCTAssertEqual(
+            app.buttons.matching(
+                NSPredicate(
+                    format: "identifier BEGINSWITH %@",
+                    "coach.leaderboard.rank."
+                )
+            ).count,
+            0
+        )
+    }
+
+    @MainActor
     func testParticipantHomeViewAllSelectsLeaderboardTab() throws {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -171,6 +321,228 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "participant.profile", in: app)
                 .waitForExistence(timeout: 5)
         )
+    }
+
+    @MainActor
+    func testCoachDashboardProfileCardSelectsProfileTab() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            element(identifier: "coach.dashboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let profileCard = app.buttons["coach.dashboard.profile"]
+        XCTAssertTrue(profileCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(profileCard.isHittable)
+        XCTAssertTrue(profileCard.label.contains("Selamat datang"))
+        XCTAssertTrue(profileCard.label.contains("Coach Raka"))
+        XCTAssertTrue(profileCard.label.contains("Coach"))
+        XCTAssertTrue(tabButton(label: "Dashboard", in: app).exists)
+        XCTAssertTrue(tabButton(label: "Program", in: app).exists)
+        XCTAssertTrue(tabButton(label: "Profil", in: app).exists)
+        XCTAssertFalse(tabButton(label: "Peserta", in: app).exists)
+        XCTAssertFalse(tabButton(label: "Peringkat", in: app).exists)
+        profileCard.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.profile", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(tabButton(label: "Profil", in: app).isSelected)
+        XCTAssertFalse(
+            app.navigationBars["Profil"].buttons["BackButton"].exists
+        )
+    }
+
+    @MainActor
+    func testCoachDashboardAttentionAndProgramOpenFilteredParticipants()
+        throws
+    {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let attention = app.buttons[
+            "coach.dashboard.action.attention"
+        ]
+        XCTAssertTrue(attention.waitForExistence(timeout: 8))
+        attention.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.participants", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            app.navigationBars["Perlu perhatian"]
+                .waitForExistence(timeout: 5)
+        )
+        let attentionSummary = app.staticTexts.matching(
+            NSPredicate(
+                format: "label CONTAINS %@",
+                "peserta perlu ditindaklanjuti"
+            )
+        ).firstMatch
+        XCTAssertTrue(attentionSummary.waitForExistence(timeout: 5))
+
+        let back = app.navigationBars.buttons.element(boundBy: 0)
+        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        back.tap()
+
+        let activeProgram = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.dashboard.program."
+            )
+        ).firstMatch
+        for _ in 0..<5
+        where !activeProgram.waitForExistence(timeout: 1)
+            || !activeProgram.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(activeProgram.waitForExistence(timeout: 5))
+        XCTAssertTrue(activeProgram.isHittable)
+        activeProgram.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.participants", in: app)
+                .waitForExistence(timeout: 8)
+        )
+    }
+
+    @MainActor
+    func testCoachParticipantDynamicLabelsFallbackToIndonesian() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let participants = app.buttons[
+            "coach.dashboard.action.participants"
+        ]
+        XCTAssertTrue(participants.waitForExistence(timeout: 8))
+        participants.tap()
+
+        XCTAssertTrue(
+            app.textFields["Cari nama atau kota"]
+                .waitForExistence(timeout: 5)
+        )
+        let filter = app.buttons.matching(
+            NSPredicate(
+                format: "label CONTAINS %@",
+                "Semua program"
+            )
+        ).firstMatch
+        XCTAssertTrue(filter.waitForExistence(timeout: 5))
+
+        let participant = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.participant.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(participant.waitForExistence(timeout: 5))
+        XCTAssertFalse(participant.label.contains("coach."))
+
+        let rawKey = app.descendants(matching: .any).matching(
+            NSPredicate(
+                format: "label CONTAINS %@",
+                "coach.participants."
+            )
+        ).firstMatch
+        XCTAssertFalse(rawKey.exists)
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        let attention = app.buttons[
+            "coach.dashboard.action.attention"
+        ]
+        XCTAssertTrue(attention.waitForExistence(timeout: 5))
+        attention.tap()
+
+        let attentionSummary = app.staticTexts.matching(
+            NSPredicate(
+                format: "label CONTAINS %@",
+                "peserta perlu ditindaklanjuti"
+            )
+        ).firstMatch
+        XCTAssertTrue(attentionSummary.waitForExistence(timeout: 5))
+        XCTAssertFalse(
+            app.descendants(matching: .any).matching(
+                NSPredicate(
+                    format: "label CONTAINS %@",
+                    "coach.participants."
+                )
+            ).firstMatch.exists
+        )
+    }
+
+    @MainActor
+    func testAppCopyStaysIndonesianWhenDeviceLanguageIsEnglish() throws {
+        let launchCases = [
+            (
+                role: "participant",
+                scenario: "participant_active",
+                rootIdentifier: "participant.home",
+                tabLabel: "Beranda"
+            ),
+            (
+                role: "coach",
+                scenario: "coach_review_queue",
+                rootIdentifier: "coach.dashboard",
+                tabLabel: "Dashboard"
+            ),
+            (
+                role: "admin",
+                scenario: "admin_winner_lock",
+                rootIdentifier: "admin.overview",
+                tabLabel: "Ringkasan"
+            )
+        ]
+
+        for launchCase in launchCases {
+            let app = XCUIApplication()
+            app.launchArguments = [
+                "-AppleLanguages", "(en)",
+                "-AppleLocale", "en_US",
+                "-DemoRole", launchCase.role,
+                "-DemoScenario", launchCase.scenario,
+                "-SkipDemoLanding"
+            ]
+            app.launch()
+
+            XCTAssertTrue(
+                element(
+                    identifier: launchCase.rootIdentifier,
+                    in: app
+                ).waitForExistence(timeout: 10),
+                "Root \(launchCase.role) tidak tampil."
+            )
+            XCTAssertTrue(
+                tabButton(label: launchCase.tabLabel, in: app)
+                    .waitForExistence(timeout: 5),
+                "Tab \(launchCase.role) tidak tetap berbahasa Indonesia."
+            )
+            assertNoVisibleLocalizationKeys(in: app)
+
+            app.terminate()
+        }
     }
 
     @MainActor
@@ -707,7 +1079,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 .waitForExistence(timeout: 8)
         )
 
-        let openReview = app.buttons["coach.open-review-queue"]
+        let openReview = app.buttons["coach.dashboard.action.review"]
         if !openReview.waitForExistence(timeout: 2)
             || !openReview.isHittable {
             app.scrollViews["coach.dashboard"].swipeUp()
@@ -755,12 +1127,29 @@ final class MSCBodyTransformationUITests: XCTestCase {
         )
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        tabButton(label: "Peringkat", in: app).tap()
+        app.buttons["coach.dashboard.action.leaderboard"].tap()
         XCTAssertTrue(
             element(identifier: "coach.leaderboard", in: app)
                 .waitForExistence(timeout: 8)
         )
-        tabButton(label: "QR saya", in: app).tap()
+        let leaderboardBack = app.navigationBars.buttons.element(
+            boundBy: 0
+        )
+        XCTAssertTrue(leaderboardBack.waitForExistence(timeout: 5))
+        leaderboardBack.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.dashboard", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        tabButton(label: "Profil", in: app).tap()
+        let openQR = app.buttons["coach.profile.open-qr"]
+        for _ in 0..<4
+        where !openQR.waitForExistence(timeout: 1)
+            || !openQR.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(openQR.waitForExistence(timeout: 8))
+        openQR.tap()
 
         XCTAssertTrue(
             app.staticTexts["QR pendaftaran saya"]
@@ -779,7 +1168,16 @@ final class MSCBodyTransformationUITests: XCTestCase {
         let closeShare = app.buttons["header.closeButton"]
         XCTAssertTrue(closeShare.waitForExistence(timeout: 5))
         closeShare.tap()
-        tabButton(label: "Peserta", in: app).tap()
+        tabButton(label: "Dashboard", in: app).tap()
+        let participantsAction = app.buttons[
+            "coach.dashboard.action.participants"
+        ]
+        XCTAssertTrue(participantsAction.waitForExistence(timeout: 5))
+        participantsAction.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.participants", in: app)
+                .waitForExistence(timeout: 5)
+        )
         let participant = app.buttons.matching(
             NSPredicate(
                 format: "identifier BEGINSWITH %@",
@@ -792,6 +1190,247 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "coach.participant.detail", in: app)
                 .waitForExistence(timeout: 5)
         )
+    }
+
+    @MainActor
+    func testCoachViewsAutomaticEvidenceAndSavesOptionalRating() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let openReview = app.buttons["coach.dashboard.action.review"]
+        XCTAssertTrue(openReview.waitForExistence(timeout: 8))
+        openReview.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.review.queue", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        let scopeControl = element(
+            identifier: "coach.review.scope",
+            in: app
+        )
+        let evidenceList = app.scrollViews["coach.review.evidence-list"]
+        let fixedControls = element(
+            identifier: "coach.review.fixed-controls",
+            in: app
+        )
+        let filterButton = app.buttons["coach.review.filter.open"]
+        XCTAssertTrue(scopeControl.waitForExistence(timeout: 5))
+        XCTAssertTrue(evidenceList.waitForExistence(timeout: 5))
+        XCTAssertTrue(fixedControls.waitForExistence(timeout: 5))
+        XCTAssertTrue(filterButton.waitForExistence(timeout: 5))
+        XCTAssertGreaterThanOrEqual(
+            filterButton.frame.height,
+            scopeControl.frame.height
+        )
+
+        let evidencePageFrame = element(
+            identifier: "coach.review.queue",
+            in: app
+        ).frame
+
+        let fixedControlsFrame = fixedControls.frame
+        evidenceList.swipeUp()
+        XCTAssertEqual(fixedControls.frame, fixedControlsFrame)
+        XCTAssertEqual(
+            element(identifier: "coach.review.queue", in: app).frame,
+            evidencePageFrame
+        )
+
+        let allEvidence = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Semua bukti"))
+            .firstMatch
+        XCTAssertTrue(allEvidence.waitForExistence(timeout: 5))
+        allEvidence.tap()
+
+        filterButton.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.review.filter.sheet", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        let automaticStatus = element(
+            identifier: "coach.review.filter.option.status.automatic",
+            in: app
+        )
+        XCTAssertTrue(automaticStatus.waitForExistence(timeout: 5))
+        automaticStatus.tap()
+
+        let applyFilter = app.buttons["coach.review.filter.apply"]
+        XCTAssertTrue(applyFilter.waitForExistence(timeout: 5))
+        applyFilter.tap()
+        XCTAssertTrue(
+            filterButton.waitForExistence(timeout: 5)
+        )
+
+        let automaticEvidence = app.buttons[
+            "coach.review.open.50000000-0000-0000-0000-000000000007"
+        ]
+        for _ in 0..<4
+        where !automaticEvidence.waitForExistence(timeout: 1)
+            || !automaticEvidence.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(automaticEvidence.waitForExistence(timeout: 5))
+        XCTAssertTrue(automaticEvidence.label.contains("Poin otomatis"))
+        automaticEvidence.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["Poin diberikan otomatis"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(app.staticTexts["Hari 3"].exists)
+        XCTAssertTrue(
+            app.staticTexts[
+                "5 poin sudah diberikan saat peserta mengirim bukti."
+            ].exists
+        )
+        XCTAssertFalse(app.buttons["coach.review.approve"].exists)
+        XCTAssertFalse(app.buttons["coach.review.reject"].exists)
+
+        let fourStars = app.buttons["coach.review.rating.4"]
+        XCTAssertTrue(fourStars.waitForExistence(timeout: 5))
+        fourStars.tap()
+
+        let saveRating = app.buttons["coach.review.rating.save"]
+        XCTAssertTrue(saveRating.waitForExistence(timeout: 5))
+        XCTAssertTrue(saveRating.isEnabled)
+        saveRating.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.review.queue", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            app.staticTexts["4/5"].waitForExistence(timeout: 5)
+        )
+    }
+
+    @MainActor
+    func testCoachRejectionUsesSingleSheetNavigationFlow() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let openReview = app.buttons["coach.dashboard.action.review"]
+        XCTAssertTrue(openReview.waitForExistence(timeout: 8))
+        openReview.tap()
+
+        let manualEvidence = app.buttons[
+            "coach.review.open.50000000-0000-0000-0000-000000000006"
+        ]
+        XCTAssertTrue(manualEvidence.waitForExistence(timeout: 8))
+        manualEvidence.tap()
+
+        let reject = app.buttons["coach.review.reject"]
+        XCTAssertTrue(reject.waitForExistence(timeout: 5))
+        let sheetCountBeforeRejection = app.sheets.count
+        reject.tap()
+
+        let cancel = app.buttons["coach.review.rejection.cancel"]
+        let submit = app.buttons["coach.review.rejection.submit"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+        XCTAssertTrue(submit.waitForExistence(timeout: 5))
+        XCTAssertEqual(app.sheets.count, sheetCountBeforeRejection)
+        XCTAssertFalse(submit.isEnabled)
+        XCTAssertGreaterThan(cancel.frame.width, 120)
+        XCTAssertGreaterThan(submit.frame.width, 120)
+        XCTAssertEqual(
+            cancel.frame.height,
+            submit.frame.height,
+            accuracy: 1
+        )
+
+        cancel.tap()
+        XCTAssertTrue(reject.waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testCoachCanJoinProgramThroughSharedParticipantFlow() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let programAction = app.buttons[
+            "coach.dashboard.action.program"
+        ]
+        XCTAssertTrue(programAction.waitForExistence(timeout: 8))
+        programAction.tap()
+
+        let programTab = tabButton(label: "Program", in: app)
+        XCTAssertTrue(programTab.waitForExistence(timeout: 8))
+        XCTAssertTrue(programTab.isSelected)
+
+        XCTAssertTrue(
+            element(identifier: "participant.program.catalog", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        let availableFilter = app.segmentedControls.buttons["Tersedia"]
+        XCTAssertTrue(availableFilter.waitForExistence(timeout: 5))
+        availableFilter.tap()
+
+        let availableProgram = app.buttons[
+            "participant.program.select."
+                + "10000000-0000-0000-0000-000000000001"
+        ]
+        XCTAssertTrue(availableProgram.waitForExistence(timeout: 5))
+        availableProgram.tap()
+
+        let programIdentity = element(
+            identifier: "participant.program.offer.identity",
+            in: app
+        )
+        XCTAssertTrue(programIdentity.waitForExistence(timeout: 5))
+        XCTAssertGreaterThan(
+            programIdentity.frame.width,
+            app.windows.firstMatch.frame.width * 0.85
+        )
+
+        let joinProgram = app.buttons["participant.program.offer.join"]
+        XCTAssertTrue(joinProgram.waitForExistence(timeout: 5))
+        joinProgram.tap()
+        XCTAssertTrue(
+            app.navigationBars["Gabung program"]
+                .waitForExistence(timeout: 5)
+        )
+
+        app.buttons["participant.join.scan"].tap()
+        let useDemoQR = app.buttons["participant.qr.use-demo"]
+        XCTAssertTrue(useDemoQR.waitForExistence(timeout: 5))
+        useDemoQR.tap()
+
+        let confirmCoach = app.buttons["participant.join.confirm-coach"]
+        XCTAssertTrue(confirmCoach.waitForExistence(timeout: 5))
+        confirmCoach.tap()
+
+        let payment = app.buttons["participant.payment.demo"]
+        XCTAssertTrue(payment.waitForExistence(timeout: 5))
+        payment.tap()
+
+        let completed = app.buttons["participant.join.completed"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 8))
+        completed.tap()
+        XCTAssertTrue(
+            element(identifier: "participant.program.detail", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(programTab.isSelected)
     }
 
     @MainActor
@@ -1270,5 +1909,39 @@ final class MSCBodyTransformationUITests: XCTestCase {
         app.descendants(matching: .any)
             .matching(identifier: identifier)
             .firstMatch
+    }
+
+    @MainActor
+    private func assertNoVisibleLocalizationKeys(
+        in app: XCUIApplication,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let localizationKeyPrefixes = [
+            "app.",
+            "root.",
+            "tab.",
+            "participant.",
+            "coach.",
+            "admin.",
+            "state.",
+            "action.",
+            "metric.",
+            "program.",
+            "leaderboard.",
+            "configuration."
+        ]
+
+        for prefix in localizationKeyPrefixes {
+            let rawKey = app.descendants(matching: .any).matching(
+                NSPredicate(format: "label CONTAINS %@", prefix)
+            ).firstMatch
+            XCTAssertFalse(
+                rawKey.exists,
+                "Localization key \(prefix) terlihat: \(rawKey.label)",
+                file: file,
+                line: line
+            )
+        }
     }
 }

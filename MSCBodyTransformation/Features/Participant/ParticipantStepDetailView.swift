@@ -122,7 +122,8 @@ struct ParticipantStepDetailView: View {
                     Label(
                         requirement.prompt
                             ?? String(
-                                localized: "participant.step.requirement"
+                                localized: "participant.step.requirement",
+                                defaultValue: "Persyaratan langkah"
                             ),
                         systemImage: requirement.kind == .photoEvidence
                             ? "photo"
@@ -353,7 +354,10 @@ struct ParticipantStepDetailView: View {
                 actionError = ParticipantFormatting.fieldReason(error)
             }
         } catch {
-            actionError = String(localized: "participant.error.generic")
+            actionError = String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
         }
     }
 

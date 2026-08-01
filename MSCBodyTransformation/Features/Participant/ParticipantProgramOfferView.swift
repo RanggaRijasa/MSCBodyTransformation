@@ -52,6 +52,7 @@ struct ParticipantProgramOfferView: View {
             }
         }
         .padding(AppSpacing.large)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             Color.appSurface,
             in: RoundedRectangle(
@@ -66,6 +67,8 @@ struct ParticipantProgramOfferView: View {
             )
             .stroke(Color.appBorder, lineWidth: 1)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("participant.program.offer.identity")
     }
 
     private var aboutSection: some View {

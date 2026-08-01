@@ -148,7 +148,8 @@ struct CoachInviteView: View {
                   payload: payload
               ) else {
             actionError = String(
-                localized: "coach.identifier.share_error"
+                localized: "coach.identifier.share_error",
+                defaultValue: "QR coach belum dapat dibagikan."
             )
             return
         }

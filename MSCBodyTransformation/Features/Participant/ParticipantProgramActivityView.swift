@@ -8,7 +8,7 @@ struct ParticipantProgramActivityView: View {
     let program: Program
     let store: ParticipantJourneyStore
     let router: ShellTabRouter
-    let navigationTab: ParticipantTab
+    let navigationContext: ProgramParticipationNavigationContext
 
     private var sortedDays: [ProgramDay] {
         program.days.sorted { $0.dayNumber < $1.dayNumber }
@@ -90,8 +90,8 @@ struct ParticipantProgramActivityView: View {
 
     private func openStep(_ step: ProgramStep) {
         router.navigate(
-            to: .participant(.stepDetail(step.id)),
-            in: .participant(navigationTab)
+            to: navigationContext.stepDetailRoute(stepID: step.id),
+            in: navigationContext.tab
         )
     }
 

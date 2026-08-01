@@ -234,7 +234,10 @@ private struct ParticipantProfileCompletionView: View {
         } catch let error as DomainError {
             fieldError = ParticipantFormatting.fieldReason(error)
         } catch {
-            fieldError = String(localized: "participant.error.generic")
+            fieldError = String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
         }
     }
 }
@@ -255,7 +258,9 @@ private struct ParticipantDisclaimerView: View {
                     Text(
                         store.wellnessDisclaimer?.body
                             ?? String(
-                                localized: "participant.disclaimer.fallback"
+                                localized: "participant.disclaimer.fallback",
+                                defaultValue:
+                                    "Program ini mendukung kebiasaan hidup sehat dan bukan pengganti diagnosis atau perawatan medis."
                             )
                     )
                 } icon: {

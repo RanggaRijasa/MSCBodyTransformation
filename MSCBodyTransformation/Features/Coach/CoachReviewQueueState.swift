@@ -65,10 +65,33 @@ final class CoachReviewQueueState {
             $0.participantID == item.participant.id
         }?.score.totalPoints ?? item.scoreBeforeReview
         lastDecision = CoachReviewDecisionResult(
+            submissionID: item.id,
             participantName: item.participant.displayName,
             status: status,
             pointsBefore: item.scoreBeforeReview,
             pointsAfter: pointsAfter
+        )
+        await load()
+    }
+
+    func saveRating(
+        item: CoachReviewItem,
+        rating: Int
+    ) async throws {
+        guard let repositories = environment.repositories else {
+            throw environment.bootstrapError ?? DomainError.unknown
+        }
+        let identity = try await service.identity()
+        isPerformingAction = true
+        defer { isPerformingAction = false }
+
+        let useCase = RateLocalSubmissionUseCase(
+            repository: repositories.submissions
+        )
+        _ = try await useCase(
+            submissionID: item.id,
+            reviewerID: identity.user.id,
+            rating: rating
         )
         await load()
     }

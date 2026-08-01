@@ -56,6 +56,11 @@ nonisolated protocol SubmissionRepository: Sendable {
         note: String?,
         reviewedAt: Date
     ) async throws -> StepSubmission
+    func saveCoachRating(
+        submissionID: UUID,
+        reviewerID: UUID,
+        rating: Int
+    ) async throws -> StepSubmission
 }
 
 nonisolated protocol WeighInRepository: Sendable {

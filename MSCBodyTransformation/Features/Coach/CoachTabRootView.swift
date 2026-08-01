@@ -4,8 +4,10 @@ import SwiftUI
 struct CoachTabRootView: View {
     let tab: CoachTab
     let features: CoachFeatureContainer
+    let programStore: ParticipantJourneyStore?
     let router: ShellTabRouter
     let showsOfflineBanner: Bool
+    let onSelectCoachTab: (CoachTab) -> Void
 
     var body: some View {
         tabContent
@@ -25,20 +27,29 @@ struct CoachTabRootView: View {
         case .dashboard:
             CoachDashboardView(
                 state: features.dashboard,
-                router: router
+                router: router,
+                onOpenProgram: {
+                    onSelectCoachTab(.program)
+                },
+                onOpenProfile: {
+                    onSelectCoachTab(.profile)
+                }
             )
-        case .participants:
-            CoachParticipantsView(
-                state: features.participants,
-                router: router
-            )
-        case .invite:
-            CoachInviteView(
-                state: features.invites,
-                router: router
-            )
-        case .leaderboard:
-            CoachLeaderboardView(state: features.leaderboard)
+        case .program:
+            if let programStore {
+                ParticipantTabRootView(
+                    tab: .program,
+                    store: programStore,
+                    router: router,
+                    showsOfflineBanner: false,
+                    onSelectParticipantTab: { _ in },
+                    programNavigationContext: .coach
+                )
+            } else {
+                LoadingStateView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.appBackground)
+            }
         case .profile:
             CoachProfileView(
                 state: features.profile,

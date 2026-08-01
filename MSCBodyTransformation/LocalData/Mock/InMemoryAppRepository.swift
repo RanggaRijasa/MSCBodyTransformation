@@ -302,6 +302,29 @@ actor InMemoryAppRepository:
         return submissionsStorage[index]
     }
 
+    func saveCoachRating(
+        submissionID: UUID,
+        reviewerID: UUID,
+        rating: Int
+    ) async throws -> StepSubmission {
+        guard let index = submissionsStorage.firstIndex(
+            where: { $0.id == submissionID }
+        ) else {
+            throw DomainError.notFound(resource: "submission")
+        }
+        guard (1...5).contains(rating) else {
+            throw DomainError.validation(
+                field: "coachRating",
+                reason: "Penilaian harus antara 1 sampai 5 bintang."
+            )
+        }
+        submissionsStorage[index].coachRating = rating
+        if submissionsStorage[index].reviewerID == nil {
+            submissionsStorage[index].reviewerID = reviewerID
+        }
+        return submissionsStorage[index]
+    }
+
     func weighIns(enrollmentID: UUID) async throws -> [WeighIn] {
         weighInsStorage
             .filter { $0.enrollmentID == enrollmentID }

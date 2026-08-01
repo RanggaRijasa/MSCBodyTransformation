@@ -160,9 +160,9 @@ struct RoleAppShellView: View {
             adminFeatures = nil
             await prepareParticipantStoreIfNeeded()
         case .coach:
-            participantStore = nil
             adminFeatures = nil
             await prepareCoachFeaturesIfNeeded()
+            await prepareCoachProgramStoreIfNeeded()
         case .admin:
             participantStore = nil
             coachFeatures = nil
@@ -215,6 +215,18 @@ struct RoleAppShellView: View {
         let features = CoachFeatureContainer(environment: appEnvironment)
         await features.prepareIdentity()
         coachFeatures = features
+    }
+
+    private func prepareCoachProgramStoreIfNeeded() async {
+        guard participantStore == nil else {
+            return
+        }
+        let store = ParticipantJourneyStore(
+            environment: appEnvironment,
+            participationAccount: .coach
+        )
+        participantStore = store
+        await store.load()
     }
 
     private func prepareAdminFeaturesIfNeeded() async {
