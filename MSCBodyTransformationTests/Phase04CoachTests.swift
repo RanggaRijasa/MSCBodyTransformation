@@ -52,6 +52,20 @@ struct Phase04CoachTests {
 
         state.prepare(for: .all)
         #expect(state.filteredParticipants.count == participants.count)
+
+        let historyProgramID = UUID(
+            uuidString: "10000000-0000-0000-0000-000000000004"
+        )!
+        #expect(
+            state.availablePrograms.contains {
+                $0.id == historyProgramID
+            }
+        )
+        state.selectedProgramID = historyProgramID
+        #expect(
+            state.filteredParticipants.map(\.profile.displayName)
+                == ["Ayu Lestari"]
+        )
     }
 
     @MainActor
@@ -128,6 +142,76 @@ struct Phase04CoachTests {
                     "Dimas Arta",
                     "Ayu Lestari"
                 ]
+        )
+    }
+
+    @Test("Status program mengikuti rentang tanggal")
+    func programLifecycleUsesReferenceDate() throws {
+        var program = try #require(
+            MockSeedData.load().programs.first {
+                $0.status == .active
+            }
+        )
+
+        #expect(
+            program.lifecycleStatus(
+                at: program.startDate.addingTimeInterval(-1)
+            ) == .scheduled
+        )
+        #expect(
+            program.lifecycleStatus(at: program.startDate) == .active
+        )
+        #expect(
+            program.lifecycleStatus(
+                at: program.endDate.addingTimeInterval(1)
+            ) == .completed
+        )
+
+        program.status = .archived
+        #expect(
+            program.lifecycleStatus(at: program.startDate) == .archived
+        )
+    }
+
+    @Test("Filter program memisahkan program berjalan dan riwayat")
+    func programFilterSeparatesCurrentAndHistory() throws {
+        let programs = try MockSeedData.load().programs
+        let referenceDate = try Date.ISO8601FormatStyle().parse(
+            "2026-08-01T00:00:00Z"
+        )
+        let selectedHistoryProgramID = UUID(
+            uuidString: "10000000-0000-0000-0000-000000000005"
+        )!
+
+        let catalog = ProgramFilterCatalog(
+            programs: programs,
+            selectedProgramID: selectedHistoryProgramID,
+            referenceDate: referenceDate
+        )
+
+        #expect(
+            catalog.currentPrograms.map(\.title)
+                == ["Gerak bersama Agustus"]
+        )
+        #expect(
+            catalog.historyPrograms.map(\.title)
+                == [
+                    "Transformasi 7 hari",
+                    "Gerak konsisten 3 hari",
+                    "Konsisten Juni"
+                ]
+        )
+        #expect(
+            catalog.programsShownInMainPicker.map(\.title)
+                == [
+                    "Gerak bersama Agustus",
+                    "Gerak konsisten 3 hari"
+                ]
+        )
+        #expect(
+            catalog.currentPrograms.allSatisfy {
+                $0.status != .draft
+            }
         )
     }
 
@@ -217,8 +301,8 @@ struct Phase04CoachTests {
     }
 
     @MainActor
-    @Test("Keputusan review menghitung ulang skor lokal")
-    func reviewRecalculatesLocalScore() async throws {
+    @Test("Persetujuan menambah poin langkah tanpa menghapus skor historis")
+    func approvalAddsExactStepPoints() async throws {
         let environment = AppEnvironment.preview
         let features = CoachFeatureContainer(environment: environment)
         await features.prepareIdentity()
@@ -237,8 +321,10 @@ struct Phase04CoachTests {
 
         let result = try #require(features.reviewQueue.lastDecision)
         #expect(result.status == .approved)
-        #expect(result.pointsAfter != result.pointsBefore)
-        #expect(result.pointsAfter >= item.step.points)
+        #expect(
+            result.pointsAfter
+                == result.pointsBefore + item.step.points
+        )
     }
 
     @MainActor
@@ -325,8 +411,8 @@ struct Phase04CoachTests {
     }
 
     @MainActor
-    @Test("Penolakan menghitung ulang dan menghapus poin yang tidak sah")
-    func rejectionRemovesLocallyAwardedPoints() async throws {
+    @Test("Penolakan bukti pending tidak mengurangi poin")
+    func rejectionKeepsScoreForPendingEvidence() async throws {
         let features = CoachFeatureContainer(environment: .preview)
         await features.prepareIdentity()
         await features.reviewQueue.load()
@@ -344,7 +430,7 @@ struct Phase04CoachTests {
 
         let result = try #require(features.reviewQueue.lastDecision)
         #expect(result.status == .rejected)
-        #expect(result.pointsAfter < result.pointsBefore)
+        #expect(result.pointsAfter == result.pointsBefore)
     }
 
     @Test("Setiap coach memiliki identifier pendaftaran unik")

@@ -113,10 +113,12 @@ struct CoachLeaderboardView: View {
 
             HStack(spacing: AppSpacing.small) {
                 StatusBadge(
-                    title: snapshot.isFinal
+                    title: snapshot.isProgramCompleted
                         ? "participant.leaderboard.status.completed"
                         : "participant.leaderboard.status.in_progress",
-                    kind: snapshot.isFinal ? .success : .information
+                    kind: snapshot.isProgramCompleted
+                        ? .success
+                        : .information
                 )
 
                 Spacer()
@@ -156,7 +158,7 @@ struct CoachLeaderboardView: View {
             )
             .frame(maxWidth: .infinity, minHeight: 320)
         } else {
-            rankingStatus(isFinal: snapshot.isFinal)
+            rankingStatus(snapshot)
 
             ParticipantLeaderboardPodium(
                 entries: Array(entries.prefix(3)),
@@ -183,22 +185,28 @@ struct CoachLeaderboardView: View {
         }
     }
 
-    private func rankingStatus(isFinal: Bool) -> some View {
+    private func rankingStatus(
+        _ snapshot: CoachLeaderboardSnapshot
+    ) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
             Text(
                 LocalizedStringKey(
-                    isFinal
-                    ? "participant.leaderboard.status.final.title"
-                    : "participant.leaderboard.status.provisional.title"
+                    snapshot.isFinal
+                        ? "participant.leaderboard.status.final.title"
+                        : snapshot.isAwaitingWinnerLock
+                            ? "coach.leaderboard.status.awaiting_lock.title"
+                            : "participant.leaderboard.status.provisional.title"
                 )
             )
             .font(AppTypography.cardTitle)
 
             Text(
                 LocalizedStringKey(
-                    isFinal
-                    ? "participant.leaderboard.status.final.message"
-                    : "participant.leaderboard.status.provisional.message"
+                    snapshot.isFinal
+                        ? "participant.leaderboard.status.final.message"
+                        : snapshot.isAwaitingWinnerLock
+                            ? "coach.leaderboard.status.awaiting_lock.message"
+                            : "participant.leaderboard.status.provisional.message"
                 )
             )
             .font(AppTypography.secondary)
@@ -353,7 +361,9 @@ struct CoachLeaderboardView: View {
         in snapshot: CoachLeaderboardSnapshot
     ) -> [Program] {
         snapshot.programs
-            .filter { $0.status == .active }
+            .filter {
+                $0.lifecycleStatus(at: snapshot.referenceDate) == .active
+            }
             .sorted { $0.startDate > $1.startDate }
     }
 
@@ -361,7 +371,12 @@ struct CoachLeaderboardView: View {
         in snapshot: CoachLeaderboardSnapshot
     ) -> [Program] {
         snapshot.programs
-            .filter(\.isLeaderboardArchive)
+            .filter {
+                let status = $0.lifecycleStatus(
+                    at: snapshot.referenceDate
+                )
+                return status == .completed || status == .archived
+            }
             .sorted { $0.endDate > $1.endDate }
     }
 
@@ -369,8 +384,11 @@ struct CoachLeaderboardView: View {
         in snapshot: CoachLeaderboardSnapshot
     ) -> Bool {
         let activePrograms = activePrograms(in: snapshot)
-        return activePrograms.count > 1
-            || snapshot.selectedProgram.isLeaderboardArchive
+        return !activePrograms.isEmpty
+            && (
+                activePrograms.count > 1
+                    || snapshot.isProgramCompleted
+            )
     }
 }
 

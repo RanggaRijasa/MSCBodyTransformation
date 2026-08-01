@@ -22,14 +22,19 @@ final class CoachLeaderboardState {
             guard let repositories = environment.repositories else {
                 throw environment.bootstrapError ?? DomainError.unknown
             }
+            let referenceDate = environment.clock.now()
             let programs = try await repositories.programs.programs()
                 .filter {
-                    $0.status == .active || $0.status == .completed
+                    let status = $0.lifecycleStatus(at: referenceDate)
+                    return status == .active
+                        || status == .completed
+                        || status == .archived
                 }
+                .sorted { $0.endDate > $1.endDate }
             guard let selectedProgram = programs.first(where: {
                 $0.id == selectedProgramID
             }) ?? programs.first(where: {
-                $0.status == .active
+                $0.lifecycleStatus(at: referenceDate) == .active
             }) ?? programs.first else {
                 throw DomainError.notFound(resource: "program")
             }
@@ -54,7 +59,8 @@ final class CoachLeaderboardState {
                     selectedProgram: selectedProgram,
                     entries: entries,
                     winners: winners,
-                    assignedParticipantIDs: participantIDs
+                    assignedParticipantIDs: participantIDs,
+                    referenceDate: referenceDate
                 )
             )
         } catch is CancellationError {

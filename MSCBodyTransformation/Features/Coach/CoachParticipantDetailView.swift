@@ -578,7 +578,13 @@ struct CoachParticipantDetailView: View {
                         MediaThumbnail(
                             title: "coach.evidence.thumbnail",
                             systemImage: "photo.fill",
-                            kindLabel: "coach.evidence.photo"
+                            kindLabel: "coach.evidence.photo",
+                            imageReference: evidence.localReference,
+                            showsDemoBadge:
+                                LocalMediaImageResolver
+                                    .isBundledEvidenceFixture(
+                                        evidence.localReference
+                                    )
                         )
                     }
                     .buttonStyle(.plain)
@@ -950,27 +956,32 @@ struct CoachEvidenceViewer: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: AppSpacing.large) {
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.largeTitle)
-                    .foregroundStyle(Color.brandPrimary)
-                    .accessibilityHidden(true)
-                Text("coach.evidence.viewer.title")
-                    .font(AppTypography.sectionTitle)
-                Text("coach.evidence.viewer.local_placeholder")
-                    .font(AppTypography.body)
-                    .foregroundStyle(Color.appSecondaryText)
-                    .multilineTextAlignment(.center)
-                Label(
-                    "coach.evidence.viewer.privacy",
-                    systemImage: "lock.fill"
-                )
-                .font(AppTypography.secondary)
-                .foregroundStyle(Color.appPrimaryText)
+            ScrollView {
+                VStack(spacing: AppSpacing.large) {
+                    evidencePreview
+
+                    if LocalMediaImageResolver.isBundledEvidenceFixture(
+                        evidence.localReference
+                    ) {
+                        Label(
+                            "coach.evidence.demo_badge",
+                            systemImage: "shippingbox.fill"
+                        )
+                        .font(AppTypography.label)
+                        .foregroundStyle(Color.appSecondaryText)
+                    }
+
+                    Label(
+                        "coach.evidence.viewer.privacy",
+                        systemImage: "lock.fill"
+                    )
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(Color.appPrimaryText)
+                }
+                .frame(maxWidth: 620)
+                .padding(AppSpacing.large)
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: 520)
-            .padding(AppSpacing.large)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.appBackground)
             .navigationTitle(
                 Text("coach.evidence.viewer.navigation_title")
@@ -986,5 +997,47 @@ struct CoachEvidenceViewer: View {
         }
         .presentationDetents([.medium, .large])
         .accessibilityIdentifier("coach.evidence.viewer")
+    }
+
+    @ViewBuilder
+    private var evidencePreview: some View {
+        if let image = LocalMediaImageResolver.image(
+            reference: evidence.localReference
+        ) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 600)
+                .clipShape(
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
+                .accessibilityLabel(Text("coach.evidence.thumbnail"))
+                .accessibilityIdentifier("coach.evidence.viewer.image")
+        } else {
+            VStack(spacing: AppSpacing.small) {
+                Image(systemName: "photo.badge.exclamationmark")
+                    .font(.largeTitle)
+                    .foregroundStyle(Color.appDestructive)
+                    .accessibilityHidden(true)
+                Text("coach.evidence.viewer.title")
+                    .font(AppTypography.sectionTitle)
+                Text("coach.evidence.unavailable.message")
+                    .font(AppTypography.body)
+                    .foregroundStyle(Color.appSecondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(AppSpacing.large)
+            .frame(maxWidth: .infinity, minHeight: 280)
+            .background(
+                Color.appSecondaryBackground,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+        }
     }
 }

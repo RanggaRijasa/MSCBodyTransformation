@@ -44,7 +44,8 @@ struct CoachParticipantsView: View {
         .sheet(item: $presentedFilter) { draft in
             CoachParticipantFilterSheet(
                 draft: draft,
-                programs: state.availablePrograms
+                programs: state.availablePrograms,
+                referenceDate: state.referenceDate
             ) { selection in
                 state.selectedProgramID = selection.programID
                 state.completionFilter = selection.completion
@@ -123,62 +124,17 @@ struct CoachParticipantsView: View {
             }
             .accessibilityIdentifier("coach.participants.search")
 
-            Button {
+            FilterSummaryButton(
+                title: "coach.participants.filter.action",
+                summary: Text(verbatim: filterSummary),
+                identifier: "coach.participants.filter"
+            ) {
                 presentedFilter = CoachParticipantFilterDraft(
                     programID: state.selectedProgramID,
                     completion: state.completionFilter,
                     sort: state.sort
                 )
-            } label: {
-                HStack(spacing: AppSpacing.medium) {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.title3)
-                        .foregroundStyle(Color.appPrimaryText)
-                        .frame(width: 32)
-                        .accessibilityHidden(true)
-
-                    VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                        Text("coach.participants.filter.action")
-                            .font(AppTypography.cardTitle)
-                            .foregroundStyle(Color.appPrimaryText)
-
-                        Text(filterSummary)
-                            .font(AppTypography.secondary)
-                            .foregroundStyle(Color.appSecondaryText)
-                            .lineLimit(2)
-                    }
-
-                    Spacer(minLength: AppSpacing.small)
-
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.appSecondaryText)
-                        .accessibilityHidden(true)
-                }
-                .padding(AppSpacing.medium)
-                .background(
-                    Color.appSurface,
-                    in: RoundedRectangle(
-                        cornerRadius: AppRadius.large,
-                        style: .continuous
-                    )
-                )
-                .overlay {
-                    RoundedRectangle(
-                        cornerRadius: AppRadius.large,
-                        style: .continuous
-                    )
-                    .stroke(Color.appBorder, lineWidth: 1)
-                }
-                .contentShape(
-                    RoundedRectangle(
-                        cornerRadius: AppRadius.large,
-                        style: .continuous
-                    )
-                )
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("coach.participants.filter")
         }
     }
 
@@ -238,7 +194,11 @@ struct CoachParticipantsView: View {
         case .all, .needsAttention:
             state.participants
         case .program(let programID):
-            state.participants.filter { $0.program?.id == programID }
+            state.participants.filter { participant in
+                participant.associatedPrograms.contains {
+                    $0.id == programID
+                }
+            }
         }
     }
 
@@ -902,6 +862,7 @@ private struct CoachParticipantFilterSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let programs: [Program]
+    let referenceDate: Date
     let onApply: (CoachParticipantFilterDraft) -> Void
 
     @State private var draft: CoachParticipantFilterDraft
@@ -909,9 +870,11 @@ private struct CoachParticipantFilterSheet: View {
     init(
         draft: CoachParticipantFilterDraft,
         programs: [Program],
+        referenceDate: Date,
         onApply: @escaping (CoachParticipantFilterDraft) -> Void
     ) {
         self.programs = programs
+        self.referenceDate = referenceDate
         self.onApply = onApply
         _draft = State(initialValue: draft)
     }
@@ -919,21 +882,15 @@ private struct CoachParticipantFilterSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("coach.filter.program") {
-                    Picker(
-                        "coach.filter.program",
-                        selection: $draft.programID
-                    ) {
-                        Text("coach.filter.all_programs")
-                            .tag(UUID?.none)
-                        ForEach(programs) { program in
-                            Text(program.title)
-                                .tag(Optional(program.id))
-                        }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-                }
+                ProgramFilterSection(
+                    programs: programs,
+                    referenceDate: referenceDate,
+                    sectionTitle: "coach.filter.program",
+                    allProgramsTitle: "coach.filter.all_programs",
+                    optionIdentifierPrefix:
+                        "coach.participants.filter.option.program",
+                    selection: $draft.programID
+                )
 
                 Section("coach.filter.completion") {
                     Picker(
@@ -976,37 +933,20 @@ private struct CoachParticipantFilterSheet: View {
                     }
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                HStack(spacing: AppSpacing.small) {
-                    Button {
-                        draft.programID = nil
-                        draft.completion = .all
-                        draft.sort = .progress
-                    } label: {
-                        Text("coach.participants.filter.reset")
-                            .font(AppTypography.button)
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                            .foregroundStyle(Color.brandPrimary)
-                            .overlay {
-                                RoundedRectangle(
-                                    cornerRadius: AppRadius.medium,
-                                    style: .continuous
-                                )
-                                .stroke(Color.brandPrimary, lineWidth: 1)
-                            }
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        onApply(draft)
-                        dismiss()
-                    } label: {
-                        Text("coach.participants.filter.apply")
-                    }
-                    .buttonStyle(PrimaryActionButtonStyle())
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                FilterSheetActionBar(
+                    resetTitle: "coach.participants.filter.reset",
+                    applyTitle: "coach.participants.filter.apply",
+                    resetIdentifier: "coach.participants.filter.reset",
+                    applyIdentifier: "coach.participants.filter.apply"
+                ) {
+                    draft.programID = nil
+                    draft.completion = .all
+                    draft.sort = .progress
+                } onApply: {
+                    onApply(draft)
+                    dismiss()
                 }
-                .padding(AppSpacing.medium)
-                .background(.bar)
             }
         }
         .presentationDetents([.large])

@@ -851,6 +851,16 @@
         }
       }
     },
+    "coach.evidence.demo_badge" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bukti demo lokal"
+          }
+        }
+      }
+    },
     "coach.evidence.photo" : {
       "localizations" : {
         "id" : {
@@ -871,7 +881,28 @@
         }
       }
     },
+    "coach.evidence.unavailable.action_notice" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keputusan dinonaktifkan sampai bukti foto dapat ditampilkan."
+          }
+        }
+      }
+    },
+    "coach.evidence.unavailable.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bukti foto tidak dapat ditampilkan. Tutup layar ini, lalu muat ulang sebelum mengambil keputusan."
+          }
+        }
+      }
+    },
     "coach.evidence.viewer.local_placeholder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -1588,6 +1619,28 @@
         }
       }
     },
+    "coach.leaderboard.status.awaiting_lock.message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program telah berakhir. Peringkat menunggu penguncian hasil akhir."
+          }
+        }
+      }
+    },
+    "coach.leaderboard.status.awaiting_lock.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program selesai"
+          }
+        }
+      }
+    },
     "coach.leaderboard.top_five" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2253,6 +2306,16 @@
         }
       }
     },
+    "coach.profile.biography.prompt" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tulis bio publik"
+          }
+        }
+      }
+    },
     "coach.profile.city" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2351,6 +2414,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pengingat antrean pemeriksaan"
+          }
+        }
+      }
+    },
+    "coach.profile.required_fields" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nama tampilan, kota, dan bio publik wajib diisi."
           }
         }
       }
@@ -2608,7 +2681,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Poin langkah akan dihitung ulang secara lokal."
+            "value" : "Poin langkah akan ditambahkan setelah bukti disetujui."
           }
         }
       }
@@ -2801,6 +2874,7 @@
       }
     },
     "coach.review.filter.not_selected" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -2881,6 +2955,7 @@
       }
     },
     "coach.review.filter.selected" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -3022,36 +3097,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Menunggu pemeriksaan"
-          }
-        }
-      }
-    },
-    "coach.review.points.awarded_suffix" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "poin diberikan"
-          }
-        }
-      }
-    },
-    "coach.review.points.not_awarded_suffix" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "poin tidak diberikan"
-          }
-        }
-      }
-    },
-    "coach.review.points.pending_suffix" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "poin menunggu"
           }
         }
       }
@@ -3226,37 +3271,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kirim penolakan"
-          }
-        }
-      }
-    },
-    "coach.review.result.approved" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bukti disetujui"
-          }
-        }
-      }
-    },
-    "coach.review.result.points_format" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Poin lokal: %@ menjadi %@"
-          }
-        }
-      }
-    },
-    "coach.review.result.rejected" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bukti ditolak"
           }
         }
       }
@@ -3932,7 +3946,6 @@
       }
     },
     "error.session_expired.message" : {
-      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -3943,7 +3956,6 @@
       }
     },
     "error.session_expired.title" : {
-      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -4021,6 +4033,46 @@
     },
     "Filter status" : {
 
+    },
+    "filter.program.history" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riwayat program"
+          }
+        }
+      }
+    },
+    "filter.program.history.empty.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coba kata kunci lain."
+          }
+        }
+      }
+    },
+    "filter.program.history.empty.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program tidak ditemukan"
+          }
+        }
+      }
+    },
+    "filter.program.history.search" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari program selesai"
+          }
+        }
+      }
     },
     "Format" : {
 
@@ -4219,9 +4271,6 @@
     "Maksimal %@ peserta" : {
       "comment" : "A stepper that lets the user set the maximum number of participants for a program.",
       "isCommentAutoGenerated" : true
-    },
-    "Masuk kembali untuk melanjutkan demo lokal." : {
-
     },
     "Memeriksa kamera…" : {
 
@@ -7020,18 +7069,6 @@
     "Poin langkah" : {
 
     },
-    "Poin lokal: %@ menjadi %@" : {
-      "comment" : "A message showing the points a coach's participant has accumulated before and after a review. The first argument is the number of points before the review. The second argument is the number of points after the review.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Poin lokal: %1$@ menjadi %2$@"
-          }
-        }
-      }
-    },
     "Poin pada demo ini dihitung secara lokal." : {
 
     },
@@ -7572,8 +7609,35 @@
     "Semua status" : {
 
     },
-    "Sesi berakhir" : {
-
+    "session.logged_out.recovery_error" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi belum dapat dipulihkan. Coba lagi."
+          }
+        }
+      }
+    },
+    "session.logged_out.resume" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masuk kembali ke demo"
+          }
+        }
+      }
+    },
+    "session.logged_out.resuming" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memulihkan sesi"
+          }
+        }
+      }
     },
     "Setujui • %@ poin" : {
       "comment" : "A button that approves a coach review. The argument is the number of points the review is worth.",

@@ -14,6 +14,9 @@ struct RoleAppShellView: View {
     @State private var coachFeatures: CoachFeatureContainer?
     @State private var adminFeatures: AdminFeatureContainer?
     @State private var didRetryRepositoryError = false
+    @State private var didResumeLoggedOutSession = false
+    @State private var isResumingLoggedOutSession = false
+    @State private var loggedOutRecoveryError: String?
 
     init(role: UserRole, scenario: AppDemoScenario) {
         self.role = role
@@ -81,9 +84,16 @@ struct RoleAppShellView: View {
                         coachFeatures: coachFeatures,
                         adminFeatures: adminFeatures,
                         didRetryRepositoryError: didRetryRepositoryError,
+                        didResumeLoggedOutSession:
+                            didResumeLoggedOutSession,
+                        isResumingLoggedOutSession:
+                            isResumingLoggedOutSession,
+                        loggedOutRecoveryError: loggedOutRecoveryError,
                         onRetryRepositoryError: {
                             didRetryRepositoryError = true
                         },
+                        onResumeLoggedOutSession:
+                            resumeLoggedOutSession,
                         onSelectTab: selectTab
                     )
                     .navigationDestination(for: ShellRoute.self) { route in
@@ -153,7 +163,10 @@ struct RoleAppShellView: View {
 
         _ = try? await appEnvironment.repositories?.session
             .switchDebugRole(to: role)
+        await prepareFeaturesForRole()
+    }
 
+    private func prepareFeaturesForRole() async {
         switch role {
         case .participant:
             coachFeatures = nil
@@ -167,6 +180,35 @@ struct RoleAppShellView: View {
             participantStore = nil
             coachFeatures = nil
             await prepareAdminFeaturesIfNeeded()
+        }
+    }
+
+    private func resumeLoggedOutSession() {
+        guard !isResumingLoggedOutSession else {
+            return
+        }
+        isResumingLoggedOutSession = true
+        loggedOutRecoveryError = nil
+
+        Task {
+            defer {
+                isResumingLoggedOutSession = false
+            }
+            do {
+                guard let session = appEnvironment.repositories?.session else {
+                    throw appEnvironment.bootstrapError
+                        ?? DomainError.unknown
+                }
+                _ = try await session.switchDebugRole(to: role)
+                await prepareFeaturesForRole()
+                didResumeLoggedOutSession = true
+            } catch {
+                loggedOutRecoveryError = String(
+                    localized: "session.logged_out.recovery_error",
+                    defaultValue:
+                        "Sesi belum dapat dipulihkan. Coba lagi."
+                )
+            }
         }
     }
 

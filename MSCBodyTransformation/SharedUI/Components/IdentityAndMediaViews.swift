@@ -1,6 +1,32 @@
 import SwiftUI
 import UIKit
 
+enum LocalMediaImageResolver {
+    static func image(reference: String?) -> UIImage? {
+        guard let reference, !reference.isEmpty else {
+            return nil
+        }
+        if FileManager.default.fileExists(atPath: reference) {
+            return UIImage(contentsOfFile: reference)
+        }
+        if let image = UIImage(named: reference) {
+            return image
+        }
+        if isBundledEvidenceFixture(reference) {
+            return UIImage(named: "EvidenceDemoFixture")
+        }
+        return nil
+    }
+
+    static func isBundledEvidenceFixture(_ reference: String?) -> Bool {
+        guard let reference else {
+            return false
+        }
+        return reference.hasPrefix("fixtures/evidence/")
+            || reference.hasPrefix("local-demo://debug/evidence")
+    }
+}
+
 struct UserAvatar: View {
     let displayName: String
     let imageName: String?
@@ -133,20 +159,42 @@ struct MediaThumbnail: View {
     let title: LocalizedStringKey
     let systemImage: String
     let kindLabel: LocalizedStringKey
+    var imageReference: String? = nil
+    var showsDemoBadge = false
 
     var body: some View {
-        ZStack {
-            Color.appSecondaryBackground
+        ZStack(alignment: .topLeading) {
+            Group {
+                if let image = LocalMediaImageResolver.image(
+                    reference: imageReference
+                ) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Color.appSecondaryBackground
 
-            VStack(spacing: AppSpacing.xSmall) {
-                Image(systemName: systemImage)
-                    .font(.title2)
-                    .foregroundStyle(Color.brandPrimary)
-                    .accessibilityHidden(true)
+                    VStack(spacing: AppSpacing.xSmall) {
+                        Image(systemName: systemImage)
+                            .font(.title2)
+                            .foregroundStyle(Color.brandPrimary)
+                            .accessibilityHidden(true)
 
-                Text(kindLabel)
+                        Text(kindLabel)
+                            .font(AppTypography.label)
+                            .foregroundStyle(Color.appSecondaryText)
+                    }
+                }
+            }
+
+            if showsDemoBadge {
+                Text("coach.evidence.demo_badge")
                     .font(AppTypography.label)
-                    .foregroundStyle(Color.appSecondaryText)
+                    .foregroundStyle(Color.appPrimaryText)
+                    .padding(.horizontal, AppSpacing.xSmall)
+                    .padding(.vertical, AppSpacing.xxSmall)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(AppSpacing.xSmall)
             }
         }
         .frame(maxWidth: .infinity, minHeight: 112)
@@ -165,7 +213,13 @@ struct MediaThumbnail: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(title))
-        .accessibilityValue(Text(kindLabel))
+        .accessibilityValue(
+            Text(
+                showsDemoBadge
+                    ? "coach.evidence.demo_badge"
+                    : kindLabel
+            )
+        )
     }
 }
 

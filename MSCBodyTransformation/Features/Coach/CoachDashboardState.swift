@@ -22,6 +22,7 @@ final class CoachDashboardState {
                 throw environment.bootstrapError ?? DomainError.unknown
             }
             let programs = try await repositories.programs.programs()
+            let referenceDate = environment.clock.now()
             let participants = try await service.participantSummaries(
                 coachID: identity.profile.id
             )
@@ -32,7 +33,7 @@ final class CoachDashboardState {
                 CoachDashboardSnapshot(
                     profile: identity.profile,
                     activePrograms: programs.filter {
-                        $0.status == .active
+                        $0.lifecycleStatus(at: referenceDate) == .active
                     },
                     participants: participants
                 )
@@ -50,6 +51,7 @@ final class CoachDashboardState {
 @MainActor
 @Observable
 final class CoachParticipantsState {
+    private let environment: AppEnvironment
     private let service: CoachDataService
 
     var state: CoachFeatureLoadState<[CoachParticipantSummary]> = .idle
@@ -60,7 +62,12 @@ final class CoachParticipantsState {
     var sort: CoachParticipantSort = .progress
 
     init(environment: AppEnvironment) {
+        self.environment = environment
         service = CoachDataService(environment: environment)
+    }
+
+    var referenceDate: Date {
+        environment.clock.now()
     }
 
     var participants: [CoachParticipantSummary] {
@@ -71,7 +78,7 @@ final class CoachParticipantsState {
     }
 
     var availablePrograms: [Program] {
-        let programs = participants.compactMap(\.program)
+        let programs = participants.flatMap(\.associatedPrograms)
         return Dictionary(
             grouping: programs,
             by: \.id
@@ -95,7 +102,9 @@ final class CoachParticipantsState {
             }
             .filter { participant in
                 selectedProgramID == nil
-                    || participant.program?.id == selectedProgramID
+                    || participant.associatedPrograms.contains {
+                        $0.id == selectedProgramID
+                    }
             }
             .filter(matchesCompletionFilter)
             .filter(matchesReviewFilter)

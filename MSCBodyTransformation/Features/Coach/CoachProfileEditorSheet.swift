@@ -174,7 +174,7 @@ struct CoachProfileEditorSheet: View {
     }
 
     private var identitySection: some View {
-        Section("participant.profile.data") {
+        Section {
             LabeledContent("participant.profile.field.name") {
                 TextField(
                     "participant.profile.field.name",
@@ -204,13 +204,25 @@ struct CoachProfileEditorSheet: View {
                 value: snapshot.user.email
             )
 
-            TextField(
-                "coach.profile.biography",
-                text: $biography,
-                axis: .vertical
-            )
-            .lineLimit(3...8)
-            .accessibilityIdentifier("coach.profile.editor.biography")
+            VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+                Text("coach.profile.biography")
+                    .font(AppTypography.label)
+                    .foregroundStyle(Color.appSecondaryText)
+
+                TextField(
+                    "coach.profile.biography.prompt",
+                    text: $biography,
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+                .accessibilityIdentifier(
+                    "coach.profile.editor.biography"
+                )
+            }
+        } header: {
+            Text("participant.profile.data")
+        } footer: {
+            Text("coach.profile.required_fields")
         }
     }
 

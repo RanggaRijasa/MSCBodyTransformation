@@ -43,6 +43,7 @@ nonisolated struct CoachDataService: Sendable {
             summaries.append(
                 try await summary(
                     for: profile,
+                    coachID: coachID,
                     programsByID: programsByID,
                     repositories: repositories
                 )
@@ -63,6 +64,7 @@ nonisolated struct CoachDataService: Sendable {
         let programs = try await repositories.programs.programs()
         return try await summary(
             for: profile,
+            coachID: coachID,
             programsByID: Dictionary(
                 uniqueKeysWithValues: programs.map { ($0.id, $0) }
             ),
@@ -73,37 +75,63 @@ nonisolated struct CoachDataService: Sendable {
     func reviewItems(
         coachID: UUID
     ) async throws -> [CoachReviewItem] {
-        let summaries = try await participantSummaries(coachID: coachID)
+        guard let repositories = environment.repositories else {
+            throw environment.bootstrapError ?? DomainError.unknown
+        }
+        let profiles = try await repositories.coachParticipants
+            .assignedParticipants(coachID: coachID)
+        let programs = try await repositories.programs.programs()
+        let programsByID = Dictionary(
+            uniqueKeysWithValues: programs.map { ($0.id, $0) }
+        )
 
-        return summaries.flatMap { summary -> [CoachReviewItem] in
-            guard let enrollment = summary.enrollment,
-                  let program = summary.program else {
-                return []
-            }
-            return summary.submissions.compactMap { submission in
-                guard !submission.evidence.isEmpty,
-                      let day = program.days.first(where: { day in
-                          day.steps.contains {
-                              $0.id == submission.stepID
-                          }
-                      }),
-                      let step = day.steps.first(where: {
-                          $0.id == submission.stepID
-                      }) else {
-                    return nil
+        var reviewItems: [CoachReviewItem] = []
+        for profile in profiles {
+            let enrollments = try await repositories.enrollments.enrollments(
+                participantID: profile.id
+            )
+            .filter { $0.coachID == coachID }
+
+            for enrollment in enrollments {
+                guard let program = programsByID[enrollment.programID] else {
+                    continue
                 }
-                return CoachReviewItem(
-                    submission: submission,
-                    participant: summary.profile,
-                    enrollment: enrollment,
-                    program: program,
-                    day: day,
-                    step: step,
-                    scoreBeforeReview: summary.points
+                let submissions = try await repositories.submissions
+                    .submissions(enrollmentID: enrollment.id)
+                let leaderboard = try await repositories.leaderboard
+                    .leaderboard(programID: program.id)
+                let score = leaderboard.first {
+                    $0.participantID == profile.id
+                }?.score.totalPoints ?? 0
+
+                reviewItems.append(
+                    contentsOf: submissions.compactMap { submission in
+                        guard !submission.evidence.isEmpty,
+                              let day = program.days.first(where: { day in
+                                  day.steps.contains {
+                                      $0.id == submission.stepID
+                                  }
+                              }),
+                              let step = day.steps.first(where: {
+                                  $0.id == submission.stepID
+                              }) else {
+                            return nil
+                        }
+                        return CoachReviewItem(
+                            submission: submission,
+                            participant: profile,
+                            enrollment: enrollment,
+                            program: program,
+                            day: day,
+                            step: step,
+                            scoreBeforeReview: score
+                        )
+                    }
                 )
             }
         }
-        .sorted { lhs, rhs in
+
+        return reviewItems.sorted { lhs, rhs in
             let lhsNeedsAction = lhs.submission.status == .pending
                 && lhs.step.verificationMode == .coachReview
             let rhsNeedsAction = rhs.submission.status == .pending
@@ -117,12 +145,17 @@ nonisolated struct CoachDataService: Sendable {
 
     private func summary(
         for profile: ParticipantProfile,
+        coachID: UUID,
         programsByID: [UUID: Program],
         repositories: AppRepositories
     ) async throws -> CoachParticipantSummary {
         let enrollments = try await repositories.enrollments.enrollments(
             participantID: profile.id
         )
+        .filter { $0.coachID == coachID }
+        let associatedPrograms = enrollments.compactMap {
+            programsByID[$0.programID]
+        }
         let enrollment = enrollments.sorted {
             if $0.status == .active, $1.status != .active {
                 return true
@@ -140,7 +173,8 @@ nonisolated struct CoachDataService: Sendable {
                 program: nil,
                 submissions: [],
                 weighIns: [],
-                leaderboardEntry: nil
+                leaderboardEntry: nil,
+                associatedPrograms: associatedPrograms
             )
         }
 
@@ -161,7 +195,8 @@ nonisolated struct CoachDataService: Sendable {
             weighIns: weighIns,
             leaderboardEntry: leaderboard.first {
                 $0.participantID == profile.id
-            }
+            },
+            associatedPrograms: associatedPrograms
         )
     }
 }

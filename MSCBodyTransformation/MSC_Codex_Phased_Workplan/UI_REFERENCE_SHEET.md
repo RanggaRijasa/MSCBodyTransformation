@@ -428,6 +428,19 @@ Aturan:
 - Dapat menggunakan outline merah.
 - Jangan bersaing visual dengan primary action.
 
+### Filter
+
+- Tombol pembuka filter daftar memakai komponen ringkasan bersama: ikon
+  filter, judul, ringkasan pilihan aktif, dan chevron pada surface netral.
+- Filter kompleks dibuka sebagai bottom sheet dengan `Form`, `Section`, dan
+  `Picker` inline native. Jangan membuat kartu pilihan atau indikator radio
+  khusus per fitur.
+- Footer filter selalu memakai dua tombol bersama dengan tinggi dan radius
+  yang sama: `Atur ulang` sebagai secondary outline dan `Terapkan filter`
+  sebagai primary merah.
+- Perbedaan fitur hanya pada isi section dan pilihan filter, bukan pada
+  styling sheet, surface, spacing, header, atau action bar.
+
 ### Yellow accent button
 
 Gunakan sangat terbatas untuk:
@@ -495,6 +508,19 @@ Gunakan:
 - Semantic color assets.
 - Material hanya bila benar-benar membantu hierarchy.
 - Rounded surface dengan `AppSurface`.
+
+### Navigasi kembali
+
+- Destination di dalam `NavigationStack` harus mempertahankan gesture native
+  swipe dari leading edge untuk kembali.
+- Jangan menambahkan `DragGesture` layar penuh sebagai pengganti gesture
+  kembali karena dapat bertabrakan dengan scroll horizontal, carousel,
+  sheet, dan gesture sistem.
+- Jika tombol back native disembunyikan untuk kebutuhan produk, kontrol
+  bersama wajib mengaktifkan kembali `interactivePopGestureRecognizer` dan
+  hanya mengizinkannya ketika stack memiliki destination yang dapat di-pop.
+- Root tab dan root navigation stack tidak boleh bereaksi terhadap gesture
+  kembali.
 
 Fallback harus mempertahankan:
 

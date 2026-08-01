@@ -121,6 +121,7 @@ nonisolated struct CoachParticipantSummary:
     let submissions: [StepSubmission]
     let weighIns: [WeighIn]
     let leaderboardEntry: LeaderboardEntry?
+    let associatedPrograms: [Program]
 
     var id: UUID { profile.id }
 
@@ -312,9 +313,23 @@ nonisolated struct CoachLeaderboardSnapshot: Equatable, Sendable {
     let entries: [LeaderboardEntry]
     let winners: [ProgramWinner]
     let assignedParticipantIDs: Set<UUID>
+    let referenceDate: Date
+
+    var selectedProgramStatus: ProgramStatus {
+        selectedProgram.lifecycleStatus(at: referenceDate)
+    }
+
+    var isProgramCompleted: Bool {
+        selectedProgramStatus == .completed
+            || selectedProgramStatus == .archived
+    }
 
     var isFinal: Bool {
-        selectedProgram.status == .completed && !winners.isEmpty
+        isProgramCompleted && !winners.isEmpty
+    }
+
+    var isAwaitingWinnerLock: Bool {
+        isProgramCompleted && winners.isEmpty
     }
 }
 

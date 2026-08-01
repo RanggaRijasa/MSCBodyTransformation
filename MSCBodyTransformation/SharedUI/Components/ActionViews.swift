@@ -35,6 +35,102 @@ struct PrimaryActionBar: View {
     }
 }
 
+struct FilterSummaryButton: View {
+    let title: LocalizedStringKey
+    let summary: Text
+    let identifier: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: AppSpacing.medium) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.title3.weight(.medium))
+                    .foregroundStyle(Color.appPrimaryText)
+                    .frame(
+                        width: AppControlMetrics.minimumTouchTarget,
+                        height: AppControlMetrics.minimumTouchTarget
+                    )
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
+                    Text(title)
+                        .font(AppTypography.cardTitle)
+                        .foregroundStyle(Color.appPrimaryText)
+
+                    summary
+                        .font(AppTypography.secondary)
+                        .foregroundStyle(Color.appSecondaryText)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: AppSpacing.xSmall)
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.appSecondaryText)
+                    .accessibilityHidden(true)
+            }
+            .padding(AppSpacing.medium)
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .background(
+                Color.appSurface,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+                .stroke(Color.appBorder, lineWidth: 1)
+            }
+            .contentShape(
+                RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(summary)
+        .accessibilityIdentifier(identifier)
+    }
+}
+
+struct FilterSheetActionBar: View {
+    let resetTitle: LocalizedStringKey
+    let applyTitle: LocalizedStringKey
+    let resetIdentifier: String
+    let applyIdentifier: String
+    let onReset: () -> Void
+    let onApply: () -> Void
+
+    var body: some View {
+        HStack(spacing: AppSpacing.small) {
+            Button(resetTitle, action: onReset)
+                .buttonStyle(SecondaryActionButtonStyle())
+                .accessibilityIdentifier(resetIdentifier)
+
+            Button(applyTitle, action: onApply)
+                .buttonStyle(PrimaryActionButtonStyle())
+                .accessibilityIdentifier(applyIdentifier)
+        }
+        .padding(AppSpacing.medium)
+        .background(.bar)
+        .overlay(alignment: .top) {
+            Divider()
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("app.filter.action-bar")
+    }
+}
+
 struct ConfirmationSheet: View {
     @Environment(\.dismiss) private var dismiss
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @MainActor
 private struct SinglePressNavigationBackButtonModifier: ViewModifier {
@@ -7,6 +8,9 @@ private struct SinglePressNavigationBackButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .navigationBarBackButtonHidden(true)
+            .background {
+                InteractivePopGestureBridge()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -25,6 +29,54 @@ private struct SinglePressNavigationBackButtonModifier: ViewModifier {
                     .accessibilityIdentifier("navigation.back")
                 }
             }
+    }
+}
+
+@MainActor
+private struct InteractivePopGestureBridge:
+    UIViewControllerRepresentable
+{
+    func makeUIViewController(
+        context: Context
+    ) -> InteractivePopGestureController {
+        InteractivePopGestureController()
+    }
+
+    func updateUIViewController(
+        _ uiViewController: InteractivePopGestureController,
+        context: Context
+    ) {
+        uiViewController.enableGestureIfPossible()
+    }
+}
+
+@MainActor
+private final class InteractivePopGestureController:
+    UIViewController,
+    UIGestureRecognizerDelegate
+{
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        enableGestureIfPossible()
+    }
+
+    func enableGestureIfPossible() {
+        guard let gesture = navigationController?
+            .interactivePopGestureRecognizer else {
+            return
+        }
+        gesture.isEnabled = true
+        gesture.delegate = self
+    }
+
+    func gestureRecognizerShouldBegin(
+        _ gestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        guard let navigationController else {
+            return false
+        }
+        return navigationController.viewControllers.count > 1
+            && navigationController.transitionCoordinator == nil
     }
 }
 

@@ -130,7 +130,8 @@ private struct CoachParticipantScenarioPreview: View {
                         program: summary.program,
                         submissions: summary.submissions,
                         weighIns: summary.weighIns,
-                        leaderboardEntry: summary.leaderboardEntry
+                        leaderboardEntry: summary.leaderboardEntry,
+                        associatedPrograms: summary.associatedPrograms
                     )
                 )
             }

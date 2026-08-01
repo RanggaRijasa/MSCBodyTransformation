@@ -92,4 +92,19 @@ nonisolated struct Program: Codable, Equatable, Identifiable, Sendable {
         let interval = max(endDate.timeIntervalSince(startDate), 0)
         return max(Int(ceil(interval / secondsPerDay)), 1)
     }
+
+    func lifecycleStatus(at date: Date) -> ProgramStatus {
+        switch status {
+        case .draft, .completed, .archived:
+            return status
+        case .scheduled, .active:
+            if date < startDate {
+                return .scheduled
+            }
+            if date > endDate {
+                return .completed
+            }
+            return .active
+        }
+    }
 }

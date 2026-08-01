@@ -215,6 +215,30 @@ Sesuaikan implementasi dengan API yang benar pada Xcode yang tersedia. Jangan me
 
 ### Log
 
+#### 2026-08-01 — Gesture kembali dari tepi kiri
+
+- Files changed: kontrol navigasi bersama, UI reference, UI test navigasi,
+  dan progress log Phase 02.
+- Assumptions: gesture kembali mengikuti perilaku native iOS dari leading
+  edge dan hanya aktif jika navigation stack memiliki destination yang dapat
+  di-pop. Aplikasi tidak menambahkan `DragGesture` layar penuh karena dapat
+  bertabrakan dengan scroll, carousel, sheet, dan gesture sistem. Tombol back
+  khusus tetap dipertahankan agar long-press tidak membuka menu riwayat.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` untuk scheme `MSCBodyTransformation`, konfigurasi
+  Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase02NavigationTests`,
+  `testLeadingEdgeSwipePopsCustomBackDestinations`, dan
+  `testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build/run lulus tanpa warning; empat test navigasi dan dua UI test
+  lulus. Edge swipe berhasil melakukan pop pada dua destination bertingkat,
+  sedangkan tombol kembali singkat maupun long-press tetap menggunakan
+  perilaku satu kali pop tanpa menu riwayat.
+- Remaining blockers: tidak ada.
+
 #### 2026-07-26 — Phase 02 selesai
 
 - Files changed: semantic color assets; design tokens dan adaptive glass styles;

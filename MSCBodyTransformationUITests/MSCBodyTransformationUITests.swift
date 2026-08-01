@@ -68,7 +68,10 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 .waitForExistence(timeout: 8)
         )
         XCTAssertTrue(
-            app.buttons["coach.leaderboard.program-selector"]
+            element(
+                identifier: "coach.leaderboard.program-selector",
+                in: app
+            )
                 .waitForExistence(timeout: 5)
         )
         let assignedPodiumCards = app.buttons.matching(
@@ -146,6 +149,12 @@ final class MSCBodyTransformationUITests: XCTestCase {
         )
         XCTAssertTrue(
             app.textFields["coach.profile.editor.biography"].exists
+        )
+        XCTAssertTrue(app.staticTexts["Bio publik"].exists)
+        XCTAssertTrue(
+            app.staticTexts[
+                "Nama tampilan, kota, dan bio publik wajib diisi."
+            ].exists
         )
         app.buttons["Batal"].tap()
     }
@@ -364,7 +373,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
-    func testCoachDashboardAttentionAndProgramOpenFilteredParticipants()
+    func testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate()
         throws
     {
         let app = XCUIApplication()
@@ -408,18 +417,11 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 "coach.dashboard.program."
             )
         ).firstMatch
-        for _ in 0..<5
-        where !activeProgram.waitForExistence(timeout: 1)
-            || !activeProgram.isHittable {
-            app.swipeUp()
-        }
-        XCTAssertTrue(activeProgram.waitForExistence(timeout: 5))
-        XCTAssertTrue(activeProgram.isHittable)
-        activeProgram.tap()
         XCTAssertTrue(
-            element(identifier: "coach.participants", in: app)
-                .waitForExistence(timeout: 8)
+            app.staticTexts["0, program aktif"]
+                .waitForExistence(timeout: 5)
         )
+        XCTAssertFalse(activeProgram.exists)
     }
 
     @MainActor
@@ -444,12 +446,28 @@ final class MSCBodyTransformationUITests: XCTestCase {
             app.textFields["Cari nama atau kota"]
                 .waitForExistence(timeout: 5)
         )
-        let filter = app.buttons.matching(
-            NSPredicate(
-                format: "label CONTAINS %@",
-                "Semua program"
-            )
-        ).firstMatch
+        let filter = app.buttons["Filter dan urutkan"]
+        XCTAssertTrue(filter.waitForExistence(timeout: 5))
+        filter.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.participants.filter.sheet", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        let participantReset = app.buttons[
+            "coach.participants.filter.reset"
+        ]
+        let participantApply = app.buttons[
+            "coach.participants.filter.apply"
+        ]
+        XCTAssertTrue(participantReset.waitForExistence(timeout: 5))
+        XCTAssertTrue(participantApply.waitForExistence(timeout: 5))
+        XCTAssertEqual(
+            participantReset.frame.height,
+            participantApply.frame.height,
+            accuracy: 1
+        )
+        app.buttons["Tutup"].tap()
         XCTAssertTrue(filter.waitForExistence(timeout: 5))
 
         let participant = app.buttons.matching(
@@ -1107,6 +1125,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "coach.evidence.viewer", in: app)
                 .waitForExistence(timeout: 5)
         )
+        XCTAssertTrue(app.staticTexts["Bukti demo lokal"].exists)
         app.navigationBars["Bukti peserta"].buttons["Tutup"].tap()
 
         let approve = app.buttons["coach.review.approve"]
@@ -1122,9 +1141,13 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertTrue(confirmApprove.waitForExistence(timeout: 5))
         confirmApprove.tap()
         XCTAssertTrue(
-            element(identifier: "coach.review.result", in: app)
+            element(identifier: "coach.review.evidence-list", in: app)
                 .waitForExistence(timeout: 8)
         )
+        XCTAssertFalse(
+            element(identifier: "coach.review.result", in: app).exists
+        )
+        XCTAssertFalse(app.staticTexts["Poin lokal: 210 menjadi 220"].exists)
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["coach.dashboard.action.leaderboard"].tap()
@@ -1193,6 +1216,124 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testCoachParticipantFilterFindsAndKeepsHistoryProgram() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let participants = app.buttons[
+            "coach.dashboard.action.participants"
+        ]
+        XCTAssertTrue(participants.waitForExistence(timeout: 8))
+        participants.tap()
+
+        let filter = app.buttons["Filter dan urutkan"]
+        XCTAssertTrue(filter.waitForExistence(timeout: 5))
+        filter.tap()
+
+        let history = app.buttons[
+            "coach.participants.filter.option.program.history"
+        ]
+        XCTAssertTrue(history.waitForExistence(timeout: 5))
+        history.tap()
+
+        XCTAssertTrue(
+            element(identifier: "app.filter.program-history", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        let search = app.searchFields["Cari program selesai"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("Transformasi")
+
+        let historyProgramID =
+            "10000000-0000-0000-0000-000000000001"
+        let historyProgram = app.buttons[
+            "coach.participants.filter.option.program.history."
+                + historyProgramID
+        ]
+        XCTAssertTrue(historyProgram.waitForExistence(timeout: 5))
+        historyProgram.tap()
+
+        let selectedProgram = element(
+            identifier:
+                "coach.participants.filter.option.program."
+                    + historyProgramID,
+            in: app
+        )
+        XCTAssertTrue(selectedProgram.waitForExistence(timeout: 5))
+
+        let apply = app.buttons["coach.participants.filter.apply"]
+        XCTAssertTrue(apply.waitForExistence(timeout: 5))
+        apply.tap()
+
+        XCTAssertTrue(filter.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            (filter.value as? String)?.contains("Transformasi 7 hari")
+                == true
+        )
+
+        filter.tap()
+        XCTAssertTrue(selectedProgram.waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testLeadingEdgeSwipePopsCustomBackDestinations() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        let openParticipants = app.buttons[
+            "coach.dashboard.action.participants"
+        ]
+        XCTAssertTrue(openParticipants.waitForExistence(timeout: 8))
+        openParticipants.tap()
+
+        let participants = element(
+            identifier: "coach.participants",
+            in: app
+        )
+        XCTAssertTrue(participants.waitForExistence(timeout: 5))
+
+        let participant = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.participant.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(participant.waitForExistence(timeout: 5))
+        participant.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.participant.detail", in: app)
+                .waitForExistence(timeout: 5)
+        )
+
+        performLeadingEdgeBackSwipe(in: app)
+        XCTAssertTrue(participants.waitForExistence(timeout: 5))
+
+        performLeadingEdgeBackSwipe(in: app)
+        XCTAssertTrue(openParticipants.waitForExistence(timeout: 5))
+        XCTAssertFalse(participants.exists)
+
+        performLeadingEdgeBackSwipe(in: app)
+        XCTAssertTrue(openParticipants.waitForExistence(timeout: 2))
+        XCTAssertFalse(app.buttons["navigation.back"].exists)
+    }
+
+    @MainActor
     func testCoachViewsAutomaticEvidenceAndSavesOptionalRating() throws {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -1253,6 +1394,15 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "coach.review.filter.sheet", in: app)
                 .waitForExistence(timeout: 5)
         )
+        let resetFilter = app.buttons["coach.review.filter.reset"]
+        let applyFilter = app.buttons["coach.review.filter.apply"]
+        XCTAssertTrue(resetFilter.waitForExistence(timeout: 5))
+        XCTAssertTrue(applyFilter.waitForExistence(timeout: 5))
+        XCTAssertEqual(
+            resetFilter.frame.height,
+            applyFilter.frame.height,
+            accuracy: 1
+        )
         let automaticStatus = element(
             identifier: "coach.review.filter.option.status.automatic",
             in: app
@@ -1260,8 +1410,6 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertTrue(automaticStatus.waitForExistence(timeout: 5))
         automaticStatus.tap()
 
-        let applyFilter = app.buttons["coach.review.filter.apply"]
-        XCTAssertTrue(applyFilter.waitForExistence(timeout: 5))
         applyFilter.tap()
         XCTAssertTrue(
             filterButton.waitForExistence(timeout: 5)
@@ -1277,6 +1425,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
         }
         XCTAssertTrue(automaticEvidence.waitForExistence(timeout: 5))
         XCTAssertTrue(automaticEvidence.label.contains("Poin otomatis"))
+        XCTAssertFalse(automaticEvidence.label.contains("poin diberikan"))
         automaticEvidence.tap()
 
         XCTAssertTrue(
@@ -1353,6 +1502,29 @@ final class MSCBodyTransformationUITests: XCTestCase {
 
         cancel.tap()
         XCTAssertTrue(reject.waitForExistence(timeout: 5))
+
+        reject.tap()
+        let reason = app.textViews[
+            "coach.review.rejection-reason"
+        ]
+        XCTAssertTrue(reason.waitForExistence(timeout: 5))
+        reason.tap()
+        reason.typeText("Bukti belum sesuai petunjuk.")
+
+        let submitRejection = app.buttons[
+            "coach.review.rejection.submit"
+        ]
+        XCTAssertTrue(submitRejection.isEnabled)
+        submitRejection.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.review.evidence-list", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertFalse(
+            element(identifier: "coach.review.result", in: app).exists
+        )
+        XCTAssertFalse(app.staticTexts["Bukti ditolak"].exists)
     }
 
     @MainActor
@@ -1814,6 +1986,33 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testCoachLoggedOutStateCanResumeLocalDemo() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+            "-DemoRole", "coach",
+            "-DemoScenario", "logged_out",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            element(identifier: "state.logged-out", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        let resume = app.buttons["Masuk kembali ke demo"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 5))
+        XCTAssertTrue(resume.isEnabled)
+        resume.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.dashboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+    }
+
+    @MainActor
     func testRepositoryErrorRetryPersistsAcrossTabs() throws {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -1909,6 +2108,20 @@ final class MSCBodyTransformationUITests: XCTestCase {
         app.descendants(matching: .any)
             .matching(identifier: identifier)
             .firstMatch
+    }
+
+    @MainActor
+    private func performLeadingEdgeBackSwipe(
+        in app: XCUIApplication
+    ) {
+        let window = app.windows.firstMatch
+        let start = window.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5)
+        )
+        let end = window.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.82, dy: 0.5)
+        )
+        start.press(forDuration: 0.05, thenDragTo: end)
     }
 
     @MainActor

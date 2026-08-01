@@ -16,6 +16,10 @@ final class CoachReviewQueueState {
         service = CoachDataService(environment: environment)
     }
 
+    var referenceDate: Date {
+        environment.clock.now()
+    }
+
     func load() async {
         state = .loading
         do {

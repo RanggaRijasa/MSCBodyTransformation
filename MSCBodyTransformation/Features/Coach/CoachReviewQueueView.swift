@@ -50,7 +50,8 @@ struct CoachReviewQueueView: View {
             case .filters(let programs):
                 CoachEvidenceFilterSheet(
                     programs: programs,
-                    selection: filterSelection
+                    selection: filterSelection,
+                    referenceDate: state.referenceDate
                 ) { selection in
                     filterSelection = selection
                 }
@@ -95,10 +96,6 @@ struct CoachReviewQueueView: View {
             .accessibilityIdentifier("coach.review.scope")
 
             filters(for: items)
-
-            if let decision = state.lastDecision {
-                CoachReviewResultBanner(result: decision)
-            }
         }
         .padding(.horizontal, AppSpacing.medium)
         .padding(.top, AppSpacing.small)
@@ -165,50 +162,14 @@ struct CoachReviewQueueView: View {
     private func filters(
         for items: [CoachReviewItem]
     ) -> some View {
-        Button {
+        FilterSummaryButton(
+            title: "coach.review.filter.title",
+            summary: filterSummary(in: items),
+            identifier: "coach.review.filter.open"
+        ) {
             presentedSheet = .filters(programs(in: items))
-        } label: {
-            HStack(spacing: AppSpacing.medium) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.title2.weight(.medium))
-                    .frame(
-                        width: AppControlMetrics.minimumTouchTarget,
-                        height: AppControlMetrics.minimumTouchTarget
-                    )
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                    Text("coach.review.filter.title")
-                        .font(AppTypography.cardTitle)
-                        .foregroundStyle(Color.appPrimaryText)
-
-                    filterSummary(in: items)
-                        .font(AppTypography.secondary)
-                        .foregroundStyle(Color.appSecondaryText)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer(minLength: AppSpacing.xSmall)
-
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.appPrimaryText)
-                    .accessibilityHidden(true)
-            }
         }
-        .buttonStyle(.plain)
-        .padding(AppSpacing.small)
-        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-        .adaptiveGlassSurface(
-            cornerRadius: AppRadius.large,
-            isInteractive: true
-        )
-        .accessibilityLabel(Text("coach.review.filter.title"))
-        .accessibilityValue(filterSummary(in: items))
         .accessibilityHint(Text("coach.review.filter.open_hint"))
-        .accessibilityIdentifier("coach.review.filter.open")
     }
 
     private func filteredItems(
@@ -392,6 +353,7 @@ private struct CoachEvidenceFilterSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let programs: [Program]
+    let referenceDate: Date
     let onApply: (CoachEvidenceFilterSelection) -> Void
 
     @State private var draftSelection: CoachEvidenceFilterSelection
@@ -399,28 +361,23 @@ private struct CoachEvidenceFilterSheet: View {
     init(
         programs: [Program],
         selection: CoachEvidenceFilterSelection,
+        referenceDate: Date,
         onApply: @escaping (CoachEvidenceFilterSelection) -> Void
     ) {
         self.programs = programs
+        self.referenceDate = referenceDate
         self.onApply = onApply
         _draftSelection = State(initialValue: selection)
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: AppSpacing.large) {
-                    programSection
-                    statusSection
-                    ratingSection
-                }
-                .padding(.horizontal, AppSpacing.medium)
-                .padding(.top, AppSpacing.medium)
-                .padding(.bottom, AppSpacing.large)
+            Form {
+                programSection
+                statusSection
+                ratingSection
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                actionBar
-            }
+            .scrollContentBackground(.hidden)
             .background(Color.appBackground)
             .navigationTitle(Text("coach.review.filter.title"))
             .navigationBarTitleDisplayMode(.inline)
@@ -433,236 +390,73 @@ private struct CoachEvidenceFilterSheet: View {
                     .accessibilityIdentifier("coach.review.filter.close")
                 }
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                FilterSheetActionBar(
+                    resetTitle: "coach.review.filter.reset",
+                    applyTitle: "coach.review.filter.apply",
+                    resetIdentifier: "coach.review.filter.reset",
+                    applyIdentifier: "coach.review.filter.apply"
+                ) {
+                    draftSelection = .all
+                } onApply: {
+                    onApply(draftSelection)
+                    dismiss()
+                }
+                .accessibilityIdentifier("coach.review.filter.action-bar")
+            }
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("coach.review.filter.sheet")
     }
 
     private var programSection: some View {
-        CoachEvidenceFilterSection(
-            title: Text("coach.review.filter.program")
-        ) {
-            VStack(spacing: 0) {
-                CoachEvidenceFilterOptionRow(
-                    title: Text("coach.review.filter.all_programs"),
-                    isSelected: draftSelection.programID == nil
-                ) {
-                    draftSelection.programID = nil
-                }
-                .accessibilityIdentifier(
-                    "coach.review.filter.option.program.all"
-                )
-
-                if !programs.isEmpty {
-                    Divider()
-                        .padding(.horizontal, AppSpacing.medium)
-                }
-
-                ForEach(Array(programs.enumerated()), id: \.element.id) {
-                    index,
-                    program in
-                    CoachEvidenceFilterOptionRow(
-                        title: Text(verbatim: program.title),
-                        isSelected: draftSelection.programID == program.id
-                    ) {
-                        draftSelection.programID = program.id
-                    }
-                    .accessibilityIdentifier(
-                        "coach.review.filter.option.program.\(program.id)"
-                    )
-
-                    if index < programs.count - 1 {
-                        Divider()
-                            .padding(.horizontal, AppSpacing.medium)
-                    }
-                }
-            }
-        }
+        ProgramFilterSection(
+            programs: programs,
+            referenceDate: referenceDate,
+            sectionTitle: "coach.review.filter.program",
+            allProgramsTitle: "coach.review.filter.all_programs",
+            optionIdentifierPrefix:
+                "coach.review.filter.option.program",
+            selection: $draftSelection.programID
+        )
     }
 
     private var statusSection: some View {
-        CoachEvidenceFilterSection(
-            title: Text("coach.review.filter.status.title")
-        ) {
-            VStack(spacing: 0) {
-                ForEach(
-                    Array(
-                        CoachEvidenceStatusFilter.allCases.enumerated()
-                    ),
-                    id: \.element.id
-                ) { index, option in
-                    CoachEvidenceFilterOptionRow(
-                        title: Text(option.titleKey),
-                        isSelected: draftSelection.status == option
-                    ) {
-                        draftSelection.status = option
-                    }
-                    .accessibilityIdentifier(
-                        "coach.review.filter.option.status.\(option.rawValue)"
-                    )
-
-                    if index
-                        < CoachEvidenceStatusFilter.allCases.count - 1 {
-                        Divider()
-                            .padding(.horizontal, AppSpacing.medium)
-                    }
+        Section("coach.review.filter.status.title") {
+            Picker(
+                "coach.review.filter.status.title",
+                selection: $draftSelection.status
+            ) {
+                ForEach(CoachEvidenceStatusFilter.allCases) { option in
+                    Text(option.titleKey)
+                        .tag(option)
+                        .accessibilityIdentifier(
+                            "coach.review.filter.option.status.\(option.rawValue)"
+                        )
                 }
             }
+            .pickerStyle(.inline)
+            .labelsHidden()
         }
     }
 
     private var ratingSection: some View {
-        CoachEvidenceFilterSection(
-            title: Text("coach.review.filter.rating.title")
-        ) {
-            VStack(spacing: 0) {
-                ForEach(
-                    Array(
-                        CoachEvidenceRatingFilter.allCases.enumerated()
-                    ),
-                    id: \.element.id
-                ) { index, option in
-                    CoachEvidenceFilterOptionRow(
-                        title: Text(option.titleKey),
-                        isSelected: draftSelection.rating == option
-                    ) {
-                        draftSelection.rating = option
-                    }
-                    .accessibilityIdentifier(
-                        "coach.review.filter.option.rating.\(option.rawValue)"
-                    )
-
-                    if index
-                        < CoachEvidenceRatingFilter.allCases.count - 1 {
-                        Divider()
-                            .padding(.horizontal, AppSpacing.medium)
-                    }
+        Section("coach.review.filter.rating.title") {
+            Picker(
+                "coach.review.filter.rating.title",
+                selection: $draftSelection.rating
+            ) {
+                ForEach(CoachEvidenceRatingFilter.allCases) { option in
+                    Text(option.titleKey)
+                        .tag(option)
+                        .accessibilityIdentifier(
+                            "coach.review.filter.option.rating.\(option.rawValue)"
+                        )
                 }
             }
+            .pickerStyle(.inline)
+            .labelsHidden()
         }
-    }
-
-    private var actionBar: some View {
-        HStack(spacing: AppSpacing.medium) {
-            Button("coach.review.filter.reset") {
-                draftSelection = .all
-            }
-            .font(AppTypography.button)
-            .foregroundStyle(Color.brandPrimary)
-            .frame(minHeight: 50)
-            .accessibilityIdentifier("coach.review.filter.reset")
-
-            Button("coach.review.filter.apply") {
-                onApply(draftSelection)
-                dismiss()
-            }
-            .buttonStyle(PrimaryActionButtonStyle())
-            .accessibilityIdentifier("coach.review.filter.apply")
-        }
-        .padding(.horizontal, AppSpacing.medium)
-        .padding(.vertical, AppSpacing.small)
-        .background(Color.appElevatedSurface)
-        .overlay(alignment: .top) {
-            Divider()
-        }
-    }
-}
-
-private struct CoachEvidenceFilterSection<
-    Content: View
->: View {
-    let title: Text
-    let content: Content
-
-    init(
-        title: Text,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-            title
-                .font(AppTypography.sectionTitle)
-                .foregroundStyle(Color.appPrimaryText)
-
-            content
-                .background(
-                    Color.appSurface,
-                    in: RoundedRectangle(
-                        cornerRadius: AppRadius.medium,
-                        style: .continuous
-                    )
-                )
-                .overlay {
-                    RoundedRectangle(
-                        cornerRadius: AppRadius.medium,
-                        style: .continuous
-                    )
-                    .stroke(Color.appBorder, lineWidth: 1)
-                }
-                .clipShape(
-                    RoundedRectangle(
-                        cornerRadius: AppRadius.medium,
-                        style: .continuous
-                    )
-                )
-        }
-    }
-}
-
-private struct CoachEvidenceFilterOptionRow: View {
-    let title: Text
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: AppSpacing.medium) {
-                title
-                    .font(AppTypography.body)
-                    .foregroundStyle(Color.appPrimaryText)
-                    .multilineTextAlignment(.leading)
-
-                Spacer(minLength: AppSpacing.medium)
-
-                Image(
-                    systemName: isSelected
-                        ? "checkmark"
-                        : "circle"
-                )
-                .font(.body.weight(isSelected ? .semibold : .regular))
-                .foregroundStyle(
-                    isSelected
-                        ? Color.brandPrimary
-                        : Color.appSecondaryText
-                )
-                .frame(
-                    width: AppControlMetrics.minimumTouchTarget,
-                    height: AppControlMetrics.minimumTouchTarget
-                )
-                .accessibilityHidden(true)
-            }
-            .padding(.leading, AppSpacing.medium)
-            .padding(.trailing, AppSpacing.xSmall)
-            .frame(
-                maxWidth: .infinity,
-                minHeight: 58,
-                alignment: .leading
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityValue(
-            isSelected
-                ? Text("coach.review.filter.selected")
-                : Text("coach.review.filter.not_selected")
-        )
-        .accessibilityAddTraits(
-            isSelected ? .isSelected : []
-        )
     }
 }
 
@@ -765,27 +559,18 @@ private struct CoachEvidenceRowStatus: View {
         Group {
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-                    statusAndPoints
+                    statusLabel
                     ratingLabel
                 }
             } else {
                 HStack(alignment: .center, spacing: AppSpacing.small) {
-                    statusAndPoints
+                    statusLabel
                     Spacer(minLength: AppSpacing.xSmall)
                     ratingLabel
                 }
             }
         }
         .font(AppTypography.secondary)
-    }
-
-    private var statusAndPoints: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-            statusLabel
-            if shouldShowPointsLabel {
-                pointsLabel
-            }
-        }
     }
 
     private var statusLabel: some View {
@@ -801,14 +586,6 @@ private struct CoachEvidenceRowStatus: View {
                     style: .continuous
                 )
             )
-    }
-
-    private var pointsLabel: some View {
-        Text(
-            "\(item.step.points, format: .number.locale(CoachFormatting.locale)) \(Text(pointsSuffixKey))"
-        )
-        .monospacedDigit()
-        .foregroundStyle(Color.appSecondaryText)
     }
 
     private var ratingLabel: some View {
@@ -897,62 +674,6 @@ private struct CoachEvidenceRowStatus: View {
         }
     }
 
-    private var pointsSuffixKey: LocalizedStringKey {
-        if item.step.verificationMode == .automatic
-            || item.submission.status == .approved {
-            return "coach.review.points.awarded_suffix"
-        }
-        if item.submission.status == .rejected {
-            return "coach.review.points.not_awarded_suffix"
-        }
-        return "coach.review.points.pending_suffix"
-    }
-
-    private var shouldShowPointsLabel: Bool {
-        item.step.verificationMode == .automatic
-            || item.submission.status != .pending
-    }
-}
-
-private struct CoachReviewResultBanner: View {
-    let result: CoachReviewDecisionResult
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
-            Label(
-                result.status == .approved
-                    ? "coach.review.result.approved"
-                    : "coach.review.result.rejected",
-                systemImage: result.status == .approved
-                    ? "checkmark.circle.fill"
-                    : "xmark.circle.fill"
-            )
-            .font(AppTypography.cardTitle)
-            .foregroundStyle(
-                result.status == .approved
-                    ? Color.appSuccess
-                    : Color.appDestructive
-            )
-            Text(result.participantName)
-                .font(AppTypography.body)
-            Text(
-                "Poin lokal: \(CoachFormatting.number(result.pointsBefore)) menjadi \(CoachFormatting.number(result.pointsAfter))"
-            )
-            .font(AppTypography.secondary.monospacedDigit())
-            .foregroundStyle(Color.appSecondaryText)
-        }
-        .padding(AppSpacing.medium)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color.appSurface,
-            in: RoundedRectangle(
-                cornerRadius: AppRadius.large,
-                style: .continuous
-            )
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("coach.review.result")
-    }
 }
 
 @MainActor
@@ -1175,6 +896,18 @@ private struct CoachReviewDetailSheet: View {
                 }
             }
 
+            if hasUnavailablePhotoEvidence {
+                Label(
+                    "coach.evidence.unavailable.action_notice",
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appDestructive)
+                .accessibilityIdentifier(
+                    "coach.review.evidence.unavailable"
+                )
+            }
+
             let submittedAt = CoachFormatting.dateTime(
                 item.submission.submittedAt,
                 timeZoneIdentifier: item.program.timeZoneIdentifier
@@ -1272,7 +1005,10 @@ private struct CoachReviewDetailSheet: View {
                         foregroundColor: .appDestructive
                     )
                 )
-                .disabled(features.reviewQueue.isPerformingAction)
+                .disabled(
+                    features.reviewQueue.isPerformingAction
+                        || hasUnavailablePhotoEvidence
+                )
                 .accessibilityIdentifier("coach.review.reject")
 
                 Button {
@@ -1283,7 +1019,10 @@ private struct CoachReviewDetailSheet: View {
                     )
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
-                .disabled(features.reviewQueue.isPerformingAction)
+                .disabled(
+                    features.reviewQueue.isPerformingAction
+                        || hasUnavailablePhotoEvidence
+                )
                 .accessibilityIdentifier("coach.review.approve")
             }
             .padding(.horizontal, AppSpacing.medium)
@@ -1335,6 +1074,15 @@ private struct CoachReviewDetailSheet: View {
                     defaultValue: "Terjadi kendala. Coba lagi."
                 )
             }
+        }
+    }
+
+    private var hasUnavailablePhotoEvidence: Bool {
+        item.submission.evidence.contains { evidence in
+            evidence.kind == .photo
+                && LocalMediaImageResolver.image(
+                    reference: evidence.localReference
+                ) == nil
         }
     }
 
@@ -1573,6 +1321,23 @@ private struct CoachEvidencePhotoPreview: View {
                 .background(.ultraThinMaterial, in: Circle())
                 .padding(AppSpacing.small)
                 .accessibilityHidden(true)
+
+            if LocalMediaImageResolver.isBundledEvidenceFixture(
+                evidence.localReference
+            ) {
+                Text("coach.evidence.demo_badge")
+                    .font(AppTypography.label)
+                    .foregroundStyle(Color.appPrimaryText)
+                    .padding(.horizontal, AppSpacing.xSmall)
+                    .padding(.vertical, AppSpacing.xxSmall)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(AppSpacing.small)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity,
+                        alignment: .topLeading
+                    )
+            }
         }
         .clipShape(
             RoundedRectangle(
@@ -1593,14 +1358,9 @@ private struct CoachEvidencePhotoPreview: View {
     }
 
     private var image: UIImage? {
-        guard let reference = evidence.localReference,
-              !reference.isEmpty else {
-            return nil
-        }
-        if FileManager.default.fileExists(atPath: reference) {
-            return UIImage(contentsOfFile: reference)
-        }
-        return UIImage(named: reference)
+        LocalMediaImageResolver.image(
+            reference: evidence.localReference
+        )
     }
 }
 

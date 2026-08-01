@@ -292,12 +292,14 @@ actor InMemoryAppRepository:
                 reason: "Submission sudah diperiksa."
             )
         }
+        let reviewedSubmission = submissionsStorage[index]
         submissionsStorage[index].status = status
         submissionsStorage[index].reviewerID = reviewerID
         submissionsStorage[index].reviewedAt = reviewedAt
         submissionsStorage[index].reviewNote = note
-        refreshLeaderboard(
-            enrollmentID: submissionsStorage[index].enrollmentID
+        applyReviewScoreChange(
+            submission: reviewedSubmission,
+            decision: status
         )
         return submissionsStorage[index]
     }
@@ -898,6 +900,34 @@ actor InMemoryAppRepository:
         leaderboardEntries[entryIndex].score = result.score
         leaderboardEntries[entryIndex].progressPercentage =
             result.progress.overallPercentage
+        recalculateRanks(programID: program.id)
+    }
+
+    private func applyReviewScoreChange(
+        submission: StepSubmission,
+        decision: SubmissionStatus
+    ) {
+        guard decision == .approved,
+              let enrollment = enrollmentsStorage.first(where: {
+                  $0.id == submission.enrollmentID
+              }),
+              let program = programsStorage.first(where: {
+                  $0.id == enrollment.programID
+              }),
+              let step = program.days
+                  .flatMap(\.steps)
+                  .first(where: { $0.id == submission.stepID }),
+              let entryIndex = leaderboardEntries.firstIndex(where: {
+                  $0.programID == enrollment.programID
+                      && $0.participantID == enrollment.participantID
+              }) else {
+            return
+        }
+
+        // The bundled review fixture is intentionally a partial activity log.
+        // Apply only this decision's delta so its seeded historical score stays
+        // intact instead of being rebuilt from incomplete submissions.
+        leaderboardEntries[entryIndex].score.approvedStepPoints += step.points
         recalculateRanks(programID: program.id)
     }
 
