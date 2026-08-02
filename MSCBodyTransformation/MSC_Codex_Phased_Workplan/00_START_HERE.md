@@ -3,6 +3,19 @@
 
 Dokumen ini adalah pintu masuk untuk menjalankan pengembangan aplikasi secara bertahap. Workplan sengaja dipisah agar Codex dapat membangun bagian lokal yang terlihat dan dapat diuji sekarang, tanpa menunggu Supabase, Google OAuth, App Store Connect, domain universal link, atau kredensial eksternal lain.
 
+## Workplan program end-to-end authoritative
+
+Sebelum mengubah domain, UI program, Supabase schema, scoring, pembayaran, atau
+Android contract, baca:
+
+- `PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md`
+
+Dokumen tersebut memuat keputusan produk terbaru tentang satu Coach per
+Peserta, multi-program, QR enrollment, konten dan kuis, timbang, scoring,
+duplikasi cohort, serta commerce lintas App Store dan Google Play. Jika ada
+konflik dengan phase lama, workplan remediation tersebut berlaku sampai file
+phase terkait direkonsiliasi.
+
 ## Target produk
 
 Aplikasi native iOS dan iPadOS untuk program transformasi berat badan dengan tiga role:

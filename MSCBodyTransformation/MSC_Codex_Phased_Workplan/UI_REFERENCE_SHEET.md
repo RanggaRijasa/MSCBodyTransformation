@@ -320,7 +320,21 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
 
 ### Admin
 
+- Admin membuka `Dashboard` sebagai tab awal. Pemilih demo menyediakan
+  skenario `Dashboard Admin`; skenario yang secara khusus menguji draft atau
+  program aktif boleh langsung membuka tab Program.
 - Form dan CMS memakai background system/netral.
+- Direktori Orang memakai segmented control native `Peserta`, `Coach`, dan
+  `Admin` seperti katalog Program peserta. Judul serta segmented control
+  tetap terlihat dan hanya daftar orang yang digulir. Segmen menggantikan
+  pengelompokan atau label peran yang berulang pada setiap baris. Pintasan
+  persetujuan Coach dari Dashboard langsung membuka segmen `Coach`.
+- Detail Orang mengikuti struktur profil asli setiap peran. Peserta
+  menampilkan identitas, data profil, dan Coach pendamping; Coach menampilkan
+  identitas publik, data profil, bio, persetujuan, serta visibilitas; Admin
+  hanya menampilkan data akun yang benar-benar tersedia. Tindakan
+  administratif ditempatkan setelah informasi profil dan tidak boleh
+  menggantikan atau mengarang field profil.
 - Layar Konten memakai area aksi tambah yang dapat diperluas untuk jenis
   konten berikutnya. Pada fase ini hanya ada `Poster pemenang`.
 - Poster pemenang dikelola sebagai galeri gambar vertikal dua kolom berbasis

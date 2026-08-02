@@ -12,6 +12,61 @@ nonisolated extension ProgramStatus {
     }
 }
 
+nonisolated enum AdminProgramStage: Int, CaseIterable, Sendable {
+    case settings = 1
+    case content = 2
+    case review = 3
+}
+
+nonisolated struct AdminProgramFlowProgress: Equatable, Sendable {
+    let issues: [AdminValidationIssue]
+
+    func isComplete(_ stage: AdminProgramStage) -> Bool {
+        switch stage {
+        case .settings:
+            issues.allSatisfy { !Self.settingsFields.contains($0.field) }
+        case .content:
+            issues.allSatisfy { !Self.contentFields.contains($0.field) }
+        case .review:
+            issues.isEmpty
+        }
+    }
+
+    var completedStageCount: Int {
+        AdminProgramStage.allCases.filter(isComplete).count
+    }
+
+    func issueCount(for stage: AdminProgramStage) -> Int {
+        switch stage {
+        case .settings:
+            issues.count { Self.settingsFields.contains($0.field) }
+        case .content:
+            issues.count { Self.contentFields.contains($0.field) }
+        case .review:
+            issues.count
+        }
+    }
+
+    private static let settingsFields: Set<AdminValidationField> = [
+        .title,
+        .cover,
+        .dates,
+        .timeZone,
+        .scoring,
+        .access
+    ]
+
+    private static let contentFields: Set<AdminValidationField> = [
+        .days,
+        .dayNumbers,
+        .dayDates,
+        .steps,
+        .stepOrder,
+        .media,
+        .content
+    ]
+}
+
 nonisolated extension SubmissionVerificationMode {
     var adminTitle: String {
         switch self {

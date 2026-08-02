@@ -19,6 +19,11 @@ nonisolated struct AdminPersonSummary: Identifiable, Sendable {
     var id: UUID { user.id }
 }
 
+nonisolated enum AdminPeopleScope: Equatable, Sendable {
+    case all
+    case pendingCoachApprovals
+}
+
 @MainActor
 @Observable
 final class AdminFeatureContainer {
@@ -32,6 +37,7 @@ final class AdminFeatureContainer {
     var winnersState: AsyncContentState<[ProgramWinner]> = .idle
     var programQuery = ""
     var programStatusFilter: ProgramStatus?
+    var peopleScope: AdminPeopleScope = .all
     var lastMessage: String?
 
     private(set) var adminID: UUID?
@@ -53,6 +59,32 @@ final class AdminFeatureContainer {
                 && (programStatusFilter == nil
                     || program.status == programStatusFilter)
         }
+    }
+
+    var filteredPeople: [AdminPersonSummary] {
+        guard case .loaded(let people) = peopleState else {
+            return []
+        }
+        switch peopleScope {
+        case .all:
+            return people
+        case .pendingCoachApprovals:
+            return people.filter(\.user.isCoachApprovalPending)
+        }
+    }
+
+    var nextWinnerPosterSortOrder: Int {
+        guard case .loaded(let content) = contentState else {
+            return 1
+        }
+        return (
+            content
+                .filter {
+                    $0.kind == .winnerBanner && !$0.isArchived
+                }
+                .map(\.sortOrder)
+                .max() ?? 0
+        ) + 1
     }
 
     func load() async {
@@ -172,7 +204,10 @@ final class AdminFeatureContainer {
         return draft
     }
 
-    func duplicate(_ source: AdminProgramDraft) async throws {
+    @discardableResult
+    func duplicate(
+        _ source: AdminProgramDraft
+    ) async throws -> AdminProgramDraft {
         let repositories = try repositories()
         let now = environment.clock.now()
         let newID = environment.identifierGenerator.makeIdentifier()
@@ -242,6 +277,7 @@ final class AdminFeatureContainer {
             id: newID,
             title: "\(source.title) — salinan",
             summary: source.summary,
+            price: source.price,
             coverLocalReference: source.coverLocalReference,
             verificationMode: source.verificationMode,
             wellnessDisclaimer: source.wellnessDisclaimer,
@@ -276,6 +312,7 @@ final class AdminFeatureContainer {
         )
         lastMessage = "Draft berhasil diduplikasi."
         await load()
+        return duplicate
     }
 
     func archive(_ draft: AdminProgramDraft) async throws {

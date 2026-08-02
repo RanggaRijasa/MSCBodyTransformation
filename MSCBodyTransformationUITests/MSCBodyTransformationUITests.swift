@@ -644,8 +644,8 @@ final class MSCBodyTransformationUITests: XCTestCase {
             (
                 role: "admin",
                 scenario: "admin_winner_lock",
-                rootIdentifier: "admin.overview",
-                tabLabel: "Ringkasan"
+                rootIdentifier: "admin.dashboard",
+                tabLabel: "Dashboard"
             )
         ]
 
@@ -1064,7 +1064,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(
-            tabButton(label: "Ringkasan", in: app)
+            tabButton(label: "Dashboard", in: app)
                 .waitForExistence(timeout: 5)
         )
         XCTAssertTrue(tabButton(label: "Program", in: app).exists)
@@ -1726,7 +1726,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
 
         tabButton(label: "Program", in: app).tap()
         XCTAssertTrue(
-            element(identifier: "admin.programs", in: app)
+            element(identifier: "admin.program.create", in: app)
                 .waitForExistence(timeout: 8)
         )
         app.buttons["admin.program.create"].tap()
@@ -1737,6 +1737,21 @@ final class MSCBodyTransformationUITests: XCTestCase {
             )
                 .waitForExistence(timeout: 8)
         )
+
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.settings"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.content"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.review"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(app.buttons["Kelola program"].exists)
+        XCTAssertFalse(app.buttons["Atur program"].exists)
 
         app.buttons["admin.program.editor.open.content"].tap()
         XCTAssertTrue(
@@ -1774,6 +1789,12 @@ final class MSCBodyTransformationUITests: XCTestCase {
         app.buttons["navigation.back"].tap()
         app.buttons["navigation.back"].tap()
 
+        app.buttons["admin.program.editor.open.review"].tap()
+        XCTAssertTrue(
+            element(identifier: "admin.program.review-publish", in: app)
+                .waitForExistence(timeout: 5)
+        )
+
         app.buttons["admin.program.editor.open.preview"].tap()
         XCTAssertTrue(
             element(identifier: "admin.editor.preview", in: app)
@@ -1781,7 +1802,6 @@ final class MSCBodyTransformationUITests: XCTestCase {
         )
         app.buttons["navigation.back"].tap()
 
-        app.buttons["admin.program.editor.open.publish"].tap()
         let publish = app.buttons["admin.editor.publish"]
         if !publish.waitForExistence(timeout: 3) || !publish.isHittable {
             app.swipeUp()
@@ -1801,6 +1821,184 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testAdminProgramHeaderStaysFixedWhileCardsScroll() throws {
+        let app = launchAdmin()
+
+        tabButton(label: "Program", in: app).tap()
+        XCTAssertTrue(
+            element(identifier: "admin.program.create", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        app.buttons["Filter status"].tap()
+        let allStatuses = app.buttons["Semua status"]
+        XCTAssertTrue(allStatuses.waitForExistence(timeout: 5))
+        allStatuses.tap()
+
+        let search = element(
+            identifier: "admin.program.search",
+            in: app
+        )
+        let cardScroll = app.scrollViews.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        XCTAssertTrue(cardScroll.waitForExistence(timeout: 5))
+
+        let initialSearchFrame = search.frame
+        let createButton = app.buttons["admin.program.create"]
+        let initialCreateButtonFrame = createButton.frame
+        cardScroll.swipeUp()
+
+        XCTAssertEqual(
+            search.frame.minY,
+            initialSearchFrame.minY,
+            accuracy: 1
+        )
+        XCTAssertEqual(
+            createButton.frame.minY,
+            initialCreateButtonFrame.minY,
+            accuracy: 1
+        )
+        XCTAssertTrue(createButton.isHittable)
+    }
+
+    @MainActor
+    func testPublishedAdminProgramIsReadOnlyAndDuplicatesAsDraft() throws {
+        let app = launchAdmin()
+
+        tabButton(label: "Program", in: app).tap()
+        XCTAssertTrue(
+            element(identifier: "admin.program.create", in: app)
+                .waitForExistence(timeout: 8)
+        )
+
+        app.buttons["Filter status"].tap()
+        let activeFilter = app.buttons["Aktif"]
+        XCTAssertTrue(activeFilter.waitForExistence(timeout: 5))
+        activeFilter.tap()
+
+        let activeProgram = app.buttons[
+            "admin.program.open."
+                + "10000000-0000-0000-0000-000000000001"
+        ]
+        XCTAssertTrue(activeProgram.waitForExistence(timeout: 5))
+        activeProgram.tap()
+
+        XCTAssertTrue(
+            app.buttons[
+                "admin.program.editor.open.readonly-settings"
+            ].waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons[
+                "admin.program.editor.open.readonly-content"
+            ].exists
+        )
+        XCTAssertTrue(
+            app.buttons[
+                "admin.program.editor.open.publication-status"
+            ].exists
+        )
+        XCTAssertFalse(app.buttons["admin.editor.save"].exists)
+        XCTAssertFalse(app.buttons["Atur program"].exists)
+        XCTAssertFalse(app.buttons["Kelola program"].exists)
+
+        let duplicate = app.buttons[
+            "admin.program.duplicate-as-draft"
+        ]
+        XCTAssertTrue(duplicate.waitForExistence(timeout: 5))
+        duplicate.tap()
+
+        XCTAssertTrue(
+            app.buttons["admin.editor.save"].waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.settings"].exists
+        )
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.content"].exists
+        )
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.review"].exists
+        )
+    }
+
+    @MainActor
+    func testPublishedAdminProgramRequiresArchiveConfirmation() throws {
+        let app = launchAdmin()
+
+        tabButton(label: "Program", in: app).tap()
+        app.buttons["Filter status"].tap()
+        let activeFilter = app.buttons["Aktif"]
+        XCTAssertTrue(activeFilter.waitForExistence(timeout: 5))
+        activeFilter.tap()
+
+        let activeProgram = app.buttons[
+            "admin.program.open."
+                + "10000000-0000-0000-0000-000000000001"
+        ]
+        XCTAssertTrue(activeProgram.waitForExistence(timeout: 5))
+        activeProgram.tap()
+
+        let archive = app.buttons["admin.program.archive"]
+        XCTAssertTrue(archive.waitForExistence(timeout: 5))
+        archive.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["Arsipkan program?"]
+                .waitForExistence(timeout: 5)
+        )
+    }
+
+    @MainActor
+    func testAdminDashboardUsesUniqueQuickActions() throws {
+        let app = launchAdmin()
+        tabButton(label: "Dashboard", in: app).tap()
+
+        XCTAssertTrue(
+            element(identifier: "admin.dashboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            element(
+                identifier: "admin.dashboard.attention.reviews",
+                in: app
+            ).waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons["admin.dashboard.action.createProgram"]
+                .waitForExistence(timeout: 5)
+        )
+        let addPoster = app.buttons[
+            "admin.dashboard.action.addWinnerPoster"
+        ]
+        XCTAssertTrue(addPoster.waitForExistence(timeout: 5))
+
+        XCTAssertFalse(app.buttons["Kelola program"].exists)
+        XCTAssertFalse(app.buttons["Kelola orang"].exists)
+
+        addPoster.tap()
+        XCTAssertTrue(
+            app.buttons["admin.content.poster-picker"]
+                .waitForExistence(timeout: 5)
+        )
+        app.buttons["Batal"].tap()
+
+        let coachApprovals = app.buttons[
+            "admin.dashboard.attention.coachApprovals"
+        ]
+        XCTAssertTrue(coachApprovals.waitForExistence(timeout: 5))
+        coachApprovals.tap()
+        XCTAssertTrue(
+            element(identifier: "admin.people", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.staticTexts["Menampilkan persetujuan Coach tertunda."]
+                .waitForExistence(timeout: 5)
+        )
+    }
+
+    @MainActor
     func testAdminApprovesCoachAndManuallyEnrollsParticipant() throws {
         let app = launchAdmin()
         tabButton(label: "Orang", in: app).tap()
@@ -1808,6 +2006,32 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "admin.people", in: app)
                 .waitForExistence(timeout: 8)
         )
+
+        let roleFilter = app.segmentedControls[
+            "admin.people.role-filter"
+        ]
+        XCTAssertTrue(roleFilter.waitForExistence(timeout: 5))
+        let firstParticipant = app.buttons[
+            "admin.people.open."
+                + "00000000-0000-0000-0000-000000000001"
+        ]
+        XCTAssertTrue(firstParticipant.waitForExistence(timeout: 5))
+        XCTAssertLessThan(
+            firstParticipant.frame.minY - roleFilter.frame.maxY,
+            28
+        )
+
+        let coachSegment = app.segmentedControls.buttons["Coach"]
+        XCTAssertTrue(
+            app.segmentedControls.buttons["Peserta"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(coachSegment.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            app.segmentedControls.buttons["Admin"]
+                .waitForExistence(timeout: 5)
+        )
+        coachSegment.tap()
 
         let approve = app.buttons[
             "admin.people.approve."
@@ -1818,6 +2042,10 @@ final class MSCBodyTransformationUITests: XCTestCase {
         }
         XCTAssertTrue(approve.waitForExistence(timeout: 5))
         approve.tap()
+
+        let participantSegment = app.segmentedControls.buttons["Peserta"]
+        XCTAssertTrue(participantSegment.waitForExistence(timeout: 5))
+        participantSegment.tap()
 
         let participant = app.buttons[
             "admin.people.open."
@@ -1830,6 +2058,9 @@ final class MSCBodyTransformationUITests: XCTestCase {
         participant.tap()
 
         let reason = app.textFields["admin.people.enroll-reason"]
+        for _ in 0..<5 where !reason.exists || !reason.isHittable {
+            app.swipeUp()
+        }
         XCTAssertTrue(reason.waitForExistence(timeout: 5))
         reason.tap()
         reason.typeText("Koreksi enrollment demo")
@@ -1841,11 +2072,83 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testAdminPersonDetailsMatchRoleProfiles() throws {
+        let app = launchAdmin()
+        tabButton(label: "Orang", in: app).tap()
+
+        app.buttons[
+            "admin.people.open."
+                + "00000000-0000-0000-0000-000000000001"
+        ].tap()
+        XCTAssertTrue(
+            app.navigationBars["Profil peserta"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            element(identifier: "admin.people.detail.phone", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            element(
+                identifier: "admin.people.detail.participant-coach",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+        app.buttons["Tutup"].tap()
+
+        app.segmentedControls.buttons["Coach"].tap()
+        app.buttons[
+            "admin.people.open."
+                + "00000000-0000-0000-0000-000000000102"
+        ].tap()
+        XCTAssertTrue(
+            app.navigationBars["Profil Coach"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            element(
+                identifier: "admin.people.detail.biography",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            element(
+                identifier: "admin.people.detail.coach-status",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+        app.buttons["Tutup"].tap()
+
+        app.segmentedControls.buttons["Admin"].tap()
+        app.buttons[
+            "admin.people.open."
+                + "00000000-0000-0000-0000-000000000201"
+        ].tap()
+        XCTAssertTrue(
+            app.navigationBars["Profil Admin"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            element(identifier: "admin.people.detail.email", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(
+            element(
+                identifier: "admin.people.detail.biography",
+                in: app
+            ).exists
+        )
+    }
+
+    @MainActor
     func testAdminPosterEditorRequiresPhotoSelection() throws {
         let app = launchAdmin()
         tabButton(label: "Konten", in: app).tap()
         XCTAssertTrue(
-            element(identifier: "admin.content", in: app)
+            element(identifier: "admin.content.create-banner", in: app)
                 .waitForExistence(timeout: 8)
         )
         XCTAssertTrue(
@@ -1874,6 +2177,57 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testAdminContentHeaderStaysFixedWhilePostersScroll() throws {
+        let app = launchAdmin()
+        tabButton(label: "Konten", in: app).tap()
+
+        let title = element(
+            identifier: "admin.content.title",
+            in: app
+        )
+        let createPoster = app.buttons[
+            "admin.content.create-banner"
+        ]
+        let galleryInstruction = element(
+            identifier: "admin.content.gallery-instruction",
+            in: app
+        )
+        let posterScroll = app.scrollViews.firstMatch
+
+        XCTAssertTrue(title.waitForExistence(timeout: 8))
+        XCTAssertTrue(createPoster.waitForExistence(timeout: 8))
+        XCTAssertTrue(galleryInstruction.waitForExistence(timeout: 5))
+        XCTAssertTrue(posterScroll.waitForExistence(timeout: 5))
+
+        let initialTitleFrame = title.frame
+        let initialCreatePosterFrame = createPoster.frame
+        let initialGalleryInstructionFrame = galleryInstruction.frame
+        for _ in 0..<3 {
+            posterScroll.swipeUp()
+        }
+        for _ in 0..<3 {
+            posterScroll.swipeDown()
+        }
+
+        XCTAssertEqual(
+            title.frame.minY,
+            initialTitleFrame.minY,
+            accuracy: 1
+        )
+        XCTAssertEqual(
+            createPoster.frame.minY,
+            initialCreatePosterFrame.minY,
+            accuracy: 1
+        )
+        XCTAssertEqual(
+            galleryInstruction.frame.minY,
+            initialGalleryInstructionFrame.minY,
+            accuracy: 1
+        )
+        XCTAssertTrue(createPoster.isHittable)
+    }
+
+    @MainActor
     func testRoleSwitchOpensCoachScenario() throws {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -1897,6 +2251,37 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "coach.dashboard", in: app)
                 .waitForExistence(timeout: 8)
         )
+    }
+
+    @MainActor
+    func testRoleSwitchDefaultsAdminToDashboard() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(id)",
+            "-AppleLocale", "id_ID"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            app.staticTexts["root.title"].waitForExistence(timeout: 5)
+        )
+        app.buttons["Admin"].tap()
+
+        let scenarioPicker = app.buttons["root.scenario-picker"]
+        XCTAssertTrue(scenarioPicker.waitForExistence(timeout: 5))
+        XCTAssertTrue(scenarioPicker.label.contains("Dashboard Admin"))
+
+        let enterDemo = app.buttons["root.enter-demo"]
+        let ready = NSPredicate(format: "enabled == true")
+        expectation(for: ready, evaluatedWith: enterDemo)
+        waitForExpectations(timeout: 5)
+        enterDemo.tap()
+
+        XCTAssertTrue(
+            element(identifier: "admin.dashboard", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(tabButton(label: "Dashboard", in: app).isSelected)
     }
 
     @MainActor
@@ -2181,7 +2566,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
         ]
         adminApp.launch()
         XCTAssertTrue(
-            element(identifier: "admin.overview", in: adminApp)
+            element(identifier: "admin.dashboard", in: adminApp)
                 .waitForExistence(timeout: 10)
         )
         XCTAssertFalse(adminApp.buttons["Kelola pemenang"].exists)
@@ -2199,7 +2584,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
         ]
         app.launch()
         XCTAssertTrue(
-            tabButton(label: "Ringkasan", in: app)
+            tabButton(label: "Dashboard", in: app)
                 .waitForExistence(timeout: 8)
         )
         return app

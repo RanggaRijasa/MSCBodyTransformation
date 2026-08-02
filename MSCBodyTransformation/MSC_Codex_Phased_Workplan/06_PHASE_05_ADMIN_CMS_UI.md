@@ -158,11 +158,11 @@ publikasi bersifat read-only.
 ## People
 
 - [x] User list.
-- [x] Role badges.
+- [x] Segmented role filter for Peserta, Coach, and Admin.
 - [x] Pending coach approval.
 - [x] Approve coach local action.
 - [x] Public coach profile toggle.
-- [x] Participant detail summary.
+- [x] Role-specific profile details for Participant, Coach, and Admin.
 - [x] Manual enrollment UI.
 - [x] Manual enrollment reason required.
 - [x] Local audit record.
@@ -252,6 +252,219 @@ Jangan:
 ## Progress log
 
 ### Log
+
+#### 2026-08-02 — Dashboard menjadi halaman awal Admin
+
+- Files changed: katalog skenario demo, pemetaan tab awal, app shell,
+  localization catalog, Swift Testing, focused XCTest UI, preview Admin, dan
+  progress log Phase 05.
+- Assumptions: Admin umum selalu masuk ke Dashboard. Skenario khusus
+  `Draft program admin` dan `Program aktif admin` tetap masuk langsung ke
+  Program karena masing-masing memang ditujukan untuk menguji alur tersebut.
+  Pemilih demo menyediakan opsi eksplisit `Dashboard Admin`.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "admin", "-SkipDemoLanding"])` pada iPhone 17 Pro Max iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase08AccessibilityReliabilityTests` dan focused XCTest UI
+  `testRoleSwitchDefaultsAdminToDashboard`.
+- Result: build lulus tanpa warning/error; 11 test reliabilitas dan satu
+  focused UI test lulus. Runtime snapshot memastikan Dashboard tampil,
+  tab Dashboard terpilih, tab Program tidak terpilih, serta tidak ada key
+  localization yang terlihat pada locale aplikasi non-Indonesia.
+- Remaining blockers: tidak ada blocker lokal. Integrasi backend tetap
+  ditunda ke phase yang ditetapkan.
+
+#### 2026-08-02 — Detail Orang konsisten dengan profil peran
+
+- Files changed: sheet detail Orang berbasis peran, komposisi daftar Orang,
+  focused UI test, UI reference, dan progress log Phase 05.
+- Assumptions: detail memakai field dari model profil yang sama dengan menu
+  tiap peran. Peserta memakai foto, nama tampilan, email, kota, nomor HP,
+  dan Coach pendamping. Coach memakai foto, nama publik, email, kota, bio,
+  status persetujuan, serta visibilitas. Admin tidak memiliki model profil
+  terpisah sehingga hanya menampilkan nama dan email akun. Pendaftaran
+  manual tetap menjadi alat Admin khusus Peserta.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5, termasuk launch dengan `-AppleLanguages (en) -AppleLocale
+  en_US -DemoRole admin -DemoScenario admin_draft_editor
+  -SkipDemoLanding`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testAdminPersonDetailsMatchRoleProfiles` dan
+  `testAdminApprovesCoachAndManuallyEnrollsParticipant`.
+- Result: build lulus tanpa warning dan kedua UI test lulus. Profil ketiga
+  peran terbuka dari bagian identitas dengan judul serta section yang sesuai;
+  alur persetujuan Coach dan pendaftaran manual Peserta tetap berfungsi,
+  serta tidak ada localization key pada locale perangkat Inggris.
+- Remaining blockers: penyimpanan profil produksi tetap ditunda ke fase
+  backend yang ditetapkan. Tidak ada blocker lokal.
+
+#### 2026-08-02 — Perataan header dan jarak daftar Orang
+
+- Files changed: layout layar Orang Admin, focused UI test, dan progress log
+  Phase 05.
+- Assumptions: padding atas header mengikuti header Konten Admin. Jarak
+  setelah segmented control tetap berasal dari satu token
+  `AppSpacing.medium`; margin atas bawaan `List(.insetGrouped)` tidak ikut
+  ditambahkan.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5 dengan skenario `admin_draft_editor`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testAdminApprovesCoachAndManuallyEnrollsParticipant`, termasuk assertion
+  batas jarak segmented control ke baris pertama.
+- Result: build lulus tanpa warning dan UI test lulus. Inspeksi runtime
+  mengonfirmasi header lebih tinggi serta jarak selector ke kartu pertama
+  sekitar 14 poin.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-08-02 — Segmented control peran pada Orang
+
+- Files changed: layar Orang Admin, presentasi judul shell, focused UI test,
+  UI reference, dan progress log Phase 05.
+- Assumptions: `Peserta` menjadi pilihan awal. Pintasan persetujuan Coach
+  dari Dashboard memilih segmen `Coach` dan mempertahankan filter tertunda;
+  berpindah ke peran lain mengembalikan scope ke semua akun. Karena peran
+  sudah terlihat pada segmen, baris menampilkan kota atau email sebagai
+  informasi sekunder dan tidak mengulang label peran.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5, termasuk launch dengan `-AppleLanguages (en) -AppleLocale
+  en_US -DemoRole admin -DemoScenario admin_draft_editor
+  -SkipDemoLanding`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testAdminApprovesCoachAndManuallyEnrollsParticipant` dan
+  `testAdminDashboardUsesUniqueQuickActions`.
+- Result: build lulus tanpa warning; kedua UI test lulus. Inspeksi runtime
+  memverifikasi tiga segmen, daftar per peran, judul dan selector tetap,
+  serta tidak ada localization key pada locale perangkat Inggris.
+- Remaining blockers: tidak ada blocker lokal dan tidak diperlukan perubahan
+  Xcode.
+
+#### 2026-08-02 — Kartu tambah poster memenuhi area konten
+
+- Files changed: layout header Konten Admin dan progress log Phase 05.
+- Assumptions: selama hanya ada satu jenis konten yang dapat ditambahkan,
+  kartu aksi tidak memerlukan grid adaptif dan harus memakai seluruh lebar
+  kolom konten. Target tap tetap lebih besar dari batas minimum melalui
+  ikon 48 poin dan padding semantik.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testAdminContentHeaderStaysFixedWhilePostersScroll` dan
+  `testAdminPosterEditorRequiresPhotoSelection`.
+- Result: build lulus tanpa warning; kedua UI test lulus. Inspeksi runtime
+  mengonfirmasi kartu memenuhi lebar kolom, padding internal lebih ringkas,
+  serta header tetap diam ketika grid poster digulir.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-08-02 — Perbaikan lompatan scroll galeri poster
+
+- Files changed: shell title presentation untuk tab Konten, header statis
+  Konten Admin, dan focused UI test.
+- Assumptions: judul besar `Konten` dimiliki header layar, bukan large
+  navigation title, agar grid poster tidak memicu collapse/expand navigation
+  bar. Hanya grid yang menjadi sumber offset scroll.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5 dengan skenario `admin_winner_lock`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testAdminContentHeaderStaysFixedWhilePostersScroll` dengan tiga swipe
+  naik dan tiga swipe turun, serta
+  `testAdminPosterEditorRequiresPhotoSelection`.
+- Result: build lulus tanpa warning dan kedua UI test lulus. Rekaman masalah
+  menunjukkan large title sebelumnya mengubah tinggi layout di tengah
+  gesture; setelah dipisahkan, overscroll tidak lagi memindahkan atau
+  menumpuk judul dan header.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-08-02 — Header galeri poster tetap terlihat
+
+- Files changed: komposisi layar Konten Admin dan focused UI test.
+- Assumptions: bagian `Tambah konten`, kartu tambah poster, judul galeri,
+  dan petunjuk merupakan header tetap. Hanya grid poster pemenang yang
+  dapat digulir vertikal.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5 dengan skenario `admin_winner_lock`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testAdminContentHeaderStaysFixedWhilePostersScroll` dan
+  `testAdminPosterEditorRequiresPhotoSelection`.
+- Result: build lulus tanpa warning; kedua UI test lulus. Posisi header
+  tetap setelah grid digulir dan sheet tambah poster tetap dapat dibuka.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-08-02 — Header daftar Program tetap terlihat
+
+- Files changed: komposisi daftar Program Admin dan focused UI test.
+- Assumptions: search, filter toolbar, aksi `Buat program baru`, dan pesan
+  status merupakan kontrol tetap. Hanya daftar kartu program di bawahnya
+  yang dapat digulir.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5 dengan skenario `admin_draft_editor`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testAdminProgramHeaderStaysFixedWhileCardsScroll` dan
+  `testAdminCreatesDraftAddsDayStepPreviewsAndPublishes`.
+- Result: build lulus tanpa warning; kedua UI test lulus. Search langsung
+  terlihat saat layar dibuka dan posisi search serta tombol buat tidak
+  berubah setelah kartu digulir.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-08-02 — Satu alur Program Admin
+
+- Files changed: daftar Program Admin; hub program draft dan terbit;
+  pengelompokan progres validasi tiga tahap; navigasi editor; duplikasi
+  draft; focused Swift Testing dan XCTest UI; serta artefak desain alur
+  Program Admin.
+- Assumptions: seluruh program dibuka dari kartu pada daftar yang sama.
+  Status `Draft` membuka tiga tahap yang dapat diedit, sedangkan
+  `Terjadwal`, `Aktif`, `Selesai`, dan `Diarsipkan` memakai struktur yang
+  sama dalam mode baca. Perubahan program terbit hanya dibuat lewat
+  `Duplikasikan sebagai draft`; arsip tetap menjadi tindakan terpisah
+  dengan konfirmasi.
+- Build command: XcodeBuildMCP `build_run_sim` pada iPhone 17 Pro Max
+  iOS 26.5, termasuk launch dengan `-AppleLanguages (en) -AppleLocale
+  en_US -DemoRole admin -DemoScenario admin_draft_editor
+  -SkipDemoLanding`.
+- Test command: XcodeBuildMCP `test_sim` untuk seluruh 21
+  `Phase05AdminCMSTests`; focused UI
+  `testAdminCreatesDraftAddsDayStepPreviewsAndPublishes`;
+  `testPublishedAdminProgramIsReadOnlyAndDuplicatesAsDraft`; dan
+  `testPublishedAdminProgramRequiresArchiveConfirmation`.
+- Result: build lulus tanpa warning; 21 test Phase 05 dan ketiga
+  perjalanan UI terkait lulus. Inspeksi runtime memverifikasi daftar
+  memiliki satu aksi `Buat program baru`, draft memiliki tepat tiga tahap,
+  program aktif tidak menampilkan aksi simpan, salinan membuka draft baru,
+  dan tidak ada localization key pada locale perangkat Inggris.
+- Remaining blockers: persistence backend, upload media, serta publikasi
+  server-authoritative tetap ditunda ke Phase 11. Tidak ada blocker lokal
+  dan tidak diperlukan perubahan Xcode.
+
+#### 2026-08-02 — Dashboard Admin berorientasi tindakan
+
+- Files changed: Dashboard Admin baru dan komponen section-nya; filter
+  persetujuan Coach pada tab Orang; pintasan editor program dan poster;
+  shell tab serta label `Dashboard`; localization catalog; focused unit/UI
+  test; dan artefak rencana serta mockup ImageGen.
+- Assumptions: Admin memantau jumlah pemeriksaan tertunda, tetapi keputusan
+  bukti tetap milik Coach. Akses cepat hanya memuat `Buat program` dan
+  `Tambah poster`; tujuan umum Program, Orang, Konten, dan Pengaturan tidak
+  diduplikasi dari tab bar, sedangkan antrean tindakan tidak diduplikasi
+  sebagai pintasan.
+- Build command: XcodeBuildMCP `build_run_sim` dengan
+  `SWIFT_VERSION=6`, `SWIFT_STRICT_CONCURRENCY=complete`,
+  `IPHONEOS_DEPLOYMENT_TARGET=17.0`, serta launch arguments
+  `-AppleLanguages (en) -AppleLocale en_US -DemoRole admin
+  -DemoScenario admin_winner_lock -SkipDemoLanding` pada iPhone 17 Pro Max
+  iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk seluruh
+  `MSCBodyTransformationTests`, focused
+  `Phase05AdminCMSTests`, UI test
+  `testAdminDashboardUsesUniqueQuickActions`, dan UI test
+  `testAppCopyStaysIndonesianWhenDeviceLanguageIsEnglish`.
+- Result: build lulus tanpa warning; seluruh 117 unit test lulus, termasuk
+  19 test Phase 05; kedua focused UI test lulus. Inspeksi runtime memastikan
+  tab `Dashboard`, dua antrean prioritas, dua pintasan unik, tiga metrik
+  operasional, status skor lokal, dan tab bar tampil tanpa localization key
+  pada locale perangkat Inggris.
+- Remaining blockers: pemantauan pemeriksaan per program memerlukan data dan
+  destination server-authoritative pada Phase 11. Tidak ada blocker lokal.
 
 #### 2026-07-29 — Konten Admin menjadi galeri poster
 

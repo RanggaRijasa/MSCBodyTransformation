@@ -17,6 +17,13 @@
 - `08_PHASE_07_LOCAL_SCORING_AND_LEADERBOARD.md`
 - `09_PHASE_08_ACCESSIBILITY_TESTS_AND_DEMO.md`
 
+## Program end-to-end remediation
+
+- `PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md` — keputusan produk dan urutan
+  perbaikan authoritative untuk program, Coach, konten, kuis, timbang,
+  scoring, duplikasi cohort, commerce lintas platform, dan penutupan program.
+  Rekonsiliasi bagian yang konflik sebelum melanjutkan Track B.
+
 ## Track B: External integration
 
 - `10_PHASE_09_SUPABASE_FOUNDATION.md`
