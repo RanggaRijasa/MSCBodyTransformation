@@ -132,10 +132,14 @@ struct ShellRouteDestinationView: View {
                 if let programID {
                     AdminProgramEditorView(
                         programID: programID,
-                        features: features
+                        features: features,
+                        router: router
                     )
                 } else {
-                    AdminNewProgramDestinationView(features: features)
+                    AdminNewProgramDestinationView(
+                        features: features,
+                        router: router
+                    )
                 }
             }
         default:

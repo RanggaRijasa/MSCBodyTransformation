@@ -12,6 +12,63 @@ struct Phase05AdminCMSTests {
     )!
     private let fixedDate = Date(timeIntervalSince1970: 1_785_028_400)
 
+    @Test("Akses cepat Dashboard tidak menduplikasi tab atau antrean")
+    func dashboardQuickActionsAreUnique() {
+        let titles = Set(
+            AdminDashboardQuickAction.allCases.map(\.title)
+        )
+        let existingNavigationLabels: Set<String> = [
+            "Dashboard",
+            "Program",
+            "Orang",
+            "Konten",
+            "Pengaturan",
+            "Pemeriksaan tertunda",
+            "Persetujuan Coach"
+        ]
+
+        #expect(
+            AdminDashboardQuickAction.allCases
+                == [.createProgram, .addWinnerPoster]
+        )
+        #expect(titles.isDisjoint(with: existingNavigationLabels))
+    }
+
+    @Test("Progres hub memisahkan masalah pengaturan dan konten")
+    func programHubProgressGroupsValidationIssues() {
+        let issues = [
+            AdminValidationIssue(
+                field: .title,
+                message: "Nama program wajib diisi."
+            ),
+            AdminValidationIssue(
+                field: .steps,
+                message: "Tambahkan langkah aktif."
+            )
+        ]
+        let progress = AdminProgramFlowProgress(issues: issues)
+
+        #expect(progress.completedStageCount == 0)
+        #expect(progress.issueCount(for: .settings) == 1)
+        #expect(progress.issueCount(for: .content) == 1)
+        #expect(progress.issueCount(for: .review) == 2)
+        #expect(!progress.isComplete(.settings))
+        #expect(!progress.isComplete(.content))
+        #expect(!progress.isComplete(.review))
+    }
+
+    @Test("Hub valid menandai ketiga tahap siap")
+    func validProgramHubMarksAllStagesReady() {
+        let progress = AdminProgramFlowProgress(issues: [])
+
+        #expect(progress.completedStageCount == 3)
+        #expect(AdminProgramStage.allCases == [
+            .settings,
+            .content,
+            .review
+        ])
+    }
+
     @Test("Validator editor menemukan field program yang belum valid")
     func programEditorValidation() throws {
         var draft = try validDraft()

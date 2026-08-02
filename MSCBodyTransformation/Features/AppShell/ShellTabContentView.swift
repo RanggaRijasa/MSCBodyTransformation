@@ -19,7 +19,16 @@ struct ShellTabContentView: View {
     var body: some View {
         content
             .navigationTitle(
-                Text(LocalizedStringKey(tab.titleLocalizationKey))
+                usesPinnedContentTitle
+                    ? Text("")
+                    : Text(
+                        LocalizedStringKey(
+                            tab.titleLocalizationKey
+                        )
+                    )
+            )
+            .navigationBarTitleDisplayMode(
+                usesPinnedContentTitle ? .inline : .automatic
             )
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -34,6 +43,10 @@ struct ShellTabContentView: View {
                     .accessibilityIdentifier("shell.scenario-info")
                 }
             }
+    }
+
+    private var usesPinnedContentTitle: Bool {
+        tab == .admin(.people) || tab == .admin(.content)
     }
 
     @ViewBuilder
@@ -118,8 +131,8 @@ struct ShellTabContentView: View {
              .participantDayOne, .participantMidProgram,
              .participantFinalWeighIn, .participantFinalLeaderboard,
              .coachWalletZero, .coachActiveParticipants,
-             .coachReviewQueue, .adminDraftCMS, .adminActiveProgram,
-             .adminWinnerLock:
+             .coachReviewQueue, .adminDashboard, .adminDraftCMS,
+             .adminActiveProgram, .adminWinnerLock:
             loadedContent(showsOfflineBanner: false)
         }
     }
@@ -184,7 +197,10 @@ struct ShellTabContentView: View {
                 tab: adminTab,
                 features: adminFeatures,
                 router: router,
-                showsOfflineBanner: showsOfflineBanner
+                showsOfflineBanner: showsOfflineBanner,
+                onSelectAdminTab: { adminTab in
+                    onSelectTab(.admin(adminTab))
+                }
             )
         } else {
             List {

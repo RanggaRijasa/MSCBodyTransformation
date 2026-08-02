@@ -4,12 +4,12 @@ import Testing
 
 @Suite("Phase 08 — aksesibilitas, demo, dan reliabilitas")
 struct Phase08AccessibilityReliabilityTests {
-    @Test("Launcher menyediakan seluruh 18 skenario deterministik")
+    @Test("Launcher menyediakan seluruh 19 skenario deterministik")
     func completeScenarioCatalog() {
-        #expect(AppDemoScenario.allCases.count == 18)
+        #expect(AppDemoScenario.allCases.count == 19)
         #expect(AppDemoScenario.scenarios(for: .participant).count == 12)
         #expect(AppDemoScenario.scenarios(for: .coach).count == 8)
-        #expect(AppDemoScenario.scenarios(for: .admin).count == 8)
+        #expect(AppDemoScenario.scenarios(for: .admin).count == 9)
 
         for role in UserRole.allCases {
             #expect(
@@ -36,8 +36,16 @@ struct Phase08AccessibilityReliabilityTests {
                 == .coach(.dashboard)
         )
         #expect(
+            AppDemoScenario.adminDashboard.initialTab(for: .admin)
+                == .admin(.overview)
+        )
+        #expect(
             AppDemoScenario.adminDraftCMS.initialTab(for: .admin)
                 == .admin(.programs)
+        )
+        #expect(
+            AppDemoScenario.defaultScenario(for: .admin)
+                == .adminDashboard
         )
     }
 
@@ -145,6 +153,14 @@ struct Phase08AccessibilityReliabilityTests {
 
         #expect(participant.scenario == .participantActive)
         #expect(admin.scenario == .adminDraftCMS)
+
+        let adminDefault = DebugLaunchConfiguration(
+            arguments: [
+                "MSCBodyTransformation",
+                "-DemoRole", "admin"
+            ]
+        )
+        #expect(adminDefault.scenario == .adminDashboard)
     }
 #endif
 

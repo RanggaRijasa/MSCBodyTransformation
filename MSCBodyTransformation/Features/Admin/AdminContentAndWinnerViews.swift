@@ -3,8 +3,6 @@ import SwiftUI
 
 @MainActor
 struct AdminContentView: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     let features: AdminFeatureContainer
 
     @State private var selectedContent: ManagedContent?
@@ -12,14 +10,30 @@ struct AdminContentView: View {
     @State private var error: DomainError?
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: AppSpacing.xLarge) {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: AppSpacing.large) {
+                Text("Konten")
+                    .font(AppTypography.screenTitle)
+                    .foregroundStyle(Color.appPrimaryText)
+                    .accessibilityIdentifier("admin.content.title")
+
                 addContentSection
-                galleryState
+                galleryHeader
             }
             .frame(maxWidth: 760)
-            .padding(AppSpacing.medium)
+            .padding(.horizontal, AppSpacing.medium)
+            .padding(.top, AppSpacing.xSmall)
+            .padding(.bottom, AppSpacing.xSmall)
             .frame(maxWidth: .infinity)
+
+            Divider()
+
+            ScrollView {
+                galleryState
+                    .frame(maxWidth: 760)
+                    .padding(AppSpacing.medium)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .background(Color.appBackground)
         .sheet(item: $selectedContent) { content in
@@ -64,7 +78,6 @@ struct AdminContentView: View {
         } message: {
             Text(error?.localizedAdminMessage ?? "")
         }
-        .accessibilityIdentifier("admin.content")
     }
 
     private var addContentSection: some View {
@@ -73,22 +86,32 @@ struct AdminContentView: View {
                 .font(AppTypography.sectionTitle)
                 .foregroundStyle(Color.appPrimaryText)
 
-            LazyVGrid(
-                columns: addContentColumns,
-                spacing: AppSpacing.small
+            AdminContentTypeButton(
+                title: "Poster pemenang",
+                subtitle: "Tambahkan gambar vertikal untuk galeri Home.",
+                systemImage: "photo.stack.fill"
             ) {
-                AdminContentTypeButton(
-                    title: "Poster pemenang",
-                    subtitle: "Tambahkan gambar vertikal untuk galeri Home.",
-                    systemImage: "photo.stack.fill"
-                ) {
-                    selectedContent = features.makeWinnerBanner(
-                        programID: nil,
-                        sortOrder: nextPosterSortOrder
-                    )
-                }
-                .accessibilityIdentifier("admin.content.create-banner")
+                selectedContent = features.makeWinnerBanner(
+                    programID: nil,
+                    sortOrder: nextPosterSortOrder
+                )
             }
+            .accessibilityIdentifier("admin.content.create-banner")
+        }
+    }
+
+    private var galleryHeader: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
+            Text("Poster pemenang")
+                .font(AppTypography.sectionTitle)
+                .foregroundStyle(Color.appPrimaryText)
+
+            Text("Ketuk poster untuk mengganti gambarnya.")
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appSecondaryText)
+                .accessibilityIdentifier(
+                    "admin.content.gallery-instruction"
+                )
         }
     }
 
@@ -96,9 +119,9 @@ struct AdminContentView: View {
     private var galleryState: some View {
         switch features.contentState {
         case .loaded(let content):
-            posterGallery(posters(from: content))
+            posterGrid(posters(from: content))
         case .empty:
-            posterGallery([])
+            posterGrid([])
         case .idle, .loading:
             ProgressView("Memuat galeri…")
                 .frame(maxWidth: .infinity, minHeight: 180)
@@ -118,71 +141,50 @@ struct AdminContentView: View {
         }
     }
 
-    private func posterGallery(
+    @ViewBuilder
+    private func posterGrid(
         _ posters: [ManagedContent]
     ) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.small) {
-            Text("Poster pemenang")
-                .font(AppTypography.sectionTitle)
-                .foregroundStyle(Color.appPrimaryText)
-
-            Text("Ketuk poster untuk mengganti gambarnya.")
-                .font(AppTypography.secondary)
-                .foregroundStyle(Color.appSecondaryText)
-
-            if posters.isEmpty {
-                ContentUnavailableView(
-                    "Galeri masih kosong",
-                    systemImage: "photo.on.rectangle.angled",
-                    description: Text(
-                        "Tambahkan poster pemenang pertama dari tombol di atas."
-                    )
+        if posters.isEmpty {
+            ContentUnavailableView(
+                "Galeri masih kosong",
+                systemImage: "photo.on.rectangle.angled",
+                description: Text(
+                    "Tambahkan poster pemenang pertama dari tombol di atas."
                 )
-                .frame(maxWidth: .infinity, minHeight: 240)
-                .background(
-                    Color.appSurface,
-                    in: RoundedRectangle(
-                        cornerRadius: AppRadius.large,
-                        style: .continuous
-                    )
-                )
-            } else {
-                LazyVGrid(
-                    columns: galleryColumns,
-                    alignment: .leading,
-                    spacing: AppSpacing.medium
-                ) {
-                    ForEach(
-                        Array(posters.enumerated()),
-                        id: \.element.id
-                    ) { index, poster in
-                        AdminPosterGalleryCell(
-                            poster: poster,
-                            position: index + 1,
-                            onEdit: {
-                                selectedContent = poster
-                            },
-                            onRemove: {
-                                posterPendingRemoval = poster
-                            }
-                        )
-                    }
-                }
-                .accessibilityIdentifier("admin.content.poster-gallery")
-            }
-        }
-    }
-
-    private var addContentColumns: [GridItem] {
-        if dynamicTypeSize.isAccessibilitySize {
-            return [GridItem(.flexible())]
-        }
-        return [
-            GridItem(
-                .adaptive(minimum: 220, maximum: 360),
-                spacing: AppSpacing.small
             )
-        ]
+            .frame(maxWidth: .infinity, minHeight: 240)
+            .background(
+                Color.appSurface,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.large,
+                    style: .continuous
+                )
+            )
+        } else {
+            LazyVGrid(
+                columns: galleryColumns,
+                alignment: .leading,
+                spacing: AppSpacing.medium
+            ) {
+                ForEach(
+                    Array(posters.enumerated()),
+                    id: \.element.id
+                ) { index, poster in
+                    AdminPosterGalleryCell(
+                        poster: poster,
+                        position: index + 1,
+                        onEdit: {
+                            selectedContent = poster
+                        },
+                        onRemove: {
+                            posterPendingRemoval = poster
+                        }
+                    )
+                }
+            }
+            .accessibilityIdentifier("admin.content.poster-gallery")
+        }
     }
 
     private var galleryColumns: [GridItem] {
@@ -273,8 +275,8 @@ private struct AdminContentTypeButton: View {
                     .foregroundStyle(Color.brandPrimary)
                     .accessibilityHidden(true)
             }
-            .padding(AppSpacing.medium)
-            .frame(maxWidth: .infinity, minHeight: 88)
+            .padding(AppSpacing.small)
+            .frame(maxWidth: .infinity)
             .background(
                 Color.appSurface,
                 in: RoundedRectangle(
@@ -364,7 +366,7 @@ private struct AdminPosterGalleryCell: View {
     }
 }
 
-private struct AdminPosterEditorSheet: View {
+struct AdminPosterEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let features: AdminFeatureContainer
@@ -384,6 +386,17 @@ private struct AdminPosterEditorSheet: View {
     }
 
     var body: some View {
+        let pickerTitle = content.localMediaReference == nil
+            ? String(
+                localized: "admin.content.poster.pick",
+                defaultValue: "Pilih poster dari Foto"
+            )
+            : String(
+                localized: "admin.content.poster.replace",
+                defaultValue: "Ganti poster dari Foto"
+            )
+        let pickerFont = AppTypography.button
+
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.large) {
@@ -412,12 +425,10 @@ private struct AdminPosterEditorSheet: View {
                         photoLibrary: .shared()
                     ) {
                         Label(
-                            content.localMediaReference == nil
-                                ? "Pilih poster dari Foto"
-                                : "Ganti poster dari Foto",
+                            pickerTitle,
                             systemImage: "photo.on.rectangle"
                         )
-                        .font(AppTypography.button)
+                        .font(pickerFont)
                         .frame(maxWidth: .infinity, minHeight: 50)
                     }
                     .buttonStyle(.borderedProminent)

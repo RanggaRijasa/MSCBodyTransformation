@@ -76,7 +76,7 @@ nonisolated enum AppTab: Hashable, Identifiable, Sendable {
         case .coach(.profile):
             "person.crop.circle"
         case .admin(.overview):
-            "chart.bar"
+            "chart.bar.fill"
         case .admin(.programs):
             "square.stack.3d.up"
         case .admin(.people):
@@ -120,6 +120,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
     case coachWalletZero = "coach_wallet_zero"
     case coachActiveParticipants = "coach_active_participants"
     case coachReviewQueue = "coach_review_queue"
+    case adminDashboard = "admin_dashboard"
     case adminDraftCMS = "admin_draft_cms"
     case adminActiveProgram = "admin_active_program"
     case adminWinnerLock = "admin_winner_lock"
@@ -143,7 +144,8 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         case .coachWalletZero, .coachActiveParticipants,
              .coachReviewQueue:
             role == .coach
-        case .adminDraftCMS, .adminActiveProgram, .adminWinnerLock:
+        case .adminDashboard, .adminDraftCMS, .adminActiveProgram,
+             .adminWinnerLock:
             role == .admin
         }
     }
@@ -159,7 +161,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         case .coach:
             .coachReviewQueue
         case .admin:
-            .adminDraftCMS
+            .adminDashboard
         }
     }
 
@@ -171,6 +173,8 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
             .coach(.dashboard)
         case .coachActiveParticipants:
             .coach(.dashboard)
+        case .adminDashboard:
+            .admin(.overview)
         case .adminDraftCMS, .adminActiveProgram:
             .admin(.programs)
         default:

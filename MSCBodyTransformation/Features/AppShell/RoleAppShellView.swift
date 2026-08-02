@@ -319,7 +319,7 @@ struct RoleAppShellView: View {
 #Preview("Shell admin — teks aksesibilitas") {
     RoleAppShellView(
         role: .admin,
-        scenario: .adminDraftCMS
+        scenario: .adminDashboard
     )
     .environment(\.locale, Locale(identifier: "id-ID"))
     .dynamicTypeSize(.accessibility5)
