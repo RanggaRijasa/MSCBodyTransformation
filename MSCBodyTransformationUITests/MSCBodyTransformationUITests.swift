@@ -386,15 +386,24 @@ final class MSCBodyTransformationUITests: XCTestCase {
         ]
         app.launch()
 
-        let attention = app.buttons[
-            "coach.dashboard.action.attention"
+        let participants = app.buttons[
+            "coach.dashboard.action.participants"
         ]
-        XCTAssertTrue(attention.waitForExistence(timeout: 8))
-        attention.tap()
+        XCTAssertTrue(participants.waitForExistence(timeout: 8))
+        XCTAssertEqual(participants.value as? String, "6")
+        participants.tap()
         XCTAssertTrue(
             element(identifier: "coach.participants", in: app)
                 .waitForExistence(timeout: 8)
         )
+        let attention = app.buttons.matching(
+            NSPredicate(
+                format: "label CONTAINS[c] %@",
+                "perlu perhatian"
+            )
+        ).firstMatch
+        XCTAssertTrue(attention.waitForExistence(timeout: 5))
+        attention.tap()
         XCTAssertTrue(
             app.navigationBars["Perlu perhatian"]
                 .waitForExistence(timeout: 5)
@@ -407,9 +416,34 @@ final class MSCBodyTransformationUITests: XCTestCase {
         ).firstMatch
         XCTAssertTrue(attentionSummary.waitForExistence(timeout: 5))
 
+        let participantCard = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "coach.participant.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(participantCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(participantCard.isHittable)
+        XCTAssertFalse(participantCard.label.contains("Lihat peserta"))
+        participantCard.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.participant.detail", in: app)
+                .waitForExistence(timeout: 5)
+        )
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(
+            element(identifier: "coach.participants", in: app)
+                .waitForExistence(timeout: 5)
+        )
+
         let back = app.navigationBars.buttons.element(boundBy: 0)
         XCTAssertTrue(back.waitForExistence(timeout: 5))
         back.tap()
+
+        let dashboardBack = app.navigationBars.buttons.element(boundBy: 0)
+        XCTAssertTrue(dashboardBack.waitForExistence(timeout: 5))
+        dashboardBack.tap()
 
         let activeProgram = app.buttons.matching(
             NSPredicate(
@@ -488,9 +522,19 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertFalse(rawKey.exists)
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        let attention = app.buttons[
-            "coach.dashboard.action.attention"
+        let dashboardParticipants = app.buttons[
+            "coach.dashboard.action.participants"
         ]
+        XCTAssertTrue(
+            dashboardParticipants.waitForExistence(timeout: 5)
+        )
+        dashboardParticipants.tap()
+        let attention = app.buttons.matching(
+            NSPredicate(
+                format: "label CONTAINS[c] %@",
+                "perlu perhatian"
+            )
+        ).firstMatch
         XCTAssertTrue(attention.waitForExistence(timeout: 5))
         attention.tap()
 
@@ -506,6 +550,77 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 NSPredicate(
                     format: "label CONTAINS %@",
                     "coach.participants."
+                )
+            ).firstMatch.exists
+        )
+    }
+
+    @MainActor
+    func testCoachRecentActivityDefaultsToTodayAndCanRevealHistory()
+        throws
+    {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+            "-DemoRole", "coach",
+            "-DemoScenario", "coach_review_queue",
+            "-SkipDemoLanding"
+        ]
+        app.launch()
+
+        XCTAssertFalse(
+            app.buttons["coach.dashboard.action.attention"].exists
+        )
+        let activity = app.buttons["coach.dashboard.action.activity"]
+        XCTAssertTrue(activity.waitForExistence(timeout: 8))
+        activity.tap()
+
+        XCTAssertTrue(
+            element(identifier: "coach.activity", in: app)
+                .waitForExistence(timeout: 8)
+        )
+        XCTAssertTrue(
+            app.navigationBars["Aktivitas terbaru"]
+                .waitForExistence(timeout: 5)
+        )
+        let filter = app.buttons["coach.activity.filter"]
+        XCTAssertTrue(filter.waitForExistence(timeout: 5))
+        XCTAssertTrue(filter.value as? String == [
+            "Semua program",
+            "Semua aktivitas",
+            "Hari ini"
+        ].joined(separator: " · "))
+
+        let previous = app.buttons["coach.activity.previous"]
+        XCTAssertTrue(previous.waitForExistence(timeout: 5))
+        previous.tap()
+
+        XCTAssertTrue(
+            app.buttons.matching(
+                NSPredicate(
+                    format: "identifier BEGINSWITH %@",
+                    "coach.activity.item."
+                )
+            ).firstMatch.waitForExistence(timeout: 5)
+        )
+
+        filter.tap()
+        XCTAssertTrue(
+            element(identifier: "coach.activity.filter.sheet", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons["coach.activity.filter.reset"].exists
+        )
+        XCTAssertTrue(
+            app.buttons["coach.activity.filter.apply"].exists
+        )
+        XCTAssertFalse(
+            app.descendants(matching: .any).matching(
+                NSPredicate(
+                    format: "label CONTAINS %@",
+                    "coach.activity."
                 )
             ).firstMatch.exists
         )

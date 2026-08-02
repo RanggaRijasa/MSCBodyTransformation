@@ -102,6 +102,8 @@ struct CoachDashboardView: View {
                 quickAction(
                     title: "coach.dashboard.action.participants",
                     systemImage: "person.3",
+                    badgeValue: snapshot.needsAttentionCount,
+                    badgeKind: .attention,
                     accessibilityHint:
                         "coach.dashboard.action.participants.hint",
                     accessibilityIdentifier:
@@ -111,16 +113,17 @@ struct CoachDashboardView: View {
                 }
 
                 quickAction(
-                    title: "coach.dashboard.action.attention",
-                    systemImage: "exclamationmark.circle",
-                    badgeValue: snapshot.needsAttentionCount,
-                    badgeKind: .attention,
+                    title: "coach.dashboard.action.activity",
+                    systemImage: "clock.arrow.circlepath",
                     accessibilityHint:
-                        "coach.dashboard.action.attention.hint",
+                        "coach.dashboard.action.activity.hint",
                     accessibilityIdentifier:
-                        "coach.dashboard.action.attention"
+                        "coach.dashboard.action.activity"
                 ) {
-                    openParticipants(.needsAttention)
+                    router.navigate(
+                        to: .coach(.activity),
+                        in: .coach(.dashboard)
+                    )
                 }
 
                 quickAction(

@@ -74,6 +74,13 @@ struct ShellRouteDestinationView: View {
                     features: $0
                 )
             }
+        case .coach(.activity):
+            coachDestination {
+                CoachActivityView(
+                    state: $0.activity,
+                    router: router
+                )
+            }
         case .coach(.reviewQueue):
             coachDestination {
                 CoachReviewQueueView(features: $0)

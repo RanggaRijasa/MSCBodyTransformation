@@ -579,7 +579,318 @@
         }
       }
     },
+    "coach.activity.badge.points_format" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ poin"
+          }
+        }
+      }
+    },
+    "coach.activity.badge.review" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perlu pemeriksaan"
+          }
+        }
+      }
+    },
+    "coach.activity.empty.filtered.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah filter untuk melihat aktivitas lainnya."
+          }
+        }
+      }
+    },
+    "coach.activity.empty.filtered.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada aktivitas yang cocok"
+          }
+        }
+      }
+    },
+    "coach.activity.empty.today.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivitas peserta hari ini akan tampil di sini."
+          }
+        }
+      }
+    },
+    "coach.activity.empty.today.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum ada aktivitas hari ini"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter aktivitas"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.apply" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terapkan filter"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.kind" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jenis aktivitas"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.kind.all" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semua aktivitas"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.kind.completed" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program selesai"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.kind.evidence" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bukti dikirim"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.kind.joined" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peserta bergabung"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.kind.step" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langkah selesai"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.reset" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atur ulang"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.time" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waktu"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.time.seven_days" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 hari terakhir"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.time.thirty_days" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 hari terakhir"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.time.today" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hari ini"
+          }
+        }
+      }
+    },
+    "coach.activity.filter.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter aktivitas"
+          }
+        }
+      }
+    },
+    "coach.activity.message.completed_format" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menyelesaikan program %@"
+          }
+        }
+      }
+    },
+    "coach.activity.message.evidence_format" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengirim bukti untuk %@"
+          }
+        }
+      }
+    },
+    "coach.activity.message.joined_format" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bergabung ke program %@"
+          }
+        }
+      }
+    },
+    "coach.activity.message.step_format" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menyelesaikan langkah %@"
+          }
+        }
+      }
+    },
+    "coach.activity.navigation_title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivitas terbaru"
+          }
+        }
+      }
+    },
+    "coach.activity.previous" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lihat aktivitas sebelumnya"
+          }
+        }
+      }
+    },
+    "coach.activity.row.hint" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka rincian aktivitas peserta."
+          }
+        }
+      }
+    },
+    "coach.activity.section.today" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hari ini"
+          }
+        }
+      }
+    },
+    "coach.activity.section.yesterday" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kemarin"
+          }
+        }
+      }
+    },
+    "coach.dashboard.action.activity" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivitas terbaru"
+          }
+        }
+      }
+    },
+    "coach.dashboard.action.activity.hint" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka aktivitas terbaru peserta dampingan."
+          }
+        }
+      }
+    },
     "coach.dashboard.action.attention" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -590,6 +901,7 @@
       }
     },
     "coach.dashboard.action.attention.hint" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -2065,6 +2377,36 @@
         }
       }
     },
+    "coach.participants.attention.not_enrolled" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum terdaftar"
+          }
+        }
+      }
+    },
+    "coach.participants.attention.not_enrolled.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peserta belum terdaftar pada program aktif."
+          }
+        }
+      }
+    },
+    "coach.participants.attention.not_enrolled.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum mengikuti program"
+          }
+        }
+      }
+    },
     "coach.participants.attention.not_started" : {
       "localizations" : {
         "id" : {
@@ -2091,16 +2433,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Belum ada progres"
-          }
-        }
-      }
-    },
-    "coach.participants.attention.open" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lihat peserta"
           }
         }
       }

@@ -170,6 +170,9 @@ struct CoachParticipantsView: View {
             .accessibilityHint(
                 Text("coach.participants.summary.attention.hint")
             )
+            .accessibilityIdentifier(
+                "coach.participants.summary.attention"
+            )
         }
         .padding(.vertical, AppSpacing.xSmall)
         .fixedSize(horizontal: false, vertical: true)
@@ -695,7 +698,17 @@ private struct CoachAttentionParticipantCard: View {
 
             Divider()
 
-            Label {
+            HStack(alignment: .top, spacing: AppSpacing.small) {
+                Image(systemName: attentionSystemImage)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(attentionColor)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        attentionColor.opacity(0.1),
+                        in: Circle()
+                    )
+                    .accessibilityHidden(true)
+
                 VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
                     Text(attentionTitle)
                         .font(AppTypography.cardTitle)
@@ -705,24 +718,8 @@ private struct CoachAttentionParticipantCard: View {
                         .font(AppTypography.secondary)
                         .foregroundStyle(Color.appSecondaryText)
                 }
-            } icon: {
-                Image(systemName: attentionSystemImage)
-                    .font(.title3)
-                    .foregroundStyle(attentionColor)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-
-            Text("coach.participants.attention.open")
-                .font(AppTypography.button)
-                .foregroundStyle(Color.brandPrimary)
-                .padding(.horizontal, AppSpacing.medium)
-                .frame(minHeight: 44)
-                .overlay {
-                    RoundedRectangle(
-                        cornerRadius: AppRadius.medium,
-                        style: .continuous
-                    )
-                    .stroke(Color.brandPrimary, lineWidth: 1)
-                }
         }
         .padding(AppSpacing.medium)
         .background(
@@ -750,7 +747,21 @@ private struct CoachAttentionParticipantCard: View {
 
     @ViewBuilder
     private var attentionStatus: some View {
-        if summary.progressPercentage == 0 {
+        switch summary.attentionReason {
+        case .notEnrolled:
+            Text("coach.participants.attention.not_enrolled")
+                .font(AppTypography.label)
+                .foregroundStyle(Color.appDestructive)
+                .padding(.horizontal, AppSpacing.xSmall)
+                .padding(.vertical, AppSpacing.xxSmall)
+                .background(
+                    Color.appDestructive.opacity(0.1),
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.small,
+                        style: .continuous
+                    )
+                )
+        case .notStarted:
             Text("coach.participants.attention.not_started")
                 .font(AppTypography.label)
                 .foregroundStyle(Color.appDestructive)
@@ -763,7 +774,7 @@ private struct CoachAttentionParticipantCard: View {
                         style: .continuous
                     )
                 )
-        } else {
+        case .fallingBehind:
             Text("coach.participants.attention.behind")
                 .font(AppTypography.label)
                 .foregroundStyle(Color.appWarning)
@@ -780,52 +791,77 @@ private struct CoachAttentionParticipantCard: View {
     }
 
     private var attentionTitle: String {
-        if summary.progressPercentage == 0 {
+        switch summary.attentionReason {
+        case .notEnrolled:
+            return String(
+                localized:
+                    "coach.participants.attention.not_enrolled.title",
+                defaultValue: "Belum mengikuti program"
+            )
+        case .notStarted:
             return String(
                 localized:
                     "coach.participants.attention.not_started.title",
                 defaultValue: "Belum ada progres"
             )
+        case .fallingBehind:
+            return String(
+                format: String(
+                    localized:
+                        "coach.participants.attention.missing_steps_format",
+                    defaultValue: "%@ langkah belum selesai"
+                ),
+                CoachFormatting.number(summary.missingStepCount)
+            )
         }
-        return String(
-            format: String(
-                localized:
-                    "coach.participants.attention.missing_steps_format",
-                defaultValue: "%@ langkah belum selesai"
-            ),
-            CoachFormatting.number(summary.missingStepCount)
-        )
     }
 
     private var attentionMessage: String {
-        if summary.progressPercentage == 0 {
+        switch summary.attentionReason {
+        case .notEnrolled:
+            return String(
+                localized:
+                    "coach.participants.attention.not_enrolled.message",
+                defaultValue:
+                    "Peserta belum terdaftar pada program aktif."
+            )
+        case .notStarted:
             return String(
                 localized:
                     "coach.participants.attention.not_started.message",
                 defaultValue:
                     "Belum ada langkah yang diselesaikan."
             )
+        case .fallingBehind:
+            return String(
+                format: String(
+                    localized:
+                        "coach.participants.attention.last_activity_format",
+                    defaultValue: "Aktivitas terakhir %@"
+                ),
+                CoachFormatting.relativeDate(summary.lastActivityAt)
+            )
         }
-        return String(
-            format: String(
-                localized:
-                    "coach.participants.attention.last_activity_format",
-                defaultValue: "Aktivitas terakhir %@"
-            ),
-            CoachFormatting.relativeDate(summary.lastActivityAt)
-        )
     }
 
     private var attentionSystemImage: String {
-        summary.progressPercentage == 0
-            ? "clock.badge.exclamationmark"
-            : "exclamationmark.triangle"
+        switch summary.attentionReason {
+        case .notEnrolled:
+            "person.crop.circle.badge.questionmark"
+        case .notStarted:
+            "clock.badge.exclamationmark"
+        case .fallingBehind:
+            "exclamationmark.triangle"
+        }
     }
 
     private var attentionColor: Color {
-        summary.progressPercentage == 0
-            ? .appDestructive
-            : .appWarning
+        switch summary.attentionReason {
+        case .notEnrolled, .notStarted:
+            .appDestructive
+        case .fallingBehind:
+            .appWarning
+        }
     }
 }
 

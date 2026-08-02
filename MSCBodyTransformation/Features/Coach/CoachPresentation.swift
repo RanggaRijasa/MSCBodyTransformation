@@ -110,6 +110,12 @@ where Value: Equatable & Sendable {
     case failed(DomainError)
 }
 
+nonisolated enum CoachParticipantAttentionReason: Equatable, Sendable {
+    case notEnrolled
+    case notStarted
+    case fallingBehind
+}
+
 nonisolated struct CoachParticipantSummary:
     Equatable,
     Identifiable,
@@ -193,6 +199,18 @@ nonisolated struct CoachParticipantSummary:
 
     var isFallingBehind: Bool {
         !isComplete && progressPercentage < 50
+    }
+
+    var attentionReason: CoachParticipantAttentionReason {
+        guard let enrollment,
+              program != nil,
+              enrollment.status != .cancelled else {
+            return .notEnrolled
+        }
+        if progressPercentage == 0 {
+            return .notStarted
+        }
+        return .fallingBehind
     }
 
     var lastActivityAt: Date {

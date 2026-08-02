@@ -69,6 +69,123 @@ struct Phase04CoachTests {
     }
 
     @MainActor
+    @Test("Status perhatian membedakan pendaftaran dan progres")
+    func attentionReasonDistinguishesEnrollmentAndProgress() async throws {
+        let state = CoachParticipantsState(environment: .preview)
+        await state.load()
+        let participants = try loadedParticipants(from: state)
+        let enrolledNotStarted = try #require(
+            participants.first {
+                $0.enrollment != nil && $0.progressPercentage == 0
+            }
+        )
+        let enrolledBehind = try #require(
+            participants.first {
+                $0.enrollment != nil
+                    && $0.progressPercentage > 0
+                    && $0.isFallingBehind
+            }
+        )
+        let notEnrolled = CoachParticipantSummary(
+            profile: enrolledNotStarted.profile,
+            enrollment: nil,
+            program: nil,
+            submissions: [],
+            weighIns: [],
+            leaderboardEntry: nil,
+            associatedPrograms: []
+        )
+        var cancelledEnrollment = try #require(
+            enrolledNotStarted.enrollment
+        )
+        cancelledEnrollment.status = .cancelled
+        let cancelled = CoachParticipantSummary(
+            profile: enrolledNotStarted.profile,
+            enrollment: cancelledEnrollment,
+            program: enrolledNotStarted.program,
+            submissions: [],
+            weighIns: [],
+            leaderboardEntry: nil,
+            associatedPrograms: enrolledNotStarted.associatedPrograms
+        )
+
+        #expect(notEnrolled.attentionReason == .notEnrolled)
+        #expect(cancelled.attentionReason == .notEnrolled)
+        #expect(enrolledNotStarted.attentionReason == .notStarted)
+        #expect(enrolledBehind.attentionReason == .fallingBehind)
+    }
+
+    @MainActor
+    @Test("Aktivitas Coach menampilkan hari ini sebelum riwayat")
+    func activityDefaultsToTodayBeforeHistory() async throws {
+        let state = CoachActivityState(environment: .preview)
+
+        await state.load()
+
+        let snapshot = try #require(state.snapshot)
+        #expect(!snapshot.items.isEmpty)
+        #expect(!state.filteredItems.isEmpty)
+        #expect(
+            state.filteredItems.allSatisfy {
+                state.calendar.isDate(
+                    $0.occurredAt,
+                    inSameDayAs: state.referenceDate
+                )
+            }
+        )
+        #expect(state.sections.count == 1)
+        #expect(state.hasOlderMatchingActivity)
+
+        state.showPreviousActivity()
+
+        #expect(state.timeRange == .lastThirtyDays)
+        #expect(state.sections.count > 1)
+        #expect(
+            state.filteredItems.contains {
+                !state.calendar.isDate(
+                    $0.occurredAt,
+                    inSameDayAs: state.referenceDate
+                )
+            }
+        )
+    }
+
+    @MainActor
+    @Test("Filter aktivitas memakai program dan jenis yang dipilih")
+    func activityFiltersByProgramAndKind() async throws {
+        let state = CoachActivityState(environment: .preview)
+        await state.load()
+        state.timeRange = .lastThirtyDays
+
+        let evidence = state.filteredItems.filter {
+            $0.kind == .evidenceSubmitted
+        }
+        let programID = try #require(evidence.first?.programID)
+
+        state.kindFilter = .evidenceSubmitted
+        state.selectedProgramID = programID
+
+        #expect(!state.filteredItems.isEmpty)
+        #expect(
+            state.filteredItems.allSatisfy {
+                $0.kind == .evidenceSubmitted
+                    && $0.programID == programID
+            }
+        )
+        #expect(
+            state.filteredItems.contains {
+                $0.requiresReview
+            }
+        )
+
+        state.resetFilters()
+
+        #expect(state.selectedProgramID == nil)
+        #expect(state.kindFilter == .all)
+        #expect(state.timeRange == .today)
+    }
+
+    @MainActor
     @Test("Profil Coach memuat identitas akun dan menyimpan data publik")
     func coachProfileLoadsAccountIdentityAndSavesPublicData() async throws {
         let environment = AppEnvironment.preview

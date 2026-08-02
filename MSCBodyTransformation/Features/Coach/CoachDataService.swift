@@ -143,6 +143,127 @@ nonisolated struct CoachDataService: Sendable {
         }
     }
 
+    func activitySnapshot(
+        coachID: UUID
+    ) async throws -> CoachActivitySnapshot {
+        guard let repositories = environment.repositories else {
+            throw environment.bootstrapError ?? DomainError.unknown
+        }
+        let profiles = try await repositories.coachParticipants
+            .assignedParticipants(coachID: coachID)
+        let programs = try await repositories.programs.programs()
+        let programsByID = Dictionary(
+            uniqueKeysWithValues: programs.map { ($0.id, $0) }
+        )
+
+        var activityItems: [CoachActivityItem] = []
+        var associatedPrograms: [UUID: Program] = [:]
+
+        for profile in profiles {
+            let enrollments = try await repositories.enrollments.enrollments(
+                participantID: profile.id
+            )
+            .filter { $0.coachID == coachID }
+
+            for enrollment in enrollments {
+                guard let program = programsByID[enrollment.programID] else {
+                    continue
+                }
+                associatedPrograms[program.id] = program
+                activityItems.append(
+                    CoachActivityItem(
+                        id: "\(enrollment.id.uuidString)-joined",
+                        participantID: profile.id,
+                        participantName: profile.displayName,
+                        participantPhotoReference:
+                            profile.localPhotoReference,
+                        programID: program.id,
+                        programTitle: program.title,
+                        stepTitle: nil,
+                        points: nil,
+                        kind: .participantJoined,
+                        evidenceStatus: nil,
+                        occurredAt: enrollment.enrolledAt,
+                        requiresReview: false
+                    )
+                )
+
+                if enrollment.status == .completed {
+                    activityItems.append(
+                        CoachActivityItem(
+                            id: "\(enrollment.id.uuidString)-completed",
+                            participantID: profile.id,
+                            participantName: profile.displayName,
+                            participantPhotoReference:
+                                profile.localPhotoReference,
+                            programID: program.id,
+                            programTitle: program.title,
+                            stepTitle: nil,
+                            points: nil,
+                            kind: .programCompleted,
+                            evidenceStatus: nil,
+                            occurredAt: program.endDate,
+                            requiresReview: false
+                        )
+                    )
+                }
+
+                let stepsByID = Dictionary(
+                    uniqueKeysWithValues: program.days
+                        .flatMap(\.steps)
+                        .map { ($0.id, $0) }
+                )
+                let submissions = try await repositories.submissions
+                    .submissions(enrollmentID: enrollment.id)
+
+                for submission in submissions {
+                    guard let step = stepsByID[submission.stepID] else {
+                        continue
+                    }
+                    let requiresReview =
+                        submission.status == .pending
+                        && step.verificationMode == .coachReview
+                    let isEvidenceActivity =
+                        requiresReview
+                        || submission.status == .rejected
+
+                    activityItems.append(
+                        CoachActivityItem(
+                            id: "\(submission.id.uuidString)-submission",
+                            participantID: profile.id,
+                            participantName: profile.displayName,
+                            participantPhotoReference:
+                                profile.localPhotoReference,
+                            programID: program.id,
+                            programTitle: program.title,
+                            stepTitle: step.title,
+                            points: submission.status == .approved
+                                ? step.points
+                                : nil,
+                            kind: isEvidenceActivity
+                                ? .evidenceSubmitted
+                                : .stepCompleted,
+                            evidenceStatus: isEvidenceActivity
+                                ? submission.status
+                                : nil,
+                            occurredAt: submission.submittedAt,
+                            requiresReview: requiresReview
+                        )
+                    )
+                }
+            }
+        }
+
+        return CoachActivitySnapshot(
+            items: activityItems.sorted {
+                $0.occurredAt > $1.occurredAt
+            },
+            programs: associatedPrograms.values.sorted {
+                $0.startDate > $1.startDate
+            }
+        )
+    }
+
     private func summary(
         for profile: ParticipantProfile,
         coachID: UUID,

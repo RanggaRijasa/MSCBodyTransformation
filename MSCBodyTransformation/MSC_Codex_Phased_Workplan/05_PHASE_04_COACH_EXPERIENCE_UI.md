@@ -207,6 +207,85 @@ Jangan:
 
 ### Log
 
+#### 2026-08-01 — Feed Aktivitas terbaru Coach
+
+- Files changed: route dan destination Coach; Dashboard dan feature container;
+  presenter, state, service, serta layar Aktivitas terbaru; badge ringkasan
+  Peserta; katalog lokalisasi; UI reference; test Phase 04 dan UI test Coach;
+  serta progress log Phase 04.
+- Assumptions: `Perlu perhatian` tetap dapat dibuka dari ringkasan
+  `Peserta saya`, sehingga quick action Dashboard diganti menjadi
+  `Aktivitas terbaru`. Badge jumlah perhatian dipindahkan ke `Peserta saya`.
+  Feed hanya menampilkan `Hari ini` secara default. Aktivitas maksimal 30 hari
+  baru dimuat ke tampilan setelah Coach memilih rentang waktu atau menekan
+  `Lihat aktivitas sebelumnya`. Foto bukti dan data berat tidak muncul di
+  feed; baris membuka pusat bukti jika perlu pemeriksaan, selain itu membuka
+  detail peserta.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` untuk scheme `MSCBodyTransformation`, konfigurasi
+  Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])`; lalu UI
+  test `testCoachRecentActivityDefaultsToTodayAndCanRevealHistory`,
+  `testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate`, dan
+  `testCoachParticipantDynamicLabelsFallbackToIndonesian`.
+- Result: build/run lulus tanpa warning; 20 test Phase 04 dan ketiga UI test
+  terfokus lulus. Runtime locale perangkat Inggris memverifikasi seluruh copy
+  tetap Bahasa Indonesia, badge `6` berada pada `Peserta saya`, aktivitas lama
+  tersembunyi sebelum diminta, tanggal memakai timezone WITA, filter memakai
+  komponen systemwide, dan tidak ada localization key yang terlihat.
+- Remaining blockers: event `Kembali aktif` belum dapat diturunkan secara
+  akurat dari model lokal karena belum ada riwayat sesi aktivitas. Feed hanya
+  menampilkan event yang memiliki sumber data deterministik.
+
+#### 2026-08-01 — Status perhatian peserta tanpa program
+
+- Files changed: presenter dan kartu prioritas peserta Coach, katalog
+  lokalisasi, UI reference, test Phase 04, dan progress log Phase 04.
+- Assumptions: peserta yang terkait ke Coach tetapi tidak memiliki enrollment,
+  program yang dapat ditemukan, atau hanya memiliki enrollment dibatalkan
+  tetap masuk daftar `Perlu perhatian`, tetapi tidak boleh disebut `Belum
+  mulai`. Kartu membedakan tiga status: `Belum terdaftar`, `Belum mulai`, dan
+  `Tertinggal`.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` untuk scheme `MSCBodyTransformation`, konfigurasi
+  Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])` dan
+  `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate"])`.
+- Result: build/run lulus tanpa warning; 18 test Phase 04 dan 1 UI test
+  terfokus lulus. Test baru memverifikasi klasifikasi peserta tanpa
+  enrollment, peserta terdaftar tanpa progres, dan peserta yang tertinggal.
+- Remaining blockers: fixture demo utama belum memiliki peserta tanpa
+  enrollment; state tersebut diverifikasi secara deterministik melalui test.
+
+#### 2026-08-01 — Kartu Perlu perhatian tanpa CTA duplikat
+
+- Files changed: kartu prioritas peserta Coach, katalog lokalisasi, UI
+  reference, UI test Coach, dan progress log Phase 04.
+- Assumptions: seluruh permukaan kartu tetap menjadi satu target navigasi
+  menuju detail peserta. Chevron sudah cukup menjadi petunjuk interaksi,
+  sehingga CTA `Lihat peserta` dihapus. Alasan perhatian memakai ikon dalam
+  surface status yang ringkas agar terpisah jelas dari identitas peserta
+  tanpa menambah aksi kedua.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` untuk scheme `MSCBodyTransformation`, konfigurasi
+  Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate"])`.
+- Result: build/run lulus tanpa warning dan 1/1 UI test lulus. Verifikasi
+  runtime pada locale perangkat Inggris memastikan CTA duplikat tidak ada,
+  seluruh copy tetap Bahasa Indonesia, kartu tetap dapat diketuk, dan detail
+  peserta terbuka dari satu target navigasi.
+- Remaining blockers: tidak ada.
+
 #### 2026-08-01 — Riwayat program pada filter Coach
 
 - Files changed: katalog dan komponen pemilih program bersama; sumber data,

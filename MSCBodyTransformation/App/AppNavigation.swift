@@ -21,6 +21,7 @@ nonisolated enum CoachParticipantsDestination: Hashable, Sendable {
 nonisolated enum CoachRoute: Hashable, Sendable {
     case participants(CoachParticipantsDestination)
     case participantDetail(UUID)
+    case activity
     case reviewQueue
     case invite
     case programDetail(UUID)

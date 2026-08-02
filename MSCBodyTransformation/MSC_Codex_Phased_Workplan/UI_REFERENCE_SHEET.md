@@ -300,6 +300,23 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
 - Merah untuk quick actions utama.
 - Kuning untuk pending review dan highlight penting.
 - Evidence viewer tidak diberi overlay warna yang mengganggu foto.
+- Kartu `Perlu perhatian` harus membedakan `Belum terdaftar` untuk peserta
+  tanpa enrollment, `Belum mulai` untuk peserta yang sudah terdaftar tetapi
+  belum menyelesaikan langkah, dan `Tertinggal` untuk peserta yang sudah
+  memiliki progres di bawah batas tindak lanjut.
+- Badge jumlah `Perlu perhatian` berada pada aksi `Peserta saya`, karena
+  daftar prioritas merupakan bagian dari direktori peserta. Jangan
+  menduplikasiasinya sebagai aksi cepat Dashboard tersendiri.
+- `Aktivitas terbaru` hanya menampilkan aktivitas hari ini secara default.
+  Aktivitas lama baru ditampilkan setelah Coach memilih rentang 7 atau 30
+  hari, atau menekan `Lihat aktivitas sebelumnya`, agar feed tidak tumbuh
+  tanpa batas pada kunjungan sehari-hari.
+- Feed aktivitas tidak menampilkan foto bukti atau data berat. Gunakan avatar
+  profil netral, ringkasan aktivitas, waktu, status yang relevan, dan satu
+  target navigasi pada seluruh baris.
+- Filter aktivitas memakai pola filter systemwide: satu kartu ringkasan,
+  `Form` native berisi Program, Jenis aktivitas, dan Waktu, serta footer
+  bersama `Atur ulang` dan `Terapkan filter`.
 
 ### Admin
 
@@ -427,6 +444,10 @@ Aturan:
 - Native bordered atau tinted style.
 - Dapat menggunakan outline merah.
 - Jangan bersaing visual dengan primary action.
+- Kartu navigasi yang seluruh permukaannya dapat diketuk dan sudah memakai
+  chevron tidak boleh menambahkan CTA duplikat seperti `Lihat peserta`.
+  Pertahankan satu target tap yang jelas untuk menghindari hierarki aksi
+  palsu dan ruang kosong yang tidak perlu.
 
 ### Filter
 
