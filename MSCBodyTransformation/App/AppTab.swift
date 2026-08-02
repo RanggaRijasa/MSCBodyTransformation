@@ -10,9 +10,7 @@ nonisolated enum ParticipantTab: String, CaseIterable, Sendable {
 
 nonisolated enum CoachTab: String, CaseIterable, Sendable {
     case dashboard
-    case participants
-    case invite
-    case leaderboard
+    case program
     case profile
 }
 
@@ -73,12 +71,8 @@ nonisolated enum AppTab: Hashable, Identifiable, Sendable {
             "person.crop.circle"
         case .coach(.dashboard):
             "rectangle.grid.2x2"
-        case .coach(.participants):
-            "person.3"
-        case .coach(.invite):
-            "qrcode"
-        case .coach(.leaderboard):
-            "trophy"
+        case .coach(.program):
+            "list.bullet.rectangle"
         case .coach(.profile):
             "person.crop.circle"
         case .admin(.overview):
@@ -174,9 +168,9 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         case .participantFinalLeaderboard:
             .participant(.leaderboard)
         case .coachWalletZero:
-            .coach(.invite)
+            .coach(.dashboard)
         case .coachActiveParticipants:
-            .coach(.participants)
+            .coach(.dashboard)
         case .adminDraftCMS, .adminActiveProgram:
             .admin(.programs)
         default:

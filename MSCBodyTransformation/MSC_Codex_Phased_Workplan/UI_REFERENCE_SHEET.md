@@ -23,6 +23,12 @@ Aturan:
 - Jangan menjanjikan hasil penurunan berat badan tertentu.
 - Gunakan `Localizable.xcstrings` sejak awal meskipun MVP baru memiliki satu bahasa.
 - Jangan menulis copy reusable langsung berulang kali di dalam View.
+- Seluruh UI yang dimiliki aplikasi tetap memakai locale `id-ID` walaupun
+  bahasa perangkat bukan Bahasa Indonesia. UI yang sepenuhnya dimiliki sistem,
+  seperti pemilih Foto atau dialog izin, boleh mengikuti bahasa perangkat.
+- Istilah Inggris hanya dipakai untuk nama produk, teknologi, atau istilah
+  fitur yang memang disetujui; jangan membiarkan bahasa perangkat mengubah
+  copy aplikasi menjadi bahasa lain atau menampilkan localization key.
 
 ### Istilah utama
 
@@ -294,6 +300,23 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
 - Merah untuk quick actions utama.
 - Kuning untuk pending review dan highlight penting.
 - Evidence viewer tidak diberi overlay warna yang mengganggu foto.
+- Kartu `Perlu perhatian` harus membedakan `Belum terdaftar` untuk peserta
+  tanpa enrollment, `Belum mulai` untuk peserta yang sudah terdaftar tetapi
+  belum menyelesaikan langkah, dan `Tertinggal` untuk peserta yang sudah
+  memiliki progres di bawah batas tindak lanjut.
+- Badge jumlah `Perlu perhatian` berada pada aksi `Peserta saya`, karena
+  daftar prioritas merupakan bagian dari direktori peserta. Jangan
+  menduplikasiasinya sebagai aksi cepat Dashboard tersendiri.
+- `Aktivitas terbaru` hanya menampilkan aktivitas hari ini secara default.
+  Aktivitas lama baru ditampilkan setelah Coach memilih rentang 7 atau 30
+  hari, atau menekan `Lihat aktivitas sebelumnya`, agar feed tidak tumbuh
+  tanpa batas pada kunjungan sehari-hari.
+- Feed aktivitas tidak menampilkan foto bukti atau data berat. Gunakan avatar
+  profil netral, ringkasan aktivitas, waktu, status yang relevan, dan satu
+  target navigasi pada seluruh baris.
+- Filter aktivitas memakai pola filter systemwide: satu kartu ringkasan,
+  `Form` native berisi Program, Jenis aktivitas, dan Waktu, serta footer
+  bersama `Atur ulang` dan `Terapkan filter`.
 
 ### Admin
 
@@ -421,6 +444,23 @@ Aturan:
 - Native bordered atau tinted style.
 - Dapat menggunakan outline merah.
 - Jangan bersaing visual dengan primary action.
+- Kartu navigasi yang seluruh permukaannya dapat diketuk dan sudah memakai
+  chevron tidak boleh menambahkan CTA duplikat seperti `Lihat peserta`.
+  Pertahankan satu target tap yang jelas untuk menghindari hierarki aksi
+  palsu dan ruang kosong yang tidak perlu.
+
+### Filter
+
+- Tombol pembuka filter daftar memakai komponen ringkasan bersama: ikon
+  filter, judul, ringkasan pilihan aktif, dan chevron pada surface netral.
+- Filter kompleks dibuka sebagai bottom sheet dengan `Form`, `Section`, dan
+  `Picker` inline native. Jangan membuat kartu pilihan atau indikator radio
+  khusus per fitur.
+- Footer filter selalu memakai dua tombol bersama dengan tinggi dan radius
+  yang sama: `Atur ulang` sebagai secondary outline dan `Terapkan filter`
+  sebagai primary merah.
+- Perbedaan fitur hanya pada isi section dan pilihan filter, bukan pada
+  styling sheet, surface, spacing, header, atau action bar.
 
 ### Yellow accent button
 
@@ -489,6 +529,19 @@ Gunakan:
 - Semantic color assets.
 - Material hanya bila benar-benar membantu hierarchy.
 - Rounded surface dengan `AppSurface`.
+
+### Navigasi kembali
+
+- Destination di dalam `NavigationStack` harus mempertahankan gesture native
+  swipe dari leading edge untuk kembali.
+- Jangan menambahkan `DragGesture` layar penuh sebagai pengganti gesture
+  kembali karena dapat bertabrakan dengan scroll horizontal, carousel,
+  sheet, dan gesture sistem.
+- Jika tombol back native disembunyikan untuk kebutuhan produk, kontrol
+  bersama wajib mengaktifkan kembali `interactivePopGestureRecognizer` dan
+  hanya mengizinkannya ketika stack memiliki destination yang dapat di-pop.
+- Root tab dan root navigation stack tidak boleh bereaksi terhadap gesture
+  kembali.
 
 Fallback harus mempertahankan:
 

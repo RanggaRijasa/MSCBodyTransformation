@@ -63,4 +63,5 @@ nonisolated struct StepSubmission: Codable, Equatable, Identifiable, Sendable {
     var reviewedAt: Date?
     var reviewerID: UUID?
     var reviewNote: String?
+    var coachRating: Int? = nil
 }

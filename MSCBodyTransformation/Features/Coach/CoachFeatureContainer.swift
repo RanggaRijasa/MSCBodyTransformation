@@ -4,6 +4,7 @@ import Foundation
 final class CoachFeatureContainer {
     let dashboard: CoachDashboardState
     let participants: CoachParticipantsState
+    let activity: CoachActivityState
     let reviewQueue: CoachReviewQueueState
     let invites: CoachInviteComposerState
     let leaderboard: CoachLeaderboardState
@@ -16,6 +17,7 @@ final class CoachFeatureContainer {
         self.environment = environment
         dashboard = CoachDashboardState(environment: environment)
         participants = CoachParticipantsState(environment: environment)
+        activity = CoachActivityState(environment: environment)
         reviewQueue = CoachReviewQueueState(environment: environment)
         invites = CoachInviteComposerState(environment: environment)
         leaderboard = CoachLeaderboardState(environment: environment)
@@ -44,12 +46,21 @@ final class CoachFeatureContainer {
         )
         async let dashboardLoad: Void = dashboard.load()
         async let participantsLoad: Void = participants.load()
+        async let activityLoad: Void = activity.load()
         async let leaderboardLoad: Void = leaderboard.load()
         _ = await (
             dashboardLoad,
             participantsLoad,
+            activityLoad,
             leaderboardLoad
         )
+    }
+
+    func saveRating(
+        item: CoachReviewItem,
+        rating: Int
+    ) async throws {
+        try await reviewQueue.saveRating(item: item, rating: rating)
     }
 
     func makeParticipantDetailState(

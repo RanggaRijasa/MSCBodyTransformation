@@ -33,6 +33,7 @@ nonisolated struct CoachProfile: Codable, Equatable, Identifiable, Sendable {
     var displayName: String
     var biography: String
     var city: String
+    var localPhotoReference: String?
     var isPublic: Bool
     var isApproved: Bool
 }

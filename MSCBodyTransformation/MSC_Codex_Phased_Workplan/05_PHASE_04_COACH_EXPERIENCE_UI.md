@@ -42,6 +42,15 @@ undangan, masa berlaku, dan riwayat undangan tidak lagi menjadi alur produk.
 - [x] Participant row with progress.
 - [x] Empty filter state.
 
+### Program participation
+
+- [x] Program tab in the Coach app shell.
+- [x] Shared Participant program catalog and filter flow.
+- [x] Shared program offer and enrollment flow.
+- [x] Shared Coach QR scan and confirmation flow.
+- [x] Shared enrolled-program activity and step flow.
+- [x] Coach session remains authorized as Coach while participating.
+
 ### Participant detail
 
 - [x] Profile summary.
@@ -112,6 +121,7 @@ This phase only builds UI and local product fixtures.
 
 ## Local behavior
 
+- [x] Coach can locally enroll in a program as a participant capability.
 - [x] Approve submission updates local participant points.
 - [x] Reject requires reason and removes local awarded points.
 - [x] Generate invite decrements nothing.
@@ -196,6 +206,661 @@ Jangan:
 ## Progress log
 
 ### Log
+
+#### 2026-08-01 — Feed Aktivitas terbaru Coach
+
+- Files changed: route dan destination Coach; Dashboard dan feature container;
+  presenter, state, service, serta layar Aktivitas terbaru; badge ringkasan
+  Peserta; katalog lokalisasi; UI reference; test Phase 04 dan UI test Coach;
+  serta progress log Phase 04.
+- Assumptions: `Perlu perhatian` tetap dapat dibuka dari ringkasan
+  `Peserta saya`, sehingga quick action Dashboard diganti menjadi
+  `Aktivitas terbaru`. Badge jumlah perhatian dipindahkan ke `Peserta saya`.
+  Feed hanya menampilkan `Hari ini` secara default. Aktivitas maksimal 30 hari
+  baru dimuat ke tampilan setelah Coach memilih rentang waktu atau menekan
+  `Lihat aktivitas sebelumnya`. Foto bukti dan data berat tidak muncul di
+  feed; baris membuka pusat bukti jika perlu pemeriksaan, selain itu membuka
+  detail peserta.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` untuk scheme `MSCBodyTransformation`, konfigurasi
+  Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])`; lalu UI
+  test `testCoachRecentActivityDefaultsToTodayAndCanRevealHistory`,
+  `testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate`, dan
+  `testCoachParticipantDynamicLabelsFallbackToIndonesian`.
+- Result: build/run lulus tanpa warning; 20 test Phase 04 dan ketiga UI test
+  terfokus lulus. Runtime locale perangkat Inggris memverifikasi seluruh copy
+  tetap Bahasa Indonesia, badge `6` berada pada `Peserta saya`, aktivitas lama
+  tersembunyi sebelum diminta, tanggal memakai timezone WITA, filter memakai
+  komponen systemwide, dan tidak ada localization key yang terlihat.
+- Remaining blockers: event `Kembali aktif` belum dapat diturunkan secara
+  akurat dari model lokal karena belum ada riwayat sesi aktivitas. Feed hanya
+  menampilkan event yang memiliki sumber data deterministik.
+
+#### 2026-08-01 — Status perhatian peserta tanpa program
+
+- Files changed: presenter dan kartu prioritas peserta Coach, katalog
+  lokalisasi, UI reference, test Phase 04, dan progress log Phase 04.
+- Assumptions: peserta yang terkait ke Coach tetapi tidak memiliki enrollment,
+  program yang dapat ditemukan, atau hanya memiliki enrollment dibatalkan
+  tetap masuk daftar `Perlu perhatian`, tetapi tidak boleh disebut `Belum
+  mulai`. Kartu membedakan tiga status: `Belum terdaftar`, `Belum mulai`, dan
+  `Tertinggal`.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` untuk scheme `MSCBodyTransformation`, konfigurasi
+  Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])` dan
+  `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate"])`.
+- Result: build/run lulus tanpa warning; 18 test Phase 04 dan 1 UI test
+  terfokus lulus. Test baru memverifikasi klasifikasi peserta tanpa
+  enrollment, peserta terdaftar tanpa progres, dan peserta yang tertinggal.
+- Remaining blockers: fixture demo utama belum memiliki peserta tanpa
+  enrollment; state tersebut diverifikasi secara deterministik melalui test.
+
+#### 2026-08-01 — Kartu Perlu perhatian tanpa CTA duplikat
+
+- Files changed: kartu prioritas peserta Coach, katalog lokalisasi, UI
+  reference, UI test Coach, dan progress log Phase 04.
+- Assumptions: seluruh permukaan kartu tetap menjadi satu target navigasi
+  menuju detail peserta. Chevron sudah cukup menjadi petunjuk interaksi,
+  sehingga CTA `Lihat peserta` dihapus. Alasan perhatian memakai ikon dalam
+  surface status yang ringkas agar terpisah jelas dari identitas peserta
+  tanpa menambah aksi kedua.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` untuk scheme `MSCBodyTransformation`, konfigurasi
+  Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate"])`.
+- Result: build/run lulus tanpa warning dan 1/1 UI test lulus. Verifikasi
+  runtime pada locale perangkat Inggris memastikan CTA duplikat tidak ada,
+  seluruh copy tetap Bahasa Indonesia, kartu tetap dapat diketuk, dan detail
+  peserta terbuka dari satu target navigasi.
+- Remaining blockers: tidak ada.
+
+#### 2026-08-01 — Riwayat program pada filter Coach
+
+- Files changed: katalog dan komponen pemilih program bersama; sumber data,
+  state, filter Peserta, dan filter bukti Coach; katalog lokalisasi; preview;
+  test Phase 04 dan UI test Coach; serta progress log Phase 04.
+- Assumptions: daftar utama hanya memuat program aktif dan akan datang yang
+  relevan dengan data peserta atau bukti Coach. Program selesai dan arsip
+  dipindahkan ke `Riwayat program`, diurutkan berdasarkan tanggal selesai
+  terbaru dan dapat dicari. `Semua program` tidak membatasi program sehingga
+  tetap mencakup riwayat. Program riwayat yang sudah dipilih tetap muncul
+  pada Picker utama sampai pilihan diganti atau diatur ulang.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])`, lalu diulang dengan locale `id_ID`, untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])`; lalu
+  `test_sim` untuk
+  `testCoachParticipantFilterFindsAndKeepsHistoryProgram` dan
+  `testCoachViewsAutomaticEvidenceAndSavesOptionalRating`.
+- Result: build/run lulus tanpa warning; 17 test Phase 04 dan dua UI test
+  terfokus lulus. Runtime dark mode pada locale perangkat Inggris
+  memverifikasi navigation push riwayat, urutan terbaru, pencarian native,
+  pilihan program selesai yang tetap terlihat, serta copy Bahasa Indonesia
+  tanpa localization key.
+- Remaining blockers: tidak ada.
+
+#### 2026-08-01 — Standarisasi filter Coach
+
+- Files changed: komponen tombol ringkasan dan action bar filter bersama,
+  style tombol secondary, filter Peserta, filter bukti, UI reference, UI test
+  Coach, dan progress log Phase 04.
+- Assumptions: pola filter Peserta menjadi acuan systemwide karena memakai
+  kontrol native. Seluruh filter Coach menggunakan bottom sheet `Form`,
+  `Section`, dan `Picker` inline; `Atur ulang` memakai outline serta
+  `Terapkan filter` memakai primary merah. Isi pilihan tetap spesifik fitur.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])`, lalu diulang dengan locale `id_ID`, untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachParticipantDynamicLabelsFallbackToIndonesian",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build/run lulus tanpa warning. Kedua UI test terfokus lulus setelah
+  semantic accessibility tombol ringkasan diperbarui menjadi judul sebagai
+  label dan ringkasan filter sebagai value. Runtime dark mode memverifikasi
+  kedua sheet memakai surface, section, indikator pilihan, serta footer yang
+  sama tanpa localization key.
+- Remaining blockers: tidak ada.
+
+#### 2026-08-01 — Sejajarkan status dan penilaian kartu bukti
+
+- Files changed: kartu antrean bukti Coach, katalog lokalisasi, UI test bukti
+  otomatis, dan progress log Phase 04.
+- Assumptions: ringkasan poin tidak diperlukan di kartu daftar karena status
+  keputusan sudah cukup menjelaskan hasilnya. Penjelasan poin tetap tersedia
+  di detail bukti. Status dan penilaian ditampilkan sejajar dalam satu baris,
+  lalu ditumpuk secara vertikal hanya pada ukuran Dynamic Type aksesibilitas.
+- Build command: XcodeBuildMCP `build_sim`, lalu
+  `build_run_sim(launchArgs: ["-AppleLanguages", "(id)",
+  "-AppleLocale", "id_ID", "-DemoRole", "coach", "-DemoScenario",
+  "coach_review_queue", "-SkipDemoLanding"])` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build dan build/run lulus tanpa warning; 1/1 UI test lulus. Runtime
+  memverifikasi status `Disetujui` dan `Ditolak` sejajar dengan
+  `Belum dinilai`, tanpa teks poin pada kartu, sementara penjelasan poin tetap
+  muncul di detail bukti.
+- Remaining blockers: tidak ada.
+
+#### 2026-08-01 — Hapus kartu hasil keputusan bukti
+
+- Files changed: pusat bukti Coach, katalog lokalisasi, UI test persetujuan
+  dan penolakan, serta progress log Phase 04.
+- Assumptions: hasil keputusan tidak memerlukan kartu atau banner tersendiri.
+  Setelah keputusan berhasil, detail ditutup dan perubahan cukup tercermin
+  pada jumlah `Perlu tindakan`, daftar bukti, status submission, dan skor.
+  State `lastDecision` tetap dipertahankan untuk koordinasi dismissal alur
+  penolakan dan pengujian perhitungan poin.
+- Build command: XcodeBuildMCP `build_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testCoachCompletesCriticalLocalJourney` dan
+  `testCoachRejectionUsesSingleSheetNavigationFlow`.
+- Result: build lulus tanpa warning dan 2/2 UI test lulus. Kedua alur kembali
+  langsung ke daftar tanpa kartu hasil keputusan atau copy perubahan poin.
+- Remaining blockers: tidak ada.
+
+#### 2026-08-01 — Perbaikan heuristik usability Coach
+
+- Files changed: lifecycle program dan state Dashboard/Peringkat Coach;
+  transaksi skor mock; pusat bukti, viewer bukti, detail peserta, editor
+  profil, serta recovery session di app shell; fixture gambar bukti lokal;
+  lokalisasi; test Phase 04 dan UI test Coach.
+- Assumptions: `Dashboard` tetap menjadi istilah produk yang disetujui.
+  Program yang didampingi dan program yang Coach ikuti sebagai peserta tetap
+  satu program; perubahan tidak memisahkan kapabilitas tersebut. Fixture
+  bukti bersifat non-pribadi, hanya lokal, dan selalu diberi label
+  `Bukti demo lokal`.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` pada iPhone 17 Pro iOS 26.5, serta build/run skenario
+  `logged_out`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests"])`; `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachLeaderboardAndProfileUseParticipantInformationArchitecture",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardAttentionAndExpiredProgramStatusIsAccurate",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachCompletesCriticalLocalJourney",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachLoggedOutStateCanResumeLocalDemo"])`.
+- Result: build/run lulus tanpa warning; 112 unit/integration test dan empat
+  UI test terfokus lulus. Runtime memverifikasi bukti benar-benar tampil,
+  approve mengubah skor 210 menjadi 220, program 24–30 Juli berstatus
+  `Selesai`, state logged-out dapat dipulihkan, serta label dan aturan field
+  profil tetap terlihat pada locale perangkat Inggris. Audit ulang Nielsen
+  mencapai 33/40.
+- Remaining blockers: tidak ada blocker lokal Phase 04. Media privat
+  produksi, session production, dan otorisasi backend tetap menunggu fase
+  backend/auth yang telah ditetapkan.
+
+#### 2026-07-31 — Ringkasan Peserta Coach lebih ringkas
+
+- Files changed: `CoachParticipantsView.swift` dan progress log Phase 04.
+- Assumptions: angka ringkasan dan ukuran teks semantic dipertahankan; kartu
+  dipadatkan melalui spacing, padding, dan ukuran wadah ikon agar tetap aman
+  untuk Dynamic Type.
+- Build command: XcodeBuildMCP `build_sim` dan `build_run_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `testCoachParticipantDynamicLabelsFallbackToIndonesian`.
+- Result: build lulus tanpa warning dan satu UI test alur Peserta Coach lulus.
+  Verifikasi runtime memastikan kartu mengikuti tinggi ideal konten tanpa
+  ruang kosong vertikal.
+- Remaining blockers: tidak ada.
+
+#### 2026-07-31 — Fallback lokalisasi dinamis lintas locale
+
+- Files changed: fallback string dinamis pada fitur Coach dan Participant,
+  UI test Coach, aturan repository `AGENTS.md`, dan progress log Phase 04.
+- Assumptions: Bahasa Indonesia tetap menjadi copy production utama meskipun
+  aplikasi atau Simulator berjalan dengan locale selain `id`. Setiap
+  `String(localized:)` wajib memiliki `defaultValue` Bahasa Indonesia karena
+  development region project masih `en`; perubahan tidak menyentuh
+  `project.pbxproj`.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`,
+  lalu Simulator diverifikasi kembali dalam dark appearance.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachParticipantDynamicLabelsFallbackToIndonesian",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardAttentionAndProgramOpenFilteredParticipants"])`.
+- Result: build dan launch lulus tanpa warning; dua UI test lulus. Runtime
+  locale Inggris dan dark mode memverifikasi placeholder pencarian, ringkasan
+  filter, aktivitas, jumlah peserta perhatian, serta alasan kartu seluruhnya
+  memakai copy Bahasa Indonesia tanpa key `coach.*`.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-31 — Direktori dan prioritas peserta Coach
+
+- Files changed: daftar peserta Coach, detail peserta, presenter Coach,
+  destination shell, katalog lokalisasi, UI test Coach, dan progress log
+  Phase 04.
+- Assumptions: `Peserta saya` merupakan direktori seluruh peserta dengan
+  pencarian, filter program/status, urutan, progres, dan aktivitas terakhir.
+  `Perlu perhatian` merupakan daftar kerja otomatis yang hanya memuat peserta
+  tertinggal atau belum mulai, tanpa mencampurkan status pemeriksaan bukti.
+  Kedua alur memakai route dan detail peserta yang sama. Filter daftar umum
+  memakai satu bottom sheet; hanya daftar kartu yang scroll pada layar utama.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])` dan
+  `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardAttentionAndProgramOpenFilteredParticipants"])`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; 15 test
+  Phase 04 dan UI test rute perhatian/program lulus. Runtime memverifikasi
+  semua label Bahasa Indonesia tampil tanpa localization key, filter sheet
+  memakai tombol rounded rectangle yang konsisten, kartu peserta tidak
+  menampilkan status review bukti, serta tombol detail menggulir ke bukti dan
+  rincian progres yang sama.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Penolakan tanpa modal bertumpuk
+
+- Files changed: detail dan form penolakan bukti Coach, UI test Coach, serta
+  progress log Phase 04.
+- Assumptions: penolakan merupakan langkah lanjutan dari pemeriksaan bukti,
+  sehingga memakai push navigation di dalam sheet detail yang sama. Tidak ada
+  sheet kedua. Tombol `Batal` dan `Kirim penolakan` memakai rounded rectangle
+  dengan tinggi 50 dan radius yang sama; tombol sekunder menggunakan outline
+  destructive, bukan kapsul native `.bordered`.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachRejectionUsesSingleSheetNavigationFlow",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; dua UI
+  test terfokus lulus. Runtime memverifikasi jumlah sheet tidak bertambah
+  ketika `Tolak bukti` dibuka, navigation back mengembalikan detail, kedua
+  tombol footer memiliki lebar minimum dan tinggi yang sama, serta alur bukti
+  otomatis/rating tidak mengalami regresi.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Header native pusat bukti
+
+- Files changed: pusat bukti Coach dan progress log Phase 04.
+- Assumptions: `Periksa bukti` menjadi satu-satunya judul layar dengan gaya
+  navigation title besar seperti halaman Peserta. Section `Bukti peserta`
+  beserta kalimat penjelas dihapus; konten langsung dimulai dari segmented
+  control dan kartu filter.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; UI test
+  terfokus lulus. Runtime memverifikasi header besar native, tidak ada copy
+  penjelas yang tersisa, kontrol/filter tetap diam, dan daftar bukti tetap
+  menjadi satu-satunya area scroll vertikal.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Hilangkan poin menunggu dari kartu bukti
+
+- Files changed: kartu daftar bukti Coach dan progress log Phase 04.
+- Assumptions: hanya copy poin untuk bukti manual yang masih pending
+  persetujuan yang dihilangkan. Poin otomatis dan hasil keputusan tetap dapat
+  ditampilkan pada status lain, sedangkan nilai langkah lengkap tetap tersedia
+  di detail bukti.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; UI test
+  terfokus lulus. Runtime dan accessibility snapshot memverifikasi copy
+  `10 poin menunggu` tidak lagi dirender atau dibacakan pada kartu pending,
+  tanpa meninggalkan jarak kosong.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Hierarki visual kartu bukti Coach
+
+- Files changed: kartu daftar bukti Coach dan progress log Phase 04.
+- Assumptions: referensi visual dipakai untuk seluruh status bukti, bukan
+  hanya fixture pending. Kartu tetap memakai `UserAvatar` peserta; foto bukti
+  hanya tampil setelah detail dibuka. Metadata berada pada blok atas, divider
+  memenuhi lebar konten kartu, status dan poin berada di kiri, serta rating
+  opsional memakai badge di kanan. Pada Dynamic Type accessibility, kedua
+  badge boleh ditumpuk agar tidak terpotong.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; UI test
+  terfokus lulus. Runtime memverifikasi program/hari dan tanggal tetap satu
+  baris pada fixture standar, badge status dan penilaian sejajar, kartu tetap
+  dapat dibuka, filter bukti tetap berfungsi, serta rating opsional tersimpan.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Bottom sheet filter pusat bukti
+
+- Files changed: pusat bukti Coach, lokalisasi, UI test bukti otomatis, dan
+  progress log Phase 04.
+- Assumptions: bar chip horizontal Program, Status, dan Penilaian diganti satu
+  kartu `Filter bukti` selebar konten. Kartu menampilkan ringkasan filter
+  aktif dan membuka bottom sheet dengan pilihan tunggal per bagian. Pilihan
+  memakai state draft; `Tutup` membatalkan perubahan, `Atur ulang` mereset
+  draft, dan daftar baru berubah setelah `Terapkan filter`. Header, segmented
+  control, serta kartu filter menetap; hanya daftar kartu bukti yang scroll.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; 15 test
+  Phase 04 dan satu UI test terfokus lulus. Runtime memverifikasi kartu filter
+  tanpa scroll horizontal, bottom sheet dan footer tetap, pemilihan status
+  `Poin otomatis`, penerapan filter, daftar-only scroll, pembukaan detail, dan
+  penyimpanan rating opsional. Ringkasan filter membungkus maksimal dua baris
+  agar tidak terpotong pada lebar iPhone.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Ukuran kontrol dan isolasi scroll daftar bukti
+
+- Files changed: pusat bukti Coach, UI test bukti otomatis, dan progress log
+  Phase 04.
+- Assumptions: permintaan ukuran mengacu pada segmented control `Perlu
+  tindakan`/`Semua bukti`, yang kini memiliki tinggi visual setara dengan
+  chip filter di bawahnya. Judul, deskripsi, segmented control, dan bar filter
+  menetap. Hanya daftar kartu bukti yang menerima scroll vertikal; bar chip
+  Program, Status, dan Penilaian tetap memiliki scroll horizontal tersendiri.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-DemoRole", "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`
+  dan `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachCompletesCriticalLocalJourney"])`.
+- Result: build dan launch lulus tanpa warning; dua UI test lulus. Runtime
+  memverifikasi segmented control dan chip filter memiliki tinggi yang sama,
+  header/filter tetap pada frame yang sama setelah swipe vertikal daftar,
+  bar filter dikenali sebagai scroll horizontal terpisah, serta alur
+  persetujuan dan rating tetap berfungsi.
+- Remaining blockers: tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Fallback lokalisasi dan Picker skenario Debug
+
+- Files changed: pusat/detail bukti Coach, formatter pesan Coach, landing
+  Debug, UI test bukti otomatis, dan progress log Phase 04.
+- Assumptions: Bahasa Indonesia tetap menjadi source language dan fallback
+  production. Copy yang menerima nilai dinamis dipertahankan sebagai resource
+  SwiftUI sampai dirender agar nama localization key tidak pernah menjadi
+  label verbatim ketika bahasa perangkat bukan `id`. Selection skenario Debug
+  selalu diproyeksikan ke skenario valid untuk role yang sedang dipilih.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-DemoRole", "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` tanpa override bahasa; `build_run_sim(launchArgs: [])`
+  untuk landing Debug; dan `build_sim(extraArgs:
+  ["IPHONEOS_DEPLOYMENT_TARGET=17.0", "SWIFT_VERSION=6",
+  "SWIFT_STRICT_CONCURRENCY=complete"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase02NavigationTests",
+  "-only-testing:MSCBodyTransformationTests/Phase04CoachTests",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachCompletesCriticalLocalJourney",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachViewsAutomaticEvidenceAndSavesOptionalRating"])`.
+- Result: build dan launch lulus. Empat test navigasi, 15 test Coach, dan dua
+  UI test terfokus lulus. Pusat bukti, detail persetujuan, detail poin
+  otomatis, hari, waktu kirim, dan CTA menampilkan copy Indonesia tanpa key
+  mentah pada konfigurasi bahasa Simulator biasa. Perpindahan role Peserta ke
+  Coach tidak lagi menghasilkan warning selection `participantActive`; log
+  `Membuka app shell demo lokal.` juga dihapus. Strict build tetap hanya
+  melaporkan dua warning concurrency lama di
+  `AdminContentAndWinnerViews.swift`, di luar scope perubahan ini.
+- Remaining blockers: pesan duplikasi
+  `UIAccessibilityLoaderWebShared` masih berasal dari accessibility bundle
+  WebKit/WebCore milik runtime iOS 26.5 Simulator, bukan class aplikasi.
+  Tidak ada blocker lokal Phase 04.
+
+#### 2026-07-30 — Pusat bukti, mode verifikasi, dan rating Coach
+
+- Files changed: model submission, protocol dan mock repository submission,
+  use case rating lokal, service/state/container/presentation review Coach,
+  tampilan pusat bukti dan detail, lokalisasi, test Phase 04 dan UI test, serta
+  progress log Phase 04.
+- Assumptions: daftar bukti hanya memakai foto profil peserta melalui
+  `UserAvatar`; foto atau jawaban bukti baru terlihat setelah detail dibuka.
+  `Perlu tindakan` hanya berisi submission `coachReview` yang masih pending,
+  sedangkan `Semua bukti` juga menampilkan submission otomatis dan riwayat
+  keputusan. Rating 1–5 bersifat opsional, disimpan terpisah pada submission,
+  dan tidak mengubah status maupun perhitungan poin.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`;
+  serta `build_sim(extraArgs: ["IPHONEOS_DEPLOYMENT_TARGET=17.0",
+  "SWIFT_VERSION=6", "SWIFT_STRICT_CONCURRENCY=complete"])`.
+- Test command: XcodeBuildMCP `test_sim` untuk `Phase04CoachTests`;
+  `Phase01FixtureTests` dan `Phase07LocalScoringTests`; UI test
+  `testCoachCompletesCriticalLocalJourney`; serta UI test baru
+  `testCoachViewsAutomaticEvidenceAndSavesOptionalRating`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; 15 test
+  Phase 04, 26 test fixture/scoring, dan dua UI test terfokus lulus. Runtime
+  memverifikasi avatar profil pada daftar, detail persetujuan manual, detail
+  poin otomatis tanpa tombol setuju/tolak, rating opsional, dan sheet alasan
+  penolakan. Strict build lulus dengan dua warning concurrency lama di
+  `AdminContentAndWinnerViews.swift`, di luar scope perubahan ini.
+- Remaining blockers: media fixture tetap memakai placeholder aman karena
+  tidak ada file bukti privat yang dibundel. Media produksi dan penyimpanan
+  rating server tetap menunggu fase backend/media terkait.
+
+#### 2026-07-30 — Ikon netral kartu Periksa bukti
+
+- Files changed: `CoachDashboardView` dan progress log Phase 04.
+- Assumptions: seluruh ikon quick action memakai warna teks utama yang adaptif.
+  Badge kuning dan garis aksen merah tetap membedakan jumlah antrean tanpa
+  memberi emphasis khusus pada ikon Periksa bukti.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP UI test terfokus
+  `testCoachCompletesCriticalLocalJourney`.
+- Result: build dan launch lulus tanpa warning; UI test lulus. Ikon Periksa
+  bukti kini netral dan aksinya tetap berfungsi.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-07-30 — Border netral kartu Periksa bukti
+
+- Files changed: `CoachDashboardView` dan progress log Phase 04.
+- Assumptions: urgensi antrean pemeriksaan tetap disampaikan melalui ikon
+  merah dan badge jumlah berwarna kuning. Seluruh quick action memakai border
+  netral yang sama agar hierarchy grid konsisten.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP UI test terfokus
+  `testCoachCompletesCriticalLocalJourney`.
+- Result: build dan launch lulus tanpa warning; UI test lulus. Kartu Periksa
+  bukti tetap interaktif dan tidak lagi memakai outline merah.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-07-30 — Dashboard Coach sebagai pusat aksi cepat
+
+- Files changed: tab dan route Coach; app-shell destination dan fallback;
+  Dashboard, state ringkasan, daftar Peserta, tab root, dan preview Coach;
+  lokalisasi; test navigasi, Coach, aksesibilitas, dan UI; serta progress log
+  Phase 04.
+- Assumptions: mockup pilihan menjadi acuan pada iPhone dengan enam aksi dalam
+  grid tiga kolom dan dua baris. Pada Dynamic Type accessibility, grid berubah
+  menjadi satu kolom agar teks tidak dipotong. Bottom tab Coach dipadatkan
+  menjadi Dashboard, Program, dan Profil; layar Peserta dan Peringkat yang
+  sudah ada tetap digunakan sebagai destination dari Dashboard. Kartu program
+  dampingan membuka daftar Peserta dengan filter program terkait.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`;
+  launch accessibility dengan
+  `UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge`; dan
+  `build_sim(extraArgs: ["IPHONEOS_DEPLOYMENT_TARGET=17.0",
+  "SWIFT_VERSION=6", "SWIFT_STRICT_CONCURRENCY=complete"])`.
+- Test command: XcodeBuildMCP `test_sim` untuk
+  `Phase02NavigationTests`, `Phase04CoachTests`, dan
+  `Phase08AccessibilityReliabilityTests`; UI test
+  `testCoachLeaderboardAndProfileUseParticipantInformationArchitecture`,
+  `testCoachDashboardProfileCardSelectsProfileTab`,
+  `testCoachCanJoinProgramThroughSharedParticipantFlow`,
+  `testCoachCompletesCriticalLocalJourney`, dan
+  `testCoachDashboardAttentionAndProgramOpenFilteredParticipants`.
+- Result: build dan launch iPhone 17 Simulator lulus tanpa warning; 27 unit
+  dan integration-style test serta lima UI test terfokus lulus. Enam quick
+  action, badge data-driven, tiga bottom tab, filter peserta, QR, review,
+  Peringkat, Program, Profil, dan kartu program interaktif telah diverifikasi.
+  Strict build lulus dengan dua warning concurrency lama di
+  `AdminContentAndWinnerViews.swift`, di luar scope perubahan ini.
+- Remaining blockers: tidak ada blocker lokal. Data dan otorisasi production
+  tetap menunggu fase backend/auth terkait.
+
+#### 2026-07-30 — Konsistensi kartu profil Dashboard
+
+- Files changed: komponen identitas bersama, Dashboard Participant dan Coach,
+  wiring pemilihan tab Coach, preview Coach, lokalisasi, UI test, dan progress
+  log Phase 04.
+- Assumptions: kartu Dashboard kedua role menggunakan hierarki visual dan
+  interaksi yang sama: sapaan, avatar, nama, badge role, dan chevron. Tap
+  memilih tab Profil tanpa membuat navigation push. Kota, status visibilitas,
+  dan bio Coach tetap tersedia pada layar Profil, bukan di kartu Dashboard.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachDashboardProfileCardSelectsProfileTab",
+  "-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testParticipantHomeProfileCardSelectsProfileTab"])`.
+- Result: build dan launch lulus tanpa warning; dua UI test lulus. Visual kartu
+  Coach serta perpindahan langsung ke tab Profil diverifikasi pada iPhone 17
+  Simulator. Dashboard Participant tetap memakai perilaku yang sama.
+- Remaining blockers: tidak ada blocker lokal untuk perubahan ini.
+
+#### 2026-07-30 — Perbaikan lebar kartu penawaran program
+
+- Files changed: `ParticipantProgramOfferView`, UI test alur Program Coach,
+  dan progress log Phase 04.
+- Assumptions: kartu ringkasan program harus memenuhi lebar container konten
+  dengan margin horizontal standar, terlepas dari panjang judul atau jumlah
+  metadata. Perubahan tetap menggunakan view bersama Participant dan Coach.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachCanJoinProgramThroughSharedParticipantFlow"])`.
+- Result: build dan launch lulus tanpa warning; UI test lulus. Kartu untuk
+  judul pendek `Transformasi 7 hari` diverifikasi memenuhi lebar container
+  pada iPhone 17 Simulator. Test juga memastikan lebar kartu lebih dari 85%
+  lebar window agar regresi intrinsic-width tidak kembali.
+- Remaining blockers: tidak ada blocker lokal untuk perbaikan visual ini.
+
+#### 2026-07-30 — Tab Program dan partisipasi program Coach
+
+- Files changed: app tab dan route Coach; app-shell dependency wiring;
+  `ParticipantJourneyStore`; view katalog, detail, enrollment, aktivitas, dan
+  langkah Program Participant yang kini menerima konteks navigasi bersama;
+  fixture profil partisipasi Coach; lokalisasi; test fixture, navigasi,
+  Participant, Coach, reliabilitas, dan UI; serta workplan Phase 04.
+- Assumptions: akun Coach tetap memiliki role otorisasi `coach`, tetapi dapat
+  memiliki profil partisipasi terpisah untuk enrollment program. Seluruh UI
+  dan alur Program memakai file Participant yang sama. Tab Coach tetap lima
+  item agar tidak berubah menjadi menu `Lainnya`; QR Coach tetap dapat dibuka
+  dari quick action Dashboard dan section QR di Profil.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-AppleLanguages", "(id)", "-AppleLocale", "id_ID", "-DemoRole",
+  "coach", "-DemoScenario", "coach_review_queue", "-SkipDemoLanding"])`
+  dan `build_sim(extraArgs: ["IPHONEOS_DEPLOYMENT_TARGET=17.0",
+  "SWIFT_VERSION=6", "SWIFT_STRICT_CONCURRENCY=complete"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests",
+  "-only-testing:MSCBodyTransformationTests/Phase02NavigationTests",
+  "-only-testing:MSCBodyTransformationTests/Phase01FixtureTests",
+  "-only-testing:MSCBodyTransformationTests/Phase08AccessibilityReliabilityTests"])`;
+  `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase03ParticipantTests"])`;
+  dan UI test terfokus `testCoachCanJoinProgramThroughSharedParticipantFlow`,
+  `testCoachCompletesCriticalLocalJourney`, serta
+  `testParticipantSelectsProgramBeforeOpeningDetail`.
+- Result: build dan launch lulus tanpa warning; 32 test lintas Phase 01, 02,
+  04, dan 08 lulus; 13 test Participant lulus; ketiga UI test terfokus lulus.
+  Katalog Coach, enrollment melalui QR, aktivitas setelah enrollment, alur
+  Coach yang sudah ada, dan regresi Program Participant telah diverifikasi
+  pada iPhone 17 Simulator. Strict build lulus dengan dua warning concurrency
+  lama di `AdminContentAndWinnerViews.swift`, di luar scope.
+- Remaining blockers: otorisasi dual-capability dan penyimpanan profil
+  partisipasi Coach di backend tetap menunggu fase backend/auth terkait.
+
+#### 2026-07-30 — Interaksi rincian poin pada kartu leaderboard
+
+- Files changed: komponen podium bersama, layar dan snapshot Peringkat Coach,
+  lokalisasi, test Phase 04, serta UI test Coach.
+- Assumptions: tidak ada section `Rincian poin` terpisah. Pada akun Coach,
+  hanya kartu bertanda `Pesertamu` yang dapat membuka modal rincian, termasuk
+  podium peringkat 1–3 dan kartu peringkat lainnya. Akun Participant tetap
+  memakai komponen yang sama tanpa interaksi rincian Coach. Tampilan visual
+  kartu leaderboard tidak berubah.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-DemoRole", "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` dan `build_sim(extraArgs:
+  ["IPHONEOS_DEPLOYMENT_TARGET=17.0", "SWIFT_VERSION=6",
+  "SWIFT_STRICT_CONCURRENCY=complete"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])` dan
+  `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachLeaderboardAndProfileUseParticipantInformationArchitecture"])`,
+  serta `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testParticipantLeaderboardDoesNotExposeCoachScoreDetails"])`.
+- Result: build dan run Simulator lulus tanpa warning pada file yang diubah;
+  build minimum iOS 17/Swift 6 lulus; 11 test Coach dan dua UI test terfokus
+  lulus. Interaksi modal pada podium dan kartu peringkat lainnya, kartu peserta
+  yang bukan dampingan tetap noninteraktif, serta ketiadaan interaksi rincian
+  Coach pada akun Participant diverifikasi pada iPhone 17 Simulator. Build
+  ketat tetap melaporkan dua warning concurrency lama di
+  `AdminContentAndWinnerViews.swift`, di luar scope.
+- Remaining blockers: tidak ada blocker lokal.
+
+#### 2026-07-30 — Penyelarasan Peringkat dan Profil Coach
+
+- Files changed: komponen leaderboard Participant yang kini dapat menandai
+  peserta dampingan; layar dan state Peringkat Coach; layar, editor foto,
+  state, snapshot, dan model Profil Coach; lokalisasi; test Phase 04 dan UI
+  test Coach.
+- Assumptions: “sama seperti peserta” berarti memakai hierarchy, komponen,
+  spacing, program selector, podium, Form, dan alur edit profil yang sama.
+  Rincian poin, visibilitas profil, status persetujuan, pengingat review, dan
+  akses QR tetap dipertahankan sebagai kebutuhan khusus Coach. Identifier
+  pendaftaran mentah tidak ditampilkan.
+- Build command: XcodeBuildMCP `build_run_sim(launchArgs:
+  ["-DemoRole", "coach", "-DemoScenario", "coach_review_queue",
+  "-SkipDemoLanding"])` dan `build_sim(extraArgs:
+  ["IPHONEOS_DEPLOYMENT_TARGET=17.0", "SWIFT_VERSION=6",
+  "SWIFT_STRICT_CONCURRENCY=complete"])`.
+- Test command: XcodeBuildMCP `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase04CoachTests"])`,
+  `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationTests/Phase03ParticipantTests"])`,
+  dan `test_sim(extraArgs:
+  ["-only-testing:MSCBodyTransformationUITests/MSCBodyTransformationUITests/testCoachLeaderboardAndProfileUseParticipantInformationArchitecture"])`.
+- Result: build dan run Simulator lulus tanpa warning pada file yang diubah;
+  build minimum iOS 17/Swift 6 lulus; 10 test Coach, 13 test Participant, dan
+  satu UI test baru lulus. Peringkat dan Profil Coach diverifikasi secara
+  visual pada iPhone 17 Simulator. Build ketat masih melaporkan dua warning
+  concurrency lama di `AdminContentAndWinnerViews.swift`, di luar scope
+  perubahan ini.
+- Remaining blockers: tidak ada blocker lokal. Sinkronisasi foto profil,
+  pengaturan notifikasi, session logout produksi, dan otorisasi Coach tetap
+  menunggu fase backend/auth terkait.
 
 #### 2026-07-28 — QR identifier permanen coach
 

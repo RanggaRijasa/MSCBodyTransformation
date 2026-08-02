@@ -4,7 +4,7 @@ import Testing
 
 @Suite("Navigasi Phase 02")
 struct Phase02NavigationTests {
-    @Test("Setiap role menghasilkan lima tab yang tepat")
+    @Test("Setiap role menghasilkan susunan tab yang tepat")
     func rolesProduceCorrectTabs() {
         #expect(
             AppTab.tabs(for: .participant) == [
@@ -18,9 +18,7 @@ struct Phase02NavigationTests {
         #expect(
             AppTab.tabs(for: .coach) == [
                 .coach(.dashboard),
-                .coach(.participants),
-                .coach(.invite),
-                .coach(.leaderboard),
+                .coach(.program),
                 .coach(.profile)
             ]
         )

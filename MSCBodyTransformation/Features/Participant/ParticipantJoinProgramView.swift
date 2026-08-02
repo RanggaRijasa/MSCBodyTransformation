@@ -314,7 +314,10 @@ struct ParticipantJoinProgramView: View {
             fieldError = ParticipantFormatting.fieldReason(error)
         } catch {
             selectedCoach = nil
-            fieldError = String(localized: "participant.error.generic")
+            fieldError = String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
         }
     }
 
@@ -330,7 +333,10 @@ struct ParticipantJoinProgramView: View {
         } catch let error as DomainError {
             fieldError = ParticipantFormatting.fieldReason(error)
         } catch {
-            fieldError = String(localized: "participant.error.generic")
+            fieldError = String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
         }
     }
 }

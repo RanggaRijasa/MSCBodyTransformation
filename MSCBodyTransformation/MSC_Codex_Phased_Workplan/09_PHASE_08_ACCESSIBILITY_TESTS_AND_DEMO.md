@@ -203,6 +203,25 @@ Admin:
 
 ### Log
 
+#### 2026-07-31 — Bahasa Indonesia independen dari bahasa perangkat
+
+- Files changed: aturan agent dan referensi UI; regression UI test locale
+  non-Indonesia; serta progress log ini.
+- Assumptions: seluruh UI yang dimiliki aplikasi harus tetap menggunakan
+  Bahasa Indonesia dan locale `id-ID`; komponen native yang sepenuhnya
+  dimiliki iOS tetap boleh mengikuti bahasa perangkat.
+- Build command: XcodeBuildMCP `build_sim` untuk scheme
+  `MSCBodyTransformation`, konfigurasi Debug, pada iPhone 17 iOS 26.5.
+- Test command: XcodeBuildMCP `test_sim` untuk suite fondasi
+  `MSCBodyTransformationTests` dan UI test
+  `testAppCopyStaysIndonesianWhenDeviceLanguageIsEnglish`.
+- Result: build lulus tanpa warning; 3/3 unit test dan satu UI test lintas
+  Participant, Coach, dan Admin lulus dengan `-AppleLanguages (en)` serta
+  `-AppleLocale en_US`. Tidak ada localization key mentah yang terlihat.
+- Remaining blockers: tidak ada blocker implementasi; metadata development
+  region Xcode tidak diubah karena task ini tidak mengizinkan perubahan
+  `project.pbxproj`.
+
 #### 2026-07-29 — Perbaikan audit heuristik Nielsen UI peserta
 
 - Files changed: shell onboarding dan shared error state; alur entry peserta;

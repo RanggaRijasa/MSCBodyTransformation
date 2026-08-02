@@ -37,72 +37,16 @@ struct ParticipantHomeView: View {
     private func profileCard(
         _ snapshot: ParticipantJourneySnapshot
     ) -> some View {
-        Button {
+        HomeProfileCard(
+            displayName: snapshot.profile.displayName,
+            imageName: snapshot.profile.localPhotoReference,
+            badgeTitle: roleTitle(snapshot.user.role),
+            accessibilityHint: "participant.home.profile.hint",
+            accessibilityIdentifier: "participant.home.profile"
+        ) {
             onSelectTab(.profile)
-        } label: {
-            HStack(spacing: AppSpacing.medium) {
-                UserAvatar(
-                    displayName: snapshot.profile.displayName,
-                    imageName: snapshot.profile.localPhotoReference,
-                    size: 64
-                )
-
-                VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                    Text("participant.home.greeting")
-                        .font(AppTypography.secondary)
-                        .foregroundStyle(Color.appSecondaryText)
-
-                    Text(snapshot.profile.displayName)
-                        .font(AppTypography.sectionTitle)
-                        .foregroundStyle(Color.appPrimaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(roleTitle(snapshot.user.role))
-                        .font(AppTypography.label)
-                        .foregroundStyle(Color.brandPrimary)
-                        .padding(.horizontal, AppSpacing.xSmall)
-                        .padding(.vertical, AppSpacing.xxSmall)
-                        .background(
-                            Color.brandPrimary.opacity(0.1),
-                            in: Capsule()
-                        )
-                }
-
-                Spacer(minLength: AppSpacing.xSmall)
-
-                Image(systemName: "chevron.right")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(Color.brandPrimary)
-                    .frame(width: 44, height: 44)
-                    .accessibilityHidden(true)
-            }
-            .padding(AppSpacing.medium)
-            .background(
-                Color.appSurface,
-                in: RoundedRectangle(
-                    cornerRadius: AppRadius.large,
-                    style: .continuous
-                )
-            )
-            .overlay {
-                RoundedRectangle(
-                    cornerRadius: AppRadius.large,
-                    style: .continuous
-                )
-                .stroke(Color.appBorder, lineWidth: 1)
-            }
-            .contentShape(
-                RoundedRectangle(
-                    cornerRadius: AppRadius.large,
-                    style: .continuous
-                )
-            )
         }
-        .buttonStyle(.plain)
         .padding(.horizontal, AppSpacing.medium)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint(Text("participant.home.profile.hint"))
-        .accessibilityIdentifier("participant.home.profile")
     }
 
     @ViewBuilder

@@ -9,7 +9,7 @@ struct Phase01FixtureTests {
         let seed = try MockSeedData.load()
 
         #expect(seed.users.count == 18)
-        #expect(seed.participantProfiles.count == 12)
+        #expect(seed.participantProfiles.count == 13)
         #expect(seed.coachProfiles.filter(\.isPublic).count == 4)
         #expect(seed.programs.count == 5)
         #expect(seed.enrollments.count == 14)

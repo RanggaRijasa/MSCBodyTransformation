@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import SwiftUI
 
 @MainActor
@@ -135,11 +134,9 @@ struct RootView: View {
 
             Picker(
                 "root.scenario_picker.label",
-                selection: $selectedScenario
+                selection: validScenarioSelection
             ) {
-                ForEach(
-                    AppDemoScenario.scenarios(for: selectedRole.userRole)
-                ) { scenario in
+                ForEach(availableScenarios) { scenario in
                     Text(
                         LocalizedStringKey(
                             scenario.titleLocalizationKey
@@ -160,7 +157,6 @@ struct RootView: View {
 
     private var enterDemoButton: some View {
         Button {
-            AppLog.navigation.info("Membuka app shell demo lokal.")
             openSelectedDemo()
         } label: {
             Label("root.enter_demo", systemImage: "arrow.right")
@@ -168,6 +164,24 @@ struct RootView: View {
         .buttonStyle(PrimaryActionButtonStyle())
         .disabled(!sessionSwitchState.isReady(for: selectedRole.userRole))
         .accessibilityIdentifier("root.enter-demo")
+    }
+
+    private var availableScenarios: [AppDemoScenario] {
+        AppDemoScenario.scenarios(for: selectedRole.userRole)
+    }
+
+    private var validScenarioSelection: Binding<AppDemoScenario> {
+        Binding(
+            get: {
+                guard availableScenarios.contains(selectedScenario) else {
+                    return AppDemoScenario.defaultScenario(
+                        for: selectedRole.userRole
+                    )
+                }
+                return selectedScenario
+            },
+            set: { selectedScenario = $0 }
+        )
     }
 
     @ViewBuilder

@@ -9,6 +9,20 @@ nonisolated enum ParticipantEntryStage: Equatable, Sendable {
     case complete
 }
 
+nonisolated enum ProgramParticipationAccount: Sendable {
+    case participant
+    case coach
+
+    var sessionRole: UserRole {
+        switch self {
+        case .participant:
+            .participant
+        case .coach:
+            .coach
+        }
+    }
+}
+
 nonisolated enum ParticipantJourneyLoadState: Equatable, Sendable {
     case idle
     case loading
@@ -52,6 +66,7 @@ nonisolated struct ParticipantLeaderboardProgramSnapshot:
 @Observable
 final class ParticipantJourneyStore {
     private let environment: AppEnvironment
+    private let participationAccount: ProgramParticipationAccount
     private let shouldStartWithoutEnrollment: Bool
     private var didPrepareInitialScenario = false
 
@@ -78,9 +93,11 @@ final class ParticipantJourneyStore {
 
     init(
         environment: AppEnvironment,
+        participationAccount: ProgramParticipationAccount = .participant,
         startsWithoutEnrollment: Bool = false
     ) {
         self.environment = environment
+        self.participationAccount = participationAccount
         shouldStartWithoutEnrollment = startsWithoutEnrollment
         entryStage = startsWithoutEnrollment ? .login : .complete
     }
@@ -261,10 +278,11 @@ final class ParticipantJourneyStore {
             var session = try await repositories.session.loadCurrentSession()
             if session.state == .loggedOut {
                 session = try await repositories.session.switchDebugRole(
-                    to: .participant
+                    to: participationAccount.sessionRole
                 )
             }
-            guard let user = session.user, user.role == .participant else {
+            guard let user = session.user,
+                  user.role == participationAccount.sessionRole else {
                 throw DomainError.permissionDenied
             }
             let profile = try await repositories.profiles.participantProfile(
@@ -305,7 +323,7 @@ final class ParticipantJourneyStore {
 
         do {
             _ = try await repositories.session.switchDebugRole(
-                to: .participant
+                to: participationAccount.sessionRole
             )
             await load()
             entryStage = .profile

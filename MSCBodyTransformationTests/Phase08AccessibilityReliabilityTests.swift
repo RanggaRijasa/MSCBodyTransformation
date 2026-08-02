@@ -29,11 +29,11 @@ struct Phase08AccessibilityReliabilityTests {
         )
         #expect(
             AppDemoScenario.coachWalletZero.initialTab(for: .coach)
-                == .coach(.invite)
+                == .coach(.dashboard)
         )
         #expect(
             AppDemoScenario.coachActiveParticipants.initialTab(for: .coach)
-                == .coach(.participants)
+                == .coach(.dashboard)
         )
         #expect(
             AppDemoScenario.adminDraftCMS.initialTab(for: .admin)

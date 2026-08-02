@@ -187,11 +187,21 @@ nonisolated enum ParticipantFormatting {
         case .validation(_, let reason), .conflict(let reason):
             reason
         case .notFound:
-            String(localized: "participant.error.not_found")
+            String(
+                localized: "participant.error.not_found",
+                defaultValue: "Data yang diperlukan tidak ditemukan."
+            )
         case .offline:
-            String(localized: "participant.error.offline")
+            String(
+                localized: "participant.error.offline",
+                defaultValue:
+                    "Anda sedang offline. Data lokal yang tersimpan tetap dapat dilihat."
+            )
         default:
-            String(localized: "participant.error.generic")
+            String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
         }
     }
 }

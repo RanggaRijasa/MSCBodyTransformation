@@ -21,3 +21,34 @@ struct PrimaryActionButtonStyle: ButtonStyle {
             .opacity(isEnabled ? 1 : 0.45)
     }
 }
+
+struct SecondaryActionButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    var foregroundColor: Color = .brandPrimary
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(AppTypography.button)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .padding(.horizontal, AppSpacing.medium)
+            .foregroundStyle(foregroundColor)
+            .background(
+                configuration.isPressed
+                    ? foregroundColor.opacity(0.08)
+                    : Color.appSurface,
+                in: RoundedRectangle(
+                    cornerRadius: AppRadius.medium,
+                    style: .continuous
+                )
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: AppRadius.medium,
+                    style: .continuous
+                )
+                .stroke(foregroundColor, lineWidth: 1)
+            }
+            .opacity(isEnabled ? 1 : 0.45)
+    }
+}

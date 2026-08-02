@@ -152,7 +152,8 @@ struct ParticipantProfileView: View {
                 value: snapshot.profile.phoneNumber
                     ?? String(
                         localized:
-                            "participant.profile.phone.empty"
+                            "participant.profile.phone.empty",
+                        defaultValue: "Belum ditambahkan"
                     )
             )
             .accessibilityIdentifier("participant.profile.phone")
@@ -223,7 +224,8 @@ struct ParticipantProfileView: View {
                 "participant.profile.dark_preview",
                 value: String(
                     localized:
-                        "participant.profile.appearance.system"
+                        "participant.profile.appearance.system",
+                    defaultValue: "Otomatis"
                 )
             )
         }
@@ -298,7 +300,8 @@ struct ParticipantProfileView: View {
             actionError = ParticipantFormatting.fieldReason(error)
         } catch {
             actionError = String(
-                localized: "participant.error.generic"
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
             )
         }
     }
@@ -316,7 +319,8 @@ struct ParticipantProfileView: View {
                 actionError = ParticipantFormatting.fieldReason(error)
             } catch {
                 actionError = String(
-                    localized: "participant.error.generic"
+                    localized: "participant.error.generic",
+                    defaultValue: "Terjadi kendala. Coba lagi."
                 )
             }
         }

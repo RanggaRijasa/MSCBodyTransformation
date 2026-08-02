@@ -109,7 +109,8 @@ struct ParticipantDebugToolsView: View {
                 actionError = ParticipantFormatting.fieldReason(error)
             } catch {
                 actionError = String(
-                    localized: "participant.error.generic"
+                    localized: "participant.error.generic",
+                    defaultValue: "Terjadi kendala. Coba lagi."
                 )
             }
         }

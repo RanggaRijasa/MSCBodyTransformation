@@ -2,15 +2,15 @@ import PhotosUI
 import SwiftUI
 
 @MainActor
-struct ParticipantProfileEditorSheet: View {
+struct CoachProfileEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    let store: ParticipantJourneyStore
-    let profile: ParticipantProfile
-    let email: String
+    let state: CoachProfileState
+    let snapshot: CoachProfileSnapshot
 
     @State private var displayName: String
-    @State private var phoneNumber: String
+    @State private var biography: String
+    @State private var city: String
     @State private var photoReference: String?
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var mediaState = LocalEvidenceMediaState()
@@ -18,17 +18,16 @@ struct ParticipantProfileEditorSheet: View {
     @State private var errorMessage: String?
 
     init(
-        store: ParticipantJourneyStore,
-        profile: ParticipantProfile,
-        email: String
+        state: CoachProfileState,
+        snapshot: CoachProfileSnapshot
     ) {
-        self.store = store
-        self.profile = profile
-        self.email = email
-        _displayName = State(initialValue: profile.displayName)
-        _phoneNumber = State(initialValue: profile.phoneNumber ?? "")
+        self.state = state
+        self.snapshot = snapshot
+        _displayName = State(initialValue: snapshot.profile.displayName)
+        _biography = State(initialValue: snapshot.profile.biography)
+        _city = State(initialValue: snapshot.profile.city)
         _photoReference = State(
-            initialValue: profile.localPhotoReference
+            initialValue: snapshot.profile.localPhotoReference
         )
     }
 
@@ -51,16 +50,12 @@ struct ParticipantProfileEditorSheet: View {
                         save()
                     }
                     .disabled(
-                        displayName
-                            .trimmingCharacters(
-                                in: .whitespacesAndNewlines
-                            )
-                            .isEmpty
+                        requiredFieldsAreEmpty
                             || mediaState.isProcessing
                             || isSaving
                     )
                     .accessibilityIdentifier(
-                        "participant.profile.editor.save"
+                        "coach.profile.editor.save"
                     )
                 }
             }
@@ -98,16 +93,14 @@ struct ParticipantProfileEditorSheet: View {
     }
 
     private var photoSection: some View {
-        return Section {
+        Section {
             VStack(spacing: AppSpacing.medium) {
                 UserAvatar(
                     displayName: displayName,
                     imageName: photoReference,
                     size: 112
                 )
-                .accessibilityIdentifier(
-                    "participant.profile.editor.photo"
-                )
+                .accessibilityIdentifier("coach.profile.editor.photo")
 
                 Group {
                     if photoReference == nil {
@@ -137,7 +130,7 @@ struct ParticipantProfileEditorSheet: View {
                     }
                 }
                 .accessibilityIdentifier(
-                    "participant.profile.editor.photo-picker"
+                    "coach.profile.editor.photo-picker"
                 )
                 .onChange(of: selectedPhotoItem) { _, newItem in
                     guard let newItem else { return }
@@ -181,36 +174,61 @@ struct ParticipantProfileEditorSheet: View {
     }
 
     private var identitySection: some View {
-        Section("participant.profile.data") {
+        Section {
             LabeledContent("participant.profile.field.name") {
                 TextField(
                     "participant.profile.field.name",
                     text: $displayName
                 )
-                .multilineTextAlignment(.trailing)
-                .textContentType(.name)
-                .accessibilityIdentifier(
-                    "participant.profile.editor.name"
-                )
+                    .multilineTextAlignment(.trailing)
+                    .textContentType(.name)
+                    .accessibilityIdentifier(
+                        "coach.profile.editor.name"
+                    )
             }
 
-            LabeledContent("participant.profile.field.phone") {
+            LabeledContent("participant.profile.field.city") {
                 TextField(
-                    "participant.profile.field.phone",
-                    text: $phoneNumber
+                    "participant.profile.field.city",
+                    text: $city
                 )
-                .multilineTextAlignment(.trailing)
-                .keyboardType(.phonePad)
-                .textContentType(.telephoneNumber)
-                .accessibilityIdentifier(
-                    "participant.profile.editor.phone"
-                )
+                    .multilineTextAlignment(.trailing)
+                    .textContentType(.addressCity)
+                    .accessibilityIdentifier(
+                        "coach.profile.editor.city"
+                    )
             }
 
             LabeledContent(
                 "participant.profile.field.email",
-                value: email
+                value: snapshot.user.email
             )
+
+            VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+                Text("coach.profile.biography")
+                    .font(AppTypography.label)
+                    .foregroundStyle(Color.appSecondaryText)
+
+                TextField(
+                    "coach.profile.biography.prompt",
+                    text: $biography,
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+                .accessibilityIdentifier(
+                    "coach.profile.editor.biography"
+                )
+            }
+        } header: {
+            Text("participant.profile.data")
+        } footer: {
+            Text("coach.profile.required_fields")
+        }
+    }
+
+    private var requiredFieldsAreEmpty: Bool {
+        [displayName, biography, city].contains {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
     }
 
@@ -224,17 +242,18 @@ struct ParticipantProfileEditorSheet: View {
         Task {
             defer { isSaving = false }
             do {
-                try await store.updateParticipantProfile(
+                try await state.save(
                     displayName: displayName,
-                    phoneNumber: phoneNumber,
+                    biography: biography,
+                    city: city,
                     localPhotoReference: photoReference
                 )
                 dismiss()
             } catch let error as DomainError {
-                errorMessage = ParticipantFormatting.fieldReason(error)
+                errorMessage = CoachFormatting.reason(error)
             } catch {
                 errorMessage = String(
-                    localized: "participant.error.generic",
+                    localized: "coach.error.generic",
                     defaultValue: "Terjadi kendala. Coba lagi."
                 )
             }

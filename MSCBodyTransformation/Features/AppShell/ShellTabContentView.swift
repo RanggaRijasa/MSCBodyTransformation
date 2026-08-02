@@ -9,7 +9,11 @@ struct ShellTabContentView: View {
     let coachFeatures: CoachFeatureContainer?
     let adminFeatures: AdminFeatureContainer?
     let didRetryRepositoryError: Bool
+    let didResumeLoggedOutSession: Bool
+    let isResumingLoggedOutSession: Bool
+    let loggedOutRecoveryError: String?
     let onRetryRepositoryError: () -> Void
+    let onResumeLoggedOutSession: () -> Void
     let onSelectTab: (AppTab) -> Void
 
     var body: some View {
@@ -63,16 +67,49 @@ struct ShellTabContentView: View {
                 }
             }
         case .loggedOut:
-            stateContainer {
-                ContentUnavailableView {
-                    Label(
-                        "Sesi berakhir",
-                        systemImage: "person.crop.circle.badge.xmark"
-                    )
-                } description: {
-                    Text("Masuk kembali untuk melanjutkan demo lokal.")
+            if didResumeLoggedOutSession {
+                loadedContent(showsOfflineBanner: false)
+            } else {
+                stateContainer {
+                    ContentUnavailableView {
+                        Label(
+                            "error.session_expired.title",
+                            systemImage:
+                                "person.crop.circle.badge.xmark"
+                        )
+                    } description: {
+                        VStack(spacing: AppSpacing.xSmall) {
+                            Text("error.session_expired.message")
+                            if let loggedOutRecoveryError {
+                                Text(loggedOutRecoveryError)
+                                    .foregroundStyle(
+                                        Color.appDestructive
+                                    )
+                            }
+                        }
+                    } actions: {
+                        Button {
+                            onResumeLoggedOutSession()
+                        } label: {
+                            if isResumingLoggedOutSession {
+                                ProgressView()
+                                    .accessibilityLabel(
+                                        Text(
+                                            "session.logged_out.resuming"
+                                        )
+                                    )
+                            } else {
+                                Text("session.logged_out.resume")
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(isResumingLoggedOutSession)
+                        .accessibilityIdentifier(
+                            "state.logged-out.resume"
+                        )
+                    }
+                    .accessibilityIdentifier("state.logged-out")
                 }
-                .accessibilityIdentifier("state.logged-out")
             }
         case .offline:
             loadedContent(showsOfflineBanner: true)
@@ -134,8 +171,12 @@ struct ShellTabContentView: View {
             CoachTabRootView(
                 tab: coachTab,
                 features: coachFeatures,
+                programStore: participantStore,
                 router: router,
-                showsOfflineBanner: showsOfflineBanner
+                showsOfflineBanner: showsOfflineBanner,
+                onSelectCoachTab: { coachTab in
+                    onSelectTab(.coach(coachTab))
+                }
             )
         } else if case .admin(let adminTab) = tab,
                   let adminFeatures {
@@ -316,35 +357,17 @@ private struct CoachShellSections: View {
             } header: {
                 SectionHeader(title: "shell.coach.dashboard.title")
             }
-        case .participants:
+        case .program:
             Section {
-                participantRow(name: "Ayu Lestari", progress: 0.4)
-                participantRow(name: "Bima Putra", progress: 0.9)
-                participantRow(name: "Citra Dewi", progress: 0.9)
-            } header: {
-                SectionHeader(title: "shell.coach.participants.title")
-            }
-        case .invite:
-            Section {
-                MetricCard(
-                    title: "coach.identifier.code_label",
-                    value: "COACH-RAKA-7K9Q",
-                    systemImage: "qrcode",
-                    accentColor: .brandPrimary
+                ProgramCard(
+                    title: "shell.demo.program.active_title",
+                    summary: "shell.participant.program.summary",
+                    statusTitle: "status.active",
+                    statusKind: .success,
+                    progress: nil
                 )
             } header: {
-                SectionHeader(title: "shell.coach.invite.title")
-            }
-        case .leaderboard:
-            Section {
-                RankBadge(rank: 1)
-                MetricCard(
-                    title: "metric.participants",
-                    value: "12",
-                    systemImage: "trophy"
-                )
-            } header: {
-                SectionHeader(title: "shell.leaderboard.title")
+                SectionHeader(title: "shell.participant.program.title")
             }
         case .profile:
             Section {
@@ -361,40 +384,6 @@ private struct CoachShellSections: View {
                 SectionHeader(title: "shell.profile.title")
             }
         }
-    }
-
-    private func participantRow(
-        name: String,
-        progress: Double
-    ) -> some View {
-        HStack(spacing: AppSpacing.medium) {
-            UserAvatar(displayName: name)
-            Text(name)
-                .font(AppTypography.cardTitle)
-            Spacer()
-            ProgressRing(progress: progress, label: "metric.progress")
-                .scaleEffect(0.72)
-                .frame(width: 56, height: 56)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func compactAction(
-        title: LocalizedStringKey,
-        systemImage: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(AppTypography.secondary)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .padding(.horizontal, AppSpacing.small)
-        }
-        .buttonStyle(.plain)
-        .adaptiveGlassSurface(
-            cornerRadius: AppRadius.prominent,
-            isInteractive: true
-        )
     }
 }
 

@@ -385,7 +385,7 @@ private struct ParticipantLeaderboardProgramPickerView: View {
     }
 }
 
-private struct ParticipantLeaderboardProgramPickerRow: View {
+struct ParticipantLeaderboardProgramPickerRow: View {
     let program: Program
     let isSelected: Bool
 

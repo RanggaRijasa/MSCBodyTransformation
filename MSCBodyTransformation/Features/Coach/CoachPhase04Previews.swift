@@ -57,7 +57,12 @@ private struct CoachDashboardScenarioPreview: View {
     @State private var router = ShellTabRouter()
 
     var body: some View {
-        CoachDashboardView(state: state, router: router)
+        CoachDashboardView(
+            state: state,
+            router: router,
+            onOpenProgram: {},
+            onOpenProfile: {}
+        )
             .navigationTitle(Text("tab.coach.dashboard"))
             .task {
                 await state.load()
@@ -125,7 +130,8 @@ private struct CoachParticipantScenarioPreview: View {
                         program: summary.program,
                         submissions: summary.submissions,
                         weighIns: summary.weighIns,
-                        leaderboardEntry: summary.leaderboardEntry
+                        leaderboardEntry: summary.leaderboardEntry,
+                        associatedPrograms: summary.associatedPrograms
                     )
                 )
             }

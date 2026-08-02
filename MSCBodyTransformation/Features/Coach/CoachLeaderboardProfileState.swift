@@ -22,14 +22,19 @@ final class CoachLeaderboardState {
             guard let repositories = environment.repositories else {
                 throw environment.bootstrapError ?? DomainError.unknown
             }
+            let referenceDate = environment.clock.now()
             let programs = try await repositories.programs.programs()
                 .filter {
-                    $0.status == .active || $0.status == .completed
+                    let status = $0.lifecycleStatus(at: referenceDate)
+                    return status == .active
+                        || status == .completed
+                        || status == .archived
                 }
+                .sorted { $0.endDate > $1.endDate }
             guard let selectedProgram = programs.first(where: {
                 $0.id == selectedProgramID
             }) ?? programs.first(where: {
-                $0.status == .active
+                $0.lifecycleStatus(at: referenceDate) == .active
             }) ?? programs.first else {
                 throw DomainError.notFound(resource: "program")
             }
@@ -54,7 +59,8 @@ final class CoachLeaderboardState {
                     selectedProgram: selectedProgram,
                     entries: entries,
                     winners: winners,
-                    assignedParticipantIDs: participantIDs
+                    assignedParticipantIDs: participantIDs,
+                    referenceDate: referenceDate
                 )
             )
         } catch is CancellationError {
@@ -82,10 +88,12 @@ final class CoachProfileState {
     var displayName = ""
     var biography = ""
     var city = ""
+    var localPhotoReference: String?
     var isPublic = true
     var notificationsEnabled = true
     var isSaving = false
     var saveConfirmationVisible = false
+    var isLoggedOut = false
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -99,12 +107,14 @@ final class CoachProfileState {
             displayName = identity.profile.displayName
             biography = identity.profile.biography
             city = identity.profile.city
+            localPhotoReference = identity.profile.localPhotoReference
             isPublic = identity.profile.isPublic
             guard !Task.isCancelled else {
                 return
             }
             state = .loaded(
                 CoachProfileSnapshot(
+                    user: identity.user,
                     profile: identity.profile
                 )
             )
@@ -117,7 +127,12 @@ final class CoachProfileState {
         }
     }
 
-    func save() async throws {
+    func save(
+        displayName: String,
+        biography: String,
+        city: String,
+        localPhotoReference: String?
+    ) async throws {
         guard let repositories = environment.repositories,
               case .loaded(let snapshot) = state else {
             throw DomainError.unknown
@@ -156,9 +171,33 @@ final class CoachProfileState {
         profile.displayName = normalizedName
         profile.biography = normalizedBiography
         profile.city = normalizedCity
+        profile.localPhotoReference = localPhotoReference
         profile.isPublic = isPublic
         _ = try await repositories.profiles.save(coachProfile: profile)
         saveConfirmationVisible = true
+        await load()
+    }
+
+    func saveSettings() async throws {
+        try await save(
+            displayName: displayName,
+            biography: biography,
+            city: city,
+            localPhotoReference: localPhotoReference
+        )
+    }
+
+    func logoutLocalDemo() async {
+        await environment.repositories?.session.setDebugScenario(.loggedOut)
+        isLoggedOut = true
+    }
+
+    func resumeLocalDemo() async {
+        guard let session = environment.repositories?.session else {
+            return
+        }
+        _ = try? await session.switchDebugRole(to: .coach)
+        isLoggedOut = false
         await load()
     }
 }
