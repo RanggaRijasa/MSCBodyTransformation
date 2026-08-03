@@ -32,23 +32,49 @@ struct ParticipantProgramPoster: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .topTrailing) {
+                if hasCoverImage {
+                    ProgramCoverImage(
+                        reference: program.coverLocalReference,
+                        alternativeText:
+                            program.coverAlternativeText
+                            ?? String(
+                                localized:
+                                    "program.cover.default_alternative",
+                                defaultValue: "Cover program"
+                            )
+                    )
+                    .frame(
+                        width: proxy.size.width,
+                        height: proxy.size.height
+                    )
+                    .clipped()
+                } else {
+                    LinearGradient(
+                        colors: gradientColors,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+
                 LinearGradient(
-                    colors: gradientColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    colors: coverOverlayColors,
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
 
-                Circle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(width: 220, height: 220)
-                    .offset(x: 130, y: -75)
-                    .accessibilityHidden(true)
+                if !hasCoverImage {
+                    Circle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(width: 220, height: 220)
+                        .offset(x: 130, y: -75)
+                        .accessibilityHidden(true)
 
-                Image(systemName: posterSymbol)
-                    .font(.system(size: 92, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.16))
-                    .offset(x: 95, y: 45)
-                    .accessibilityHidden(true)
+                    Image(systemName: posterSymbol)
+                        .font(.system(size: 92, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.16))
+                        .offset(x: 95, y: 45)
+                        .accessibilityHidden(true)
+                }
 
                 VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
                     Label(
@@ -115,13 +141,32 @@ struct ParticipantProgramPoster: View {
         .accessibilityHint(Text("participant.home.program.open_hint"))
     }
 
+    private var hasCoverImage: Bool {
+        LocalMediaImageResolver.image(
+            reference: program.coverLocalReference
+        ) != nil
+    }
+
+    private var coverOverlayColors: [Color] {
+        if hasCoverImage {
+            return [
+                Color.black.opacity(0.12),
+                Color.black.opacity(0.72)
+            ]
+        }
+        return [
+            Color.black.opacity(0.02),
+            Color.black.opacity(0.28)
+        ]
+    }
+
     private var gradientColors: [Color] {
         switch program.status {
         case .scheduled:
             [Color.programPosterInfo, Color.programPosterBase]
         case .completed:
             [Color.programPosterBase, Color.programPosterAccent]
-        case .draft, .active, .archived:
+        case .draft, .preparingCommerce, .active, .archived:
             [Color.programPosterBase, Color.programPosterPrimary]
         }
     }
@@ -132,7 +177,7 @@ struct ParticipantProgramPoster: View {
             "calendar.badge.clock"
         case .completed:
             "trophy.fill"
-        case .draft, .active, .archived:
+        case .draft, .preparingCommerce, .active, .archived:
             "figure.highintensity.intervaltraining"
         }
     }
@@ -145,6 +190,8 @@ struct ParticipantProgramPoster: View {
             "participant.home.program.status.completed"
         case .draft:
             "status.draft"
+        case .preparingCommerce:
+            "status.preparing_commerce"
         case .active:
             "status.active"
         case .archived:

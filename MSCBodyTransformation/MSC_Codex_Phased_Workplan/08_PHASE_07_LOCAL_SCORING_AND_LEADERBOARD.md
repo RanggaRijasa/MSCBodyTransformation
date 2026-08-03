@@ -1,5 +1,10 @@
 # Phase 07: Local Scoring, Progress, and Leaderboard Simulation
 
+> Status: arsip baseline Phase 07. Formula aktif memakai activity points
+> program-wide, poin per jawaban kuis benar, dan weight points per enrollment.
+> Poin per langkah dan bukti terpisah tidak lagi berlaku. Lihat workplan
+> remediation.
+
 ## Tujuan
 
 Mengimplementasikan aturan domain scoring dan leaderboard secara lokal agar UI dapat diuji. Implementasi ini menjadi executable specification untuk backend, tetapi bukan authoritative production source.

@@ -136,7 +136,6 @@ struct Phase01DomainRuleTests {
             id: id,
             enrollmentID: enrollmentID,
             stepID: stepID,
-            evidence: [],
             status: status,
             submittedAt: date,
             reviewedAt: nil,

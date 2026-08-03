@@ -43,7 +43,6 @@ struct AdminDashboardView: View {
     let router: ShellTabRouter
     let onSelectAdminTab: (AdminTab) -> Void
 
-    @State private var selectedPoster: ManagedContent?
     @State private var actionError: DomainError?
     @State private var isCreatingProgram = false
 
@@ -79,12 +78,6 @@ struct AdminDashboardView: View {
         .background(Color.appBackground)
         .refreshable {
             await features.load()
-        }
-        .sheet(item: $selectedPoster) { poster in
-            AdminPosterEditorSheet(
-                initialContent: poster,
-                features: features
-            )
         }
         .alert(
             "Tindakan tidak dapat diselesaikan",
@@ -354,10 +347,7 @@ struct AdminDashboardView: View {
         case .createProgram:
             Task { await createProgram() }
         case .addWinnerPoster:
-            selectedPoster = features.makeWinnerBanner(
-                programID: nil,
-                sortOrder: features.nextWinnerPosterSortOrder
-            )
+            onSelectAdminTab(.content)
         }
     }
 

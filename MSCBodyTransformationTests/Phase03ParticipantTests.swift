@@ -23,36 +23,36 @@ struct Phase03ParticipantTests {
         #expect(today?.access == .available)
     }
 
-    @Test("Validasi langkah memerlukan foto dan jawaban")
+    @Test("Validasi pertanyaan memerlukan foto dan jawaban")
     func stepValidation() throws {
         let program = try MockSeedData.load().programs.first {
             $0.status == .active
         }
-        let photoStep = try #require(
+        let photoQuestion = try #require(
             program?.days.flatMap(\.steps).first {
-                $0.requirements.contains {
-                    $0.kind == .photoEvidence
-                }
-            }
+                $0.content?.questions.contains {
+                    $0.kind == .photoUpload
+                } == true
+            }?.content?.questions.first { $0.kind == .photoUpload }
         )
-        let textStep = try #require(
+        let textQuestion = try #require(
             program?.days.flatMap(\.steps).first {
-                $0.requirements.contains {
-                    $0.kind == .textAnswer
-                }
-            }
+                $0.content?.questions.contains {
+                    $0.kind == .shortAnswer
+                } == true
+            }?.content?.questions.first { $0.kind == .shortAnswer }
         )
 
         #expect(throws: DomainError.self) {
-            try StepSubmissionValidator().validate(
-                step: photoStep,
-                evidence: []
+            try StepAnswerValidator().validate(
+                questions: [photoQuestion],
+                answers: []
             )
         }
         #expect(throws: DomainError.self) {
-            try StepSubmissionValidator().validate(
-                step: textStep,
-                evidence: []
+            try StepAnswerValidator().validate(
+                questions: [textQuestion],
+                answers: []
             )
         }
     }
@@ -87,7 +87,7 @@ struct Phase03ParticipantTests {
             submissions: submissions
         )
 
-        #expect(progress == 14)
+        #expect(progress == 13)
     }
 
     @Test("Hari mendatang tetap terkunci")
@@ -137,10 +137,10 @@ struct Phase03ParticipantTests {
 
     @Test("Presentasi hari mengikuti kontrak akses domain")
     func dayPresentationContract() {
-        let available = ParticipantProgramDayUIState(access: .available)
-        let readOnly = ParticipantProgramDayUIState(access: .readOnly)
-        let locked = ParticipantProgramDayUIState(access: .locked)
-        let hidden = ParticipantProgramDayUIState(access: .hidden)
+        let available = ProgramActivityDayUIState(access: .available)
+        let readOnly = ProgramActivityDayUIState(access: .readOnly)
+        let locked = ProgramActivityDayUIState(access: .locked)
+        let hidden = ProgramActivityDayUIState(access: .hidden)
 
         #expect(available.showsActivities)
         #expect(available.allowsStepNavigation)
@@ -194,10 +194,11 @@ struct Phase03ParticipantTests {
     }
 
     @MainActor
-    @Test("Profil dapat diperbarui dan coach diganti melalui hasil QR")
-    func participantProfileAndCoachUpdate() async throws {
+    @Test("Profil dapat diperbarui tanpa mengubah Coach aktif")
+    func participantProfileUpdatePreservesCoach() async throws {
         let store = ParticipantJourneyStore(environment: .preview)
         await store.load()
+        let originalCoachID = try #require(store.snapshot).profile.coachID
 
         try await store.updateParticipantProfile(
             displayName: "Ayu Baru",
@@ -213,19 +214,16 @@ struct Phase03ParticipantTests {
                 == "/tmp/ayu-profile.jpg"
         )
 
-        let coach = try store.coach(
-            matchingEnrollmentIdentifier: "COACH-MAYA-4P2L"
-        )
-        try await store.changeCoach(to: coach)
-
         snapshot = try #require(store.snapshot)
-        #expect(snapshot.profile.coachID == coach.id)
+        #expect(snapshot.profile.coachID == originalCoachID)
         #expect(
             snapshot.enrollments
                 .filter {
-                    $0.status == .pending || $0.status == .active
+                    $0.status == .initiated
+                        || $0.status == .waitingForPayment
+                        || $0.status == .active
                 }
-                .allSatisfy { $0.coachID == coach.id }
+                .allSatisfy { $0.coachID == originalCoachID }
         )
     }
 
@@ -252,13 +250,15 @@ struct Phase03ParticipantTests {
         await repository.resetParticipantDemo(
             participantID: profile.id
         )
-        let enrollment = try await RedeemLocalInviteUseCase(
-            repository: repository,
+        let coachID = try #require(profile.coachID)
+        let enrollment = try await JoinProgramWithCoachUseCase(
+            enrollments: repository,
             identifierGenerator: identifiers,
             clock: clock
         )(
-            code: "MSC7HARI",
-            participantID: profile.id
+            programID: program.id,
+            participantID: profile.id,
+            coachID: coachID
         )
         _ = try await SubmitLocalWeighInUseCase(
             repository: repository,
@@ -270,22 +270,33 @@ struct Phase03ParticipantTests {
             type: .initial,
             weightKilograms: Decimal(string: "78.5")!
         )
-        _ = try await CompleteLocalStepUseCase(
+        _ = try await CompleteTypedStepUseCase(
             repository: repository,
             identifierGenerator: identifiers,
-            clock: clock,
-            validator: StepSubmissionValidator()
+            clock: clock
         )(
             enrollmentID: enrollment.id,
             step: automaticStep,
-            evidence: [
-                SubmissionEvidence(
-                    id: identifier,
-                    kind: .text,
-                    localReference: nil,
-                    textValue: "Saya ingin tetap bergerak setiap pagi."
+            answers: automaticStep.content?.questions.compactMap {
+                question in
+                guard question.kind.isInteractive else { return nil }
+                return StepSubmissionAnswer(
+                    id: identifiers.makeIdentifier(),
+                    questionID: question.id,
+                    textValue: question.kind == .shortAnswer
+                        || question.kind == .longAnswer
+                        ? "Jawaban lengkap."
+                        : nil,
+                    numberValue: question.kind == .number ? 1 : nil,
+                    selectedOptionIDs: question.kind.acceptsOptions
+                        ? Array(question.options.prefix(1).map(\.id))
+                        : [],
+                    localPhotoReference: question.kind == .photoUpload
+                        ? "local-demo://test/photo"
+                        : nil
                 )
-            ]
+            } ?? [],
+            scoring: program.effectiveScoringConfiguration
         )
 
         #expect(
@@ -309,8 +320,19 @@ struct Phase03ParticipantTests {
                 programID: program.id
             ).first { $0.participantID == profile.id }
         )
-        #expect(entry.progressPercentage == 5)
-        #expect(entry.score.approvedStepPoints == automaticStep.points)
+        #expect(
+            entry.progressPercentage
+                == ProgramProgressCalculator().percentage(
+                    totalStepCount: program.days.flatMap(\.steps).count,
+                    submissions: try await repository.submissions(
+                        enrollmentID: enrollment.id
+                    )
+                )
+        )
+        #expect(
+            entry.score.approvedStepPoints
+                == program.effectiveScoringConfiguration.pointsPerActivity
+        )
     }
 
     @Test("Program dapat diikuti melalui identifier coach tanpa kuota")

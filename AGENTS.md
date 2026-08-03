@@ -369,7 +369,8 @@ When authentication is implemented:
 - Users must not select Coach or Admin during self-registration.
 - Do not authorize from editable profile metadata.
 - Load privileged role information from protected server-controlled data.
-- Preserve pending program invites through authentication.
+- Preserve the selected program and pending opaque Coach QR validation
+  through authentication.
 - Treat Google, Apple, and email/password as identity methods for the same application account where supported.
 - Keep authentication errors user-friendly and avoid logging tokens.
 
@@ -407,7 +408,8 @@ weight_points = rounded(weight_loss_kg × weight_points_per_kg)
 
 Weight values and evidence photos are sensitive personal data.
 
-- Never log passwords, access tokens, refresh tokens, invite tokens, body weight, evidence paths, or private media URLs.
+- Never log passwords, access tokens, refresh tokens, raw Coach QR
+  identifiers, body weight, answer-photo paths, or private media URLs.
 - Use `PhotosPicker` for library selection when practical.
 - Request camera or photo access only at the point of use.
 - Keep camera integration behind a small native wrapper.
@@ -467,9 +469,9 @@ Minimum recurring edge cases:
 - Weight gain.
 - Equal leaderboard scores.
 - Fewer than five winners.
-- Expired invite.
+- Invalid or mismatched Coach QR.
 - Duplicate enrollment.
-- Insufficient coach seats.
+- Program capacity reached.
 - Permission denied.
 - Offline state.
 - Repository failure.

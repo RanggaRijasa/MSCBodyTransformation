@@ -32,12 +32,6 @@ struct ParticipantEntryFlowView: View {
             ParticipantProfileCompletionView(store: store)
         case .disclaimer:
             ParticipantDisclaimerView(store: store)
-        case .initialWeighIn:
-            ParticipantWeighInView(
-                store: store,
-                type: .initial,
-                presentation: .entry
-            )
         case .complete:
             EmptyStateView(
                 title: "participant.entry.complete.title",

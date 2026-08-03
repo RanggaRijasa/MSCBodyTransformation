@@ -683,7 +683,7 @@ private struct CoachReviewDetailSheet: View {
     let item: CoachReviewItem
     let features: CoachFeatureContainer
 
-    @State private var selectedEvidence: SubmissionEvidence?
+    @State private var selectedEvidence: StepSubmissionAnswer?
     @State private var selectedRating: Int
     @State private var persistedRating: Int
     @State private var isApproveConfirmationPresented = false
@@ -857,43 +857,38 @@ private struct CoachReviewDetailSheet: View {
             Text("coach.review.evidence.title")
                 .font(AppTypography.sectionTitle)
 
-            if item.submission.evidence.isEmpty {
+            if item.submission.typedAnswers.isEmpty {
                 Text("coach.review.evidence.empty")
                     .foregroundStyle(Color.appSecondaryText)
             } else {
-                ForEach(item.submission.evidence) { evidence in
-                    switch evidence.kind {
-                    case .photo:
-                        Button {
-                            selectedEvidence = evidence
-                        } label: {
-                            CoachEvidencePhotoPreview(evidence: evidence)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier(
-                            "coach.review.evidence.open"
-                        )
-                    case .text:
-                        Group {
-                            if let textValue = evidence.textValue {
-                                Text(verbatim: textValue)
-                            } else {
-                                Text("coach.review.evidence.empty")
-                            }
-                        }
-                        .font(AppTypography.body)
-                        .foregroundStyle(Color.appPrimaryText)
-                        .padding(AppSpacing.medium)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            Color.appSurface,
-                            in: RoundedRectangle(
-                                cornerRadius: AppRadius.large,
-                                style: .continuous
-                            )
-                        )
-                    }
+                ForEach(item.submission.typedAnswers) { answer in
+                    typedAnswerCard(answer)
                 }
+            }
+
+            if let result = item.submission.quizResult {
+                VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+                    Text("Hasil kuis")
+                        .font(AppTypography.cardTitle)
+                    LabeledContent(
+                        "Jawaban benar",
+                        value: "\(result.correctAnswerCount) dari "
+                            + "\(result.totalQuestionCount)"
+                    )
+                    LabeledContent("Nilai", value: "\(result.percentage)%")
+                    LabeledContent(
+                        "Status",
+                        value: result.isPassed ? "Lulus" : "Belum lulus"
+                    )
+                }
+                .padding(AppSpacing.medium)
+                .background(
+                    Color.appSurface,
+                    in: RoundedRectangle(
+                        cornerRadius: AppRadius.large,
+                        style: .continuous
+                    )
+                )
             }
 
             if hasUnavailablePhotoEvidence {
@@ -916,6 +911,91 @@ private struct CoachReviewDetailSheet: View {
             .font(AppTypography.secondary.monospacedDigit())
             .foregroundStyle(Color.appSecondaryText)
         }
+    }
+
+    private func typedAnswerCard(
+        _ answer: StepSubmissionAnswer
+    ) -> some View {
+        let question = item.step.content?.questions.first {
+            $0.id == answer.questionID
+        }
+        return VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+            Text(question?.prompt ?? "Jawaban peserta")
+                .font(AppTypography.cardTitle)
+            if answer.localPhotoReference != nil {
+                Button {
+                    selectedEvidence = answer
+                } label: {
+                    CoachEvidencePhotoPreview(evidence: answer)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("coach.review.evidence.open")
+            } else {
+                Text(answerSummary(answer, question: question))
+                    .font(AppTypography.body)
+            }
+            if let question, let key = question.answerKey {
+                Divider()
+                Text("Jawaban benar")
+                    .font(AppTypography.secondary.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(answerKeySummary(key, question: question))
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(AppSpacing.medium)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.appSurface,
+            in: RoundedRectangle(
+                cornerRadius: AppRadius.large,
+                style: .continuous
+            )
+        )
+    }
+
+    private func answerSummary(
+        _ answer: StepSubmissionAnswer,
+        question: ProgramQuestionDefinition?
+    ) -> String {
+        if let text = answer.textValue, !text.isEmpty {
+            return text
+        }
+        if let number = answer.numberValue {
+            return number.formatted(
+                .number.locale(Locale(identifier: "id-ID"))
+            )
+        }
+        if !answer.selectedOptionIDs.isEmpty {
+            let titles = question?.options.filter {
+                answer.selectedOptionIDs.contains($0.id)
+            }.map(\.title) ?? []
+            return titles.isEmpty ? "Pilihan tersimpan" : titles.joined(
+                separator: ", "
+            )
+        }
+        if answer.localPhotoReference != nil {
+            return "Foto peserta terlampir"
+        }
+        return "Belum dijawab"
+    }
+
+    private func answerKeySummary(
+        _ key: ProgramQuestionAnswerKey,
+        question: ProgramQuestionDefinition
+    ) -> String {
+        if let number = key.numberValue {
+            return number.formatted(
+                .number.locale(Locale(identifier: "id-ID"))
+            )
+        }
+        if !key.selectedOptionIDs.isEmpty {
+            return question.options.filter {
+                key.selectedOptionIDs.contains($0.id)
+            }.map(\.title).joined(separator: ", ")
+        }
+        return key.acceptedTextValues.joined(separator: ", ")
     }
 
     private var ratingSection: some View {
@@ -1015,7 +1095,7 @@ private struct CoachReviewDetailSheet: View {
                     isApproveConfirmationPresented = true
                 } label: {
                     Text(
-                        "Setujui • \(item.step.points, format: .number.locale(CoachFormatting.locale)) poin"
+                        "Setujui • \(item.program.effectiveScoringConfiguration.pointsPerActivity, format: .number.locale(CoachFormatting.locale)) poin"
                     )
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
@@ -1078,11 +1158,11 @@ private struct CoachReviewDetailSheet: View {
     }
 
     private var hasUnavailablePhotoEvidence: Bool {
-        item.submission.evidence.contains { evidence in
-            evidence.kind == .photo
-                && LocalMediaImageResolver.image(
-                    reference: evidence.localReference
-                ) == nil
+        item.submission.photoAnswers.contains { answer in
+            guard let reference = answer.localPhotoReference else {
+                return false
+            }
+            return LocalMediaImageResolver.image(reference: reference) == nil
         }
     }
 
@@ -1211,21 +1291,21 @@ private struct CoachEvidenceModeBanner: View {
     private var message: some View {
         if item.step.verificationMode == .automatic {
             Text(
-                "\(item.step.points, format: .number.locale(CoachFormatting.locale)) poin sudah diberikan saat peserta mengirim bukti."
+                "\(item.program.effectiveScoringConfiguration.pointsPerActivity, format: .number.locale(CoachFormatting.locale)) poin sudah diberikan saat peserta mengirim jawaban."
             )
         } else {
             switch item.submission.status {
             case .pending:
                 Text(
-                    "\(item.step.points, format: .number.locale(CoachFormatting.locale)) poin diberikan setelah bukti disetujui."
+                    "\(item.program.effectiveScoringConfiguration.pointsPerActivity, format: .number.locale(CoachFormatting.locale)) poin diberikan setelah jawaban disetujui."
                 )
             case .approved:
                 Text(
-                    "\(item.step.points, format: .number.locale(CoachFormatting.locale)) poin sudah diberikan kepada peserta."
+                    "\(item.program.effectiveScoringConfiguration.pointsPerActivity, format: .number.locale(CoachFormatting.locale)) poin sudah diberikan kepada peserta."
                 )
             case .rejected:
                 Text(
-                    "\(item.step.points, format: .number.locale(CoachFormatting.locale)) poin tidak diberikan untuk bukti ini."
+                    "\(item.program.effectiveScoringConfiguration.pointsPerActivity, format: .number.locale(CoachFormatting.locale)) poin tidak diberikan untuk jawaban ini."
                 )
             }
         }
@@ -1285,7 +1365,7 @@ private struct CoachContextTag: View {
 }
 
 private struct CoachEvidencePhotoPreview: View {
-    let evidence: SubmissionEvidence
+    let evidence: StepSubmissionAnswer
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -1323,7 +1403,7 @@ private struct CoachEvidencePhotoPreview: View {
                 .accessibilityHidden(true)
 
             if LocalMediaImageResolver.isBundledEvidenceFixture(
-                evidence.localReference
+                evidence.localPhotoReference ?? ""
             ) {
                 Text("coach.evidence.demo_badge")
                     .font(AppTypography.label)
@@ -1359,7 +1439,7 @@ private struct CoachEvidencePhotoPreview: View {
 
     private var image: UIImage? {
         LocalMediaImageResolver.image(
-            reference: evidence.localReference
+            reference: evidence.localPhotoReference ?? ""
         )
     }
 }

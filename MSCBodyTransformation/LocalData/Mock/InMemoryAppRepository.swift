@@ -10,14 +10,11 @@ actor InMemoryAppRepository:
     WeighInRepository,
     LeaderboardRepository,
     CoachParticipantRepository,
-    InviteRepository,
-    WalletRepository,
     ManagedContentRepository,
     AdminPeopleRepository,
     AdminProgramDraftRepository,
     AuditRepository,
-    ParticipantDemoRepository,
-    CoachDemoRepository
+    ParticipantDemoRepository
 {
     private var users: [AppUser]
     private var participantProfiles: [ParticipantProfile]
@@ -27,11 +24,10 @@ actor InMemoryAppRepository:
     private var enrollmentsStorage: [ProgramEnrollment]
     private var weighInsStorage: [WeighIn]
     private var submissionsStorage: [StepSubmission]
+    private var submissionHistoryStorage: [StepSubmission]
+    private var quizAttemptsStorage: [QuizAttemptResult]
     private var leaderboardEntries: [LeaderboardEntry]
     private var winners: [ProgramWinner]
-    private var wallets: [CoachWallet]
-    private var creditLedgerEntries: [CreditLedgerEntry]
-    private var invitesStorage: [CoachInvite]
     private var managedContentStorage: [ManagedContent]
     private var auditEvents: [AuditEvent]
     private var sessionScenario: DebugSessionScenario
@@ -50,11 +46,10 @@ actor InMemoryAppRepository:
         enrollmentsStorage = seed.enrollments
         weighInsStorage = seed.weighIns
         submissionsStorage = seed.submissions
+        submissionHistoryStorage = []
+        quizAttemptsStorage = seed.submissions.compactMap(\.quizResult)
         leaderboardEntries = seed.leaderboardEntries
         winners = seed.winners
-        wallets = seed.wallets
-        creditLedgerEntries = seed.creditLedgerEntries
-        invitesStorage = seed.invites
         managedContentStorage = seed.managedContent
         auditEvents = seed.auditEvents
         self.sessionScenario = sessionScenario
@@ -194,13 +189,78 @@ actor InMemoryAppRepository:
     func createEnrollment(
         _ enrollment: ProgramEnrollment
     ) async throws -> ProgramEnrollment {
+        guard let scannedCoachID = enrollment.coachID,
+              coachProfiles.contains(where: {
+                  $0.id == scannedCoachID && $0.isApproved
+              }) else {
+            throw DomainError.permissionDenied
+        }
+        guard let participantIndex = participantProfiles.firstIndex(where: {
+            $0.id == enrollment.participantID
+        }) else {
+            throw DomainError.notFound(resource: "participant_profile")
+        }
+        if let currentCoachID = participantProfiles[participantIndex].coachID,
+           currentCoachID != scannedCoachID {
+            throw DomainError.conflict(
+                reason:
+                    "QR ini bukan milik Coach pendampingmu. "
+                    + "Pindai QR Coach yang sama untuk melanjutkan."
+            )
+        }
         if let existing = enrollmentsStorage.first(where: {
             $0.programID == enrollment.programID
                 && $0.participantID == enrollment.participantID
         }) {
             return existing
         }
+        guard let program = programsStorage.first(where: {
+            $0.id == enrollment.programID
+        }) else {
+            throw DomainError.notFound(resource: "program")
+        }
+        if let participantLimit = program.participantLimit {
+            let enrollmentCount = enrollmentsStorage.filter {
+                $0.programID == program.id
+                    && $0.status != .cancelled
+                    && $0.status != .refunded
+            }.count
+            guard enrollmentCount < participantLimit else {
+                throw DomainError.conflict(
+                    reason: "Kapasitas program sudah penuh."
+                )
+            }
+        }
+        if participantProfiles[participantIndex].coachID == nil {
+            participantProfiles[participantIndex].coachID = scannedCoachID
+        }
         enrollmentsStorage.append(enrollment)
+        if enrollment.status == .active,
+           !leaderboardEntries.contains(where: {
+               $0.programID == enrollment.programID
+                   && $0.participantID == enrollment.participantID
+           }) {
+            leaderboardEntries.append(
+                LeaderboardEntry(
+                    id: derivedLeaderboardIdentifier(
+                        enrollmentID: enrollment.id
+                    ),
+                    programID: enrollment.programID,
+                    participantID: enrollment.participantID,
+                    participantDisplayName:
+                        participantProfiles[participantIndex].displayName,
+                    rank: 0,
+                    progressPercentage: 0,
+                    score: ScoreBreakdown(
+                        approvedStepPoints: 0,
+                        weightPoints: 0,
+                        adjustmentPoints: 0
+                    ),
+                    isCurrentUser: true
+                )
+            )
+            recalculateRanks(programID: enrollment.programID)
+        }
         return enrollment
     }
 
@@ -211,7 +271,9 @@ actor InMemoryAppRepository:
         for index in enrollmentsStorage.indices
         where enrollmentsStorage[index].participantID == participantID
             && (
-                enrollmentsStorage[index].status == .pending
+                enrollmentsStorage[index].status == .initiated
+                    || enrollmentsStorage[index].status
+                        == .waitingForPayment
                     || enrollmentsStorage[index].status == .active
             ) {
             enrollmentsStorage[index].coachID = coachID
@@ -219,7 +281,8 @@ actor InMemoryAppRepository:
         return enrollmentsStorage.filter {
             $0.participantID == participantID
                 && (
-                    $0.status == .pending
+                    $0.status == .initiated
+                        || $0.status == .waitingForPayment
                         || $0.status == .active
                 )
         }
@@ -235,6 +298,33 @@ actor InMemoryAppRepository:
 
     func pendingReviewCount() async throws -> Int {
         submissionsStorage.filter { $0.status == .pending }.count
+    }
+
+    func submissionHistory(
+        enrollmentID: UUID,
+        stepID: UUID
+    ) async throws -> [StepSubmission] {
+        (
+            submissionHistoryStorage
+                + submissionsStorage.filter {
+                    $0.enrollmentID == enrollmentID && $0.stepID == stepID
+                }
+        )
+        .filter {
+            $0.enrollmentID == enrollmentID && $0.stepID == stepID
+        }
+        .sorted { $0.submittedAt < $1.submittedAt }
+    }
+
+    func quizAttempts(
+        enrollmentID: UUID,
+        stepID: UUID
+    ) async throws -> [QuizAttemptResult] {
+        quizAttemptsStorage
+            .filter {
+                $0.enrollmentID == enrollmentID && $0.stepID == stepID
+            }
+            .sorted { $0.sequence < $1.sequence }
     }
 
     func reviewQueue(coachID: UUID) async throws -> [StepSubmission] {
@@ -263,14 +353,50 @@ actor InMemoryAppRepository:
             $0.enrollmentID == submission.enrollmentID
                 && $0.stepID == submission.stepID
         }) {
+            if submissionsStorage[index].id == submission.id {
+                return submissionsStorage[index]
+            }
+            if let previousResult = submissionsStorage[index].quizResult {
+                guard previousResult.reopenedAt != nil else {
+                    throw DomainError.conflict(
+                        reason: "Kuis hanya dapat dikerjakan satu kali."
+                    )
+                }
+                var replacement = submission
+                replacement.attemptSequence = previousResult.sequence + 1
+                if let result = submission.quizResult {
+                    replacement.quizResult = QuizAttemptResult(
+                        id: result.id,
+                        enrollmentID: result.enrollmentID,
+                        stepID: result.stepID,
+                        sequence: previousResult.sequence + 1,
+                        correctAnswerCount: result.correctAnswerCount,
+                        totalQuestionCount: result.totalQuestionCount,
+                        percentage: result.percentage,
+                        isPassed: result.isPassed,
+                        awardedPoints: result.awardedPoints,
+                        submittedAt: result.submittedAt
+                    )
+                }
+                submissionsStorage[index] = replacement
+                if let result = replacement.quizResult {
+                    quizAttemptsStorage.append(result)
+                }
+                refreshLeaderboard(enrollmentID: submission.enrollmentID)
+                return replacement
+            }
             guard submissionsStorage[index].status == .rejected else {
                 return submissionsStorage[index]
             }
+            submissionHistoryStorage.append(submissionsStorage[index])
             submissionsStorage[index] = submission
             refreshLeaderboard(enrollmentID: submission.enrollmentID)
             return submission
         }
         submissionsStorage.append(submission)
+        if let result = submission.quizResult {
+            quizAttemptsStorage.append(result)
+        }
         refreshLeaderboard(enrollmentID: submission.enrollmentID)
         return submission
     }
@@ -327,6 +453,47 @@ actor InMemoryAppRepository:
         return submissionsStorage[index]
     }
 
+    func reopenQuizAttempt(
+        enrollmentID: UUID,
+        stepID: UUID,
+        adminID: UUID,
+        reason: String,
+        reopenedAt: Date
+    ) async throws -> QuizAttemptResult {
+        let trimmedReason = reason.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmedReason.isEmpty else {
+            throw DomainError.validation(
+                field: "reason",
+                reason: "Alasan membuka ulang percobaan wajib diisi."
+            )
+        }
+        guard let submissionIndex = submissionsStorage.firstIndex(where: {
+            $0.enrollmentID == enrollmentID
+                && $0.stepID == stepID
+                && $0.quizResult != nil
+        }), var result = submissionsStorage[submissionIndex].quizResult else {
+            throw DomainError.notFound(resource: "quiz_attempt")
+        }
+        guard result.reopenedAt == nil else {
+            return result
+        }
+        result.reopenedAt = reopenedAt
+        result.reopenedByAdminID = adminID
+        result.reopenReason = trimmedReason
+        submissionsStorage[submissionIndex].quizResult = result
+        if let historyIndex = quizAttemptsStorage.firstIndex(where: {
+            $0.id == result.id
+        }) {
+            quizAttemptsStorage[historyIndex] = result
+        } else {
+            quizAttemptsStorage.append(result)
+        }
+        refreshLeaderboard(enrollmentID: enrollmentID)
+        return result
+    }
+
     func weighIns(enrollmentID: UUID) async throws -> [WeighIn] {
         weighInsStorage
             .filter { $0.enrollmentID == enrollmentID }
@@ -335,14 +502,54 @@ actor InMemoryAppRepository:
 
     func save(weighIn: WeighIn) async throws -> WeighIn {
         if let existing = weighInsStorage.first(where: {
-            $0.enrollmentID == weighIn.enrollmentID
-                && $0.type == weighIn.type
+            isSameWeighInSlot($0, weighIn)
         }) {
             return existing
         }
         weighInsStorage.append(weighIn)
         refreshLeaderboard(enrollmentID: weighIn.enrollmentID)
         return weighIn
+    }
+
+    func correctWeighIn(
+        enrollmentID: UUID,
+        type: WeighInType,
+        stepID: UUID?,
+        weightKilograms: Decimal,
+        correctedAt: Date
+    ) async throws -> WeighIn {
+        try WeighInValidator().validate(
+            weightKilograms: weightKilograms
+        )
+        guard let index = weighInsStorage.firstIndex(where: {
+            $0.enrollmentID == enrollmentID
+                && $0.type == type
+                && (type != .daily || $0.stepID == stepID)
+        }) else {
+            throw DomainError.notFound(resource: "weigh_in")
+        }
+        let corrected = WeighIn(
+            id: weighInsStorage[index].id,
+            enrollmentID: enrollmentID,
+            stepID: weighInsStorage[index].stepID,
+            type: type,
+            weightKilograms: weightKilograms,
+            recordedAt: correctedAt
+        )
+        weighInsStorage[index] = corrected
+        refreshLeaderboard(enrollmentID: enrollmentID)
+        return corrected
+    }
+
+    private func isSameWeighInSlot(
+        _ left: WeighIn,
+        _ right: WeighIn
+    ) -> Bool {
+        guard left.enrollmentID == right.enrollmentID,
+              left.type == right.type else {
+            return false
+        }
+        return left.type != .daily || left.stepID == right.stepID
     }
 
     func leaderboard(
@@ -429,179 +636,6 @@ actor InMemoryAppRepository:
         return participant
     }
 
-    func invites(coachID: UUID) async throws -> [CoachInvite] {
-        invitesStorage
-            .filter { $0.coachID == coachID }
-            .sorted { $0.createdAt > $1.createdAt }
-    }
-
-    func activeInvite(code: String, now: Date) async throws -> CoachInvite {
-        guard let invite = invitesStorage.first(where: {
-            $0.code.caseInsensitiveCompare(code) == .orderedSame
-        }) else {
-            throw DomainError.notFound(resource: "invite")
-        }
-        guard invite.status == .active, invite.expiresAt >= now else {
-            throw DomainError.conflict(
-                reason: "Undangan sudah tidak dapat digunakan."
-            )
-        }
-        return invite
-    }
-
-    func createInvite(_ invite: CoachInvite) async throws -> CoachInvite {
-        guard !invitesStorage.contains(where: { $0.code == invite.code }) else {
-            throw DomainError.conflict(
-                reason: "Kode undangan sudah digunakan."
-            )
-        }
-
-        invitesStorage.append(invite)
-        return invite
-    }
-
-    func revokeInvite(
-        id: UUID,
-        coachID: UUID
-    ) async throws -> CoachInvite {
-        guard let index = invitesStorage.firstIndex(where: {
-            $0.id == id && $0.coachID == coachID
-        }) else {
-            throw DomainError.permissionDenied
-        }
-        guard invitesStorage[index].status == .active else {
-            throw DomainError.conflict(
-                reason: "Hanya undangan aktif yang dapat dicabut."
-            )
-        }
-        invitesStorage[index].status = .revoked
-        return invitesStorage[index]
-    }
-
-    func redeemInvite(
-        code: String,
-        participantID: UUID,
-        enrollmentID: UUID,
-        now: Date
-    ) async throws -> ProgramEnrollment {
-        guard let inviteIndex = invitesStorage.firstIndex(
-            where: { $0.code.caseInsensitiveCompare(code) == .orderedSame }
-        ) else {
-            throw DomainError.notFound(resource: "invite")
-        }
-        let invite = invitesStorage[inviteIndex]
-
-        if invite.status == .redeemed,
-           invite.redeemedByParticipantID == participantID,
-           let existing = enrollmentsStorage.first(where: {
-               $0.programID == invite.programID
-                   && $0.participantID == participantID
-           }) {
-            return existing
-        }
-        guard invite.status == .active, invite.expiresAt >= now else {
-            throw DomainError.conflict(
-                reason: "Undangan sudah tidak dapat digunakan."
-            )
-        }
-
-        if let existing = enrollmentsStorage.first(where: {
-            $0.programID == invite.programID
-                && $0.participantID == participantID
-        }) {
-            invitesStorage[inviteIndex].status = .redeemed
-            invitesStorage[inviteIndex].redeemedByParticipantID = participantID
-            return existing
-        }
-
-        let enrollment = ProgramEnrollment(
-            id: enrollmentID,
-            programID: invite.programID,
-            participantID: participantID,
-            coachID: invite.coachID,
-            status: .active,
-            enrolledAt: now
-        )
-        enrollmentsStorage.append(enrollment)
-        invitesStorage[inviteIndex].status = .redeemed
-        invitesStorage[inviteIndex].redeemedByParticipantID = participantID
-        return enrollment
-    }
-
-    func wallet(coachID: UUID) async throws -> CoachWallet {
-        guard let wallet = wallets.first(
-            where: { $0.coachID == coachID }
-        ) else {
-            throw DomainError.notFound(resource: "coach_wallet")
-        }
-        return wallet
-    }
-
-    func ledger(walletID: UUID) async throws -> [CreditLedgerEntry] {
-        creditLedgerEntries
-            .filter { $0.walletID == walletID }
-            .sorted { $0.createdAt > $1.createdAt }
-    }
-
-    func grantSeatCredits(
-        coachID: UUID,
-        amount: Int,
-        grantedAt: Date
-    ) async throws -> CoachWallet {
-        guard amount > 0 else {
-            throw DomainError.validation(
-                field: "amount",
-                reason: "Jumlah kuota harus lebih dari nol."
-            )
-        }
-        guard let index = wallets.firstIndex(where: {
-            $0.coachID == coachID
-        }) else {
-            throw DomainError.notFound(resource: "coach_wallet")
-        }
-        wallets[index].availableSeatCredits += amount
-        wallets[index].updatedAt = grantedAt
-        let ledgerSequence = creditLedgerEntries.count + 1_000
-        let ledgerID = UUID(
-            uuidString: String(
-                format: "32000000-0000-0000-0000-%012lld",
-                Int64(ledgerSequence)
-            )
-        ) ?? wallets[index].id
-        creditLedgerEntries.append(
-            CreditLedgerEntry(
-                id: ledgerID,
-                walletID: wallets[index].id,
-                kind: .purchase,
-                seatCreditDelta: amount,
-                note: "Kredit demo lokal—bukan transaksi App Store.",
-                createdAt: grantedAt
-            )
-        )
-        return wallets[index]
-    }
-
-    func setSeatCredits(
-        coachID: UUID,
-        amount: Int,
-        updatedAt: Date
-    ) async throws -> CoachWallet {
-        guard amount >= 0 else {
-            throw DomainError.validation(
-                field: "amount",
-                reason: "Saldo kuota tidak boleh negatif."
-            )
-        }
-        guard let index = wallets.firstIndex(where: {
-            $0.coachID == coachID
-        }) else {
-            throw DomainError.notFound(resource: "coach_wallet")
-        }
-        wallets[index].availableSeatCredits = amount
-        wallets[index].updatedAt = updatedAt
-        return wallets[index]
-    }
-
     func managedContent() async throws -> [ManagedContent] {
         managedContentStorage.sorted { $0.updatedAt > $1.updatedAt }
     }
@@ -654,6 +688,37 @@ actor InMemoryAppRepository:
             coachProfiles[coachIndex].isApproved = isApproved
         }
         return users[userIndex]
+    }
+
+    func transferActiveCoach(
+        participantID: UUID,
+        coachID: UUID
+    ) async throws -> ParticipantProfile {
+        guard let coach = coachProfiles.first(where: {
+            $0.id == coachID && $0.isApproved
+        }) else {
+            throw DomainError.validation(
+                field: "coach",
+                reason: "Pilih Coach yang telah disetujui."
+            )
+        }
+        guard let participantIndex = participantProfiles.firstIndex(
+            where: { $0.id == participantID }
+        ) else {
+            throw DomainError.notFound(resource: "participant")
+        }
+        participantProfiles[participantIndex].coachID = coach.id
+        for index in enrollmentsStorage.indices
+        where enrollmentsStorage[index].participantID == participantID
+            && (
+                enrollmentsStorage[index].status == .initiated
+                    || enrollmentsStorage[index].status
+                        == .waitingForPayment
+                    || enrollmentsStorage[index].status == .active
+            ) {
+            enrollmentsStorage[index].coachID = coach.id
+        }
+        return participantProfiles[participantIndex]
     }
 
     func programDraftsForAdministration() async throws
@@ -711,12 +776,6 @@ actor InMemoryAppRepository:
         weighInsStorage.removeAll {
             enrollmentIDs.contains($0.enrollmentID)
         }
-        for index in invitesStorage.indices
-        where invitesStorage[index].redeemedByParticipantID == participantID {
-            invitesStorage[index].status = .active
-            invitesStorage[index].redeemedByParticipantID = nil
-        }
-
         for index in leaderboardEntries.indices
         where leaderboardEntries[index].participantID == participantID {
             leaderboardEntries[index].progressPercentage = 0
@@ -780,12 +839,12 @@ actor InMemoryAppRepository:
                         id: step.id,
                         enrollmentID: enrollment.id,
                         stepID: step.id,
-                        evidence: debugEvidence(for: step),
                         status: .approved,
                         submittedAt: completedAt,
                         reviewedAt: completedAt,
                         reviewerID: enrollment.coachID,
-                        reviewNote: nil
+                        reviewNote: nil,
+                        answers: debugAnswers(for: step)
                     )
                 )
             }
@@ -822,12 +881,12 @@ actor InMemoryAppRepository:
             id: step.id,
             enrollmentID: enrollment.id,
             stepID: step.id,
-            evidence: debugEvidence(for: step),
             status: .rejected,
             submittedAt: completedAt,
             reviewedAt: completedAt,
             reviewerID: enrollment.coachID,
-            reviewNote: "Bukti demo perlu diperbaiki sebelum dikirim ulang."
+            reviewNote: "Jawaban demo perlu diperbaiki sebelum dikirim ulang.",
+            answers: debugAnswers(for: step)
         )
         submissionsStorage.append(submission)
         refreshLeaderboard(enrollmentID: enrollment.id)
@@ -843,29 +902,30 @@ actor InMemoryAppRepository:
         return user
     }
 
-    private func debugEvidence(
+    private func debugAnswers(
         for step: ProgramStep
-    ) -> [SubmissionEvidence] {
-        step.requirements.compactMap { requirement in
-            guard requirement.isRequired else {
-                return nil
+    ) -> [StepSubmissionAnswer] {
+        (step.content?.questions ?? []).compactMap { question in
+            guard question.kind.isInteractive else { return nil }
+            let textValue: String?
+            switch question.kind {
+            case .shortAnswer, .longAnswer:
+                textValue = "Diselesaikan melalui alat Debug."
+            default:
+                textValue = nil
             }
-            switch requirement.kind {
-            case .photoEvidence:
-                return SubmissionEvidence(
-                    id: requirement.id,
-                    kind: .photo,
-                    localReference: "local-demo://debug/evidence",
-                    textValue: nil
-                )
-            case .textAnswer:
-                return SubmissionEvidence(
-                    id: requirement.id,
-                    kind: .text,
-                    localReference: nil,
-                    textValue: "Diselesaikan melalui alat Debug."
-                )
-            }
+            return StepSubmissionAnswer(
+                id: question.id,
+                questionID: question.id,
+                textValue: textValue,
+                numberValue: question.kind == .number ? 1 : nil,
+                selectedOptionIDs: question.kind.acceptsOptions
+                    ? Array(question.options.prefix(1).map(\.id))
+                    : [],
+                localPhotoReference: question.kind == .photoUpload
+                    ? "local-demo://debug/photo-answer"
+                    : nil
+            )
         }
     }
 
@@ -907,28 +967,7 @@ actor InMemoryAppRepository:
         submission: StepSubmission,
         decision: SubmissionStatus
     ) {
-        guard decision == .approved,
-              let enrollment = enrollmentsStorage.first(where: {
-                  $0.id == submission.enrollmentID
-              }),
-              let program = programsStorage.first(where: {
-                  $0.id == enrollment.programID
-              }),
-              let step = program.days
-                  .flatMap(\.steps)
-                  .first(where: { $0.id == submission.stepID }),
-              let entryIndex = leaderboardEntries.firstIndex(where: {
-                  $0.programID == enrollment.programID
-                      && $0.participantID == enrollment.participantID
-              }) else {
-            return
-        }
-
-        // The bundled review fixture is intentionally a partial activity log.
-        // Apply only this decision's delta so its seeded historical score stays
-        // intact instead of being rebuilt from incomplete submissions.
-        leaderboardEntries[entryIndex].score.approvedStepPoints += step.points
-        recalculateRanks(programID: program.id)
+        refreshLeaderboard(enrollmentID: submission.enrollmentID)
     }
 
     private func recalculateRanks(programID: UUID) {
@@ -979,5 +1018,18 @@ actor InMemoryAppRepository:
             $0.programID == entry.programID
                 && $0.participantID == entry.participantID
         }?.id
+    }
+
+    private func derivedLeaderboardIdentifier(
+        enrollmentID: UUID
+    ) -> UUID {
+        var bytes = enrollmentID.uuid
+        bytes.15 ^= 0xA5
+        let candidate = UUID(uuid: bytes)
+        guard !leaderboardEntries.contains(where: { $0.id == candidate }) else {
+            bytes.14 ^= 0x5A
+            return UUID(uuid: bytes)
+        }
+        return candidate
     }
 }

@@ -1,5 +1,10 @@
 # Phase 09: Supabase Foundation
 
+> Status: spesifikasi lama ditahan. Schema produksi hanya boleh dibuat dari
+> published contract yang sudah lulus E2E-01 sampai E2E-09 pada workplan
+> remediation. Jangan membuat tabel invite, wallet, seat credit, atau answer
+> key yang terbaca Peserta.
+
 ## Tujuan
 
 Menambahkan backend Supabase setelah local UI dan domain contract stabil. Phase ini tidak mengubah user experience utama. Fokus pada schema, RLS, storage, seed, dan adapter foundation.

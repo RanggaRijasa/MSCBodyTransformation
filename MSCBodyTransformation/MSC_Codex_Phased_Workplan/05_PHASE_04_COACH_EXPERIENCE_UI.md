@@ -1,5 +1,10 @@
 # Phase 04: Coach Experience UI
 
+> Status: arsip baseline Phase 04. Coach tidak mempunyai wallet, seat credit,
+> atau invite program. QR Coach hanya memvalidasi Coach aktif Peserta.
+> Monitoring dan review baru mengikuti enrollment-scoped contract pada
+> workplan remediation.
+
 ## Tujuan
 
 Membangun seluruh coach-facing experience dengan mock wallet, mock programs, mock participants, local invites, dan review queue.

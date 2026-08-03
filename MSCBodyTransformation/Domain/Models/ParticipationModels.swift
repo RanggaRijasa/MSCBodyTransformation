@@ -1,10 +1,12 @@
 import Foundation
 
 nonisolated enum EnrollmentStatus: String, Codable, CaseIterable, Sendable {
-    case pending
+    case initiated
+    case waitingForPayment = "waiting_for_payment"
     case active
     case completed
     case cancelled
+    case refunded
 }
 
 nonisolated struct ProgramEnrollment: Codable, Equatable, Identifiable, Sendable {
@@ -24,27 +26,33 @@ nonisolated enum WeighInType:
     Sendable
 {
     case initial
+    case daily
     case final
 }
 
 nonisolated struct WeighIn: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
     let enrollmentID: UUID
+    let stepID: UUID?
     let type: WeighInType
     let weightKilograms: Decimal
     let recordedAt: Date
-}
 
-nonisolated enum SubmissionEvidenceKind: String, Codable, CaseIterable, Sendable {
-    case photo
-    case text
-}
-
-nonisolated struct SubmissionEvidence: Codable, Equatable, Identifiable, Sendable {
-    let id: UUID
-    let kind: SubmissionEvidenceKind
-    let localReference: String?
-    let textValue: String?
+    init(
+        id: UUID,
+        enrollmentID: UUID,
+        stepID: UUID? = nil,
+        type: WeighInType,
+        weightKilograms: Decimal,
+        recordedAt: Date
+    ) {
+        self.id = id
+        self.enrollmentID = enrollmentID
+        self.stepID = stepID
+        self.type = type
+        self.weightKilograms = weightKilograms
+        self.recordedAt = recordedAt
+    }
 }
 
 nonisolated enum SubmissionStatus: String, Codable, CaseIterable, Sendable {
@@ -57,11 +65,23 @@ nonisolated struct StepSubmission: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
     let enrollmentID: UUID
     let stepID: UUID
-    var evidence: [SubmissionEvidence]
     var status: SubmissionStatus
     let submittedAt: Date
     var reviewedAt: Date?
     var reviewerID: UUID?
     var reviewNote: String?
     var coachRating: Int? = nil
+    var answers: [StepSubmissionAnswer]? = nil
+    var attemptSequence: Int? = nil
+    var quizResult: QuizAttemptResult? = nil
+
+    var typedAnswers: [StepSubmissionAnswer] {
+        answers ?? []
+    }
+
+    var photoAnswers: [StepSubmissionAnswer] {
+        typedAnswers.filter {
+            !($0.localPhotoReference ?? "").isEmpty
+        }
+    }
 }

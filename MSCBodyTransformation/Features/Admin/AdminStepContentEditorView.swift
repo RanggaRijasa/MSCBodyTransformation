@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 @MainActor
@@ -49,48 +50,45 @@ struct AdminStepContentEditorView: View {
 
             contentSection
 
-            Section {
-                NavigationLink {
-                    AdminStepQuestionListView(
-                        questions: questionsBinding,
-                        stepID: step.id
-                    )
-                    .singlePressNavigationBackButton()
-                } label: {
-                    LabeledContent {
-                        Text(
-                            questionCount,
-                            format: .number.locale(
-                                Locale(identifier: "id-ID")
-                            )
+            if step.contentKind == .form || step.contentKind == .quiz {
+                Section {
+                    NavigationLink {
+                        AdminStepQuestionListView(
+                            questions: questionsBinding,
+                            stepID: step.id,
+                            isQuiz: step.contentKind == .quiz
                         )
+                        .singlePressNavigationBackButton()
                     } label: {
-                        Label(
-                            "Pertanyaan",
-                            systemImage: "questionmark.bubble"
-                        )
+                        LabeledContent {
+                            Text(
+                                questionCount,
+                                format: .number.locale(
+                                    Locale(identifier: "id-ID")
+                                )
+                            )
+                        } label: {
+                            Label(
+                                "Pertanyaan",
+                                systemImage: "questionmark.bubble"
+                            )
+                        }
                     }
+                    .accessibilityIdentifier("admin.step.questions.open")
+                } header: {
+                    Text("Pertanyaan peserta")
+                } footer: {
+                    Text(
+                        step.contentKind == .quiz
+                            ? "Kuis memerlukan pertanyaan objektif dan "
+                                + "jawaban benar."
+                            : "Semua pertanyaan interaktif wajib dijawab."
+                    )
                 }
-                .accessibilityIdentifier("admin.step.questions.open")
-            } header: {
-                Text("Pertanyaan peserta")
-            } footer: {
-                Text(
-                    step.contentKind == .quiz
-                        ? "Langkah kuis memerlukan minimal satu pertanyaan."
-                        : "Pertanyaan pendamping bersifat opsional."
-                )
             }
 
             Section {
                 Toggle("Langkah aktif", isOn: $step.isActive)
-                Toggle("Minta bukti foto", isOn: $step.requiresPhoto)
-                if step.requiresPhoto {
-                    Toggle(
-                        "Bukti foto wajib",
-                        isOn: $step.isPhotoRequired
-                    )
-                }
                 Picker(
                     "Mode pemeriksaan",
                     selection: $step.verificationMode
@@ -106,18 +104,9 @@ struct AdminStepContentEditorView: View {
                 Text("Penyelesaian")
             } footer: {
                 Text(
-                    "Gunakan daftar Pertanyaan untuk meminta jawaban "
-                        + "teks, angka, pilihan, atau file."
+                    "Jawaban subjektif dan unggahan foto dapat diperiksa "
+                        + "Coach. Kuis tetap dinilai otomatis."
                 )
-            }
-
-            Section("Poin") {
-                TextField(
-                    "Poin langkah",
-                    value: $step.points,
-                    format: .number.locale(Locale(identifier: "id-ID"))
-                )
-                .keyboardType(.numberPad)
             }
 
             Section {
@@ -215,6 +204,56 @@ struct AdminStepContentEditorView: View {
                 )
                 .lineLimit(3...8)
             }
+        case .form:
+            Section("Petunjuk form") {
+                TextField(
+                    "Jelaskan informasi yang perlu diisi",
+                    text: $step.instructions,
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+            }
+        case .initialWeighIn:
+            Section("Timbang awal") {
+                TextField(
+                    "Petunjuk timbang awal",
+                    text: $step.instructions,
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+                Text("Berat disimpan khusus untuk enrollment ini.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        case .dailyWeighIn:
+            Section("Timbang harian") {
+                TextField(
+                    "Petunjuk timbang harian",
+                    text: $step.instructions,
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+                Text(
+                    "Berat dicatat untuk memantau progres dan tidak "
+                        + "menambah poin penurunan berat secara terpisah."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+        case .finalWeighIn:
+            Section("Timbang akhir") {
+                TextField(
+                    "Petunjuk timbang akhir",
+                    text: $step.instructions,
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+                Text(
+                    "Timbang akhir baru dapat dikirim setelah timbang awal."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -252,14 +291,16 @@ struct AdminStepContentEditorView: View {
 
     private func synchronizeContentKind() {
         switch step.contentKind {
-        case .article, .quiz:
+        case .article, .form, .quiz, .initialWeighIn, .dailyWeighIn,
+             .finalWeighIn:
             step.mediaKind = nil
             step.isVideoRequiredToWatch = false
             step.isVideoAutoplayEnabled = false
         case .video:
             step.mediaKind = .video
         }
-        if step.contentKind == .quiz, step.quiz == nil {
+        if (step.contentKind == .quiz || step.contentKind == .form),
+           step.quiz == nil {
             step.quiz = AdminQuizDraft(
                 title: step.title,
                 questions: []
@@ -272,6 +313,7 @@ struct AdminStepContentEditorView: View {
 private struct AdminStepQuestionListView: View {
     @Binding var questions: [AdminQuizQuestionDraft]
     let stepID: UUID
+    let isQuiz: Bool
 
     var body: some View {
         List {
@@ -288,7 +330,8 @@ private struct AdminStepQuestionListView: View {
                     ForEach($questions) { $question in
                         NavigationLink {
                             AdminQuestionEditorView(
-                                question: $question
+                                question: $question,
+                                isQuiz: isQuiz
                             )
                             .singlePressNavigationBackButton()
                         } label: {
@@ -312,7 +355,7 @@ private struct AdminStepQuestionListView: View {
                         addButton(.singleChoice)
                         addButton(.multipleChoice)
                         addButton(.imageChoice)
-                        addButton(.fileUpload)
+                        addButton(.photoUpload)
                     }
                     Section("Elemen penjelas") {
                         addButton(.heading)
@@ -351,16 +394,36 @@ private struct AdminStepQuestionListView: View {
 
     private func addQuestion(_ kind: AdminQuizQuestionKind) {
         let order = questions.count + 1
+        let questionID = availableQuestionIdentifier(startingAt: order)
+        let options = kind.acceptsOptions ? ["", ""] : []
+        let optionIDs = options.indices.map {
+            AdminProgramDraftValidator().childIdentifier(
+                parent: questionID,
+                discriminator: $0 + 1
+            )
+        }
         questions.append(
             AdminQuizQuestionDraft(
-                id: availableQuestionIdentifier(startingAt: order),
+                id: questionID,
                 order: order,
                 kind: kind,
                 prompt: "",
-                isRequired: !kind.isLayoutElement,
-                options: kind.acceptsOptions ? ["", ""] : []
+                options: options,
+                optionIDs: optionIDs,
+                answerKey: isQuiz && objective(kind)
+                    ? ProgramQuestionAnswerKey()
+                    : nil
             )
         )
+    }
+
+    private func objective(_ kind: AdminQuizQuestionKind) -> Bool {
+        switch kind {
+        case .number, .singleChoice, .multipleChoice, .imageChoice:
+            true
+        case .shortAnswer, .longAnswer, .photoUpload, .heading, .text:
+            false
+        }
     }
 
     private func availableQuestionIdentifier(
@@ -426,6 +489,7 @@ private struct AdminQuestionRow: View {
 @MainActor
 private struct AdminQuestionEditorView: View {
     @Binding var question: AdminQuizQuestionDraft
+    let isQuiz: Bool
 
     var body: some View {
         Form {
@@ -451,10 +515,8 @@ private struct AdminQuestionEditorView: View {
                 )
                 .lineLimit(2...8)
                 if !question.kind.isLayoutElement {
-                    Toggle(
-                        "Wajib dijawab",
-                        isOn: $question.isRequired
-                    )
+                    Label("Wajib dijawab", systemImage: "checkmark.circle")
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -471,6 +533,18 @@ private struct AdminQuestionEditorView: View {
                             )
                             Button(role: .destructive) {
                                 question.options.remove(at: index)
+                                if question.optionIDs.indices.contains(index) {
+                                    let removedID =
+                                        question.optionIDs.remove(at: index)
+                                    question.answerKey?.selectedOptionIDs
+                                        .removeAll { $0 == removedID }
+                                }
+                                if question.optionMediaReferences.indices
+                                    .contains(index) {
+                                    question.optionMediaReferences.remove(
+                                        at: index
+                                    )
+                                }
                             } label: {
                                 Image(systemName: "minus.circle")
                             }
@@ -481,9 +555,37 @@ private struct AdminQuestionEditorView: View {
                     }
                     Button {
                         question.options.append("")
+                        question.optionIDs.append(
+                            AdminProgramDraftValidator().childIdentifier(
+                                parent: question.id,
+                                discriminator: question.optionIDs.count + 1
+                            )
+                        )
+                        question.optionMediaReferences.append(nil)
                     } label: {
                         Label("Tambah pilihan", systemImage: "plus")
                     }
+                }
+                if question.kind == .imageChoice {
+                    Section("Gambar pilihan") {
+                        ForEach(
+                            question.options.indices,
+                            id: \.self
+                        ) { index in
+                            AdminImageOptionPicker(
+                                title: question.options[index].isEmpty
+                                    ? "Pilihan \(index + 1)"
+                                    : question.options[index],
+                                reference: optionMediaBinding(index)
+                            )
+                        }
+                    }
+                }
+            }
+
+            if isQuiz, isObjective {
+                Section("Jawaban benar") {
+                    answerKeyEditor
                 }
             }
         }
@@ -493,12 +595,34 @@ private struct AdminQuestionEditorView: View {
         .navigationTitle("Pertanyaan \(question.order)")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: question.kind) {
-            if question.kind.isLayoutElement {
-                question.isRequired = false
-            } else if question.kind.acceptsOptions,
-                      question.options.count < 2 {
+            if question.kind.acceptsOptions,
+               question.options.count < 2 {
                 question.options = ["", ""]
+                question.optionIDs = question.options.indices.map {
+                    AdminProgramDraftValidator().childIdentifier(
+                        parent: question.id,
+                        discriminator: $0 + 1
+                    )
+                }
+                question.optionMediaReferences = Array(
+                    repeating: nil,
+                    count: question.options.count
+                )
             }
+            while question.optionMediaReferences.count
+                < question.options.count {
+                question.optionMediaReferences.append(nil)
+            }
+            if question.optionMediaReferences.count
+                > question.options.count {
+                question.optionMediaReferences = Array(
+                    question.optionMediaReferences
+                        .prefix(question.options.count)
+                )
+            }
+            question.answerKey = isQuiz && isObjective
+                ? (question.answerKey ?? ProgramQuestionAnswerKey())
+                : nil
         }
         .accessibilityIdentifier("admin.question.editor")
     }
@@ -508,5 +632,158 @@ private struct AdminQuestionEditorView: View {
             get: { question.options[index] },
             set: { question.options[index] = $0 }
         )
+    }
+
+    private func optionMediaBinding(
+        _ index: Int
+    ) -> Binding<String?> {
+        Binding(
+            get: {
+                guard question.optionMediaReferences.indices
+                    .contains(index) else {
+                    return nil
+                }
+                return question.optionMediaReferences[index]
+            },
+            set: { value in
+                while question.optionMediaReferences.count <= index {
+                    question.optionMediaReferences.append(nil)
+                }
+                question.optionMediaReferences[index] = value
+            }
+        )
+    }
+
+    private var isObjective: Bool {
+        switch question.kind {
+        case .number, .singleChoice, .multipleChoice, .imageChoice:
+            true
+        case .shortAnswer, .longAnswer, .photoUpload, .heading, .text:
+            false
+        }
+    }
+
+    @ViewBuilder
+    private var answerKeyEditor: some View {
+        switch question.kind {
+        case .number:
+            TextField(
+                "Nilai yang benar",
+                value: numberAnswer,
+                format: .number.locale(Locale(identifier: "id-ID"))
+            )
+            .keyboardType(.decimalPad)
+        case .singleChoice, .multipleChoice, .imageChoice:
+            ForEach(question.options.indices, id: \.self) { index in
+                Toggle(
+                    question.options[index].isEmpty
+                        ? "Pilihan \(index + 1)"
+                        : question.options[index],
+                    isOn: correctOptionBinding(index)
+                )
+            }
+            Text(
+                question.kind == .multipleChoice
+                    ? "Pilih seluruh jawaban yang harus dipilih peserta."
+                    : "Pilih satu jawaban benar."
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        case .shortAnswer, .longAnswer, .photoUpload, .heading, .text:
+            EmptyView()
+        }
+    }
+
+    private var numberAnswer: Binding<Decimal?> {
+        Binding(
+            get: { question.answerKey?.numberValue },
+            set: { value in
+                if question.answerKey == nil {
+                    question.answerKey = ProgramQuestionAnswerKey()
+                }
+                question.answerKey?.numberValue = value
+            }
+        )
+    }
+
+    private func correctOptionBinding(_ index: Int) -> Binding<Bool> {
+        Binding(
+            get: {
+                guard question.optionIDs.indices.contains(index) else {
+                    return false
+                }
+                return question.answerKey?.selectedOptionIDs.contains(
+                    question.optionIDs[index]
+                ) == true
+            },
+            set: { isSelected in
+                guard question.optionIDs.indices.contains(index) else {
+                    return
+                }
+                if question.answerKey == nil {
+                    question.answerKey = ProgramQuestionAnswerKey()
+                }
+                let optionID = question.optionIDs[index]
+                if isSelected {
+                    if question.kind != .multipleChoice {
+                        question.answerKey?.selectedOptionIDs = [optionID]
+                    } else if question.answerKey?.selectedOptionIDs.contains(
+                        optionID
+                    ) == false {
+                        question.answerKey?.selectedOptionIDs.append(optionID)
+                    }
+                } else {
+                    question.answerKey?.selectedOptionIDs.removeAll {
+                        $0 == optionID
+                    }
+                }
+            }
+        )
+    }
+}
+
+@MainActor
+private struct AdminImageOptionPicker: View {
+    let title: String
+    @Binding var reference: String?
+
+    @State private var mediaState = LocalEvidenceMediaState()
+    @State private var selectedItem: PhotosPickerItem?
+
+    var body: some View {
+        let actionTitle = reference == nil
+            ? "Pilih gambar"
+            : "Ganti gambar"
+        VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+            Text(title)
+                .font(AppTypography.cardTitle)
+            if let result = mediaState.result {
+                LocalMediaThumbnailView(result: result)
+            } else if reference != nil {
+                Label("Gambar dipilih", systemImage: "photo.fill")
+                    .foregroundStyle(Color.appSecondaryText)
+            }
+            PhotosPicker(
+                selection: $selectedItem,
+                matching: .images
+            ) {
+                Label(
+                    actionTitle,
+                    systemImage: "photo.on.rectangle"
+                )
+                .frame(minHeight: AppControlMetrics.minimumTouchTarget)
+            }
+            .disabled(mediaState.isProcessing)
+            if mediaState.isProcessing {
+                ProgressView("Memproses gambar…")
+            }
+        }
+        .onChange(of: selectedItem) { _, item in
+            guard let item else { return }
+            Task {
+                await mediaState.importPhoto(item)
+                reference = mediaState.result?.localURL.absoluteString
+            }
+        }
     }
 }

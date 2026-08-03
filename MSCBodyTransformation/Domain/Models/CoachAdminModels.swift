@@ -1,51 +1,5 @@
 import Foundation
 
-nonisolated struct CoachWallet: Codable, Equatable, Identifiable, Sendable {
-    let id: UUID
-    let coachID: UUID
-    var availableSeatCredits: Int
-    var updatedAt: Date
-}
-
-nonisolated enum CreditLedgerEntryKind: String, Codable, CaseIterable, Sendable {
-    case purchase
-    case reservation
-    case refund
-    case adjustment
-}
-
-nonisolated struct CreditLedgerEntry: Codable, Equatable, Identifiable, Sendable {
-    let id: UUID
-    let walletID: UUID
-    let kind: CreditLedgerEntryKind
-    let seatCreditDelta: Int
-    let note: String
-    let createdAt: Date
-}
-
-nonisolated enum CoachInviteStatus: String, Codable, CaseIterable, Sendable {
-    case active
-    case redeemed
-    case expired
-    case revoked
-}
-
-nonisolated struct CoachInvite: Codable, Equatable, Identifiable, Sendable {
-    let id: UUID
-    let code: String
-    let coachID: UUID
-    let programID: UUID
-    var status: CoachInviteStatus
-    let createdAt: Date
-    let expiresAt: Date
-    var redeemedByParticipantID: UUID?
-}
-
-nonisolated struct ProgramInvitePreview: Equatable, Sendable {
-    let invite: CoachInvite
-    let program: Program
-}
-
 nonisolated enum ManagedContentKind: String, Codable, CaseIterable, Sendable {
     case winnerBanner = "winner_banner"
     case announcement
@@ -59,6 +13,7 @@ nonisolated struct ManagedContent: Codable, Equatable, Identifiable, Sendable {
     var body: String
     var localMediaReference: String?
     var programID: UUID?
+    var winnerSnapshotID: UUID? = nil
     var visibleFrom: Date?
     var visibleUntil: Date?
     var sortOrder: Int
@@ -72,14 +27,29 @@ nonisolated enum AuditEventKind: String, Codable, CaseIterable, Sendable {
     case programUpdated = "program_updated"
     case submissionReviewed = "submission_reviewed"
     case scoreAdjusted = "score_adjusted"
-    case inviteRedeemed = "invite_redeemed"
     case programPublished = "program_published"
     case programArchived = "program_archived"
     case coachApproved = "coach_approved"
     case coachVisibilityChanged = "coach_visibility_changed"
+    case coachTransferred = "coach_transferred"
     case participantEnrolled = "participant_enrolled"
     case managedContentUpdated = "managed_content_updated"
     case winnersLocked = "winners_locked"
+    case quizAttemptReopened = "quiz_attempt_reopened"
+    case weighInCorrected = "weigh_in_corrected"
+}
+
+nonisolated struct AdminFailedQuizAttempt:
+    Equatable,
+    Identifiable,
+    Sendable
+{
+    var id: UUID { submissionID }
+    let submissionID: UUID
+    let enrollmentID: UUID
+    let participantName: String
+    let stepTitle: String
+    let sequence: Int
 }
 
 nonisolated struct AuditEvent: Codable, Equatable, Identifiable, Sendable {

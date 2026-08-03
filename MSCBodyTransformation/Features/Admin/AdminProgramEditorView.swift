@@ -54,6 +54,7 @@ struct AdminProgramEditorView: View {
     @State private var actionError: DomainError?
     @State private var isPerformingProgramAction = false
     @State private var showsArchiveConfirmation = false
+    @State private var showsDuplicateProgramSheet = false
 
     init(
         programID: UUID,
@@ -76,8 +77,11 @@ struct AdminProgramEditorView: View {
                 AdminProgramOverviewView(
                     draft: draftBinding,
                     state: state,
+                    features: features,
                     isPerformingProgramAction: isPerformingProgramAction,
-                    onDuplicate: duplicateAsDraft,
+                    onDuplicate: {
+                        showsDuplicateProgramSheet = true
+                    },
                     onArchive: { showsArchiveConfirmation = true }
                 )
             } else if let error = state.error {
@@ -104,6 +108,13 @@ struct AdminProgramEditorView: View {
             }
         }
         .task { await state.load() }
+        .sheet(isPresented: $showsDuplicateProgramSheet) {
+            if let source = state.draft {
+                AdminDuplicateProgramSheet(source: source) { request in
+                    duplicateAsDraft(request: request)
+                }
+            }
+        }
         .confirmationDialog(
             "Arsipkan program?",
             isPresented: $showsArchiveConfirmation,
@@ -156,13 +167,17 @@ struct AdminProgramEditorView: View {
         )
     }
 
-    private func duplicateAsDraft() {
+    private func duplicateAsDraft(request: DuplicateProgramRequest) {
         guard let source = state.draft else { return }
+        showsDuplicateProgramSheet = false
         isPerformingProgramAction = true
         Task {
             defer { isPerformingProgramAction = false }
             do {
-                let duplicate = try await features.duplicate(source)
+                let duplicate = try await features.duplicate(
+                    source,
+                    request: request
+                )
                 router.navigate(
                     to: .admin(.programEditor(duplicate.id)),
                     in: .admin(.programs)
@@ -193,9 +208,144 @@ struct AdminProgramEditorView: View {
 }
 
 @MainActor
+private struct AdminDuplicateProgramSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let source: AdminProgramDraft
+    let onConfirm: (DuplicateProgramRequest) -> Void
+
+    @State private var title: String
+    @State private var startDate: Date
+    @State private var endDate: Date
+
+    init(
+        source: AdminProgramDraft,
+        onConfirm: @escaping (DuplicateProgramRequest) -> Void
+    ) {
+        self.source = source
+        self.onConfirm = onConfirm
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone =
+            TimeZone(identifier: source.timeZoneIdentifier) ?? .gmt
+        let sourceStart = calendar.startOfDay(for: source.startDate)
+        let duration = max(
+            (calendar.dateComponents(
+                [.day],
+                from: sourceStart,
+                to: calendar.startOfDay(for: source.endDate)
+            ).day ?? 0) + 1,
+            1
+        )
+        let suggestedStart = calendar.date(
+            byAdding: .month,
+            value: 1,
+            to: sourceStart
+        ) ?? sourceStart
+        let suggestedEnd = calendar.date(
+            byAdding: .day,
+            value: duration - 1,
+            to: suggestedStart
+        ) ?? suggestedStart
+        _title = State(initialValue: "\(source.title) — salinan")
+        _startDate = State(initialValue: suggestedStart)
+        _endDate = State(initialValue: suggestedEnd)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Program baru") {
+                    TextField("Nama program", text: $title)
+                    DatePicker(
+                        "Tanggal mulai",
+                        selection: $startDate,
+                        displayedComponents: .date
+                    )
+                    DatePicker(
+                        "Tanggal selesai",
+                        selection: $endDate,
+                        in: startDate...,
+                        displayedComponents: .date
+                    )
+                }
+
+                Section("Ringkasan perubahan") {
+                    LabeledContent(
+                        "Periode sumber",
+                        value: source.startDate.formatted(
+                            date: .abbreviated,
+                            time: .omitted
+                        ) + " – " + source.endDate.formatted(
+                            date: .abbreviated,
+                            time: .omitted
+                        )
+                    )
+                    LabeledContent(
+                        "Periode baru",
+                        value: startDate.formatted(
+                            date: .abbreviated,
+                            time: .omitted
+                        ) + " – " + endDate.formatted(
+                            date: .abbreviated,
+                            time: .omitted
+                        )
+                    )
+                    LabeledContent(
+                        "Konten",
+                        value: "\(source.days.count) hari disalin dan digeser"
+                    )
+                    LabeledContent(
+                        "Harga",
+                        value: source.price.map {
+                            $0.formatted(
+                                .currency(code: "IDR")
+                                    .locale(Locale(identifier: "id-ID"))
+                            )
+                        } ?? "Gratis"
+                    )
+                    Text(
+                        "Produk App Store dan Google Play tidak ikut disalin. "
+                            + "Program berbayar perlu disiapkan kembali."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Duplikasikan program")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Buat draft") {
+                        onConfirm(
+                            DuplicateProgramRequest(
+                                title: title,
+                                startDate: startDate,
+                                endDate: endDate
+                            )
+                        )
+                    }
+                    .disabled(
+                        title.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        ).isEmpty || endDate < startDate
+                    )
+                }
+            }
+        }
+    }
+}
+
+@MainActor
 private struct AdminProgramOverviewView: View {
     @Binding var draft: AdminProgramDraft
     let state: AdminProgramEditorState
+    let features: AdminFeatureContainer
     let isPerformingProgramAction: Bool
     let onDuplicate: () -> Void
     let onArchive: () -> Void
@@ -377,7 +527,10 @@ private struct AdminProgramOverviewView: View {
             )
 
             NavigationLink {
-                AdminProgramPublicationStatusView(draft: draft)
+                AdminProgramPublicationStatusView(
+                    draft: draft,
+                    features: features
+                )
                     .singlePressNavigationBackButton()
             } label: {
                 publishedStageCard(
@@ -470,6 +623,8 @@ private struct AdminProgramOverviewView: View {
         switch draft.status {
         case .draft:
             "Belum diterbitkan"
+        case .preparingCommerce:
+            "Pembayaran sedang disiapkan"
         case .scheduled:
             "Terjadwal dan tidak dapat diubah langsung"
         case .active:
@@ -512,6 +667,8 @@ private struct AdminProgramOverviewView: View {
         switch draft.status {
         case .draft:
             .warning
+        case .preparingCommerce:
+            .pending
         case .scheduled, .active:
             .success
         case .completed, .archived:
@@ -662,12 +819,12 @@ private struct AdminProgramSettingsHubView: View {
                 ? draft.fixedDurationDays
                 : draft.durationInDays
         ).formatted(.number.locale(Locale(identifier: "id-ID")))
-        return "\(draft.pace.adminTitle) • \(dayCount) hari • "
-            + draft.access.adminTitle
+        return "\(draft.pace.adminTitle) • \(dayCount) hari • Publik"
     }
 
     private var rulesSummary: String {
-        "\(draft.weightPointsPerKilogram.formatted(.number.locale(Locale(identifier: "id-ID")))) poin/kg • "
+        "\(draft.pointsPerActivity.formatted(.number.locale(Locale(identifier: "id-ID")))) poin/langkah • "
+            + "\(draft.weightPointsPerKilogram.formatted(.number.locale(Locale(identifier: "id-ID")))) poin/kg turun • "
             + draft.verificationMode.adminTitle
     }
 }
@@ -685,9 +842,10 @@ private struct AdminProgramReviewAndPublishView: View {
                         .singlePressNavigationBackButton()
                 } label: {
                     AdminProgramOverviewRow(
-                        title: "Pratinjau peserta",
-                        subtitle: "Periksa tampilan sebelum diterbitkan",
-                        systemImage: "iphone"
+                        title: "Pratinjau program",
+                        subtitle:
+                            "Periksa tampilan Peserta dan Coach sebelum diterbitkan",
+                        systemImage: "eye"
                     )
                 }
                 .accessibilityIdentifier(
@@ -811,12 +969,18 @@ private struct AdminProgramReadOnlySettingsView: View {
                     value: draft.endDate.formatted(dateStyle)
                 )
                 LabeledContent("Zona waktu", value: draft.timeZoneIdentifier)
-                LabeledContent("Akses", value: draft.access.adminTitle)
+                LabeledContent("Akses", value: "Publik")
             }
 
             Section("Aturan dan poin") {
                 LabeledContent(
-                    "Poin per kg",
+                    "Poin setiap langkah selesai",
+                    value: draft.pointsPerActivity.formatted(
+                        .number.locale(Locale(identifier: "id-ID"))
+                    )
+                )
+                LabeledContent(
+                    "Poin setiap 1 kg turun",
                     value: draft.weightPointsPerKilogram.formatted(
                         .number.locale(Locale(identifier: "id-ID"))
                     )
@@ -888,7 +1052,7 @@ private struct AdminProgramReadOnlyContentView: View {
                                         Color.appSecondaryText
                                     )
                                 Label(
-                                    "\(step.points.formatted(.number.locale(Locale(identifier: "id-ID")))) poin",
+                                    step.contentKind.adminTitle,
                                     systemImage: step.contentKind.systemImage
                                 )
                                 .font(AppTypography.label.monospacedDigit())
@@ -912,6 +1076,14 @@ private struct AdminProgramReadOnlyContentView: View {
 @MainActor
 private struct AdminProgramPublicationStatusView: View {
     let draft: AdminProgramDraft
+    let features: AdminFeatureContainer
+
+    @State private var preflight: ProgramClosurePreflight?
+    @State private var isLoadingClosure = false
+    @State private var isLockingWinners = false
+    @State private var selectedPoster: ManagedContent?
+    @State private var showsFailedQuizAttempts = false
+    @State private var error: DomainError?
 
     var body: some View {
         Form {
@@ -943,13 +1115,377 @@ private struct AdminProgramPublicationStatusView: View {
                 )
                 .foregroundStyle(Color.appSecondaryText)
             }
+
+            if isClosureAvailable {
+                closureSection
+            }
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
         .navigationTitle("Status publikasi")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            guard isClosureAvailable else { return }
+            await loadClosure()
+        }
+        .sheet(item: $selectedPoster) { poster in
+            AdminPosterEditorSheet(
+                initialContent: poster,
+                features: features
+            )
+        }
+        .sheet(isPresented: $showsFailedQuizAttempts) {
+            AdminFailedQuizAttemptsSheet(
+                programID: draft.id,
+                features: features
+            ) {
+                Task { await loadClosure() }
+            }
+        }
+        .alert(
+            "Penutupan belum dapat diselesaikan",
+            isPresented: Binding(
+                get: { error != nil },
+                set: { if !$0 { error = nil } }
+            )
+        ) {
+            Button("Tutup", role: .cancel) {}
+        } message: {
+            Text(error?.localizedAdminMessage ?? "")
+        }
         .accessibilityIdentifier("admin.program.publication-status")
+    }
+
+    @ViewBuilder
+    private var closureSection: some View {
+        Section {
+            if isLoadingClosure {
+                ProgressView("Memeriksa kesiapan penutupan…")
+            } else if let preflight {
+                LabeledContent(
+                    "Peserta",
+                    value: preflight.enrollmentCount.formatted(
+                        .number.locale(
+                            Locale(
+                                identifier: AppConfiguration
+                                    .indonesianLocaleIdentifier
+                            )
+                        )
+                    )
+                )
+                closureRow(
+                    title: "Pemeriksaan tertunda",
+                    count: preflight.count(for: .pendingReview),
+                    blocks: true
+                )
+                closureRow(
+                    title: "Timbang akhir belum lengkap",
+                    count: preflight.count(for: .missingFinalWeighIn),
+                    blocks: true
+                )
+                closureRow(
+                    title: "Kuis tidak lulus",
+                    count: preflight.count(for: .failedQuiz),
+                    blocks: false
+                )
+                if preflight.count(for: .failedQuiz) > 0 {
+                    Button {
+                        showsFailedQuizAttempts = true
+                    } label: {
+                        Label(
+                            "Kelola percobaan kuis",
+                            systemImage: "arrow.clockwise.circle"
+                        )
+                    }
+                }
+
+                switch features.winnersState {
+                case .loaded(let winners) where !winners.isEmpty:
+                    Label(
+                        "Snapshot pemenang sudah dikunci.",
+                        systemImage: "lock.fill"
+                    )
+                    .foregroundStyle(Color.appSuccess)
+
+                    Button {
+                        selectedPoster = features.makeWinnerBanner(
+                            programID: draft.id,
+                            winnerSnapshotID: winners.first?.id,
+                            sortOrder: features.nextWinnerPosterSortOrder
+                        )
+                    } label: {
+                        Label(
+                            "Buat poster pemenang",
+                            systemImage: "photo.stack.fill"
+                        )
+                    }
+                default:
+                    Button {
+                        Task { await lockWinners() }
+                    } label: {
+                        Label(
+                            isLockingWinners
+                                ? "Mengunci pemenang…"
+                                : "Tutup perhitungan dan kunci pemenang",
+                            systemImage: "lock.fill"
+                        )
+                    }
+                    .disabled(
+                        !preflight.canLockWinners || isLockingWinners
+                    )
+                }
+            } else {
+                Button("Coba lagi") {
+                    Task { await loadClosure() }
+                }
+            }
+        } header: {
+            Text("Penutupan program")
+        } footer: {
+            Text(
+                "Kuis tidak lulus ditampilkan sebagai informasi dan tidak "
+                    + "memblokir penutupan karena Peserta hanya memiliki "
+                    + "satu percobaan."
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func closureRow(
+        title: String,
+        count: Int,
+        blocks: Bool
+    ) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Text(
+                count.formatted(
+                    .number.locale(
+                        Locale(
+                            identifier: AppConfiguration
+                                .indonesianLocaleIdentifier
+                        )
+                    )
+                )
+            )
+            .monospacedDigit()
+            Image(
+                systemName: count == 0
+                    ? "checkmark.circle.fill"
+                    : (blocks ? "exclamationmark.triangle.fill" : "info.circle")
+            )
+            .foregroundStyle(
+                count == 0
+                    ? Color.appSuccess
+                    : (blocks ? Color.appWarning : Color.appSecondaryText)
+            )
+            .accessibilityHidden(true)
+        }
+    }
+
+    private var isClosureAvailable: Bool {
+        draft.status == .completed
+            || draft.status == .archived
+            || draft.endDate < features.environment.clock.now()
+    }
+
+    private func loadClosure() async {
+        isLoadingClosure = true
+        defer { isLoadingClosure = false }
+        do {
+            async let loadedPreflight = features.loadClosurePreflight(
+                programID: draft.id
+            )
+            async let loadedLeaderboard: Void = features.loadLeaderboard(
+                programID: draft.id
+            )
+            preflight = try await loadedPreflight
+            await loadedLeaderboard
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
+    }
+
+    private func lockWinners() async {
+        isLockingWinners = true
+        defer { isLockingWinners = false }
+        do {
+            try await features.lockWinners(programID: draft.id)
+            preflight = try await features.loadClosurePreflight(
+                programID: draft.id
+            )
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
+    }
+}
+
+@MainActor
+private struct AdminFailedQuizAttemptsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let programID: UUID
+    let features: AdminFeatureContainer
+    let onChanged: () -> Void
+
+    @State private var items: [AdminFailedQuizAttempt] = []
+    @State private var selectedItem: AdminFailedQuizAttempt?
+    @State private var isLoading = true
+    @State private var error: DomainError?
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if isLoading {
+                    ProgressView("Memuat percobaan kuis…")
+                } else if let error {
+                    ErrorStateView(error: error) {
+                        Task { await load() }
+                    }
+                    .padding(AppSpacing.medium)
+                } else if items.isEmpty {
+                    ContentUnavailableView(
+                        "Tidak ada kuis yang dapat dibuka",
+                        systemImage: "checkmark.circle",
+                        description: Text(
+                            "Semua percobaan gagal sudah ditangani."
+                        )
+                    )
+                } else {
+                    List(items) { item in
+                        VStack(alignment: .leading, spacing: AppSpacing.xSmall) {
+                            Text(item.participantName)
+                                .font(AppTypography.cardTitle)
+                            Text(item.stepTitle)
+                                .font(AppTypography.body)
+                            Text("Percobaan \(item.sequence)")
+                                .font(AppTypography.secondary.monospacedDigit())
+                                .foregroundStyle(Color.appSecondaryText)
+                            Button("Buka satu percobaan baru") {
+                                selectedItem = item
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding(.vertical, AppSpacing.xSmall)
+                    }
+                }
+            }
+            .navigationTitle("Percobaan kuis")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Tutup") { dismiss() }
+                }
+            }
+        }
+        .task { await load() }
+        .sheet(item: $selectedItem) { item in
+            AdminQuizReopenReasonSheet(item: item) { reason in
+                try await features.reopenQuizAttempt(item, reason: reason)
+                await load()
+                onChanged()
+            }
+        }
+    }
+
+    private func load() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            items = try await features.failedQuizAttempts(
+                programID: programID
+            )
+            error = nil
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
+    }
+}
+
+@MainActor
+private struct AdminQuizReopenReasonSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let item: AdminFailedQuizAttempt
+    let onSubmit: (String) async throws -> Void
+
+    @State private var reason = ""
+    @State private var isSubmitting = false
+    @State private var error: DomainError?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Kuis") {
+                    LabeledContent("Peserta", value: item.participantName)
+                    LabeledContent("Langkah", value: item.stepTitle)
+                }
+                Section {
+                    TextField(
+                        "Alasan membuka ulang",
+                        text: $reason,
+                        axis: .vertical
+                    )
+                    .lineLimit(3...6)
+                } footer: {
+                    Text(
+                        "Alasan wajib diisi dan dicatat pada audit Admin. "
+                            + "Percobaan lama tetap tersimpan."
+                    )
+                }
+            }
+            .navigationTitle("Buka ulang kuis")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") { dismiss() }
+                        .disabled(isSubmitting)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(isSubmitting ? "Menyimpan…" : "Buka") {
+                        Task { await submit() }
+                    }
+                    .disabled(
+                        isSubmitting
+                            || reason.trimmingCharacters(
+                                in: .whitespacesAndNewlines
+                            ).isEmpty
+                    )
+                }
+            }
+        }
+        .alert(
+            "Percobaan belum dibuka",
+            isPresented: Binding(
+                get: { error != nil },
+                set: { if !$0 { error = nil } }
+            )
+        ) {
+            Button("Tutup", role: .cancel) {}
+        } message: {
+            Text(error?.localizedAdminMessage ?? "")
+        }
+    }
+
+    private func submit() async {
+        isSubmitting = true
+        defer { isSubmitting = false }
+        do {
+            try await onSubmit(reason)
+            dismiss()
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
     }
 }
 

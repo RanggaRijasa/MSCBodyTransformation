@@ -1,5 +1,11 @@
 # Phase 03: Participant Experience UI
 
+> Status: arsip baseline Phase 03. Alur aktif adalah katalog publik → pindai
+> QR Coach → pembayaran bila perlu → enrollment, dengan satu Coach aktif dan
+> beberapa program per Peserta. Lihat workplan remediation dan matriks
+> kontrak; invite program, timbang onboarding, dan snapshot satu program tidak
+> lagi berlaku.
+
 ## Tujuan
 
 Membangun seluruh participant journey dengan in-memory repository dan local fixtures. Pada akhir phase, participant dapat menjalankan sample program dari awal sampai selesai tanpa backend.

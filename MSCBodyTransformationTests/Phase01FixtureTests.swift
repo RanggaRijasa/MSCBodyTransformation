@@ -21,7 +21,17 @@ struct Phase01FixtureTests {
             seed.programs.first { $0.status == .active }
         )
         #expect(activeProgram.days.count == 7)
-        #expect(activeProgram.days.allSatisfy { $0.steps.count == 3 })
+        #expect(activeProgram.days.allSatisfy { !$0.steps.isEmpty })
+        #expect(
+            activeProgram.days.flatMap(\.steps).contains {
+                $0.content?.kind == .initialWeighIn
+            }
+        )
+        #expect(
+            activeProgram.days.flatMap(\.steps).contains {
+                $0.content?.kind == .finalWeighIn
+            }
+        )
         #expect(
             activeProgram.days.flatMap(\.steps).contains {
                 $0.instructionMedia?.kind == .image
@@ -34,7 +44,9 @@ struct Phase01FixtureTests {
         )
         #expect(
             activeProgram.days.flatMap(\.steps).contains {
-                $0.requirements.contains { $0.kind == .textAnswer }
+                $0.content?.questions.contains {
+                    $0.kind == .shortAnswer
+                } == true
             }
         )
     }
@@ -94,14 +106,12 @@ struct Phase01FixtureTests {
         #expect(
             ProgramDayVisibilityMode.readOnly.rawValue == "read_only"
         )
-        #expect(StepRequirementKind.photoEvidence.rawValue == "photo_evidence")
         #expect(
             SubmissionVerificationMode.coachReview.rawValue == "coach_review"
         )
         #expect(EnrollmentStatus.active.rawValue == "active")
         #expect(WeighInType.final.rawValue == "final")
         #expect(SubmissionStatus.rejected.rawValue == "rejected")
-        #expect(CreditLedgerEntryKind.reservation.rawValue == "reservation")
         #expect(ManagedContentKind.winnerBanner.rawValue == "winner_banner")
         #expect(AuditEventKind.scoreAdjusted.rawValue == "score_adjusted")
     }

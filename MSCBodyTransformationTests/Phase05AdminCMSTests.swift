@@ -85,6 +85,66 @@ struct Phase05AdminCMSTests {
         #expect(fields.contains(.days))
     }
 
+    @Test(
+        "Pratinjau program memakai published mapping dan state deterministik"
+    )
+    func programPreviewUsesPublishedMappingAndDeterministicState() throws {
+        let draft = try validDraft()
+        let scenario = AdminProgramPreviewScenario(draft: draft)
+        let focusedDay = try #require(
+            scenario.program.days.first {
+                $0.id == scenario.focusedDayID
+            }
+        )
+
+        #expect(scenario.program == draft.program())
+        #expect(scenario.referenceDate == focusedDay.scheduledDate)
+        #expect(scenario.access(for: focusedDay) == .available)
+        #expect(
+            scenario.program.days
+                .filter { $0.id != focusedDay.id }
+                .allSatisfy {
+                    scenario.access(for: $0) == .locked
+                }
+        )
+        #expect(
+            scenario.submissions.map(\.stepID)
+                == Array(
+                    focusedDay.steps
+                        .sorted { $0.order < $1.order }
+                        .prefix(2)
+                        .map(\.id)
+                )
+        )
+        #expect(
+            scenario.submissions.map(\.status)
+                == [.approved, .pending]
+        )
+    }
+
+    @Test("Draft baru tidak mengaktifkan poin timbang tanpa langkah timbang")
+    func newDraftKeepsWeightScoringDisabledByDefault() async throws {
+        let repository = try makeRepository()
+        let draft = try await CreateAdminProgramDraftUseCase(
+            drafts: repository,
+            audit: repository,
+            identifierGenerator: DeterministicIdentifierGenerator(
+                identifier: UUID(
+                    uuidString:
+                        "72000000-0000-0000-0000-000000000088"
+                )!
+            ),
+            clock: FixedClock(now: fixedDate)
+        )(adminID: adminID)
+
+        #expect(draft.weightPointsPerKilogram == 0)
+        #expect(
+            !AdminProgramDraftValidator()
+                .validate(draft)
+                .contains { $0.field == .scoring }
+        )
+    }
+
     @Test("Hari dibuat inklusif dari rentang tanggal")
     func dayGeneration() throws {
         let calendar = Calendar(identifier: .gregorian)
@@ -147,11 +207,6 @@ struct Phase05AdminCMSTests {
                 order: 1,
                 title: "Refleksi",
                 instructions: "Jawab sesuai kondisi hari ini.",
-                points: 10,
-                requiresPhoto: false,
-                isPhotoRequired: false,
-                requiresTextAnswer: false,
-                isTextAnswerRequired: false,
                 mediaKind: nil,
                 localMediaReference: nil,
                 isActive: true,
@@ -168,7 +223,6 @@ struct Phase05AdminCMSTests {
                             order: 1,
                             kind: .shortAnswer,
                             prompt: "Apa yang terasa lebih mudah?",
-                            isRequired: true,
                             options: []
                         )
                     ]
@@ -340,14 +394,20 @@ struct Phase05AdminCMSTests {
         )
 
         #expect(fields.contains(.cover))
-        #expect(fields.contains(.access))
+        #expect(fields.contains(.participantLimit))
     }
 
     @Test("Kuis wajib memiliki nama dan pertanyaan")
     func quizContentValidation() throws {
         var draft = try validDraft()
-        draft.days[0].steps[0].contentKind = .quiz
-        draft.days[0].steps[0].quiz = AdminQuizDraft(
+        let stepIndex = try #require(
+            draft.days[0].steps.firstIndex {
+                $0.contentKind != .initialWeighIn
+                    && $0.contentKind != .finalWeighIn
+            }
+        )
+        draft.days[0].steps[stepIndex].contentKind = .quiz
+        draft.days[0].steps[stepIndex].quiz = AdminQuizDraft(
             title: "Kuis kebiasaan",
             questions: []
         )
@@ -355,17 +415,26 @@ struct Phase05AdminCMSTests {
         var issues = AdminProgramDraftValidator().validate(draft)
         #expect(issues.contains { $0.field == .content })
 
-        draft.days[0].steps[0].quiz?.questions = [
+        let firstOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000001"
+        )!
+        let secondOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000002"
+        )!
+        draft.days[0].steps[stepIndex].quiz?.questions = [
             AdminQuizQuestionDraft(
                 id: UUID(
                     uuidString:
                         "91000000-0000-0000-0000-000000000001"
                 )!,
                 order: 1,
-                kind: .shortAnswer,
-                prompt: "Apa fokusmu hari ini?",
-                isRequired: true,
-                options: []
+                kind: .singleChoice,
+                prompt: "Pilih kebiasaan yang tepat.",
+                options: ["Minum air", "Melewatkan sarapan"],
+                optionIDs: [firstOptionID, secondOptionID],
+                answerKey: ProgramQuestionAnswerKey(
+                    selectedOptionIDs: [firstOptionID]
+                )
             )
         ]
         issues = AdminProgramDraftValidator().validate(draft)
@@ -386,7 +455,6 @@ struct Phase05AdminCMSTests {
                     order: 1,
                     kind: .multipleChoice,
                     prompt: "Pilih kebiasaan yang sudah dilakukan.",
-                    isRequired: true,
                     options: ["Minum air", " "]
                 )
             ]
@@ -432,7 +500,6 @@ struct Phase05AdminCMSTests {
                         order: questionOrder,
                         kind: .shortAnswer,
                         prompt: "Pertanyaan \(questionOrder)",
-                        isRequired: true,
                         options: []
                     )
                 }
@@ -441,11 +508,6 @@ struct Phase05AdminCMSTests {
                     order: stepOrder,
                     title: "Langkah \(stepOrder)",
                     instructions: "Petunjuk langkah.",
-                    points: 10,
-                    requiresPhoto: false,
-                    isPhotoRequired: false,
-                    requiresTextAnswer: false,
-                    isTextAnswerRequired: false,
                     mediaKind: nil,
                     localMediaReference: nil,
                     isActive: true,
@@ -689,11 +751,6 @@ struct Phase05AdminCMSTests {
             order: 1,
             title: "Langkah contoh",
             instructions: "Ikuti petunjuk dengan aman.",
-            points: 10,
-            requiresPhoto: false,
-            isPhotoRequired: false,
-            requiresTextAnswer: false,
-            isTextAnswerRequired: false,
             mediaKind: nil,
             localMediaReference: nil,
             isActive: true,

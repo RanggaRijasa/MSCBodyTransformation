@@ -206,109 +206,28 @@ final class AdminFeatureContainer {
 
     @discardableResult
     func duplicate(
-        _ source: AdminProgramDraft
+        _ source: AdminProgramDraft,
+        request: DuplicateProgramRequest
     ) async throws -> AdminProgramDraft {
         let repositories = try repositories()
         let now = environment.clock.now()
-        let newID = environment.identifierGenerator.makeIdentifier()
-        let validator = AdminProgramDraftValidator()
-        let days = source.days.enumerated().map { dayIndex, day in
-            let dayID = validator.childIdentifier(
-                parent: newID,
-                discriminator: dayIndex + 1
-            )
-            return AdminDayDraft(
-                id: dayID,
-                dayNumber: dayIndex + 1,
-                title: day.title,
-                summary: day.summary,
-                scheduledDate: day.scheduledDate,
-                steps: day.steps.enumerated().map { stepIndex, step in
-                    let stepID = validator.childIdentifier(
-                        parent: dayID,
-                        discriminator: stepIndex + 1
-                    )
-                    return AdminStepDraft(
-                        id: stepID,
-                        order: stepIndex + 1,
-                        title: step.title,
-                        instructions: step.instructions,
-                        points: step.points,
-                        requiresPhoto: step.requiresPhoto,
-                        isPhotoRequired: step.isPhotoRequired,
-                        requiresTextAnswer: step.requiresTextAnswer,
-                        isTextAnswerRequired: step.isTextAnswerRequired,
-                        mediaKind: step.mediaKind,
-                        localMediaReference: step.localMediaReference,
-                        isActive: step.isActive,
-                        verificationMode: step.verificationMode,
-                        contentKind: step.contentKind,
-                        isVideoRequiredToWatch:
-                            step.isVideoRequiredToWatch,
-                        isVideoAutoplayEnabled:
-                            step.isVideoAutoplayEnabled,
-                        quiz: step.quiz.map { questionGroup in
-                            AdminQuizDraft(
-                                title: step.title,
-                                questions: questionGroup.questions
-                                    .enumerated()
-                                    .map { questionIndex, question in
-                                        AdminQuizQuestionDraft(
-                                            id: validator.childIdentifier(
-                                                parent: stepID,
-                                                discriminator:
-                                                    questionIndex + 1_000
-                                            ),
-                                            order: questionIndex + 1,
-                                            kind: question.kind,
-                                            prompt: question.prompt,
-                                            isRequired:
-                                                question.isRequired,
-                                            options: question.options
-                                        )
-                                    }
-                            )
-                        }
-                    )
-                }
-            )
-        }
+        let duplicatedProgram = try DuplicateProgramAsDraftUseCase(
+            identifierGenerator: environment.identifierGenerator
+        )(
+            source: source.program(),
+            request: request
+        )
         let duplicate = AdminProgramDraft(
-            id: newID,
-            title: "\(source.title) — salinan",
-            summary: source.summary,
-            price: source.price,
-            coverLocalReference: source.coverLocalReference,
-            verificationMode: source.verificationMode,
-            wellnessDisclaimer: source.wellnessDisclaimer,
-            startDate: source.startDate,
-            endDate: source.endDate,
-            timeZoneIdentifier: source.timeZoneIdentifier,
-            initialWeighInWindowHours:
-                source.initialWeighInWindowHours,
-            finalWeighInWindowHours: source.finalWeighInWindowHours,
-            weightPointsPerKilogram: source.weightPointsPerKilogram,
-            pastStepPolicy: source.pastStepPolicy,
-            futureStepPolicy: source.futureStepPolicy,
-            status: .draft,
-            days: days,
-            updatedAt: now,
-            category: source.category,
-            coverMediaKind: source.coverMediaKind,
-            coverAlternativeText: source.coverAlternativeText,
-            pace: source.pace,
-            durationMode: source.durationMode,
-            fixedDurationDays: source.fixedDurationDays,
-            access: source.access,
-            participantLimit: source.participantLimit
+            program: duplicatedProgram,
+            updatedAt: now
         )
         _ = try await repositories.adminProgramDrafts.save(
             programDraft: duplicate
         )
         try await appendAudit(
             kind: .programCreated,
-            subjectID: newID,
-            summary: "Draft program lokal diduplikasi."
+            subjectID: duplicate.id,
+            summary: "Draft diduplikasi dari \(source.title)."
         )
         lastMessage = "Draft berhasil diduplikasi."
         await load()
@@ -384,6 +303,46 @@ final class AdminFeatureContainer {
         await load()
     }
 
+    func transferCoach(
+        participant: ParticipantProfile,
+        to coach: CoachProfile,
+        reason: String
+    ) async throws {
+        let trimmedReason = reason.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmedReason.isEmpty else {
+            throw DomainError.validation(
+                field: "reason",
+                reason: "Alasan perubahan Coach wajib diisi."
+            )
+        }
+        guard participant.coachID != coach.id else {
+            throw DomainError.validation(
+                field: "coach",
+                reason: "Coach yang dipilih sudah aktif."
+            )
+        }
+        let oldCoachName = participant.coachID.flatMap { coachID in
+            guard case .loaded(let people) = peopleState else { return nil }
+            return people.compactMap(\.coachProfile).first {
+                $0.id == coachID
+            }?.displayName
+        } ?? "Belum ada Coach"
+        _ = try await repositories().adminPeople.transferActiveCoach(
+            participantID: participant.id,
+            coachID: coach.id
+        )
+        try await appendAudit(
+            kind: .coachTransferred,
+            subjectID: participant.id,
+            summary: "Coach \(oldCoachName) → \(coach.displayName). "
+                + "Alasan: \(trimmedReason)"
+        )
+        lastMessage = "Coach peserta berhasil diperbarui."
+        await load()
+    }
+
     func loadLeaderboard(programID: UUID) async {
         leaderboardState = .loading
         winnersState = .loading
@@ -436,17 +395,108 @@ final class AdminFeatureContainer {
 
     func lockWinners(programID: UUID) async throws {
         let repositories = try repositories()
+        let program = try await repositories.programs.program(id: programID)
         _ = try await LockAdminWinnersUseCase(
             leaderboard: repositories.leaderboard,
+            enrollments: repositories.enrollments,
+            submissions: repositories.submissions,
+            weighIns: repositories.weighIns,
             audit: repositories.audit,
             identifierGenerator: environment.identifierGenerator,
             clock: environment.clock
         )(
+            program: program,
             programID: programID,
             adminID: try requireAdminID()
         )
         lastMessage = "Snapshot lima pemenang berhasil dikunci."
         await loadLeaderboard(programID: programID)
+        await load()
+    }
+
+    func loadClosurePreflight(programID: UUID) async throws
+        -> ProgramClosurePreflight {
+        let repositories = try repositories()
+        let program = try await repositories.programs.program(id: programID)
+        return try await LoadProgramClosurePreflightUseCase(
+            enrollments: repositories.enrollments,
+            submissions: repositories.submissions,
+            weighIns: repositories.weighIns
+        )(program: program)
+    }
+
+    func failedQuizAttempts(
+        programID: UUID
+    ) async throws -> [AdminFailedQuizAttempt] {
+        let repositories = try repositories()
+        let program = try await repositories.programs.program(id: programID)
+        let profiles = try await repositories.adminPeople
+            .participantProfilesForAdministration()
+        let profilesByID = Dictionary(
+            uniqueKeysWithValues: profiles.map { ($0.id, $0) }
+        )
+        let stepsByID = Dictionary(
+            uniqueKeysWithValues: program.days
+                .flatMap(\.steps)
+                .map { ($0.id, $0) }
+        )
+        let enrollments = try await repositories.enrollments.allEnrollments()
+            .filter { $0.programID == programID }
+        var items: [AdminFailedQuizAttempt] = []
+        for enrollment in enrollments {
+            let submissions = try await repositories.submissions.submissions(
+                enrollmentID: enrollment.id
+            )
+            items.append(
+                contentsOf: submissions.compactMap { submission in
+                    guard let result = submission.quizResult,
+                          !result.isPassed,
+                          result.reopenedAt == nil else {
+                        return nil
+                    }
+                    return AdminFailedQuizAttempt(
+                        submissionID: submission.id,
+                        enrollmentID: enrollment.id,
+                        participantName:
+                            profilesByID[enrollment.participantID]?
+                                .displayName ?? "Peserta",
+                        stepTitle:
+                            stepsByID[submission.stepID]?.title ?? "Kuis",
+                        sequence: result.sequence
+                    )
+                }
+            )
+        }
+        return items.sorted {
+            if $0.participantName == $1.participantName {
+                return $0.stepTitle < $1.stepTitle
+            }
+            return $0.participantName < $1.participantName
+        }
+    }
+
+    func reopenQuizAttempt(
+        _ item: AdminFailedQuizAttempt,
+        reason: String
+    ) async throws {
+        let repositories = try repositories()
+        guard let submission = try await repositories.submissions
+            .submissions(enrollmentID: item.enrollmentID)
+            .first(where: { $0.id == item.submissionID }) else {
+            throw DomainError.notFound(resource: "quiz_attempt")
+        }
+        _ = try await ReopenQuizAttemptUseCase(
+            submissions: repositories.submissions,
+            audit: repositories.audit,
+            identifierGenerator: environment.identifierGenerator,
+            clock: environment.clock
+        )(
+            enrollmentID: item.enrollmentID,
+            stepID: submission.stepID,
+            adminID: try requireAdminID(),
+            reason: reason
+        )
+        lastMessage = "Satu percobaan kuis baru sudah dibuka."
         await load()
     }
 
@@ -477,6 +527,7 @@ final class AdminFeatureContainer {
 
     func makeWinnerBanner(
         programID: UUID?,
+        winnerSnapshotID: UUID? = nil,
         sortOrder: Int = 1
     ) -> ManagedContent {
         let now = environment.clock.now()
@@ -487,6 +538,7 @@ final class AdminFeatureContainer {
             body: "Lihat peserta dengan perolehan poin tertinggi.",
             localMediaReference: nil,
             programID: programID,
+            winnerSnapshotID: winnerSnapshotID,
             visibleFrom: now,
             visibleUntil: Calendar(identifier: .gregorian).date(
                 byAdding: .month,
@@ -653,8 +705,16 @@ final class AdminProgramEditorState {
             title = "Artikel baru"
         case .video:
             title = "Video baru"
+        case .form:
+            title = "Form baru"
         case .quiz:
             title = "Kuis baru"
+        case .initialWeighIn:
+            title = "Timbang awal"
+        case .dailyWeighIn:
+            title = "Timbang harian"
+        case .finalWeighIn:
+            title = "Timbang akhir"
         }
         draft.days[dayIndex].steps.append(
             AdminStepDraft(
@@ -662,17 +722,14 @@ final class AdminProgramEditorState {
                 order: order,
                 title: title,
                 instructions: "Tambahkan petunjuk yang jelas dan aman.",
-                points: 10,
-                requiresPhoto: false,
-                isPhotoRequired: false,
-                requiresTextAnswer: false,
-                isTextAnswerRequired: false,
                 mediaKind: contentKind == .video ? .video : nil,
                 localMediaReference: nil,
                 isActive: true,
-                verificationMode: draft.verificationMode,
+                verificationMode: contentKind.isWeighIn
+                    ? .automatic
+                    : draft.verificationMode,
                 contentKind: contentKind,
-                quiz: contentKind == .quiz
+                quiz: contentKind == .quiz || contentKind == .form
                     ? AdminQuizDraft(title: title, questions: [])
                     : nil
             )
@@ -888,11 +945,6 @@ final class AdminProgramEditorState {
             order: order,
             title: title ?? source.title,
             instructions: source.instructions,
-            points: source.points,
-            requiresPhoto: source.requiresPhoto,
-            isPhotoRequired: source.isPhotoRequired,
-            requiresTextAnswer: source.requiresTextAnswer,
-            isTextAnswerRequired: source.isTextAnswerRequired,
             mediaKind: source.mediaKind,
             localMediaReference: source.localMediaReference,
             isActive: source.isActive,
@@ -900,7 +952,8 @@ final class AdminProgramEditorState {
             contentKind: source.contentKind,
             isVideoRequiredToWatch: source.isVideoRequiredToWatch,
             isVideoAutoplayEnabled: source.isVideoAutoplayEnabled,
-            quiz: duplicatedQuestionGroup(source.quiz, stepID: id)
+            quiz: duplicatedQuestionGroup(source.quiz, stepID: id),
+            publishedContent: nil
         )
     }
 
@@ -913,16 +966,40 @@ final class AdminProgramEditorState {
             title: source.title,
             questions: source.questions.enumerated().map {
                 index, question in
-                AdminQuizQuestionDraft(
-                    id: AdminProgramDraftValidator().childIdentifier(
+                let questionID =
+                    AdminProgramDraftValidator().childIdentifier(
                         parent: stepID,
                         discriminator: index + 1_000
-                    ),
+                    )
+                let optionIDs = question.options.indices.map { optionIndex in
+                    AdminProgramDraftValidator().childIdentifier(
+                        parent: questionID,
+                        discriminator: optionIndex + 1
+                    )
+                }
+                let optionMap = Dictionary(
+                    uniqueKeysWithValues: zip(question.optionIDs, optionIDs)
+                )
+                return AdminQuizQuestionDraft(
+                    id: questionID,
                     order: index + 1,
                     kind: question.kind,
                     prompt: question.prompt,
-                    isRequired: question.isRequired,
-                    options: question.options
+                    options: question.options,
+                    optionIDs: optionIDs,
+                    optionMediaReferences:
+                        question.optionMediaReferences,
+                    answerKey: question.answerKey.map {
+                        ProgramQuestionAnswerKey(
+                            acceptedTextValues: $0.acceptedTextValues,
+                            numberValue: $0.numberValue,
+                            selectedOptionIDs:
+                                $0.selectedOptionIDs.compactMap {
+                                    optionMap[$0]
+                                },
+                            matchingMode: $0.matchingMode
+                        )
+                    }
                 )
             }
         )

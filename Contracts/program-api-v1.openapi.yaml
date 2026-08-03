@@ -1,0 +1,628 @@
+openapi: 3.1.0
+info:
+  title: MSC Body Transformation Program API
+  version: 1.0.0
+  description: >
+    Platform-neutral contract shared by iOS and the future Android client.
+    Dates are ISO-8601, identifiers are UUIDs, weights and prices are JSON
+    decimal strings, and enum raw values are stable.
+servers:
+  - url: https://{project}.supabase.co/functions/v1
+    variables:
+      project:
+        default: staging-project
+security:
+  - bearerAuth: []
+paths:
+  /programs:
+    get:
+      operationId: listPublicPrograms
+      responses:
+        "200":
+          description: Public programs visible to the authenticated account.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Program"
+  /programs/{programId}/duplicate:
+    post:
+      operationId: duplicateProgram
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DuplicateProgramRequest"
+      responses:
+        "201":
+          description: Independent draft with new nested identifiers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Program"
+  /programs/{programId}/publish:
+    post:
+      operationId: publishProgram
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      responses:
+        "200":
+          description: Published immutable program.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Program"
+        "409":
+          $ref: "#/components/responses/DomainError"
+  /programs/{programId}/enroll/free:
+    post:
+      operationId: enrollFreeProgram
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [coachQrPayload]
+              properties:
+                coachQrPayload:
+                  type: string
+      responses:
+        "200":
+          description: Existing or newly-created enrollment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnrollmentContext"
+        "409":
+          $ref: "#/components/responses/DomainError"
+  /programs/{programId}/purchase/apple/verify:
+    post:
+      operationId: verifyAppleProgramPurchase
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [coachQrPayload, signedTransaction]
+              properties:
+                coachQrPayload:
+                  type: string
+                signedTransaction:
+                  type: string
+      responses:
+        "200":
+          description: Cross-platform entitlement and active enrollment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entitlement"
+  /programs/{programId}/purchase/google/verify:
+    post:
+      operationId: verifyGoogleProgramPurchase
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [coachQrPayload, purchaseToken, productId]
+              properties:
+                coachQrPayload:
+                  type: string
+                purchaseToken:
+                  type: string
+                productId:
+                  type: string
+      responses:
+        "200":
+          description: Cross-platform entitlement and active enrollment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entitlement"
+  /enrollments/{enrollmentId}/steps/{stepId}/submit:
+    post:
+      operationId: submitStep
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+        - $ref: "#/components/parameters/StepId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StepSubmissionRequest"
+      responses:
+        "200":
+          description: Submission, including quiz result when applicable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StepSubmission"
+  /submissions/{submissionId}/review:
+    post:
+      operationId: reviewSubmission
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [approved, rejected]
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Reviewed submission and reconciled score.
+  /enrollments/{enrollmentId}/steps/{stepId}/weigh-in:
+    put:
+      operationId: submitWeighIn
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+        - $ref: "#/components/parameters/StepId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weightKilograms]
+              properties:
+                weightKilograms:
+                  type: string
+                  pattern: '^\d+(\.\d{1,2})?$'
+      responses:
+        "200":
+          description: >
+            Step-scoped initial, daily, or final weigh-in and reconciled score.
+            Daily weigh-ins are progress records and do not add weight points.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeighIn"
+  /enrollments/{enrollmentId}/weigh-ins/{weighInId}:
+    patch:
+      operationId: correctWeighIn
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+        - name: weighInId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weightKilograms, reason]
+              properties:
+                weightKilograms:
+                  type: string
+                  pattern: '^\d+(\.\d{1,2})?$'
+                reason: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Admin-corrected weigh-in, audit event, and score.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeighIn"
+  /enrollments/{enrollmentId}/steps/{stepId}/quiz/reopen:
+    post:
+      operationId: reopenQuizAttempt
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+        - $ref: "#/components/parameters/StepId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Previous attempt retained and one new sequence opened.
+  /participants/{participantId}/coach:
+    put:
+      operationId: transferParticipantCoach
+      parameters:
+        - name: participantId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [coachId, reason]
+              properties:
+                coachId: { type: string, format: uuid }
+                reason: { type: string, minLength: 1 }
+      responses:
+        "204":
+          description: Active and scheduled enrollments transferred.
+  /programs/{programId}/winners/lock:
+    post:
+      operationId: lockProgramWinners
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "201":
+          description: Immutable top-five snapshot.
+  /programs/{programId}/winner-posters:
+    post:
+      operationId: publishWinnerPoster
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [winnerSnapshotId, mediaToken, title]
+              properties:
+                winnerSnapshotId: { type: string, format: uuid }
+                mediaToken: { type: string }
+                title: { type: string, minLength: 1 }
+      responses:
+        "201":
+          description: Published poster tied to one winner snapshot.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ProgramId:
+      name: programId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    EnrollmentId:
+      name: enrollmentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    StepId:
+      name: stepId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 128 }
+  responses:
+    DomainError:
+      description: Stable actionable domain error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DomainError"
+  schemas:
+    Program:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - startsOn
+        - endsOn
+        - timezone
+        - scoring
+        - commerce
+        - days
+      properties:
+        id: { type: string, format: uuid }
+        sourceProgramId: { type: [string, "null"], format: uuid }
+        title: { type: string }
+        summary: { type: string }
+        coverImageUrl: { type: [string, "null"], format: uri }
+        coverAlternativeText: { type: [string, "null"] }
+        status:
+          type: string
+          enum:
+            - draft
+            - preparing_commerce
+            - scheduled
+            - active
+            - completed
+            - archived
+        pace: { type: string, enum: [scheduled, self_paced] }
+        startsOn: { type: string, format: date }
+        endsOn: { type: string, format: date }
+        timezone: { type: string }
+        pastStepPolicy:
+          type: string
+          enum: [available, read_only, hidden]
+        futureStepPolicy:
+          type: string
+          enum: [available, locked, hidden]
+        scoring:
+          $ref: "#/components/schemas/ScoringConfiguration"
+        commerce:
+          $ref: "#/components/schemas/CommerceConfiguration"
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgramDay"
+    ScoringConfiguration:
+      type: object
+      required:
+        - pointsPerActivity
+        - pointsPerWeightLossKilogram
+        - quizPassingPercentage
+      properties:
+        pointsPerActivity: { type: integer, minimum: 0 }
+        pointsPerWeightLossKilogram: { type: string }
+        quizPassingPercentage:
+          { type: integer, minimum: 0, maximum: 100 }
+    CommerceConfiguration:
+      type: object
+      required: [pricingMode, platformAvailability]
+      properties:
+        pricingMode: { type: string, enum: [free, paid] }
+        desiredPrice: { type: [string, "null"] }
+        platformAvailability:
+          type: array
+          items:
+            type: object
+            required: [platform, provisioningStatus]
+            properties:
+              platform: { type: string, enum: [app_store, play_store] }
+              provisioningStatus:
+                type: string
+                enum:
+                  - not_required
+                  - not_requested
+                  - provisioning
+                  - waiting_for_store
+                  - ready
+                  - action_required
+                  - retired
+              productId: { type: [string, "null"] }
+              displayPrice: { type: [string, "null"] }
+    ProgramDay:
+      type: object
+      required: [id, dayNumber, scheduledOn, steps]
+      properties:
+        id: { type: string, format: uuid }
+        dayNumber: { type: integer, minimum: 1 }
+        scheduledOn: { type: string, format: date }
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgramStep"
+    ProgramStep:
+      type: object
+      required: [id, order, title, content]
+      properties:
+        id: { type: string, format: uuid }
+        order: { type: integer, minimum: 1 }
+        title: { type: string }
+        instructions: { type: string }
+        content:
+          $ref: "#/components/schemas/StepContent"
+    StepContent:
+      type: object
+      required: [kind, completionPolicy, questions]
+      properties:
+        kind:
+          type: string
+          enum:
+            - article
+            - video
+            - form
+            - quiz
+            - initial_weigh_in
+            - daily_weigh_in
+            - final_weigh_in
+        completionPolicy:
+          type: string
+          enum:
+            - mark_complete
+            - answer_all_questions
+            - watch_video
+            - automatic_quiz
+            - submit_weigh_in
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+    Question:
+      type: object
+      required: [id, order, kind, prompt, options]
+      properties:
+        id: { type: string, format: uuid }
+        order: { type: integer, minimum: 1 }
+        kind:
+          type: string
+          enum:
+            - short_answer
+            - long_answer
+            - number
+            - single_choice
+            - multiple_choice
+            - image_choice
+            - photo_upload
+            - heading
+            - text
+        prompt: { type: string }
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionOption"
+    QuestionOption:
+      type: object
+      required: [id, order, title]
+      properties:
+        id: { type: string, format: uuid }
+        order: { type: integer, minimum: 1 }
+        title: { type: string }
+        mediaUrl: { type: [string, "null"], format: uri }
+        mediaAlternativeText: { type: [string, "null"] }
+    DuplicateProgramRequest:
+      type: object
+      required: [title, startDate]
+      properties:
+        title: { type: string, minLength: 1 }
+        startDate: { type: string, format: date }
+        endDate: { type: [string, "null"], format: date }
+    EnrollmentContext:
+      type: object
+      required: [enrollment, program, submissions, weighIns]
+      properties:
+        enrollment:
+          $ref: "#/components/schemas/Enrollment"
+        program:
+          $ref: "#/components/schemas/Program"
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/StepSubmission"
+        weighIns:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeighIn"
+    WeighIn:
+      type: object
+      required:
+        - id
+        - enrollmentId
+        - stepId
+        - kind
+        - weightKilograms
+        - recordedAt
+      properties:
+        id: { type: string, format: uuid }
+        enrollmentId: { type: string, format: uuid }
+        stepId: { type: string, format: uuid }
+        kind:
+          type: string
+          enum: [initial, daily, final]
+        weightKilograms:
+          type: string
+          pattern: '^\d+(\.\d{1,2})?$'
+        recordedAt: { type: string, format: date-time }
+    Enrollment:
+      type: object
+      required: [id, programId, participantId, coachId, status]
+      properties:
+        id: { type: string, format: uuid }
+        programId: { type: string, format: uuid }
+        participantId: { type: string, format: uuid }
+        coachId: { type: string, format: uuid }
+        status:
+          type: string
+          enum:
+            - initiated
+            - waiting_for_payment
+            - active
+            - completed
+            - cancelled
+            - refunded
+    StepSubmissionRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionAnswer"
+        watchedPercentage: { type: [integer, "null"], minimum: 0, maximum: 100 }
+    SubmissionAnswer:
+      type: object
+      required: [questionId]
+      properties:
+        questionId: { type: string, format: uuid }
+        textValue: { type: [string, "null"] }
+        numberValue: { type: [string, "null"] }
+        selectedOptionIds:
+          type: array
+          items: { type: string, format: uuid }
+        uploadedPhotoToken: { type: [string, "null"] }
+    StepSubmission:
+      type: object
+      required: [id, enrollmentId, stepId, status, answers]
+      properties:
+        id: { type: string, format: uuid }
+        enrollmentId: { type: string, format: uuid }
+        stepId: { type: string, format: uuid }
+        status: { type: string, enum: [pending, approved, rejected] }
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionAnswer"
+        quizResult:
+          type: [object, "null"]
+          properties:
+            correctCount: { type: integer }
+            totalCount: { type: integer }
+            percentage: { type: integer }
+            passed: { type: boolean }
+            awardedPoints: { type: integer }
+    Entitlement:
+      type: object
+      required: [id, programId, participantId, status]
+      properties:
+        id: { type: string, format: uuid }
+        programId: { type: string, format: uuid }
+        participantId: { type: string, format: uuid }
+        status: { type: string, enum: [active, revoked, refunded] }
+    DomainError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - validation_failed
+            - permission_denied
+            - not_found
+            - conflict
+            - coach_qr_invalid
+            - coach_mismatch
+            - program_unavailable
+            - program_full
+            - payment_pending
+            - purchase_unverified
+            - quiz_attempt_used
+        message: { type: string }
+        field: { type: [string, "null"] }

@@ -7,6 +7,7 @@ struct AdminContentView: View {
 
     @State private var selectedContent: ManagedContent?
     @State private var posterPendingRemoval: ManagedContent?
+    @State private var showsProgramPicker = false
     @State private var error: DomainError?
 
     var body: some View {
@@ -40,6 +41,15 @@ struct AdminContentView: View {
             AdminPosterEditorSheet(
                 initialContent: content,
                 features: features
+            )
+        }
+        .sheet(isPresented: $showsProgramPicker) {
+            AdminWinnerPosterProgramPicker(
+                programs: completedPrograms,
+                onSelect: { program in
+                    showsProgramPicker = false
+                    Task { await preparePoster(for: program) }
+                }
             )
         }
         .confirmationDialog(
@@ -91,10 +101,7 @@ struct AdminContentView: View {
                 subtitle: "Tambahkan gambar vertikal untuk galeri Home.",
                 systemImage: "photo.stack.fill"
             ) {
-                selectedContent = features.makeWinnerBanner(
-                    programID: nil,
-                    sortOrder: nextPosterSortOrder
-                )
+                showsProgramPicker = true
             }
             .accessibilityIdentifier("admin.content.create-banner")
         }
@@ -205,6 +212,31 @@ struct AdminContentView: View {
         (currentPosters.map(\.sortOrder).max() ?? 0) + 1
     }
 
+    private var completedPrograms: [AdminProgramDraft] {
+        guard case .loaded(let programs) = features.programsState else {
+            return []
+        }
+        return programs
+            .filter { $0.status == .completed || $0.status == .archived }
+            .sorted { $0.endDate > $1.endDate }
+    }
+
+    private func preparePoster(for program: AdminProgramDraft) async {
+        await features.loadLeaderboard(programID: program.id)
+        guard case .loaded(let winners) = features.winnersState,
+              let snapshotID = winners.first?.id else {
+            error = .conflict(
+                reason: "Kunci pemenang program ini sebelum membuat poster."
+            )
+            return
+        }
+        selectedContent = features.makeWinnerBanner(
+            programID: program.id,
+            winnerSnapshotID: snapshotID,
+            sortOrder: nextPosterSortOrder
+        )
+    }
+
     private func posters(
         from content: [ManagedContent]
     ) -> [ManagedContent] {
@@ -231,6 +263,61 @@ struct AdminContentView: View {
             error = domainError
         } catch {
             self.error = .unknown
+        }
+    }
+}
+
+@MainActor
+private struct AdminWinnerPosterProgramPicker: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let programs: [AdminProgramDraft]
+    let onSelect: (AdminProgramDraft) -> Void
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if programs.isEmpty {
+                    ContentUnavailableView(
+                        "Belum ada program selesai",
+                        systemImage: "trophy",
+                        description: Text(
+                            "Selesaikan program dan kunci pemenang sebelum "
+                                + "membuat poster."
+                        )
+                    )
+                } else {
+                    List(programs) { program in
+                        Button {
+                            onSelect(program)
+                        } label: {
+                            VStack(
+                                alignment: .leading,
+                                spacing: AppSpacing.xxSmall
+                            ) {
+                                Text(program.title)
+                                    .font(AppTypography.cardTitle)
+                                    .foregroundStyle(Color.appPrimaryText)
+                                Text(
+                                    program.endDate.formatted(
+                                        date: .abbreviated,
+                                        time: .omitted
+                                    )
+                                )
+                                .font(AppTypography.secondary)
+                                .foregroundStyle(Color.appSecondaryText)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Pilih program")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") { dismiss() }
+                }
+            }
         }
     }
 }

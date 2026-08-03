@@ -1,5 +1,9 @@
 # Phase 11: Real Data, Storage Uploads, and Server Operations
 
+> Status: spesifikasi lama ditahan. Operasi server aktif tercantum pada
+> E2E-10: Coach guard, enrollment/leaderboard atomik, typed submission, kuis,
+> timbang, scoring, closure, winner snapshot, serta poster terkait program.
+
 ## Tujuan
 
 Mengganti in-memory repository secara bertahap dengan Supabase adapters dan authoritative server operations tanpa mengubah screen contracts.

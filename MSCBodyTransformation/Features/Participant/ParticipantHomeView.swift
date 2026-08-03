@@ -460,12 +460,6 @@ struct ParticipantHomeView: View {
         guard program.id == store.currentProgram?.id else {
             return .program(program.id)
         }
-        if store.initialWeighIn == nil {
-            return .weighIn(.initial)
-        }
-        if isLastProgramDay(day, in: program), store.finalWeighIn == nil {
-            return .weighIn(.final)
-        }
         guard let day,
               store.access(for: day) == .available else {
             return .program(program.id)
@@ -496,6 +490,9 @@ struct ParticipantHomeView: View {
     }
 
     private func openProgram(_ program: Program) {
+        if store.enrollment(for: program.id)?.status == .active {
+            store.selectProgram(program.id)
+        }
         router.navigate(
             to: .participant(.programDetail(program.id, .today)),
             in: .participant(.today)
@@ -514,11 +511,6 @@ struct ParticipantHomeView: View {
         case .step(let step):
             router.navigate(
                 to: .participant(.stepDetail(step.id)),
-                in: .participant(.today)
-            )
-        case .weighIn(let type):
-            router.navigate(
-                to: .participant(.weighIn(type)),
                 in: .participant(.today)
             )
         case .program(let programID):
@@ -803,17 +795,12 @@ private struct ParticipantHomeLeaderboardItem: View {
 
 private enum ParticipantHomeFocusAction {
     case step(ProgramStep)
-    case weighIn(WeighInType)
     case program(UUID)
 
     var title: LocalizedStringKey {
         switch self {
         case .step:
             "participant.home.focus.continue"
-        case .weighIn(.initial):
-            "participant.weigh.initial.action"
-        case .weighIn(.final):
-            "participant.weigh.final.action"
         case .program:
             "action.view_program"
         }
@@ -823,10 +810,6 @@ private enum ParticipantHomeFocusAction {
         switch self {
         case .step:
             "arrow.right"
-        case .weighIn(.initial):
-            "scalemass"
-        case .weighIn(.final):
-            "flag.checkered"
         case .program:
             "list.bullet.rectangle"
         }
@@ -836,10 +819,6 @@ private enum ParticipantHomeFocusAction {
         switch self {
         case .step(let step):
             "participant.step.open.\(step.order)"
-        case .weighIn(.initial):
-            "participant.weigh.initial.open"
-        case .weighIn(.final):
-            "participant.weigh.final.open"
         case .program:
             nil
         }

@@ -5,7 +5,6 @@ nonisolated enum ParticipantEntryStage: Equatable, Sendable {
     case login
     case profile
     case disclaimer
-    case initialWeighIn
     case complete
 }
 
@@ -35,6 +34,7 @@ nonisolated struct ParticipantJourneySnapshot: Equatable, Sendable {
     let profile: ParticipantProfile
     let programs: [Program]
     let enrollments: [ProgramEnrollment]
+    let enrollmentContexts: [ProgramEnrollmentContext]
     let activeProgram: Program?
     let activeEnrollment: ProgramEnrollment?
     let submissions: [StepSubmission]
@@ -88,6 +88,7 @@ final class ParticipantJourneyStore {
         }
     }
     var isPerformingAction = false
+    var focusedProgramID: UUID?
     var selectedLeaderboardProgramID: UUID?
     var leaderboardState: ParticipantLeaderboardLoadState = .idle
 
@@ -114,6 +115,14 @@ final class ParticipantJourneyStore {
             return nil
         }
         return snapshot?.activeProgram
+    }
+
+    var activeProgramContexts: [ProgramEnrollmentContext] {
+        snapshot?.enrollmentContexts.filter {
+            $0.enrollment.status == .active
+                && ($0.program.status == .active
+                    || $0.program.status == .scheduled)
+        } ?? []
     }
 
     var currentEnrollment: ProgramEnrollment? {
@@ -228,7 +237,8 @@ final class ParticipantJourneyStore {
                 switch enrollment.status {
                 case .completed:
                     enrollment.programID
-                case .active, .pending, .cancelled:
+                case .initiated, .waitingForPayment, .active,
+                     .cancelled, .refunded:
                     nil
                 }
             }
@@ -376,7 +386,8 @@ final class ParticipantJourneyStore {
 
     func submitWeighIn(
         type: WeighInType,
-        input: String
+        input: String,
+        stepID: UUID? = nil
     ) async throws {
         guard let repositories = environment.repositories,
               let enrollmentID = currentEnrollment?.id,
@@ -400,6 +411,7 @@ final class ParticipantJourneyStore {
         )
         _ = try await useCase(
             enrollmentID: enrollmentID,
+            stepID: stepID,
             type: type,
             weightKilograms: weight
         )
@@ -407,10 +419,57 @@ final class ParticipantJourneyStore {
         entryStage = .complete
     }
 
+    func submitWeighInStep(
+        _ step: ProgramStep,
+        input: String
+    ) async throws {
+        guard let kind = step.content?.weighInKind else {
+            throw DomainError.validation(
+                field: "step",
+                reason: "Langkah ini bukan langkah timbang."
+            )
+        }
+        let type: WeighInType = switch kind {
+        case .initial:
+            .initial
+        case .daily:
+            .daily
+        case .final:
+            .final
+        }
+        if type == .final, initialWeighIn == nil {
+            throw DomainError.validation(
+                field: "weight",
+                reason: "Isi timbang awal sebelum mengirim timbang akhir."
+            )
+        }
+        try await submitWeighIn(
+            type: type,
+            input: input,
+            stepID: step.id
+        )
+
+        guard let repositories = environment.repositories,
+              let enrollmentID = currentEnrollment?.id,
+              let program = currentProgram else {
+            throw DomainError.notFound(resource: "enrollment")
+        }
+        _ = try await CompleteTypedStepUseCase(
+            repository: repositories.submissions,
+            identifierGenerator: environment.identifierGenerator,
+            clock: environment.clock
+        )(
+            enrollmentID: enrollmentID,
+            step: step,
+            answers: [],
+            scoring: program.effectiveScoringConfiguration
+        )
+        try await reloadSnapshot()
+    }
+
     func completeStep(
         _ step: ProgramStep,
-        localPhotoReference: String?,
-        textAnswer: String?
+        answers: [StepSubmissionAnswer]
     ) async throws {
         guard access(for: step) == .available else {
             throw DomainError.validation(
@@ -419,44 +478,28 @@ final class ParticipantJourneyStore {
             )
         }
         guard let repositories = environment.repositories,
-              let enrollmentID = currentEnrollment?.id else {
+              let enrollmentID = currentEnrollment?.id,
+              let program = currentProgram else {
             throw DomainError.notFound(resource: "enrollment")
         }
-
-        var evidence: [SubmissionEvidence] = []
-        if let localPhotoReference {
-            evidence.append(
-                SubmissionEvidence(
-                    id: environment.identifierGenerator.makeIdentifier(),
-                    kind: .photo,
-                    localReference: localPhotoReference,
-                    textValue: nil
-                )
-            )
-        }
-        if let textAnswer {
-            evidence.append(
-                SubmissionEvidence(
-                    id: environment.identifierGenerator.makeIdentifier(),
-                    kind: .text,
-                    localReference: nil,
-                    textValue: textAnswer
-                )
+        guard step.content?.weighInKind == nil else {
+            throw DomainError.validation(
+                field: "step",
+                reason: "Gunakan form timbang untuk menyelesaikan langkah ini."
             )
         }
 
         isPerformingAction = true
         defer { isPerformingAction = false }
-        let useCase = CompleteLocalStepUseCase(
+        _ = try await CompleteTypedStepUseCase(
             repository: repositories.submissions,
             identifierGenerator: environment.identifierGenerator,
-            clock: environment.clock,
-            validator: StepSubmissionValidator()
-        )
-        _ = try await useCase(
+            clock: environment.clock
+        )(
             enrollmentID: enrollmentID,
             step: step,
-            evidence: evidence
+            answers: answers,
+            scoring: program.effectiveScoringConfiguration
         )
         try await reloadSnapshot()
     }
@@ -465,14 +508,29 @@ final class ParticipantJourneyStore {
         snapshot?.submissions.first { $0.stepID == stepID }
     }
 
+    func selectProgram(_ programID: UUID) {
+        guard activeProgramContexts.contains(where: {
+            $0.program.id == programID
+        }) else {
+            return
+        }
+        focusedProgramID = programID
+        selectedDayNumber = nil
+        debugDateOverride = nil
+        Task {
+            try? await reloadSnapshot()
+            selectedDayNumber = defaultDayNumber()
+        }
+    }
+
     func access(for day: ProgramDay) -> ProgramDayAccess {
         guard let program = currentProgram else {
             return .hidden
         }
         return ProgramDayAccessCalculator().access(
             for: day,
-            now: effectiveDate,
-            timeZoneIdentifier: program.timeZoneIdentifier
+            in: program,
+            now: effectiveDate
         )
     }
 
@@ -575,33 +633,6 @@ final class ParticipantJourneyStore {
         try await reloadSnapshot()
     }
 
-    func changeCoach(to coach: CoachProfile) async throws {
-        guard let repositories = environment.repositories,
-              let snapshot else {
-            throw DomainError.unknown
-        }
-        guard coach.isApproved && coach.isPublic else {
-            throw DomainError.permissionDenied
-        }
-        guard snapshot.profile.coachID != coach.id else {
-            throw DomainError.validation(
-                field: "coach",
-                reason: "Coach ini sudah menjadi pendampingmu."
-            )
-        }
-
-        var profile = snapshot.profile
-        profile.coachID = coach.id
-        _ = try await repositories.profiles.save(
-            participantProfile: profile
-        )
-        _ = try await repositories.enrollments.reassignCoach(
-            participantID: profile.id,
-            coachID: coach.id
-        )
-        try await reloadSnapshot()
-    }
-
     func joinProgram(
         programID: UUID,
         with coach: CoachProfile
@@ -634,14 +665,7 @@ final class ParticipantJourneyStore {
             participantID: snapshot.profile.id,
             coachID: coach.id
         )
-
-        if snapshot.profile.coachID != coach.id {
-            var profile = snapshot.profile
-            profile.coachID = coach.id
-            _ = try await repositories.profiles.save(
-                participantProfile: profile
-            )
-        }
+        focusedProgramID = programID
         try await reloadSnapshot()
     }
 
@@ -829,33 +853,63 @@ final class ParticipantJourneyStore {
         let programs = try await programsTask
         let enrollments = try await enrollmentsTask
         let managedContent = try await managedContentTask
-        let activeEnrollment = enrollments.first { enrollment in
+        let eligibleEnrollments = enrollments.filter { enrollment in
             enrollment.status == .active
                 && programs.contains {
-                    $0.id == enrollment.programID && $0.status == .active
+                    $0.id == enrollment.programID
+                        && ($0.status == .active || $0.status == .scheduled)
                 }
         }
+        let activeEnrollment =
+            eligibleEnrollments.first {
+                $0.programID == focusedProgramID
+            } ?? eligibleEnrollments.first
         let activeProgram = activeEnrollment.flatMap { enrollment in
             programs.first {
                 $0.id == enrollment.programID
             }
         }
-
-        let submissions: [StepSubmission]
-        let weighIns: [WeighIn]
-        if let activeEnrollment {
-            async let submissionsTask = repositories.submissions.submissions(
-                enrollmentID: activeEnrollment.id
-            )
-            async let weighInsTask = repositories.weighIns.weighIns(
-                enrollmentID: activeEnrollment.id
-            )
-            submissions = try await submissionsTask
-            weighIns = try await weighInsTask
-        } else {
-            submissions = []
-            weighIns = []
+        if focusedProgramID == nil {
+            focusedProgramID = activeProgram?.id
         }
+
+        var enrollmentContexts: [ProgramEnrollmentContext] = []
+        for enrollment in enrollments
+        where enrollment.status == .active || enrollment.status == .completed {
+            guard let program = programs.first(where: {
+                $0.id == enrollment.programID
+            }) else {
+                continue
+            }
+            async let contextSubmissions =
+                repositories.submissions.submissions(
+                    enrollmentID: enrollment.id
+                )
+            async let contextWeighIns = repositories.weighIns.weighIns(
+                enrollmentID: enrollment.id
+            )
+            async let contextLeaderboard =
+                repositories.leaderboard.leaderboard(
+                    programID: program.id
+                )
+            let entries = try await contextLeaderboard
+            enrollmentContexts.append(
+                ProgramEnrollmentContext(
+                    enrollment: enrollment,
+                    program: program,
+                    submissions: try await contextSubmissions,
+                    weighIns: try await contextWeighIns,
+                    leaderboardEntry: entries.first {
+                        $0.participantID == profile.id
+                    }
+                )
+            )
+        }
+        let activeContext = activeEnrollment.flatMap { enrollment in
+            enrollmentContexts.first { $0.enrollment.id == enrollment.id }
+        }
+        let submissions = activeContext?.submissions ?? []
+        let weighIns = activeContext?.weighIns ?? []
 
         let leaderboard: [LeaderboardEntry]
         let winners: [ProgramWinner]
@@ -894,6 +948,7 @@ final class ParticipantJourneyStore {
             profile: profile,
             programs: programs,
             enrollments: enrollments,
+            enrollmentContexts: enrollmentContexts,
             activeProgram: activeProgram,
             activeEnrollment: activeEnrollment,
             submissions: submissions,
@@ -949,7 +1004,8 @@ final class ParticipantJourneyStore {
                 switch enrollment.status {
                 case .active, .completed:
                     enrollment.programID
-                case .pending, .cancelled:
+                case .initiated, .waitingForPayment, .cancelled,
+                     .refunded:
                     nil
                 }
             }

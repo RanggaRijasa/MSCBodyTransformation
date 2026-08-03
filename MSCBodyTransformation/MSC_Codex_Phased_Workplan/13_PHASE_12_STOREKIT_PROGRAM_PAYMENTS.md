@@ -1,5 +1,10 @@
 # Phase 12: StoreKit 2 Program Payments
 
+> Status: direkonsiliasi oleh E2E-11 dan E2E-12. Harga Admin adalah desired
+> price; harga tampil berasal dari store. Setiap cohort berbayar mempunyai
+> Product ID unik dan entitlement diverifikasi server-side serta berlaku
+> lintas platform.
+
 ## Tujuan
 
 Mengaktifkan pembayaran native Apple untuk peserta yang memilih program,

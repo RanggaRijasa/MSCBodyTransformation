@@ -210,8 +210,7 @@ private enum ParticipantProgramCatalogFilter:
             guard let enrollment else {
                 return false
             }
-            return (enrollment.status == .pending
-                || enrollment.status == .active)
+            return enrollment.status == .active
                 && (program.status == .active
                     || program.status == .scheduled)
         case .available:

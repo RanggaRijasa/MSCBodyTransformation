@@ -1,0 +1,2 @@
+-- Intentionally empty. Auth identities and private media must be created by
+-- deterministic integration-test setup, never copied from production.

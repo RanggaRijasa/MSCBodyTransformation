@@ -1,52 +1,31 @@
-# Panduan Data Mock
+# Panduan data lokal
 
-## Sumber data
+Fixture JSON berada di `MSCBodyTransformation/Resources/Fixtures` dan dimuat
+oleh `MockSeedData` ke `InMemoryAppRepository`.
 
-Fixture berada di `MSCBodyTransformation/Resources/Fixtures`. `MockSeedData`
-memuat dan memvalidasi seluruh file dengan decoder ISO 8601. Identifier,
-tanggal, relasi, dan urutan dibuat tetap agar test dapat diulang.
+## Kontrak fixture
 
-Data meliputi:
+- `programs.json`: scoring dan commerce program-wide, typed content, typed
+  questions, answer key, serta timbang awal/harian/akhir sebagai langkah.
+- `enrollments.json`: enrollment dan timbang per enrollment; timbang harian
+  membawa `stepID`.
+- `submissions.json`: typed answers; foto berada di
+  `localPhotoReference`, bukan array evidence.
+- `coaches.json`: profil dan QR identifier saja; tidak ada wallet/invite.
+- `leaderboard.json`: baseline demo; mutation baru direkonsiliasi oleh service
+  scoring yang sama.
+- `managed_content.json`: poster pemenang terkait program dan snapshot.
 
-- pengguna serta profil Peserta dan Coach;
-- program, hari, langkah, dan persyaratan bukti;
-- pendaftaran, timbang badan, submission, dan papan peringkat;
-- wallet Coach, ledger kuota, undangan, konten, pemenang, dan audit.
+Fixture harus deterministik, tidak memuat token/credential, tidak meniru data
+pribadi produksi, dan tetap dapat di-decode tanpa internet.
 
-## Repository lokal
+## Menambah skenario
 
-`InMemoryAppRepository` adalah actor tunggal yang memenuhi protocol per
-domain. Setiap proses aplikasi memulai seed baru; perubahan tidak ditulis ke
-backend atau database perangkat permanen.
+1. Gunakan UUID stabil.
+2. Tambahkan program, enrollment, submission, dan score dengan ID yang cocok.
+3. Pastikan satu Peserta hanya mempunyai satu `coachID` aktif.
+4. Gunakan semua pertanyaan interaktif sebagai required.
+5. Jalankan `jq empty` untuk JSON dan suite `MSCBodyTransformationTests`.
 
-## Skenario Debug
-
-`AppDemoScenario` memilih state awal. Skenario dapat:
-
-- menghapus enrollment Peserta untuk pengenalan;
-- menyembunyikan program aktif;
-- memindahkan clock efektif ke hari pertama, tengah, atau akhir;
-- melengkapi hari sebelumnya;
-- mengatur kuota Coach menjadi nol;
-- memfilter draft atau program aktif Admin;
-- mengunci snapshot pemenang;
-- menampilkan loading, offline, izin ditolak, atau repository error.
-
-Semua mutasi memakai fixture dan clock yang sama sehingga launch baru
-menghasilkan state identik.
-
-## Reset
-
-Alat Debug Peserta menghapus enrollment, submission, timbang, dan skor lokal
-Peserta terpilih. Admin dapat mereset snapshot pemenang hanya pada Debug.
-Menutup lalu menjalankan ulang aplikasi juga membuat repository dari seed
-awal.
-
-## Menambah fixture
-
-1. Gunakan UUID tetap dan tanggal ISO 8601.
-2. Jaga raw value enum yang sudah dipersist.
-3. Jangan gunakan nama, foto, berat, atau token milik orang nyata.
-4. Perbarui relasi pada semua file terkait.
-5. Jalankan suite fixture, domain, repository, dan UI scenario terkait.
-6. Jangan menambahkan URL privat atau network call.
+Media deterministik untuk test berada pada test fixture. Jangan menambahkan
+tombol “gunakan foto demo” ke UI produksi.

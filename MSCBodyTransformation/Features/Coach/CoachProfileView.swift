@@ -221,7 +221,7 @@ struct CoachProfileView: View {
         Section {
             Button {
                 router.navigate(
-                    to: .coach(.invite),
+                    to: .coach(.coachIdentifier),
                     in: .coach(.profile)
                 )
             } label: {

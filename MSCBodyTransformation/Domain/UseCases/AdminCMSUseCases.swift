@@ -49,22 +49,29 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                 issue(.timeZone, "Pilih zona waktu IANA yang valid.")
             )
         }
-        if draft.initialWeighInWindowHours <= 0
-            || draft.finalWeighInWindowHours <= 0 {
+        if draft.pointsPerActivity < 0 {
             issues.append(
-                issue(.dates, "Jendela timbang harus lebih dari nol jam.")
+                issue(.scoring, "Poin aktivitas tidak boleh negatif.")
             )
         }
-        if draft.weightPointsPerKilogram <= 0 {
+        if draft.weightPointsPerKilogram < 0 {
             issues.append(
-                issue(.scoring, "Poin per kilogram harus lebih dari nol.")
+                issue(.scoring, "Poin per kilogram tidak boleh negatif.")
+            )
+        }
+        if !(0...100).contains(draft.quizPassingPercentage) {
+            issues.append(
+                issue(
+                    .scoring,
+                    "Nilai minimum kuis harus antara 0 dan 100 persen."
+                )
             )
         }
         if let participantLimit = draft.participantLimit,
            participantLimit <= 0 {
             issues.append(
                 issue(
-                    .access,
+                    .participantLimit,
                     "Batas peserta harus lebih dari nol."
                 )
             )
@@ -156,15 +163,6 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                         .stepOrder,
                         "Urutan langkah hari ke-\(day.dayNumber) "
                             + "harus dimulai dari 1 tanpa jeda."
-                    )
-                )
-            }
-            if activeSteps.contains(where: { $0.points < 0 }) {
-                issues.append(
-                    issue(
-                        .scoring,
-                        "Poin langkah hari ke-\(day.dayNumber) "
-                            + "tidak boleh negatif."
                     )
                 )
             }
@@ -266,8 +264,76 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                         )
                     )
                 }
+                if questions.contains(where: { question in
+                    guard question.kind == .imageChoice else {
+                        return false
+                    }
+                    return question.optionMediaReferences.count
+                            != question.options.count
+                        || question.optionMediaReferences.contains {
+                            ($0 ?? "").trimmingCharacters(
+                                in: .whitespacesAndNewlines
+                            ).isEmpty
+                        }
+                }) {
+                    issues.append(
+                        issue(
+                            .content,
+                            "Pilihan gambar pada \(step.title) "
+                                + "memerlukan satu gambar untuk setiap "
+                                + "pilihan."
+                        )
+                    )
+                }
+                if step.contentKind == .quiz {
+                    let objectiveQuestions = questions.filter {
+                        switch $0.kind {
+                        case .number, .singleChoice, .multipleChoice,
+                             .imageChoice:
+                            true
+                        case .shortAnswer, .longAnswer, .photoUpload,
+                             .heading, .text:
+                            false
+                        }
+                    }
+                    if objectiveQuestions.isEmpty {
+                        issues.append(
+                            issue(
+                                .content,
+                                "Kuis \(step.title) memerlukan minimal "
+                                    + "satu pertanyaan objektif."
+                            )
+                        )
+                    }
+                    if objectiveQuestions.contains(where: {
+                        guard let key = $0.answerKey else { return true }
+                        switch $0.kind {
+                        case .number:
+                            return key.numberValue == nil
+                        case .singleChoice, .multipleChoice, .imageChoice:
+                            return key.selectedOptionIDs.isEmpty
+                        case .shortAnswer, .longAnswer, .photoUpload,
+                             .heading, .text:
+                            return false
+                        }
+                    }) {
+                        issues.append(
+                            issue(
+                                .content,
+                                "Jawaban benar kuis \(step.title) belum "
+                                    + "lengkap."
+                            )
+                        )
+                    }
+                }
             }
         }
+        let contractIssues = ProgramContractValidator().validate(
+            draft.program()
+        )
+        issues.append(
+            contentsOf: contractIssues.map { issue(.content, $0) }
+        )
         return issues
     }
 
@@ -366,6 +432,8 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
 
     func normalized(_ draft: AdminProgramDraft) -> AdminProgramDraft {
         var result = draft
+        result.initialWeighInWindowHours = 0
+        result.finalWeighInWindowHours = 0
         if result.durationMode == .fixedDuration {
             let calendar = calendar(for: result.timeZoneIdentifier)
             result.endDate = calendar.date(
@@ -386,8 +454,13 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                         updatedStep.order = stepIndex + 1
                         if updatedStep.contentKind == .video {
                             updatedStep.mediaKind = .video
+                        } else {
+                            updatedStep.mediaKind = nil
                         }
-                        if updatedStep.contentKind == .quiz,
+                        if (
+                            updatedStep.contentKind == .quiz
+                                || updatedStep.contentKind == .form
+                        ),
                            updatedStep.quiz == nil {
                             updatedStep.quiz = AdminQuizDraft(
                                 title: updatedStep.title,
@@ -401,6 +474,21 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                                 .map { questionIndex, question in
                                     var updatedQuestion = question
                                     updatedQuestion.order = questionIndex + 1
+                                    if updatedQuestion.optionIDs.count
+                                        != updatedQuestion.options.count {
+                                        updatedQuestion.optionIDs =
+                                            updatedQuestion.options.indices
+                                            .map { optionIndex in
+                                                childIdentifier(
+                                                    parent:
+                                                        updatedQuestion.id,
+                                                    discriminator:
+                                                        optionIndex + 1
+                                                )
+                                            }
+                                        updatedQuestion.answerKey?
+                                            .selectedOptionIDs = []
+                                    }
                                     return updatedQuestion
                                 }
                             updatedStep.quiz = questionGroup
@@ -508,7 +596,7 @@ nonisolated struct CreateAdminProgramDraftUseCase: Sendable {
             timeZoneIdentifier: "Asia/Makassar",
             initialWeighInWindowHours: 24,
             finalWeighInWindowHours: 24,
-            weightPointsPerKilogram: 800,
+            weightPointsPerKilogram: 0,
             pastStepPolicy: .readOnly,
             futureStepPolicy: .locked,
             status: .draft,
@@ -702,17 +790,37 @@ nonisolated struct AdjustAdminScoreUseCase: Sendable {
 
 nonisolated struct LockAdminWinnersUseCase: Sendable {
     let leaderboard: any LeaderboardRepository
+    let enrollments: any EnrollmentRepository
+    let submissions: any SubmissionRepository
+    let weighIns: any WeighInRepository
     let audit: any AuditRepository
     let identifierGenerator: any IdentifierGenerating
     let clock: any AppClock
 
     func callAsFunction(
+        program: Program,
         programID: UUID,
         adminID: UUID
     ) async throws -> [ProgramWinner] {
         let existing = try await leaderboard.winners(programID: programID)
         guard existing.isEmpty else {
             return existing
+        }
+        let preflight = try await LoadProgramClosurePreflightUseCase(
+            enrollments: enrollments,
+            submissions: submissions,
+            weighIns: weighIns
+        )(program: program)
+        guard preflight.canLockWinners else {
+            let pendingReviews = preflight.count(for: .pendingReview)
+            let missingFinalWeighIns = preflight.count(
+                for: .missingFinalWeighIn
+            )
+            throw DomainError.conflict(
+                reason: "Selesaikan \(pendingReviews) pemeriksaan tertunda "
+                    + "dan \(missingFinalWeighIns) timbang akhir sebelum "
+                    + "mengunci pemenang."
+            )
         }
         let winners = try await leaderboard.lockTopFive(
             programID: programID,
@@ -732,6 +840,175 @@ nonisolated struct LockAdminWinnersUseCase: Sendable {
     }
 }
 
+nonisolated struct ReopenQuizAttemptUseCase: Sendable {
+    let submissions: any SubmissionRepository
+    let audit: any AuditRepository
+    let identifierGenerator: any IdentifierGenerating
+    let clock: any AppClock
+
+    func callAsFunction(
+        enrollmentID: UUID,
+        stepID: UUID,
+        adminID: UUID,
+        reason: String
+    ) async throws -> QuizAttemptResult {
+        let result = try await submissions.reopenQuizAttempt(
+            enrollmentID: enrollmentID,
+            stepID: stepID,
+            adminID: adminID,
+            reason: reason,
+            reopenedAt: clock.now()
+        )
+        _ = try await audit.append(
+            auditEvent: AuditEvent(
+                id: identifierGenerator.makeIdentifier(),
+                kind: .quizAttemptReopened,
+                actorUserID: adminID,
+                subjectID: result.id,
+                summary: "Percobaan kuis dibuka kembali: "
+                    + (result.reopenReason ?? ""),
+                createdAt: clock.now()
+            )
+        )
+        return result
+    }
+}
+
+nonisolated struct CorrectWeighInUseCase: Sendable {
+    let weighIns: any WeighInRepository
+    let audit: any AuditRepository
+    let identifierGenerator: any IdentifierGenerating
+    let clock: any AppClock
+
+    func callAsFunction(
+        enrollmentID: UUID,
+        type: WeighInType,
+        stepID: UUID? = nil,
+        weightKilograms: Decimal,
+        adminID: UUID,
+        reason: String
+    ) async throws -> WeighIn {
+        let trimmedReason = reason.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmedReason.isEmpty else {
+            throw DomainError.validation(
+                field: "reason",
+                reason: "Alasan koreksi timbang wajib diisi."
+            )
+        }
+        let corrected = try await weighIns.correctWeighIn(
+            enrollmentID: enrollmentID,
+            type: type,
+            stepID: stepID,
+            weightKilograms: weightKilograms,
+            correctedAt: clock.now()
+        )
+        _ = try await audit.append(
+            auditEvent: AuditEvent(
+                id: identifierGenerator.makeIdentifier(),
+                kind: .weighInCorrected,
+                actorUserID: adminID,
+                subjectID: corrected.id,
+                summary: "Timbang \(type.rawValue) dikoreksi: "
+                    + trimmedReason,
+                createdAt: clock.now()
+            )
+        )
+        return corrected
+    }
+}
+
+nonisolated struct LoadProgramClosurePreflightUseCase: Sendable {
+    let enrollments: any EnrollmentRepository
+    let submissions: any SubmissionRepository
+    let weighIns: any WeighInRepository
+
+    func callAsFunction(program: Program) async throws
+        -> ProgramClosurePreflight {
+        let programEnrollments = try await enrollments.allEnrollments()
+            .filter {
+                $0.programID == program.id
+                    && ($0.status == .active || $0.status == .completed)
+            }
+        let requiresFinalWeighIn = program.days
+            .flatMap(\.steps)
+            .contains { $0.content?.kind == .finalWeighIn }
+        var issues: [ProgramClosureIssue] = []
+
+        for enrollment in programEnrollments {
+            let enrollmentSubmissions = try await submissions.submissions(
+                enrollmentID: enrollment.id
+            )
+            let pendingCount = enrollmentSubmissions.filter {
+                $0.status == .pending
+            }.count
+            if pendingCount > 0 {
+                issues.append(
+                    issue(
+                        enrollment: enrollment,
+                        kind: .pendingReview,
+                        count: pendingCount,
+                        blocksWinnerLock: true
+                    )
+                )
+            }
+
+            if requiresFinalWeighIn {
+                let enrollmentWeighIns = try await weighIns.weighIns(
+                    enrollmentID: enrollment.id
+                )
+                if !enrollmentWeighIns.contains(where: { $0.type == .final }) {
+                    issues.append(
+                        issue(
+                            enrollment: enrollment,
+                            kind: .missingFinalWeighIn,
+                            count: 1,
+                            blocksWinnerLock: true
+                        )
+                    )
+                }
+            }
+
+            let failedQuizCount = enrollmentSubmissions.filter {
+                $0.quizResult?.isPassed == false
+            }.count
+            if failedQuizCount > 0 {
+                issues.append(
+                    issue(
+                        enrollment: enrollment,
+                        kind: .failedQuiz,
+                        count: failedQuizCount,
+                        blocksWinnerLock: false
+                    )
+                )
+            }
+        }
+
+        return ProgramClosurePreflight(
+            programID: program.id,
+            enrollmentCount: programEnrollments.count,
+            issues: issues
+        )
+    }
+
+    private func issue(
+        enrollment: ProgramEnrollment,
+        kind: ProgramClosureIssueKind,
+        count: Int,
+        blocksWinnerLock: Bool
+    ) -> ProgramClosureIssue {
+        ProgramClosureIssue(
+            id: "\(enrollment.id.uuidString)-\(kind.rawValue)",
+            enrollmentID: enrollment.id,
+            participantID: enrollment.participantID,
+            kind: kind,
+            count: count,
+            blocksWinnerLock: blocksWinnerLock
+        )
+    }
+}
+
 nonisolated struct ManagedContentValidator: Sendable {
     func validate(_ content: ManagedContent) throws {
         if content.kind == .winnerBanner {
@@ -741,6 +1018,14 @@ nonisolated struct ManagedContentValidator: Sendable {
                 throw DomainError.validation(
                     field: "winnerPoster",
                     reason: "Poster pemenang wajib dipilih."
+                )
+            }
+            if content.isPublished,
+               (content.programID == nil || content.winnerSnapshotID == nil) {
+                throw DomainError.validation(
+                    field: "winnerSnapshot",
+                    reason: "Poster harus terkait program dan snapshot "
+                        + "pemenang yang sudah dikunci."
                 )
             }
         }

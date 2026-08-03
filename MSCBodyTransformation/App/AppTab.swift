@@ -117,7 +117,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
     case participantMidProgram = "participant_mid_program"
     case participantFinalWeighIn = "participant_final_weigh_in"
     case participantFinalLeaderboard = "participant_final_leaderboard"
-    case coachWalletZero = "coach_wallet_zero"
+    case coachIdentifier = "coach_identifier"
     case coachActiveParticipants = "coach_active_participants"
     case coachReviewQueue = "coach_review_queue"
     case adminDashboard = "admin_dashboard"
@@ -141,7 +141,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
              .participantDayOne, .participantMidProgram,
              .participantFinalWeighIn, .participantFinalLeaderboard:
             role == .participant
-        case .coachWalletZero, .coachActiveParticipants,
+        case .coachIdentifier, .coachActiveParticipants,
              .coachReviewQueue:
             role == .coach
         case .adminDashboard, .adminDraftCMS, .adminActiveProgram,
@@ -169,7 +169,7 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .participantFinalLeaderboard:
             .participant(.leaderboard)
-        case .coachWalletZero:
+        case .coachIdentifier:
             .coach(.dashboard)
         case .coachActiveParticipants:
             .coach(.dashboard)

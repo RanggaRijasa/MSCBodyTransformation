@@ -1,5 +1,10 @@
 # Phase 05: Admin CMS UI
 
+> Status: arsip baseline Phase 05. CMS baru selalu publik, memakai scoring
+> program-wide, content/pertanyaan typed, timbang sebagai content step,
+> publish preflight, dan duplikasi cohort lossless. Workplan remediation dan
+> matriks kontrak menggantikan kontrol lama yang bertentangan.
+
 ## Tujuan
 
 Membangun CMS native di dalam aplikasi menggunakan local draft repository. Admin dapat membuat, mengedit, mem-preview, dan mensimulasikan publish program tanpa backend.
@@ -46,7 +51,7 @@ Gunakan ringkasan non-linear berbasis `List` dan `NavigationLink`:
 2. Jadwal dan peserta.
 3. Aturan dan poin.
 4. Konten.
-5. Pratinjau peserta.
+5. Pratinjau program untuk Peserta dan Coach.
 6. Tinjau dan publikasi.
 
 Susunan konten mengikuti hierarki:
@@ -136,12 +141,13 @@ publikasi bersifat read-only.
 
 ### Preview
 
-- [x] Preview participant Today.
-- [x] Preview timeline.
-- [x] Preview step detail.
-- [x] Preview locked states.
+- [x] Renderer aktivitas yang sama dipakai Admin, Peserta, dan Coach.
+- [x] Pemilih konteks Peserta/Coach hanya tampil pada wrapper Admin.
+- [x] Preview timeline, progres, detail langkah, dan locked states.
+- [x] Preview Coach tidak menampilkan angka berat atau foto privat pada daftar.
 - [x] Preview leaderboard scoring description.
-- [x] Preview on small and large device sizes.
+- [x] Layout adaptif mengikuti perangkat; tidak ada kontrol ukuran perangkat
+      pada UI produksi.
 
 ### Local publish simulation
 
@@ -244,7 +250,8 @@ Jangan:
 
 - [x] Admin dapat membuat valid sample program tanpa perubahan kode.
 - [x] Invalid draft tidak dapat dipublish dalam local simulation.
-- [x] Participant preview mencerminkan draft.
+- [x] Preview Peserta dan Coach mencerminkan draft melalui renderer runtime
+      yang sama.
 - [x] People dan Content screens dapat didemokan.
 - [x] Semua privileged local action membuat local audit entry.
 - [x] Test lulus dan clean build.
@@ -252,6 +259,31 @@ Jangan:
 ## Progress log
 
 ### Log
+
+#### 2026-08-03 — Pratinjau program memakai renderer runtime Peserta/Coach
+
+- Files changed: renderer aktivitas program di `SharedUI`, layar aktivitas
+  Peserta, detail progres Coach, wrapper pratinjau dan hub editor Admin,
+  default scoring draft, localization catalog, unit/UI tests, inventaris
+  layar, status implementasi end-to-end, dan spesifikasi desain pratinjau.
+- Assumptions: Admin hanya memiliki pemilih peran, banner penjelasan, dan
+  skenario submission deterministik. Program tetap berasal dari mapper
+  draft-ke-published yang sama. Hari pertama menjadi hari fokus dan hari
+  berikutnya terkunci. Konteks Coach bersifat read-only dan tidak dapat
+  membuka layar pengerjaan Peserta. Poin timbang draft baru dimulai dari nol
+  dan hanya diaktifkan Admin setelah langkah timbang awal/akhir tersedia.
+- Build command: XcodeBuildMCP `build_run_sim` Debug pada iPhone 17 iOS 26.5
+  dengan locale perangkat `en_US` dan skenario `admin_draft_program`.
+- Test command: XcodeBuildMCP `test_sim` untuk seluruh
+  `MSCBodyTransformationTests`, lalu focused XCTest UI
+  `testAdminCreatesDraftAddsDayStepPreviewsAndPublishes`,
+  `testParticipantCompletesLocalJourneySlice`, dan
+  `testCoachCompletesCriticalLocalJourney`.
+- Result: build/run lulus tanpa warning/error; 130 unit/integration tests dan
+  tiga perjalanan UI end-to-end lulus tanpa failure. Pratinjau tidak lagi
+  memiliki kontrol ukuran perangkat atau renderer khusus Admin.
+- Remaining blockers: tidak ada blocker lokal. Data server, otorisasi, dan
+  scoring authoritative tetap mengikuti phase backend yang ditetapkan.
 
 #### 2026-08-02 — Dashboard menjadi halaman awal Admin
 

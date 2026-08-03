@@ -1,5 +1,9 @@
 # Phase 08: Accessibility, Reliability, UI Tests, and Offline Demo
 
+> Status: arsip baseline Phase 08. Skenario wallet/invite lama sudah dihapus.
+> Launcher aktif memakai `coach_identifier`, Admin default Dashboard, dan
+> regression program mengikuti workplan remediation.
+
 ## Tujuan
 
 Menjadikan Track A sebagai prototype native yang stabil, dapat didemokan end-to-end, mudah direview, dan siap menerima backend adapter tanpa perubahan UI besar.

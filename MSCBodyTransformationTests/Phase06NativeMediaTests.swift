@@ -149,24 +149,20 @@ struct Phase06NativeMediaTests {
         #expect(payload.opaqueToken == "COACH-RAKA-7K9Q")
     }
 
-    @Test("Pratinjau undangan memetakan kode ke program")
-    func invitePreviewMapsCodeToProgram() async throws {
-        let repository = InMemoryAppRepository(
-            seed: try MockSeedData.load()
+    @Test("Payload QR memetakan identifier opaque ke Coach")
+    func qrPayloadMapsOpaqueIdentifierToCoach() throws {
+        let seed = try MockSeedData.load()
+        let payload = try LocalInvitePayloadParser().payload(
+            from: "msc-demo://join/coach-raka-7k9q"
         )
-        let preview = try await PreviewLocalInviteUseCase(
-            invites: repository,
-            programs: repository,
-            clock: FixedClock(
-                now: try Date.ISO8601FormatStyle().parse(
-                    "2026-07-27T00:00:00Z"
-                )
-            )
-        )(code: " msc7hari ")
+        let coach = try #require(
+            seed.coachProfiles.first {
+                $0.enrollmentIdentifier == payload.opaqueToken
+            }
+        )
 
-        #expect(preview.invite.code == "MSC7HARI")
-        #expect(preview.program.id == preview.invite.programID)
-        #expect(preview.program.title == "Transformasi 7 hari")
+        #expect(coach.displayName == "Coach Raka")
+        #expect(coach.isApproved)
     }
 
     @Test("Parser hanya menerima scheme dan host lokal yang disetujui")
@@ -197,25 +193,25 @@ struct Phase06NativeMediaTests {
         }
     }
 
-    @Test("Langkah dengan bukti wajib tidak dapat diselesaikan kosong")
+    @Test("Pertanyaan foto wajib tidak dapat diselesaikan kosong")
     func evidenceRequirementValidation() throws {
         let program = try #require(
             MockSeedData.load().programs.first {
                 $0.status == .active
             }
         )
-        let step = try #require(
+        let question = try #require(
             program.days.flatMap(\.steps).first {
-                $0.requirements.contains {
-                    $0.kind == .photoEvidence && $0.isRequired
-                }
-            }
+                $0.content?.questions.contains {
+                    $0.kind == .photoUpload
+                } == true
+            }?.content?.questions.first { $0.kind == .photoUpload }
         )
 
         #expect(throws: DomainError.self) {
-            try StepSubmissionValidator().validate(
-                step: step,
-                evidence: []
+            try StepAnswerValidator().validate(
+                questions: [question],
+                answers: []
             )
         }
     }

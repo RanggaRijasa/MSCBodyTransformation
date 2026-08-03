@@ -1,5 +1,9 @@
 # Phase 06: Native Media, QR, and Local Workflows
 
+> Status: arsip baseline Phase 06. Foto adalah typed question answer dan QR
+> hanya memuat identifier Coach. Tidak ada invite program, expiry, capacity,
+> redemption token, atau input kode manual pada kontrak aktif.
+
 ## Tujuan
 
 Mengimplementasikan kemampuan native yang dapat dibuat tanpa backend: photo picker, camera wrapper, image processing, local video playback, QR generation, QR scanning, share sheet, dan safe local file handling.

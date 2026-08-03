@@ -5,16 +5,5 @@
     {"id":"30000000-0000-0000-0000-000000000103","userID":"00000000-0000-0000-0000-000000000103","enrollmentIdentifier":"COACH-NIKO-8D6M","displayName":"Coach Niko","biography":"Membantu peserta membangun rutinitas yang realistis.","city":"Surabaya","isPublic":true,"isApproved":true},
     {"id":"30000000-0000-0000-0000-000000000104","userID":"00000000-0000-0000-0000-000000000104","enrollmentIdentifier":"COACH-SINTA-5W3R","displayName":"Coach Sinta","biography":"Pendampingan ramah untuk kebiasaan sehat.","city":"Jakarta","isPublic":true,"isApproved":true},
     {"id":"30000000-0000-0000-0000-000000000105","userID":"00000000-0000-0000-0000-000000000105","enrollmentIdentifier":"COACH-TIO-2H8N","displayName":"Tio Pranata","biography":"Profil menunggu persetujuan admin.","city":"Bandung","isPublic":false,"isApproved":false}
-  ],
-  "wallets": [
-    {"id":"31000000-0000-0000-0000-000000000101","coachID":"30000000-0000-0000-0000-000000000101","availableSeatCredits":8,"updatedAt":"2026-07-25T00:00:00Z"}
-  ],
-  "creditLedgerEntries": [
-    {"id":"32000000-0000-0000-0000-000000000101","walletID":"31000000-0000-0000-0000-000000000101","kind":"purchase","seatCreditDelta":10,"note":"Pembelian kuota demo lokal.","createdAt":"2026-07-01T00:00:00Z"},
-    {"id":"32000000-0000-0000-0000-000000000102","walletID":"31000000-0000-0000-0000-000000000101","kind":"reservation","seatCreditDelta":-2,"note":"Reservasi dua peserta demo.","createdAt":"2026-07-15T00:00:00Z"}
-  ],
-  "invites": [
-    {"id":"33000000-0000-0000-0000-000000000101","code":"MSC7HARI","coachID":"30000000-0000-0000-0000-000000000101","programID":"10000000-0000-0000-0000-000000000001","status":"active","createdAt":"2026-07-25T00:00:00Z","expiresAt":"2026-08-01T00:00:00Z","redeemedByParticipantID":null},
-    {"id":"33000000-0000-0000-0000-000000000102","code":"LAMA2026","coachID":"30000000-0000-0000-0000-000000000101","programID":"10000000-0000-0000-0000-000000000001","status":"expired","createdAt":"2026-06-01T00:00:00Z","expiresAt":"2026-06-08T00:00:00Z","redeemedByParticipantID":null}
   ]
 }

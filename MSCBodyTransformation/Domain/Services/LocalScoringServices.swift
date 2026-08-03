@@ -3,25 +3,43 @@ import Foundation
 nonisolated struct StepScoreCalculator: Sendable {
     func calculate(
         steps: [ProgramStep],
-        submissions: [StepSubmission]
+        submissions: [StepSubmission],
+        pointsPerActivity: Int
     ) throws -> Int {
-        guard !steps.contains(where: { $0.points < 0 }) else {
+        guard pointsPerActivity >= 0 else {
             throw DomainError.validation(
-                field: "stepPoints",
-                reason: "Poin langkah aktif tidak boleh negatif."
+                field: "pointsPerActivity",
+                reason: "Poin aktivitas tidak boleh negatif."
             )
         }
-        let publishedPoints = Dictionary(
-            uniqueKeysWithValues: steps.map { ($0.id, $0.points) }
+        let activityStepIDs = Set(
+            steps.filter {
+                guard let kind = $0.content?.kind else { return true }
+                return switch kind {
+                case .article, .video, .form:
+                    true
+                case .quiz, .initialWeighIn, .dailyWeighIn,
+                     .finalWeighIn:
+                    false
+                }
+            }.map(\.id)
         )
-        let approvedStepIDs = Set(
+        let approvedStepIDs = approvedStepIDs(from: submissions)
+        return approvedStepIDs.intersection(activityStepIDs).count
+            * pointsPerActivity
+    }
+
+    private func approvedStepIDs(
+        from submissions: [StepSubmission]
+    ) -> Set<UUID> {
+        Set(
             submissions
-                .filter { $0.status == .approved }
+                .filter {
+                    $0.status == .approved
+                        && ($0.quizResult?.isPassed ?? true)
+                }
                 .map(\.stepID)
         )
-        return approvedStepIDs.reduce(into: 0) { total, stepID in
-            total += publishedPoints[stepID] ?? 0
-        }
     }
 }
 
@@ -44,10 +62,10 @@ extension WeightScoreCalculator {
         finalWeightKilograms: Decimal?,
         pointsPerKilogram: Decimal
     ) throws -> WeightScoreResult {
-        guard pointsPerKilogram > 0 else {
+        guard pointsPerKilogram >= 0 else {
             throw DomainError.validation(
                 field: "weightPointsPerKilogram",
-                reason: "Pengali poin berat harus lebih dari nol."
+                reason: "Pengali poin berat tidak boleh negatif."
             )
         }
         guard let initialWeightKilograms,
@@ -93,7 +111,10 @@ nonisolated struct ProgressCalculator: Sendable {
     ) -> ProgressSnapshot {
         let completedStepIDs = Set(
             submissions
-                .filter { $0.status != .rejected }
+                .filter {
+                    $0.status == .approved
+                        && ($0.quizResult?.isPassed ?? true)
+                }
                 .map(\.stepID)
         )
         let requiredIDs = Set(requiredSteps.map(\.id))
@@ -181,14 +202,24 @@ nonisolated struct EnrollmentScoreCalculator: Sendable {
         let weightResult = try weightCalculator.score(
             initialWeightKilograms: initialWeight,
             finalWeightKilograms: finalWeight,
-            pointsPerKilogram: program.weightPointsPerKilogram
+            pointsPerKilogram:
+                program.effectiveScoringConfiguration
+                    .pointsPerWeightLossKilogram
         )
+        let quizPoints = submissions
+            .filter { $0.status == .approved }
+            .compactMap(\.quizResult)
+            .reduce(into: 0) { $0 += $1.awardedPoints }
         return EnrollmentScoreResult(
             score: ScoreBreakdown(
                 approvedStepPoints: try stepCalculator.calculate(
                     steps: activeSteps,
-                    submissions: submissions
+                    submissions: submissions,
+                    pointsPerActivity:
+                        program.effectiveScoringConfiguration
+                            .pointsPerActivity
                 ),
+                quizPoints: quizPoints,
                 weightPoints: weightResult.points,
                 adjustmentPoints: adjustmentPoints
             ),

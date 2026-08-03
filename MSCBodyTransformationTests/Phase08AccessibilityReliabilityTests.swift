@@ -28,7 +28,7 @@ struct Phase08AccessibilityReliabilityTests {
             ) == .participant(.leaderboard)
         )
         #expect(
-            AppDemoScenario.coachWalletZero.initialTab(for: .coach)
+            AppDemoScenario.coachIdentifier.initialTab(for: .coach)
                 == .coach(.dashboard)
         )
         #expect(
@@ -53,14 +53,10 @@ struct Phase08AccessibilityReliabilityTests {
     func participantEntryStagePresentationIsExplicit() {
         let login = ParticipantEntryStagePresentation(stage: .login)
         let profile = ParticipantEntryStagePresentation(stage: .profile)
-        let weighIn = ParticipantEntryStagePresentation(
-            stage: .initialWeighIn
-        )
 
         #expect(login.currentStep == 1)
         #expect(profile.currentStep == 2)
-        #expect(weighIn.currentStep == 4)
-        #expect(login.totalSteps == 4)
+        #expect(login.totalSteps == 3)
         #expect(profile.titleKey == "participant.entry.stage.profile")
     }
 
@@ -176,30 +172,6 @@ struct Phase08AccessibilityReliabilityTests {
         let restored = try await repository.loadCurrentSession()
         #expect(restored.state == .active)
         #expect(restored.role == .coach)
-    }
-
-    @Test("Skenario saldo nol dapat diulang tanpa nilai negatif")
-    func walletZeroScenarioIsIdempotent() async throws {
-        let seed = try MockSeedData.load()
-        let coachID = try #require(
-            seed.coachProfiles.first(where: { $0.isApproved })?.id
-        )
-        let repository = InMemoryAppRepository(seed: seed)
-        _ = try await repository.setSeatCredits(
-            coachID: coachID,
-            amount: 0,
-            updatedAt: Date(timeIntervalSince1970: 0)
-        )
-        _ = try await repository.setSeatCredits(
-            coachID: coachID,
-            amount: 0,
-            updatedAt: Date(timeIntervalSince1970: 0)
-        )
-
-        let wallet = try await repository.wallet(
-            coachID: coachID
-        )
-        #expect(wallet.availableSeatCredits == 0)
     }
 
     @Test("Hari pertama mereset progres tetapi mempertahankan pendaftaran")

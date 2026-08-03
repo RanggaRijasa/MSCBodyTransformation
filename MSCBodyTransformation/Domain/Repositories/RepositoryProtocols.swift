@@ -45,6 +45,14 @@ nonisolated protocol EnrollmentRepository: Sendable {
 nonisolated protocol SubmissionRepository: Sendable {
     func pendingReviewCount() async throws -> Int
     func submissions(enrollmentID: UUID) async throws -> [StepSubmission]
+    func submissionHistory(
+        enrollmentID: UUID,
+        stepID: UUID
+    ) async throws -> [StepSubmission]
+    func quizAttempts(
+        enrollmentID: UUID,
+        stepID: UUID
+    ) async throws -> [QuizAttemptResult]
     func reviewQueue(coachID: UUID) async throws -> [StepSubmission]
     func completeStep(
         submission: StepSubmission
@@ -61,11 +69,25 @@ nonisolated protocol SubmissionRepository: Sendable {
         reviewerID: UUID,
         rating: Int
     ) async throws -> StepSubmission
+    func reopenQuizAttempt(
+        enrollmentID: UUID,
+        stepID: UUID,
+        adminID: UUID,
+        reason: String,
+        reopenedAt: Date
+    ) async throws -> QuizAttemptResult
 }
 
 nonisolated protocol WeighInRepository: Sendable {
     func weighIns(enrollmentID: UUID) async throws -> [WeighIn]
     func save(weighIn: WeighIn) async throws -> WeighIn
+    func correctWeighIn(
+        enrollmentID: UUID,
+        type: WeighInType,
+        stepID: UUID?,
+        weightKilograms: Decimal,
+        correctedAt: Date
+    ) async throws -> WeighIn
 }
 
 nonisolated protocol LeaderboardRepository: Sendable {
@@ -92,27 +114,6 @@ nonisolated protocol CoachParticipantRepository: Sendable {
     ) async throws -> ParticipantProfile
 }
 
-nonisolated protocol InviteRepository: Sendable {
-    func invites(coachID: UUID) async throws -> [CoachInvite]
-    func activeInvite(code: String, now: Date) async throws -> CoachInvite
-    func createInvite(_ invite: CoachInvite) async throws -> CoachInvite
-    func revokeInvite(
-        id: UUID,
-        coachID: UUID
-    ) async throws -> CoachInvite
-    func redeemInvite(
-        code: String,
-        participantID: UUID,
-        enrollmentID: UUID,
-        now: Date
-    ) async throws -> ProgramEnrollment
-}
-
-nonisolated protocol WalletRepository: Sendable {
-    func wallet(coachID: UUID) async throws -> CoachWallet
-    func ledger(walletID: UUID) async throws -> [CreditLedgerEntry]
-}
-
 nonisolated protocol ManagedContentRepository: Sendable {
     func managedContent() async throws -> [ManagedContent]
     func save(content: ManagedContent) async throws -> ManagedContent
@@ -128,6 +129,10 @@ nonisolated protocol AdminPeopleRepository: Sendable {
         userID: UUID,
         isApproved: Bool
     ) async throws -> AppUser
+    func transferActiveCoach(
+        participantID: UUID,
+        coachID: UUID
+    ) async throws -> ParticipantProfile
 }
 
 nonisolated protocol AdminProgramDraftRepository: Sendable {
@@ -157,17 +162,4 @@ nonisolated protocol ParticipantDemoRepository: Sendable {
         dayNumber: Int,
         completedAt: Date
     ) async throws -> StepSubmission?
-}
-
-nonisolated protocol CoachDemoRepository: Sendable {
-    func grantSeatCredits(
-        coachID: UUID,
-        amount: Int,
-        grantedAt: Date
-    ) async throws -> CoachWallet
-    func setSeatCredits(
-        coachID: UUID,
-        amount: Int,
-        updatedAt: Date
-    ) async throws -> CoachWallet
 }

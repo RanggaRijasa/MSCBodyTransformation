@@ -23,6 +23,9 @@
   perbaikan authoritative untuk program, Coach, konten, kuis, timbang,
   scoring, duplikasi cohort, commerce lintas platform, dan penutupan program.
   Rekonsiliasi bagian yang konflik sebelum melanjutkan Track B.
+- `PROGRAM_END_TO_END_CONTRACT_MATRIX.md` — pemetaan field dan migrasi model.
+- `PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md` — hasil implementasi lokal,
+  artefak backend, verifikasi, dan external gate yang masih terbuka.
 
 ## Track B: External integration
 
@@ -36,6 +39,6 @@
 
 - `15_PHASE_14_ANDROID_HANDOFF.md`
 
-## Original reference
+## Arsip referensi
 
-- `99_SOURCE_MASTER_WORKPLAN.md`
+- `99_SOURCE_MASTER_WORKPLAN.md` — arsip arah awal; bukan requirement aktif.

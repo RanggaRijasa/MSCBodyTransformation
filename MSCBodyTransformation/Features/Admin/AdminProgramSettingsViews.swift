@@ -1,10 +1,24 @@
+import PhotosUI
 import SwiftUI
 
 @MainActor
 struct AdminProgramInformationView: View {
     @Binding var draft: AdminProgramDraft
+    @State private var selectedCoverItem: PhotosPickerItem?
+    @State private var coverMedia = LocalEvidenceMediaState()
 
     var body: some View {
+        let coverPickerTitle: String =
+            draft.coverLocalReference == nil
+                ? String(
+                    localized: "admin.program.cover.choose",
+                    defaultValue: "Pilih gambar cover"
+                )
+                : String(
+                    localized: "admin.program.cover.replace",
+                    defaultValue: "Ganti gambar cover"
+                )
+
         Form {
             Section("Identitas program") {
                 TextField("Nama", text: $draft.title)
@@ -15,30 +29,118 @@ struct AdminProgramInformationView: View {
                     axis: .vertical
                 )
                 .lineLimit(3...8)
-                TextField(
-                    "Harga",
-                    value: $draft.price,
-                    format: .number.locale(Locale(identifier: "id-ID"))
-                )
-                .keyboardType(.numberPad)
+            }
+
+            Section("Pembayaran") {
+                Picker("Jenis program", selection: pricingMode) {
+                    Text("Gratis").tag(ProgramPricingMode.free)
+                    Text("Berbayar").tag(ProgramPricingMode.paid)
+                }
+                .pickerStyle(.segmented)
+
+                if pricingMode.wrappedValue == .paid {
+                    TextField(
+                        "Harga yang diinginkan",
+                        value: desiredPrice,
+                        format: .number.locale(Locale(identifier: "id-ID"))
+                    )
+                    .keyboardType(.numberPad)
+                    Text(
+                        "Harga ini menjadi acuan provisioning. Harga yang "
+                            + "ditampilkan kepada peserta tetap berasal dari "
+                            + "App Store atau Google Play."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
             }
 
             Section {
-                Picker(
-                    "Jenis cover",
-                    selection: $draft.coverMediaKind
-                ) {
-                    ForEach(AdminCoverMediaKind.allCases, id: \.self) {
-                        kind in
-                        Text(kind.adminTitle).tag(kind)
-                    }
-                }
-                TextField(
-                    draft.coverMediaKind == .image
-                        ? "Referensi gambar lokal"
-                        : "Referensi video lokal",
-                    text: optionalCoverReference
+                ProgramCoverImage(
+                    reference: draft.coverLocalReference,
+                    alternativeText: draft.coverAlternativeText
                 )
+                .clipShape(
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.medium,
+                        style: .continuous
+                    )
+                )
+                .accessibilityIdentifier("admin.program.cover.preview")
+                .listRowSeparator(.hidden)
+
+                if coverMedia.isProcessing {
+                    ProgressView(
+                        value: coverMedia.progress,
+                        total: 1
+                    ) {
+                        Text("Memproses cover…")
+                    }
+                    .listRowSeparator(.hidden)
+                }
+
+                PhotosPicker(
+                    selection: $selectedCoverItem,
+                    matching: .images,
+                    photoLibrary: .shared()
+                ) {
+                    HStack(spacing: AppSpacing.small) {
+                        Label {
+                            Text(verbatim: coverPickerTitle)
+                        } icon: {
+                            Image(systemName: "photo.on.rectangle")
+                        }
+                        Spacer(minLength: AppSpacing.small)
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color.appSecondaryText)
+                    }
+                    .font(AppTypography.body)
+                    .foregroundStyle(Color.brandPrimary)
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: 44,
+                        alignment: .leading
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(coverMedia.isProcessing)
+                .accessibilityIdentifier("admin.program.cover.picker")
+                .listRowSeparator(.hidden)
+
+                if draft.coverLocalReference != nil {
+                    Button(role: .destructive) {
+                        coverMedia.remove()
+                        draft.coverLocalReference = nil
+                        selectedCoverItem = nil
+                    } label: {
+                        Label(
+                            "Hapus gambar cover",
+                            systemImage: "trash"
+                        )
+                        .font(AppTypography.body)
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: 44,
+                            alignment: .leading
+                        )
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .listRowSeparator(.hidden)
+                }
+
+                if let error = coverMedia.error {
+                    Label(
+                        coverErrorMessage(error),
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(Color.appDestructive)
+                    .listRowSeparator(.hidden)
+                }
+
                 TextField(
                     "Teks alternatif cover",
                     text: $draft.coverAlternativeText,
@@ -49,8 +151,8 @@ struct AdminProgramInformationView: View {
                 Text("Cover program")
             } footer: {
                 Text(
-                    "Jelaskan isi cover secara singkat untuk pengguna "
-                        + "VoiceOver."
+                    "Cover selalu berupa gambar rasio lebar. Jelaskan "
+                        + "isinya secara singkat untuk pengguna VoiceOver."
                 )
             }
         }
@@ -60,15 +162,91 @@ struct AdminProgramInformationView: View {
         .navigationTitle("Info program")
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("admin.program.info")
+        .onChange(of: selectedCoverItem) { _, item in
+            guard let item else { return }
+            Task { await importCover(item) }
+        }
     }
 
-    private var optionalCoverReference: Binding<String> {
+    private func importCover(_ item: PhotosPickerItem) async {
+        await coverMedia.importPhoto(item)
+        if let result = coverMedia.result {
+            draft.coverLocalReference = result.localURL.path
+        }
+    }
+
+    private func coverErrorMessage(_ error: LocalMediaError) -> String {
+        switch error {
+        case .unsupportedMIMEType:
+            "Pilih gambar JPEG, PNG, HEIC, atau HEIF."
+        case .inputTooLarge:
+            "Ukuran cover terlalu besar. Pilih gambar hingga 20 MB."
+        case .invalidImage:
+            "Cover tidak dapat dibaca. Pilih gambar lain."
+        case .processingFailed:
+            "Cover gagal diproses. Coba lagi."
+        case .permissionDenied:
+            "Akses Foto ditolak. Periksa izin aplikasi di Pengaturan."
+        case .cameraUnavailable:
+            "Kamera tidak tersedia pada perangkat ini."
+        case .cameraUsageDescriptionMissing:
+            "Kamera belum dikonfigurasi untuk build ini."
+        }
+    }
+
+    private var pricingMode: Binding<ProgramPricingMode> {
         Binding(
-            get: { draft.coverLocalReference ?? "" },
-            set: {
-                draft.coverLocalReference = $0.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ).isEmpty ? nil : $0
+            get: {
+                draft.commerceConfiguration?.pricingMode
+                    ?? (draft.price == nil ? .free : .paid)
+            },
+            set: { mode in
+                if mode == .free {
+                    draft.price = nil
+                    draft.commerceConfiguration =
+                        ProgramCommerceConfiguration(
+                            pricingMode: .free,
+                            desiredPrice: nil,
+                            platformAvailability:
+                                CommercePlatform.allCases.map {
+                                    ProgramPlatformAvailability(
+                                        platform: $0,
+                                        isEnabled: true,
+                                        provisioningStatus: .notRequired
+                                    )
+                                }
+                        )
+                } else {
+                    let price = draft.price ?? 0
+                    draft.price = price
+                    draft.commerceConfiguration =
+                        ProgramCommerceConfiguration(
+                            pricingMode: .paid,
+                            desiredPrice: price,
+                            platformAvailability:
+                                CommercePlatform.allCases.map {
+                                    ProgramPlatformAvailability(
+                                        platform: $0,
+                                        isEnabled: true,
+                                        provisioningStatus: .notRequested
+                                    )
+                                }
+                        )
+                }
+            }
+        )
+    }
+
+    private var desiredPrice: Binding<Decimal> {
+        Binding(
+            get: {
+                draft.commerceConfiguration?.desiredPrice
+                    ?? draft.price
+                    ?? 0
+            },
+            set: { price in
+                draft.price = price
+                draft.commerceConfiguration?.desiredPrice = price
             }
         )
     }
@@ -148,15 +326,7 @@ struct AdminProgramScheduleView: View {
             }
 
             Section("Peserta") {
-                Picker("Akses program", selection: $draft.access) {
-                    ForEach(AdminProgramAccess.allCases, id: \.self) {
-                        access in
-                        Text(access.adminTitle).tag(access)
-                    }
-                }
-                Text(draft.access.adminDescription)
-                    .font(AppTypography.secondary)
-                    .foregroundStyle(Color.appSecondaryText)
+                LabeledContent("Akses", value: "Publik")
 
                 Toggle(
                     "Batasi jumlah peserta",
@@ -169,19 +339,6 @@ struct AdminProgramScheduleView: View {
                         in: 1...10_000
                     )
                 }
-            }
-
-            Section("Jendela timbang") {
-                Stepper(
-                    "Berat awal: \(draft.initialWeighInWindowHours.formatted(.number.locale(Locale(identifier: "id-ID")))) jam",
-                    value: $draft.initialWeighInWindowHours,
-                    in: 1...168
-                )
-                Stepper(
-                    "Berat akhir: \(draft.finalWeighInWindowHours.formatted(.number.locale(Locale(identifier: "id-ID")))) jam",
-                    value: $draft.finalWeighInWindowHours,
-                    in: 1...168
-                )
             }
 
             Section {
@@ -224,13 +381,44 @@ struct AdminProgramRulesView: View {
 
     var body: some View {
         Form {
-            Section("Poin dan pemeriksaan") {
+            Section {
                 TextField(
-                    "Poin per kilogram",
+                    "Poin setiap langkah selesai",
+                    value: $draft.pointsPerActivity,
+                    format: .number.locale(Locale(identifier: "id-ID"))
+                )
+                .keyboardType(.numberPad)
+            } header: {
+                Text("Poin langkah")
+            } footer: {
+                Text(
+                    "Diberikan saat langkah non-kuis disetujui. Kuis "
+                        + "memberikan poin ini untuk setiap jawaban benar."
+                )
+            }
+
+            Section {
+                TextField(
+                    "Poin setiap 1 kg turun",
                     value: $draft.weightPointsPerKilogram,
                     format: .number.locale(Locale(identifier: "id-ID"))
                 )
                 .keyboardType(.decimalPad)
+            } header: {
+                Text("Poin penurunan berat badan")
+            } footer: {
+                Text(
+                    "Dihitung dari selisih timbang awal dan timbang akhir. "
+                        + "Timbang harian hanya mencatat progres."
+                )
+            }
+
+            Section("Kuis dan pemeriksaan") {
+                Stepper(
+                    "Nilai lulus kuis: \(draft.quizPassingPercentage)%",
+                    value: $draft.quizPassingPercentage,
+                    in: 0...100
+                )
                 Picker(
                     "Pemeriksaan default",
                     selection: $draft.verificationMode
@@ -274,8 +462,9 @@ struct AdminProgramRulesView: View {
 
             Section("Ringkasan aturan") {
                 Text(
-                    "Setiap kilogram penurunan yang memenuhi aturan "
-                        + "memberi \(draft.weightPointsPerKilogram.formatted(.number.locale(Locale(identifier: "id-ID")))) poin."
+                    "Poin langkah: \(draft.pointsPerActivity) per langkah "
+                        + "selesai atau per jawaban kuis yang benar. Poin "
+                        + "penurunan berat: \(draft.weightPointsPerKilogram.formatted(.number.locale(Locale(identifier: "id-ID")))) per 1 kg dari timbang awal ke akhir."
                 )
                 Label(
                     "Skor ini masih berupa pratinjau lokal.",
@@ -297,106 +486,216 @@ struct AdminProgramRulesView: View {
 struct AdminProgramParticipantPreviewView: View {
     let draft: AdminProgramDraft
 
-    @State private var previewSize: PreviewSize = .small
+    @State private var previewRole: PreviewRole = .participant
+
+    private var scenario: AdminProgramPreviewScenario {
+        AdminProgramPreviewScenario(draft: draft)
+    }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: AppSpacing.large) {
-                Picker("Ukuran pratinjau", selection: $previewSize) {
-                    ForEach(PreviewSize.allCases) {
-                        Text($0.title).tag($0)
-                    }
-                }
-                .pickerStyle(.segmented)
+        VStack(spacing: 0) {
+            previewRolePicker
 
-                VStack(alignment: .leading, spacing: AppSpacing.medium) {
-                    Text(draft.title)
-                        .font(AppTypography.screenTitle)
-                    Text(draft.summary)
-                        .font(AppTypography.body)
-                        .foregroundStyle(Color.appSecondaryText)
+            ScrollView {
+                LazyVStack(
+                    alignment: .leading,
+                    spacing: AppSpacing.large
+                ) {
+                    previewExplanation
 
-                    if let firstDay = draft.days.first {
-                        SectionHeader(
-                            title: "Hari ini • Hari ke-\(firstDay.dayNumber)",
-                            subtitle: LocalizedStringKey(firstDay.title)
-                        )
-                        ForEach(firstDay.steps.filter(\.isActive)) { step in
-                            VStack(
-                                alignment: .leading,
-                                spacing: AppSpacing.xSmall
-                            ) {
-                                StepRow(
-                                    title: LocalizedStringKey(step.title),
-                                    detail: step.instructions,
-                                    points: step.points,
-                                    statusTitle: "Tersedia",
-                                    statusKind: .success
-                                )
-                                if let questions = step.quiz?.questions,
-                                   !questions.isEmpty {
-                                    Label(
-                                        "\(questions.count.formatted(.number.locale(Locale(identifier: "id-ID")))) pertanyaan",
-                                        systemImage: "questionmark.bubble"
-                                    )
-                                    .font(AppTypography.secondary)
-                                    .foregroundStyle(
-                                        Color.appSecondaryText
-                                    )
-                                    ForEach(questions.prefix(3)) { question in
-                                        Text("• \(question.prompt)")
-                                            .font(AppTypography.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        ContentUnavailableView(
-                            "Hari belum dibuat",
-                            systemImage: "calendar"
-                        )
+                    if previewRole == .coach {
+                        monitoredParticipant
                     }
 
-                    Label(
-                        "Hari mendatang mengikuti jadwal program.",
-                        systemImage: "lock.fill"
+                    ProgramActivityRenderer(
+                        program: scenario.program,
+                        submissions: scenario.submissions,
+                        focusedDayID: scenario.focusedDayID,
+                        referenceDate: scenario.referenceDate,
+                        capabilities: ProgramActivityCapabilities(
+                            audience: previewRole.audience,
+                            canOpenSteps: false
+                        ),
+                        accessibilityPrefix: "admin.program.preview",
+                        accessForDay: scenario.access,
+                        onOpenStep: { _ in }
                     )
-                    .foregroundStyle(Color.appSecondaryText)
+                    .accessibilityIdentifier(
+                        "admin.program.preview.renderer"
+                    )
                 }
-                .padding(AppSpacing.medium)
-                .frame(
-                    maxWidth: previewSize == .small ? 390 : 720,
-                    alignment: .leading
-                )
-                .background(
-                    Color.appSecondaryBackground,
-                    in: RoundedRectangle(
-                        cornerRadius: AppRadius.large,
-                        style: .continuous
-                    )
-                )
+                .frame(maxWidth: 720, alignment: .leading)
+                .padding(.horizontal, AppSpacing.medium)
+                .padding(.bottom, AppSpacing.medium)
                 .frame(maxWidth: .infinity)
             }
-            .padding(AppSpacing.medium)
+            .accessibilityIdentifier("admin.editor.preview")
         }
         .background(Color.appBackground)
-        .navigationTitle("Pratinjau peserta")
+        .navigationTitle(
+            String(
+                localized: "admin.program.preview.title",
+                defaultValue: "Pratinjau program"
+            )
+        )
         .navigationBarTitleDisplayMode(.inline)
-        .accessibilityIdentifier("admin.editor.preview")
+    }
+
+    private var previewRolePicker: some View {
+        Picker(
+            String(
+                localized: "admin.program.preview.role",
+                defaultValue: "Peran pratinjau"
+            ),
+            selection: $previewRole
+        ) {
+            ForEach(PreviewRole.allCases) {
+                Text($0.title)
+                    .font(.subheadline.weight(.medium))
+                    .frame(minHeight: AppSpacing.xLarge)
+                    .tag($0)
+            }
+        }
+        .pickerStyle(.segmented)
+        .controlSize(.large)
+        .frame(minHeight: AppControlMetrics.minimumTouchTarget)
+        .accessibilityIdentifier(
+            "admin.program.preview.role-picker"
+        )
+        .padding(.horizontal, AppSpacing.medium)
+        .padding(.top, AppSpacing.small)
+        .padding(.bottom, AppSpacing.medium)
+    }
+
+    private var previewExplanation: some View {
+        Label {
+            Text(previewRole.explanation)
+        } icon: {
+            Image(systemName: "eye")
+                .foregroundStyle(Color.appPrimaryText)
+        }
+        .font(AppTypography.secondary)
+        .foregroundStyle(Color.appPrimaryText)
+        .padding(AppSpacing.medium)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.appSecondaryBackground,
+            in: RoundedRectangle(
+                cornerRadius: AppRadius.medium,
+                style: .continuous
+            )
+        )
+        .overlay {
+            RoundedRectangle(
+                cornerRadius: AppRadius.medium,
+                style: .continuous
+            )
+            .stroke(Color.appBorder, lineWidth: 1)
+        }
+        .accessibilityIdentifier("admin.program.preview.explanation")
+    }
+
+    private var monitoredParticipant: some View {
+        CoachProgramParticipantContext(
+            displayName: "Ayu Lestari",
+            imageName: nil,
+            accessibilityIdentifier:
+                "admin.program.preview.monitored-participant"
+        )
+    }
+}
+
+nonisolated struct AdminProgramPreviewScenario: Sendable {
+    let program: Program
+    let focusedDayID: UUID?
+    let referenceDate: Date
+    let submissions: [StepSubmission]
+
+    init(draft: AdminProgramDraft) {
+        let publishedProgram = draft.program()
+        program = publishedProgram
+        let focusedDay = publishedProgram.days
+            .sorted { $0.dayNumber < $1.dayNumber }
+            .first
+        let scenarioReferenceDate =
+            focusedDay?.scheduledDate ?? publishedProgram.startDate
+        focusedDayID = focusedDay?.id
+        referenceDate = scenarioReferenceDate
+        submissions = (focusedDay?.steps ?? [])
+            .sorted { $0.order < $1.order }
+            .prefix(2)
+            .enumerated()
+            .map { index, step in
+                StepSubmission(
+                    id: step.id,
+                    enrollmentID: publishedProgram.id,
+                    stepID: step.id,
+                    status: index == 0 ? .approved : .pending,
+                    submittedAt: scenarioReferenceDate,
+                    reviewedAt: index == 0
+                        ? scenarioReferenceDate
+                        : nil,
+                    reviewerID: nil,
+                    reviewNote: nil
+                )
+            }
+    }
+
+    func access(for day: ProgramDay) -> ProgramDayAccess {
+        ProgramDayAccessCalculator().access(
+            for: day,
+            in: program,
+            now: referenceDate
+        )
     }
 }
 
 private extension AdminProgramParticipantPreviewView {
-    enum PreviewSize: String, CaseIterable, Identifiable {
-        case small
-        case large
+    enum PreviewRole: String, CaseIterable, Identifiable {
+        case participant
+        case coach
 
         var id: String { rawValue }
 
         var title: String {
             switch self {
-            case .small: "Perangkat kecil"
-            case .large: "Perangkat besar"
+            case .participant:
+                String(
+                    localized: "role.participant",
+                    defaultValue: "Peserta"
+                )
+            case .coach:
+                String(
+                    localized: "role.coach",
+                    defaultValue: "Coach"
+                )
+            }
+        }
+
+        var explanation: String {
+            switch self {
+            case .participant:
+                String(
+                    localized:
+                        "admin.program.preview.participant.explanation",
+                    defaultValue:
+                        "Tampilan ini sama dengan yang dilihat Peserta."
+                )
+            case .coach:
+                String(
+                    localized: "admin.program.preview.coach.explanation",
+                    defaultValue:
+                        "Tampilan ini sama dengan yang dilihat Coach."
+                )
+            }
+        }
+
+        var audience: ProgramActivityAudience {
+            switch self {
+            case .participant:
+                .participant
+            case .coach:
+                .coach
             }
         }
     }

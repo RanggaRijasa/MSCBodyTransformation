@@ -20,6 +20,14 @@ struct ParticipantProgramView: View {
                 )
             }
         }
+        .task(id: selectedProgram?.id) {
+            guard let selectedProgram,
+                  selectedEnrollment?.status == .active,
+                  store.currentProgram?.id != selectedProgram.id else {
+                return
+            }
+            store.selectProgram(selectedProgram.id)
+        }
     }
 
     @ViewBuilder
