@@ -183,7 +183,7 @@ Nilai berikut menjadi titik awal. Implementasikan sebagai color assets dengan An
 | AppPrimaryText | `#F5F5F5` | Teks utama |
 | AppSecondaryText | `#B0B0B5` | Teks sekunder |
 | AppBorder | `#3A3A3C` | Divider dan border |
-| AppDestructive | `#FF6961` | Hapus, gagal, ditolak |
+| AppDestructive | `#C62828` | Hapus, gagal, ditolak |
 | AppSuccess | `#5ED39A` | Berhasil, disetujui |
 | AppWarning | `#FFD166` | Peringatan |
 | AppInfo | `#78A9FF` | Informasi netral |
@@ -342,6 +342,11 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
   di luar renderer bersama sehingga tidak ikut muncul pada layar Peserta atau
   Coach sebenarnya.
 - Form dan CMS memakai background system/netral.
+- Editor hari menempatkan aksi `Salin isi ke hari lain` sebagai section form
+  tersendiri. Pemilih tujuan memakai sheet native dan mendukung beberapa hari
+  sekaligus. Nama, nomor, dan tanggal target tetap; deskripsi serta seluruh
+  langkah diganti. Hari yang sudah berisi konten harus ditandai dengan teks
+  dan dikonfirmasi sebelum penggantian.
 - Direktori Orang memakai segmented control native `Peserta`, `Coach`, dan
   `Admin` seperti katalog Program peserta. Judul serta segmented control
   tetap terlihat dan hanya daftar orang yang digulir. Segmen menggantikan

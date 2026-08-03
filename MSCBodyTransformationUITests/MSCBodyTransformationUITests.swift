@@ -1889,6 +1889,161 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
+    func testAdminSwipeDeletesDayWithoutConfirmation() {
+        let app = launchAdmin()
+
+        tabButton(label: "Program", in: app).tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.create"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.create"].tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.content"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.editor.open.content"].tap()
+
+        let dayRow = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.day.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(dayRow.waitForExistence(timeout: 5))
+
+        let swipeStart = dayRow.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)
+        )
+        let swipeEnd = dayRow.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+        )
+        swipeStart.press(forDuration: 0.05, thenDragTo: swipeEnd)
+
+        let deleteAction = app.buttons["admin.program.day.delete"]
+        XCTAssertTrue(deleteAction.waitForExistence(timeout: 5))
+        XCTAssertTrue(deleteAction.isHittable)
+        XCTAssertFalse(app.staticTexts["Hapus"].exists)
+        deleteAction.tap()
+
+        XCTAssertFalse(app.staticTexts["Hapus hari program?"].exists)
+        XCTAssertTrue(
+            app.staticTexts["Belum ada hari"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(dayRow.exists)
+
+        let addDay = app.buttons["admin.program.day.add"]
+        XCTAssertTrue(addDay.waitForExistence(timeout: 5))
+        addDay.tap()
+
+        let replacementDayRow = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.day.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(replacementDayRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(replacementDayRow.isHittable)
+        XCTAssertFalse(
+            deleteAction.exists,
+            "Hari baru tidak boleh mewarisi posisi swipe hari yang dihapus."
+        )
+    }
+
+    @MainActor
+    func testAdminCopiesDayContentToAnotherDay() {
+        let app = launchAdmin(language: "en", locale: "en_US")
+
+        tabButton(label: "Program", in: app).tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.create"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.create"].tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.content"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.editor.open.content"].tap()
+
+        let addDay = app.buttons["admin.program.day.add"]
+        XCTAssertTrue(addDay.waitForExistence(timeout: 5))
+        addDay.tap()
+
+        let dayRows = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.day.open."
+            )
+        )
+        XCTAssertEqual(dayRows.count, 2)
+        dayRows.element(boundBy: 0).tap()
+
+        let addStep = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.editor.add-step."
+            )
+        ).firstMatch
+        XCTAssertTrue(addStep.waitForExistence(timeout: 5))
+        addStep.tap()
+        XCTAssertTrue(app.buttons["Artikel"].waitForExistence(timeout: 5))
+        app.buttons["Artikel"].tap()
+
+        let createdStep = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.step.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(createdStep.waitForExistence(timeout: 5))
+
+        let copyContent = app.buttons[
+            "admin.program.day.copy-content"
+        ]
+        XCTAssertTrue(copyContent.waitForExistence(timeout: 5))
+        XCTAssertTrue(copyContent.isEnabled)
+        copyContent.tap()
+
+        XCTAssertTrue(
+            app.otherElements["admin.program.copy-content.sheet"]
+                .waitForExistence(timeout: 5)
+        )
+        let copyTarget = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.copy-content.target."
+            )
+        ).firstMatch
+        XCTAssertTrue(copyTarget.waitForExistence(timeout: 5))
+        copyTarget.tap()
+
+        let confirmCopy = app.buttons[
+            "admin.program.copy-content.confirm"
+        ]
+        XCTAssertTrue(confirmCopy.isEnabled)
+        confirmCopy.tap()
+        XCTAssertFalse(
+            app.otherElements["admin.program.copy-content.sheet"]
+                .waitForExistence(timeout: 2)
+        )
+
+        app.buttons["navigation.back"].tap()
+
+        let copiedTarget = app.buttons.matching(
+            NSPredicate(
+                format:
+                    "identifier BEGINSWITH %@ AND label CONTAINS %@",
+                "admin.program.day.open.",
+                "Hari ke-2"
+            )
+        ).firstMatch
+        XCTAssertTrue(copiedTarget.waitForExistence(timeout: 5))
+        XCTAssertTrue(copiedTarget.label.contains("1 langkah"))
+    }
+
+    @MainActor
     func testAdminProgramHeaderStaysFixedWhileCardsScroll() throws {
         let app = launchAdmin()
 

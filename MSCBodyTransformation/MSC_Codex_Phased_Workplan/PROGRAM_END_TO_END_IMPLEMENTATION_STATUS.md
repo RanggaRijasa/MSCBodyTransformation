@@ -19,6 +19,8 @@ tidak diklaim selesai.
 - Admin CMS tiga tahap, fixed public access, scoring program-wide, desired
   price, semua content/question type, pilihan gambar melalui PhotosPicker,
   publish validation, read-only published program, dan duplicate-as-draft.
+- Editor hari dapat menyalin deskripsi dan seluruh konten ke beberapa hari
+  tujuan sekaligus dengan ID nested baru; identitas dan jadwal target tetap.
 - Duplikasi membuat seluruh ID nested baru, mempertahankan offset tanggal dan
   timezone, menyalin desired price, serta tidak menyalin store mapping/runtime.
 - Peserta multi-program dengan state per enrollment dan same-Coach QR guard.
@@ -154,6 +156,14 @@ diverifikasi ulang:
   harian `78,1 kg`.
 - Fixture JSON, localization JSON, OpenAPI YAML, dan `git diff --check`:
   **valid**.
+
+Penyalinan isi antarhari pada 3 Agustus 2026 juga diverifikasi:
+
+- Simulator Debug build: **lulus tanpa warning**.
+- `Phase05AdminCMSTests`: **24 tests, 0 failure**.
+- UI `testAdminCopiesDayContentToAnotherDay`: **1 test, 0 failure**.
+- Salinan multi-target mempertahankan metadata hari tujuan dan membuat ulang
+  ID langkah, pertanyaan, opsi, serta referensi answer key.
 
 Full UI release matrix, perangkat fisik, Supabase staging, dan store sandbox
 tetap termasuk external gate; hasil mock lokal tidak menggantikannya.

@@ -19,7 +19,7 @@ dengan matriks ini.
 | Akses | publik | Tidak ada picker | Memilih dari katalog | Tidak mengundang | Menegakkan program publik |
 | Commerce | gratis/berbayar, desired price, platform availability | Mengatur intent | Membaca harga store | Tidak mengubah | Memetakan produk/entitlement |
 | Scoring | activity points, weight points/kg, quiz threshold | Mengatur sebelum enrollment | Melihat aturan | Melihat breakdown | Menghitung authoritative |
-| Hari | ID, order, date/offset, visibility policy | Memilih tersedia/terkunci/disembunyikan | Menjalankan sesuai policy | Memantau | Menentukan availability |
+| Hari | ID, order, date/offset, visibility policy | Menyusun dan menyalin isi antarhari; memilih tersedia/terkunci/disembunyikan | Menjalankan sesuai policy | Memantau | Menentukan availability |
 | Langkah | ID, order, kind, instructions, media, completion policy | Menyusun | Merender | Melihat konteks | Memvalidasi submission |
 | Pertanyaan | ID, kind, prompt, options/media | Menyusun | Menjawab | Melihat saat berwenang | Memvalidasi payload |
 | Answer key | answer key objektif | Menyusun | **Tidak pernah menerima** | Membaca untuk konteks | Menilai kuis |

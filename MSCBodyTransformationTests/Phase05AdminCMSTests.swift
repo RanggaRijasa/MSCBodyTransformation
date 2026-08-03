@@ -164,6 +164,128 @@ struct Phase05AdminCMSTests {
         #expect(Set(days.map(\.id)).count == 3)
     }
 
+    @Test(
+        "Isi hari dapat disalin ke beberapa hari dengan ID konten baru"
+    )
+    func dayContentCanBeCopiedToMultipleDays() throws {
+        var draft = try validDraft()
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Makassar") ?? .gmt
+        let endDate = try #require(
+            calendar.date(byAdding: .day, value: 3, to: fixedDate)
+        )
+        draft.startDate = fixedDate
+        draft.endDate = endDate
+        draft.days = try AdminProgramDraftValidator().generateDays(
+            startDate: fixedDate,
+            endDate: endDate,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: draft.id
+        )
+
+        let firstOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000011"
+        )!
+        let secondOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000012"
+        )!
+        let sourceStepID = UUID(
+            uuidString: "93000000-0000-0000-0000-000000000011"
+        )!
+        draft.days[0].summary = "Rutinitas pagi yang sama."
+        draft.days[0].steps = [
+            AdminStepDraft(
+                id: sourceStepID,
+                order: 1,
+                title: "Kuis hidrasi",
+                instructions: "Jawab setelah minum air.",
+                mediaKind: .image,
+                localMediaReference: "media/hidrasi.jpg",
+                isActive: true,
+                verificationMode: .automatic,
+                contentKind: .quiz,
+                quiz: AdminQuizDraft(
+                    title: "Kuis hidrasi",
+                    questions: [
+                        AdminQuizQuestionDraft(
+                            id: UUID(
+                                uuidString:
+                                    "91000000-0000-0000-0000-000000000011"
+                            )!,
+                            order: 1,
+                            kind: .singleChoice,
+                            prompt: "Apa pilihan yang benar?",
+                            options: ["Air putih", "Minuman manis"],
+                            optionIDs: [firstOptionID, secondOptionID],
+                            answerKey: ProgramQuestionAnswerKey(
+                                selectedOptionIDs: [firstOptionID]
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+
+        draft.days[1].summary = "Isi lama."
+        draft.days[1].steps = [
+            sampleStep(
+                id: UUID(
+                    uuidString: "93000000-0000-0000-0000-000000000099"
+                )!
+            )
+        ]
+
+        let firstTargetMetadata = draft.days[1]
+        let secondTargetMetadata = draft.days[2]
+        let untouchedDay = draft.days[3]
+        let result = try AdminDayContentCopyService()(
+            draft: draft,
+            sourceDayID: draft.days[0].id,
+            targetDayIDs: [draft.days[1].id, draft.days[2].id]
+        )
+
+        let firstTarget = result.days[1]
+        let secondTarget = result.days[2]
+        #expect(firstTarget.id == firstTargetMetadata.id)
+        #expect(firstTarget.dayNumber == firstTargetMetadata.dayNumber)
+        #expect(firstTarget.title == firstTargetMetadata.title)
+        #expect(
+            firstTarget.scheduledDate
+                == firstTargetMetadata.scheduledDate
+        )
+        #expect(secondTarget.id == secondTargetMetadata.id)
+        #expect(
+            secondTarget.scheduledDate
+                == secondTargetMetadata.scheduledDate
+        )
+        #expect(firstTarget.summary == draft.days[0].summary)
+        #expect(secondTarget.summary == draft.days[0].summary)
+        #expect(firstTarget.steps.count == 1)
+        #expect(secondTarget.steps.count == 1)
+        #expect(firstTarget.steps[0].id != sourceStepID)
+        #expect(secondTarget.steps[0].id != sourceStepID)
+        #expect(firstTarget.steps[0].id != secondTarget.steps[0].id)
+        #expect(firstTarget.steps[0].title == "Kuis hidrasi")
+        #expect(
+            firstTarget.steps[0].localMediaReference
+                == "media/hidrasi.jpg"
+        )
+
+        let firstQuestion = try #require(
+            firstTarget.steps[0].quiz?.questions.first
+        )
+        #expect(firstQuestion.optionIDs != [firstOptionID, secondOptionID])
+        #expect(
+            firstQuestion.answerKey?.selectedOptionIDs
+                == [firstQuestion.optionIDs[0]]
+        )
+        #expect(result.days[3] == untouchedDay)
+        #expect(result.days[0].steps[0].id == sourceStepID)
+
+        let allStepIDs = result.days.flatMap(\.steps).map(\.id)
+        #expect(Set(allStepIDs).count == allStepIDs.count)
+    }
+
     @Test("ID langkah tetap unik pada program multi-hari")
     func multiDayStepIdentifiersAreUnique() throws {
         let calendar = Calendar(identifier: .gregorian)

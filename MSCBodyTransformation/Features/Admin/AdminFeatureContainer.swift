@@ -756,7 +756,7 @@ final class AdminProgramEditorState {
                 parent: id,
                 discriminator: stepIndex + 1
             )
-            return duplicatedStep(
+            return AdminDraftContentDuplicator().duplicatedStep(
                 step,
                 id: stepID,
                 order: stepIndex + 1
@@ -793,7 +793,7 @@ final class AdminProgramEditorState {
             excluding: Set(draft.days.flatMap(\.steps).map(\.id))
         )
         draft.days[dayIndex].steps.append(
-            duplicatedStep(
+            AdminDraftContentDuplicator().duplicatedStep(
                 source,
                 id: id,
                 order: order,
@@ -802,6 +802,26 @@ final class AdminProgramEditorState {
         )
         self.draft = draft
         updateValidation()
+    }
+
+    func copyDayContent(
+        from sourceDayID: UUID,
+        to targetDayIDs: Set<UUID>
+    ) {
+        guard let draft else { return }
+        do {
+            self.draft = try AdminDayContentCopyService()(
+                draft: draft,
+                sourceDayID: sourceDayID,
+                targetDayIDs: targetDayIDs
+            )
+            error = nil
+            updateValidation()
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
     }
 
     func removeDay(_ dayID: UUID) {
@@ -932,77 +952,6 @@ final class AdminProgramEditorState {
             }
             discriminator += 1
         }
-    }
-
-    private func duplicatedStep(
-        _ source: AdminStepDraft,
-        id: UUID,
-        order: Int,
-        title: String? = nil
-    ) -> AdminStepDraft {
-        AdminStepDraft(
-            id: id,
-            order: order,
-            title: title ?? source.title,
-            instructions: source.instructions,
-            mediaKind: source.mediaKind,
-            localMediaReference: source.localMediaReference,
-            isActive: source.isActive,
-            verificationMode: source.verificationMode,
-            contentKind: source.contentKind,
-            isVideoRequiredToWatch: source.isVideoRequiredToWatch,
-            isVideoAutoplayEnabled: source.isVideoAutoplayEnabled,
-            quiz: duplicatedQuestionGroup(source.quiz, stepID: id),
-            publishedContent: nil
-        )
-    }
-
-    private func duplicatedQuestionGroup(
-        _ source: AdminQuizDraft?,
-        stepID: UUID
-    ) -> AdminQuizDraft? {
-        guard let source else { return nil }
-        return AdminQuizDraft(
-            title: source.title,
-            questions: source.questions.enumerated().map {
-                index, question in
-                let questionID =
-                    AdminProgramDraftValidator().childIdentifier(
-                        parent: stepID,
-                        discriminator: index + 1_000
-                    )
-                let optionIDs = question.options.indices.map { optionIndex in
-                    AdminProgramDraftValidator().childIdentifier(
-                        parent: questionID,
-                        discriminator: optionIndex + 1
-                    )
-                }
-                let optionMap = Dictionary(
-                    uniqueKeysWithValues: zip(question.optionIDs, optionIDs)
-                )
-                return AdminQuizQuestionDraft(
-                    id: questionID,
-                    order: index + 1,
-                    kind: question.kind,
-                    prompt: question.prompt,
-                    options: question.options,
-                    optionIDs: optionIDs,
-                    optionMediaReferences:
-                        question.optionMediaReferences,
-                    answerKey: question.answerKey.map {
-                        ProgramQuestionAnswerKey(
-                            acceptedTextValues: $0.acceptedTextValues,
-                            numberValue: $0.numberValue,
-                            selectedOptionIDs:
-                                $0.selectedOptionIDs.compactMap {
-                                    optionMap[$0]
-                                },
-                            matchingMode: $0.matchingMode
-                        )
-                    }
-                )
-            }
-        )
     }
 
     private func alignScheduleToDayCount(

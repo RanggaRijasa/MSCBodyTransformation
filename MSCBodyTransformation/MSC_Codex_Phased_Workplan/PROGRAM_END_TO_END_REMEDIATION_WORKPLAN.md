@@ -521,6 +521,8 @@ Membuat seluruh keputusan program dapat dikonfigurasi tanpa kontrol redundant.
 
 ### Content builder
 
+- [x] Salin deskripsi dan seluruh langkah dari satu hari ke satu atau beberapa
+  hari tujuan tanpa mengubah nama, nomor, atau tanggal hari tujuan.
 - [x] Artikel.
 - [x] Video.
 - [x] Form.
@@ -1242,3 +1244,25 @@ Workplan selesai hanya jika:
     Peserta: kontrol native `large` berada di luar `ScrollView`, sedangkan
     hanya renderer program di bawahnya yang bergulir. UI regression
     memverifikasi tinggi efektif minimal 48 poin dan posisi vertikal tetap.
+  - Mode Edit pada daftar hari hanya dipakai untuk mengatur urutan. Hari
+    dihapus langsung melalui swipe ke kiri tanpa dialog. Aksi trailing
+    memakai bidang merah seamless tanpa gap dan hanya menampilkan ikon
+    sampah. Gerak kartu mengikuti jari lalu settle dengan spring; ikon
+    muncul bertahap dengan scale dan opacity. Seluruh konten ikut dihapus,
+    urutan dinormalkan, dan tanggal selesai disesuaikan.
+  - State swipe hari sekarang direset dalam transaksi yang sama sebelum
+    penghapusan. Hari yang ditambahkan kembali tidak mewarisi offset baris
+    lama meskipun ID deterministiknya digunakan ulang oleh draft lokal.
+    Warna destructive memakai merah `#C62828` yang identik pada light dan
+    dark mode. Reset state gesture dilakukan sebelum animasi spring
+    penghapusan daftar, sehingga transisi tetap terlihat tanpa mewariskan
+    offset lama. Simulator Debug build lulus tanpa warning; UI regression
+    `testAdminSwipeDeletesDayWithoutConfirmation` yang mencakup alur hapus
+    lalu tambah kembali lulus, 1 test tanpa kegagalan.
+  - Editor hari menyediakan `Salin isi ke hari lain` dengan multi-select.
+    Deskripsi, langkah, pertanyaan, media reference, dan answer key disalin;
+    nama, nomor, serta tanggal hari tujuan dipertahankan. Seluruh ID konten
+    hasil salinan dibuat ulang, dan target yang sudah berisi konten meminta
+    konfirmasi sebelum diganti. Simulator Debug build lulus tanpa warning,
+    suite `Phase05AdminCMSTests` lulus 24 tests, dan UI regression
+    `testAdminCopiesDayContentToAnotherDay` lulus tanpa kegagalan.
