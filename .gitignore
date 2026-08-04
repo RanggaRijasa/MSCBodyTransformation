@@ -103,6 +103,7 @@ fastlane/test_output/
 .vscode/
 .idea/
 *.iml
+supabase/.branches/
 
 # Codex or agent scratch output
 .codex/

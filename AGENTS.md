@@ -342,6 +342,66 @@ For Phase 00 through Phase 08:
 - Do not add hidden network calls.
 - Do not block previews on external configuration.
 
+## Supabase Environment Rules
+
+For Phase 09 and later, the approved environment strategy is:
+
+```text
+Development → Supabase local through Supabase CLI, Docker, and Colima
+Production  → hosted Supabase main project
+Branching   → not used
+```
+
+Operational start, status, shutdown, and data-preservation commands are
+documented in `supabase/COLIMA_LOCAL_DEVELOPMENT.md`.
+
+Rules:
+
+- Before starting development work that requires the local Supabase backend,
+  check readiness in this order:
+  - `colima status`.
+  - `docker info`.
+  - `supabase status` from the repository root.
+- If Colima is not running, start it with `colima start`.
+- If the Docker daemon is not ready after Colima starts, verify `docker info`
+  before continuing.
+- If the local Supabase stack is not running, start it from the repository
+  root with `supabase start`.
+- Start Colima and Supabase automatically only when the assigned task needs
+  the local database, Auth, Storage, Data API, Studio, migrations, or backend
+  tests. Do not start them for documentation-only, mock-only, preview-only, or
+  unrelated UI work.
+- Never stop Supabase or Colima automatically when an agent finishes a task.
+  Leave shutdown to the user unless the user explicitly requests the exact
+  stop operation.
+- Use the local Supabase stack for database, Auth, Storage, Realtime, Data API,
+  migrations, seeds, integration tests, and Debug adapter development.
+- Treat the hosted `main` project as production. Do not use it for experiments,
+  development fixtures, migration iteration, local testing, or destructive
+  verification.
+- Do not create Supabase preview branches, persistent branches, or a second
+  hosted development/staging project unless the user explicitly changes this
+  environment decision.
+- Do not deploy migrations, functions, configuration, or seed data to hosted
+  `main` without explicit user authorization for that production deployment.
+- Every destructive development command, including database reset and test
+  seeding, must explicitly target local Supabase. Use `--local` when the CLI
+  command supports it and verify the target before execution.
+- Debug configuration may use the local URL and local publishable or legacy
+  anon credential returned by the running local stack. Do not copy generated
+  local credentials into committed files.
+- Release configuration must never point to localhost, a Mac LAN address, or
+  another local Supabase endpoint.
+- Production URL and publishable key may be added to Release configuration
+  only during an explicitly authorized production integration task. Never add
+  `service_role`, secret key, database password, or JWT secret to the app,
+  repository, examples, fixtures, or logs.
+- The accepted consequence is that Supabase-backed development works only
+  while the Mac, Colima, and the local stack are running. Remote QA is not
+  available under this strategy.
+- Simulator and physical-device tests must account for local networking.
+  Never hard-code a temporary LAN address into production source.
+
 ## Authentication and Role Rules
 
 Until the assigned authentication phase:

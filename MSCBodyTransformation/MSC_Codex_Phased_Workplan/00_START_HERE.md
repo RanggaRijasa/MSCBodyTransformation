@@ -24,14 +24,20 @@ satu-satunya sumber requirement program yang aktif.
 
 ## Target produk
 
-Aplikasi native iOS dan iPadOS untuk program transformasi berat badan dengan tiga role:
+Aplikasi native iOS dan iPadOS untuk program transformasi berat badan dengan
+guest access dan tiga authenticated role:
 
+- Guest dapat menjelajahi area publik Peserta tanpa membuat akun, lalu
+  diarahkan ke Login/Register ketika melakukan aksi personal seperti
+  bergabung ke program.
 - Participant mengikuti beberapa program, menjawab konten typed termasuk
   unggah foto, mengisi timbang melalui langkah program, memperoleh poin, dan
   melihat leaderboard.
-- Coach memiliki QR identifier unik untuk pendaftaran peserta dan memantau peserta.
+- Coach memiliki QR identifier unik untuk pendaftaran peserta dan memantau
+  peserta. User baru tetap Participant sampai pengajuan Coach memenuhi
+  eligibility, pembayaran verified, dan persetujuan Admin.
 - Admin mengelola program melalui CMS, transfer Coach, koreksi/audit, closure,
-  pemenang, poster, serta konfigurasi commerce program.
+  pemenang, poster, pengajuan Coach, serta konfigurasi commerce program.
 
 ## Keputusan teknis utama
 
@@ -82,11 +88,12 @@ Pada akhir Track A, aplikasi harus dapat didemokan sepenuhnya dengan data lokal 
 Dikerjakan setelah Track A stabil.
 
 10. `10_PHASE_09_SUPABASE_FOUNDATION.md`
-11. `11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`
-12. `12_PHASE_11_REAL_DATA_AND_SERVER_OPERATIONS.md`
-13. `13_PHASE_12_STOREKIT_PROGRAM_PAYMENTS.md`
-14. `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md`
-15. `15_PHASE_14_ANDROID_HANDOFF.md`
+11. `10A_PHASE_09_5_GUEST_AUTH_PROFILE_AND_COACH_APPLICATION_UI.md`
+12. `11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`
+13. `12_PHASE_11_REAL_DATA_AND_SERVER_OPERATIONS.md`
+14. `13_PHASE_12_STOREKIT_PROGRAM_PAYMENTS.md`
+15. `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md`
+16. `15_PHASE_14_ANDROID_HANDOFF.md`
 
 ## Aturan dependency
 
@@ -114,6 +121,24 @@ Gunakan:
 ### Phase 09 dan seterusnya
 
 Adapter eksternal menggantikan mock secara bertahap tanpa menulis ulang feature UI.
+
+### Phase 09.5
+
+Phase 09.5 sengaja kembali ke local UI/mock untuk membuktikan Guest,
+Login/Register presentation, onboarding profil, pengajuan Coach, preview
+pembayaran manual tiga bulan, dan review Admin sebelum Auth/StoreKit nyata
+diaktifkan.
+
+- Guest adalah logged-out access state, bukan database role dan bukan
+  anonymous Supabase user.
+- Self-registration selalu membuat Participant.
+- Pilihan Coach membuat application; client tidak boleh memberi role Coach.
+- Coach access memerlukan eligibility lengkap, pembayaran verified, dan
+  persetujuan Admin.
+- Apple/Google/email auth serta pembayaran memakai deterministic fake adapter
+  pada phase ini.
+- Tidak ada OAuth, StoreKit transaction, provider secret, atau migration
+  production pada Phase 09.5.
 
 ## Dependency boundary yang wajib dipertahankan
 
