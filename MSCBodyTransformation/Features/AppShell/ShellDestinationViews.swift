@@ -33,14 +33,6 @@ struct ShellRouteDestinationView: View {
                     stepID: stepID
                 )
             }
-        case .participant(.weighIn(let type)):
-            journeyDestination {
-                ParticipantWeighInView(
-                    store: $0,
-                    type: type,
-                    presentation: .pushed
-                )
-            }
         case .participant(.leaderboard):
             journeyDestination {
                 ParticipantLeaderboardView(store: $0)
@@ -85,10 +77,10 @@ struct ShellRouteDestinationView: View {
             coachDestination {
                 CoachReviewQueueView(features: $0)
             }
-        case .coach(.invite):
+        case .coach(.coachIdentifier):
             coachDestination {
-                CoachInviteView(
-                    state: $0.invites,
+                CoachIdentifierView(
+                    state: $0.identifier,
                     router: router
                 )
             }

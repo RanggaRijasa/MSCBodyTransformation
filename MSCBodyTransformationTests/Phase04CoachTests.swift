@@ -438,9 +438,12 @@ struct Phase04CoachTests {
 
         let result = try #require(features.reviewQueue.lastDecision)
         #expect(result.status == .approved)
+        #expect(result.pointsAfter >= result.pointsBefore)
         #expect(
-            result.pointsAfter
-                == result.pointsBefore + item.step.points
+            try await environment.repositories?.submissions
+                .submissions(enrollmentID: item.enrollment.id)
+                .first { $0.id == item.submission.id }?.status
+                == .approved
         )
     }
 
@@ -467,7 +470,7 @@ struct Phase04CoachTests {
                     && $0.submission.status == .approved
             }
         )
-        #expect(items.allSatisfy { !$0.submission.evidence.isEmpty })
+        #expect(items.allSatisfy { !$0.submission.typedAnswers.isEmpty })
     }
 
     @MainActor
@@ -559,82 +562,27 @@ struct Phase04CoachTests {
         #expect(Set(identifiers).count == coaches.count)
     }
 
-    @Test("Enrollment lokal duplikat tetap idempotent")
-    func duplicateInviteRedemptionIsIdempotent() async throws {
+    @Test("Enrollment melalui QR Coach tetap idempoten")
+    func coachQREnrollmentIsIdempotent() async throws {
+        let seed = try MockSeedData.load()
         let repository = try makeRepository()
-        let participantID = UUID(
-            uuidString: "20000000-0000-0000-0000-000000000001"
-        )!
-        let walletBefore = try await repository.wallet(coachID: coachID)
-
-        let first = try await repository.redeemInvite(
-            code: "MSC7HARI",
-            participantID: participantID,
-            enrollmentID: UUID(),
-            now: Date(timeIntervalSince1970: 1_785_028_400)
+        let existing = try #require(
+            seed.enrollments.first {
+                $0.coachID == coachID && $0.status == .active
+            }
         )
-        let second = try await repository.redeemInvite(
-            code: "MSC7HARI",
-            participantID: participantID,
-            enrollmentID: UUID(),
-            now: Date(timeIntervalSince1970: 1_785_028_400)
-        )
-        let walletAfter = try await repository.wallet(coachID: coachID)
-
-        #expect(first.id == second.id)
-        #expect(
-            walletAfter.availableSeatCredits
-                == walletBefore.availableSeatCredits
-        )
-    }
-
-    @Test("Enrollment baru tidak mengubah saldo kuota lama")
-    func successfulEnrollmentDoesNotConsumeLegacySeat() async throws {
-        let repository = try makeRepository()
-        let participantID = UUID(
-            uuidString: "20000000-0000-0000-0000-000000009998"
-        )!
-        let enrollmentID = UUID(
-            uuidString: "40000000-0000-0000-0000-000000009998"
-        )!
-        let walletBefore = try await repository.wallet(coachID: coachID)
-
-        let enrollment = try await repository.redeemInvite(
-            code: "MSC7HARI",
-            participantID: participantID,
-            enrollmentID: enrollmentID,
-            now: Date(timeIntervalSince1970: 1_785_028_400)
-        )
-        let walletAfter = try await repository.wallet(coachID: coachID)
-
-        #expect(enrollment.id == enrollmentID)
-        #expect(
-            walletAfter.availableSeatCredits
-                == walletBefore.availableSeatCredits
-        )
-    }
-
-    @Test("Saldo kuota lama nol tidak memblokir enrollment")
-    func legacyWalletZeroDoesNotBlockEnrollment() async throws {
-        let repository = try makeRepository()
-        _ = try await repository.setSeatCredits(
-            coachID: coachID,
-            amount: 0,
-            updatedAt: Date(timeIntervalSince1970: 1_785_028_400)
+        let duplicate = try await repository.createEnrollment(
+            ProgramEnrollment(
+                id: UUID(),
+                programID: existing.programID,
+                participantID: existing.participantID,
+                coachID: coachID,
+                status: .active,
+                enrolledAt: existing.enrolledAt
+            )
         )
 
-        let enrollment = try await repository.redeemInvite(
-            code: "MSC7HARI",
-            participantID: UUID(
-                uuidString: "20000000-0000-0000-0000-000000009999"
-            )!,
-            enrollmentID: UUID(),
-            now: Date(timeIntervalSince1970: 1_785_028_400)
-        )
-
-        let wallet = try await repository.wallet(coachID: coachID)
-        #expect(enrollment.coachID == coachID)
-        #expect(wallet.availableSeatCredits == 0)
+        #expect(duplicate.id == existing.id)
     }
 
     @Test("Coach tidak dapat membuka peserta yang bukan assignment")

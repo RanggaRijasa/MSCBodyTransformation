@@ -9,11 +9,13 @@ struct ParticipantStepDetailView: View {
     @State private var evidenceMedia = LocalEvidenceMediaState()
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showsCamera = false
-    @State private var textAnswer = ""
-    @State private var photoError: String?
-    @State private var textError: String?
     @State private var actionError: String?
-    @FocusState private var isAnswerFocused: Bool
+    @State private var typedTextAnswers: [UUID: String] = [:]
+    @State private var typedSelections: [UUID: Set<UUID>] = [:]
+    @State private var typedPhotoReferences: [UUID: String] = [:]
+    @State private var activePhotoQuestionID: UUID?
+    @State private var weighInInput = ""
+    @State private var videoCompletionPercentage = 0
 
     var body: some View {
         Group {
@@ -29,6 +31,12 @@ struct ParticipantStepDetailView: View {
             NativeCameraCaptureSheet { data in
                 Task {
                     await evidenceMedia.importCameraData(data)
+                    if let activePhotoQuestionID,
+                       let reference =
+                        evidenceMedia.result?.localURL.absoluteString {
+                        typedPhotoReferences[activePhotoQuestionID] =
+                            reference
+                    }
                 }
             }
         }
@@ -47,15 +55,32 @@ struct ParticipantStepDetailView: View {
                     .font(AppTypography.sectionTitle)
                 LabeledContent(
                     "metric.points",
-                    value: ParticipantFormatting.points(step.points)
+                    value: ParticipantFormatting.points(
+                        pointsDisplayed(for: step)
+                    )
                 )
                 Text(step.instructions)
                     .foregroundStyle(Color.appSecondaryText)
             }
 
             instructionMediaSection(step)
-            requirementsSection(step)
-            evidenceSection(step, submission: submission)
+            if let content = step.content {
+                typedContentSection(
+                    content,
+                    step: step,
+                    submission: submission
+                )
+            } else {
+                Section {
+                    ContentUnavailableView(
+                        "Konten belum tersedia",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(
+                            "Muat ulang program atau hubungi Admin."
+                        )
+                    )
+                }
+            }
 
             if let submission {
                 submissionSection(submission)
@@ -72,7 +97,7 @@ struct ParticipantStepDetailView: View {
                 }
             } else if submission?.status != .approved
                         && submission?.status != .pending {
-                completionSection(step)
+                typedCompletionSection(step)
             }
         }
         .scrollContentBackground(.hidden)
@@ -82,10 +107,334 @@ struct ParticipantStepDetailView: View {
             guard let item else { return }
             Task {
                 await evidenceMedia.importPhoto(item)
+                if let activePhotoQuestionID,
+                   let reference =
+                    evidenceMedia.result?.localURL.absoluteString {
+                    typedPhotoReferences[activePhotoQuestionID] = reference
+                }
                 selectedPhotoItem = nil
             }
         }
         .accessibilityIdentifier("participant.step.detail")
+    }
+
+    @ViewBuilder
+    private func typedContentSection(
+        _ content: ProgramStepContent,
+        step: ProgramStep,
+        submission: StepSubmission?
+    ) -> some View {
+        switch content.kind {
+        case .article:
+            Section("Aktivitas") {
+                Label(
+                    "Baca materi, lalu tandai selesai.",
+                    systemImage: "doc.text"
+                )
+            }
+        case .video:
+            Section("Penyelesaian video") {
+                if content.videoConfiguration?.isRequiredToWatch == true {
+                    LabeledContent(
+                        "Wajib ditonton",
+                        value: "\(content.videoConfiguration?.completionThresholdPercentage ?? 100)%"
+                    )
+                } else {
+                    Text("Video dapat ditandai selesai setelah ditonton.")
+                }
+            }
+        case .form, .quiz:
+            ForEach(
+                content.questions.sorted { $0.order < $1.order }
+            ) { question in
+                typedQuestionSection(
+                    question,
+                    isDisabled: submission?.status == .pending
+                        || submission?.status == .approved
+                )
+            }
+        case .initialWeighIn, .dailyWeighIn, .finalWeighIn:
+            Section(
+                weighInTitle(for: content.kind)
+            ) {
+                TextField(
+                    "Berat (kg)",
+                    text: $weighInInput
+                )
+                .keyboardType(.decimalPad)
+                .disabled(
+                    submission?.status == .pending
+                        || submission?.status == .approved
+                )
+                Text(
+                    "Gunakan angka kilogram, misalnya 72,5. Nilai berat "
+                        + "tidak ditampilkan di leaderboard publik."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+        }
+
+        if let result = submission?.quizResult {
+            Section("Hasil kuis") {
+                LabeledContent(
+                    "Jawaban benar",
+                    value: "\(result.correctAnswerCount) dari "
+                        + "\(result.totalQuestionCount)"
+                )
+                LabeledContent("Nilai", value: "\(result.percentage)%")
+                StatusBadge(
+                    title: result.isPassed ? "Lulus" : "Belum lulus",
+                    kind: result.isPassed ? .success : .warning
+                )
+                Text(
+                    "Jawaban benar hanya dapat dilihat oleh Coach dan Admin."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func typedQuestionSection(
+        _ question: ProgramQuestionDefinition,
+        isDisabled: Bool
+    ) -> some View {
+        switch question.kind {
+        case .heading:
+            Section {
+                Text(question.prompt)
+                    .font(AppTypography.sectionTitle)
+            }
+        case .text:
+            Section {
+                Text(question.prompt)
+                    .foregroundStyle(.secondary)
+            }
+        case .shortAnswer:
+            Section(question.prompt) {
+                TextField(
+                    "Jawaban",
+                    text: textBinding(for: question.id)
+                )
+                .disabled(isDisabled)
+            }
+        case .longAnswer:
+            Section(question.prompt) {
+                TextField(
+                    "Jawaban",
+                    text: textBinding(for: question.id),
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+                .disabled(isDisabled)
+            }
+        case .number:
+            Section(question.prompt) {
+                TextField(
+                    "Angka",
+                    text: textBinding(for: question.id)
+                )
+                .keyboardType(.decimalPad)
+                .disabled(isDisabled)
+            }
+        case .singleChoice, .multipleChoice, .imageChoice:
+            Section(question.prompt) {
+                ForEach(
+                    question.options.sorted { $0.order < $1.order }
+                ) { option in
+                    Toggle(
+                        isOn: selectionBinding(
+                            question: question,
+                            optionID: option.id
+                        )
+                    ) {
+                        HStack {
+                            if question.kind == .imageChoice {
+                                Image(systemName: "photo")
+                                    .foregroundStyle(Color.brandPrimary)
+                            }
+                            Text(option.title)
+                        }
+                    }
+                    .disabled(isDisabled)
+                }
+            }
+        case .photoUpload:
+            Section(question.prompt) {
+                let hasPhoto = typedPhotoReferences[question.id] != nil
+                if let reference = typedPhotoReferences[question.id] {
+                    Label(
+                        "Foto siap dikirim",
+                        systemImage: "checkmark.circle.fill"
+                    )
+                    .foregroundStyle(Color.appSuccess)
+                    Text(reference)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .foregroundStyle(.secondary)
+                }
+                PhotosPicker(
+                    selection: $selectedPhotoItem,
+                    matching: .images,
+                    photoLibrary: .shared()
+                ) {
+                    Label(
+                        !hasPhoto
+                            ? "Pilih foto"
+                            : "Ganti foto",
+                        systemImage: "photo.on.rectangle"
+                    )
+                    .frame(minHeight: 44)
+                }
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        activePhotoQuestionID = question.id
+                    }
+                )
+                .disabled(isDisabled || evidenceMedia.isProcessing)
+
+                Button {
+                    activePhotoQuestionID = question.id
+                    showsCamera = true
+                } label: {
+                    Label("Ambil foto", systemImage: "camera")
+                        .frame(minHeight: 44)
+                }
+                .disabled(isDisabled || evidenceMedia.isProcessing)
+            }
+        }
+    }
+
+    private func typedCompletionSection(
+        _ step: ProgramStep
+    ) -> some View {
+        Section {
+            if let actionError {
+                Text(actionError)
+                    .foregroundStyle(Color.appDestructive)
+            }
+            Button {
+                Task {
+                    await completeTypedStep(step)
+                }
+            } label: {
+                Text(
+                    step.content?.weighInKind == nil
+                        ? "Kirim langkah"
+                        : "Kirim hasil timbang"
+                )
+            }
+            .disabled(
+                store.isPerformingAction
+                    || evidenceMedia.isProcessing
+                    || isRequiredVideoIncomplete(step)
+            )
+            .accessibilityIdentifier("participant.step.complete")
+            if isRequiredVideoIncomplete(step) {
+                Text(
+                    "Tonton video hingga ambang yang ditentukan sebelum "
+                        + "mengirim langkah."
+                )
+                .font(AppTypography.secondary)
+                .foregroundStyle(Color.appSecondaryText)
+            }
+        }
+    }
+
+    private func completeTypedStep(_ step: ProgramStep) async {
+        do {
+            if step.content?.weighInKind != nil {
+                try await store.submitWeighInStep(
+                    step,
+                    input: weighInInput
+                )
+            } else {
+                try await store.completeStep(
+                    step,
+                    answers: try typedAnswers(for: step)
+                )
+            }
+            actionError = nil
+        } catch let error as DomainError {
+            actionError = ParticipantFormatting.fieldReason(error)
+        } catch {
+            actionError = String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
+        }
+    }
+
+    private func typedAnswers(
+        for step: ProgramStep
+    ) throws -> [StepSubmissionAnswer] {
+        guard let questions = step.content?.questions else {
+            return []
+        }
+        return try questions.compactMap { question in
+            guard question.requiresAnswer else { return nil }
+            let text = typedTextAnswers[question.id]?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let number: Decimal?
+            if question.kind == .number, let text, !text.isEmpty {
+                number = Decimal(
+                    string: text.replacingOccurrences(of: ",", with: "."),
+                    locale: Locale(identifier: "en_US_POSIX")
+                )
+                guard number != nil else {
+                    throw DomainError.validation(
+                        field: "answers",
+                        reason: "Masukkan angka yang valid."
+                    )
+                }
+            } else {
+                number = nil
+            }
+            return StepSubmissionAnswer(
+                id: question.id,
+                questionID: question.id,
+                textValue: question.kind == .shortAnswer
+                    || question.kind == .longAnswer ? text : nil,
+                numberValue: number,
+                selectedOptionIDs: Array(
+                    typedSelections[question.id] ?? []
+                ),
+                localPhotoReference:
+                    typedPhotoReferences[question.id]
+            )
+        }
+    }
+
+    private func textBinding(for questionID: UUID) -> Binding<String> {
+        Binding(
+            get: { typedTextAnswers[questionID] ?? "" },
+            set: { typedTextAnswers[questionID] = $0 }
+        )
+    }
+
+    private func selectionBinding(
+        question: ProgramQuestionDefinition,
+        optionID: UUID
+    ) -> Binding<Bool> {
+        Binding(
+            get: {
+                typedSelections[question.id]?.contains(optionID) == true
+            },
+            set: { selected in
+                if selected {
+                    if question.kind == .multipleChoice {
+                        typedSelections[question.id, default: []]
+                            .insert(optionID)
+                    } else {
+                        typedSelections[question.id] = [optionID]
+                    }
+                } else {
+                    typedSelections[question.id]?.remove(optionID)
+                }
+            }
+        )
     }
 
     @ViewBuilder
@@ -95,7 +444,9 @@ struct ParticipantStepDetailView: View {
                 if media.kind == .video {
                     LocalVideoPlayerView(
                         resourceName: media.resourceName,
-                        textAlternative: media.accessibilityLabel
+                        textAlternative: media.accessibilityLabel,
+                        configuration: step.content?.videoConfiguration,
+                        completionPercentage: $videoCompletionPercentage
                     )
                 } else {
                     MediaThumbnail(
@@ -110,171 +461,13 @@ struct ParticipantStepDetailView: View {
         }
     }
 
-    private func requirementsSection(_ step: ProgramStep) -> some View {
-        Section {
-            if step.requirements.isEmpty {
-                Label(
-                    "participant.step.requirements.none",
-                    systemImage: "checkmark.circle"
-                )
-            } else {
-                ForEach(step.requirements) { requirement in
-                    Label(
-                        requirement.prompt
-                            ?? String(
-                                localized: "participant.step.requirement",
-                                defaultValue: "Persyaratan langkah"
-                            ),
-                        systemImage: requirement.kind == .photoEvidence
-                            ? "photo"
-                            : "text.bubble"
-                    )
-                }
-            }
-        } header: {
-            Text("participant.step.requirements.title")
+    private func isRequiredVideoIncomplete(_ step: ProgramStep) -> Bool {
+        guard let configuration = step.content?.videoConfiguration,
+              configuration.isRequiredToWatch else {
+            return false
         }
-    }
-
-    private func evidenceSection(
-        _ step: ProgramStep,
-        submission: StepSubmission?
-    ) -> some View {
-        let hasDraftEvidence = evidenceMedia.result != nil
-
-        return Section {
-            EvidenceStatusView(status: submission?.status)
-
-            if requiresPhoto(step) {
-                if let result = evidenceMedia.result {
-                    LocalMediaThumbnailView(result: result)
-                    LabeledContent("Ukuran hasil") {
-                        Text(
-                            "\(result.width) × \(result.height) px"
-                        )
-                        .monospacedDigit()
-                    }
-                    LabeledContent("Format", value: result.mimeType)
-                } else if submission?.evidence.contains(where: {
-                        $0.kind == .photo
-                    }) == true {
-                    MediaThumbnail(
-                        title: "participant.evidence.local_sample",
-                        systemImage: "photo.fill",
-                        kindLabel: "participant.evidence.attached"
-                    )
-                }
-
-                if evidenceMedia.isProcessing {
-                    ProgressView(
-                        value: evidenceMedia.progress,
-                        total: 1
-                    ) {
-                        Text("Memproses bukti foto…")
-                    }
-                    .accessibilityIdentifier(
-                        "participant.evidence.processing"
-                    )
-                }
-
-                PhotosPicker(
-                    selection: $selectedPhotoItem,
-                    matching: .images,
-                    photoLibrary: .shared()
-                ) {
-                    Label(
-                        hasDraftEvidence
-                            ? "Ganti dari foto"
-                            : "Pilih dari foto",
-                        systemImage: "photo.on.rectangle"
-                    )
-                    .frame(minHeight: 44)
-                }
-                .disabled(
-                    submission?.status == .approved
-                        || submission?.status == .pending
-                        || evidenceMedia.isProcessing
-                )
-                .accessibilityIdentifier(
-                    "participant.evidence.photo-picker"
-                )
-
-                Button {
-                    showsCamera = true
-                } label: {
-                    Label("Ambil foto", systemImage: "camera.fill")
-                        .frame(minHeight: 44)
-                }
-                .disabled(
-                    submission?.status == .approved
-                        || submission?.status == .pending
-                        || evidenceMedia.isProcessing
-                )
-                .accessibilityIdentifier("participant.evidence.camera")
-
-                if evidenceMedia.result != nil {
-                    Button("Hapus foto", role: .destructive) {
-                        evidenceMedia.remove()
-                    }
-                    .disabled(evidenceMedia.isProcessing)
-                    .accessibilityIdentifier(
-                        "participant.evidence.remove"
-                    )
-                }
-
-                if let mediaError = evidenceMedia.error {
-                    Label(
-                        mediaErrorMessage(mediaError),
-                        systemImage: "exclamationmark.triangle.fill"
-                    )
-                    .foregroundStyle(Color.appDestructive)
-                    Button("Coba lagi") {
-                        Task { await evidenceMedia.retry() }
-                    }
-                    .disabled(evidenceMedia.isProcessing)
-                    .accessibilityIdentifier(
-                        "participant.evidence.retry"
-                    )
-                }
-
-                photoAccessExplanation
-
-                if let photoError {
-                    Text(photoError)
-                        .foregroundStyle(Color.appDestructive)
-                        .accessibilityIdentifier(
-                            "participant.evidence.validation"
-                        )
-                }
-            }
-
-            if requiresText(step) {
-                TextField(
-                    "participant.evidence.answer_field",
-                    text: $textAnswer,
-                    axis: .vertical
-                )
-                .lineLimit(3...6)
-                .focused($isAnswerFocused)
-                .disabled(
-                    submission?.status == .approved
-                        || submission?.status == .pending
-                )
-                .accessibilityIdentifier("participant.evidence.answer")
-
-                if let textError {
-                    Text(textError)
-                        .foregroundStyle(Color.appDestructive)
-                        .accessibilityIdentifier(
-                            "participant.answer.validation"
-                        )
-                }
-            }
-        } header: {
-            Text("participant.evidence.title")
-        } footer: {
-            Text("participant.evidence.local_notice")
-        }
+        return videoCompletionPercentage
+            < configuration.completionThresholdPercentage
     }
 
     private func submissionSection(
@@ -305,71 +498,29 @@ struct ParticipantStepDetailView: View {
         }
     }
 
-    private func completionSection(_ step: ProgramStep) -> some View {
-        Section {
-            if let actionError {
-                Text(actionError)
-                    .foregroundStyle(Color.appDestructive)
-            }
-
-            Button {
-                Task {
-                    await complete(step)
-                }
-            } label: {
-                Text(
-                    store.submission(for: step.id)?.status == .rejected
-                        ? "participant.step.retry_action"
-                        : "participant.step.complete_action"
-                )
-            }
-            .disabled(store.isPerformingAction)
-            .disabled(evidenceMedia.isProcessing)
-            .accessibilityIdentifier("participant.step.complete")
+    private func pointsDisplayed(for step: ProgramStep) -> Int {
+        guard let kind = step.content?.kind else { return 0 }
+        switch kind {
+        case .article, .video, .form, .quiz:
+            return store.currentProgram?.effectiveScoringConfiguration
+                .pointsPerActivity ?? 0
+        case .initialWeighIn, .dailyWeighIn, .finalWeighIn:
+            return 0
         }
     }
 
-    private func complete(_ step: ProgramStep) async {
-        do {
-            try await store.completeStep(
-                step,
-                localPhotoReference:
-                    evidenceMedia.result?.localURL.absoluteString,
-                textAnswer: textAnswer.isEmpty ? nil : textAnswer
-            )
-            photoError = nil
-            textError = nil
-            actionError = nil
-        } catch let error as DomainError {
-            switch error {
-            case .validation(let field, let reason):
-                if field == "photoEvidence" {
-                    photoError = reason
-                } else if field == "textAnswer" {
-                    textError = reason
-                } else {
-                    actionError = reason
-                }
-            default:
-                actionError = ParticipantFormatting.fieldReason(error)
-            }
-        } catch {
-            actionError = String(
-                localized: "participant.error.generic",
-                defaultValue: "Terjadi kendala. Coba lagi."
-            )
-        }
-    }
-
-    private func requiresPhoto(_ step: ProgramStep) -> Bool {
-        step.requirements.contains {
-            $0.kind == .photoEvidence && $0.isRequired
-        }
-    }
-
-    private func requiresText(_ step: ProgramStep) -> Bool {
-        step.requirements.contains {
-            $0.kind == .textAnswer && $0.isRequired
+    private func weighInTitle(
+        for kind: ProgramContentKind
+    ) -> String {
+        switch kind {
+        case .initialWeighIn:
+            "Timbang awal"
+        case .dailyWeighIn:
+            "Timbang harian"
+        case .finalWeighIn:
+            "Timbang akhir"
+        case .article, .video, .form, .quiz:
+            ""
         }
     }
 

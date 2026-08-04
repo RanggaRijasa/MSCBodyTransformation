@@ -7,9 +7,6 @@ struct ParticipantProfileView: View {
 
     @State private var notificationsEnabled = true
     @State private var presentedSheet: ParticipantProfileSheet?
-    @State private var pendingCoach: CoachProfile?
-    @State private var actionError: String?
-    @State private var isChangingCoach = false
 
     var body: some View {
         if let snapshot = store.snapshot {
@@ -35,58 +32,7 @@ struct ParticipantProfileView: View {
                         profile: profile,
                         email: email
                     )
-                case .scanCoach:
-                    LocalQRScannerSheet(
-                        demoPayload:
-                            "msc-demo://join/COACH-MAYA-4P2L"
-                    ) { identifier in
-                        resolveCoach(identifier)
-                    }
                 }
-            }
-            .confirmationDialog(
-                "participant.profile.coach.confirm.title",
-                isPresented: Binding(
-                    get: { pendingCoach != nil },
-                    set: {
-                        if !$0 {
-                            pendingCoach = nil
-                        }
-                    }
-                ),
-                titleVisibility: .visible
-            ) {
-                if let pendingCoach {
-                    Button("participant.profile.coach.confirm.action") {
-                        changeCoach(to: pendingCoach)
-                    }
-                }
-                Button("action.cancel", role: .cancel) {
-                    pendingCoach = nil
-                }
-            } message: {
-                if let pendingCoach {
-                    Text(
-                        "Coach pendamping akan diubah menjadi "
-                            + pendingCoach.displayName
-                            + "."
-                    )
-                }
-            }
-            .alert(
-                "participant.profile.action_failed",
-                isPresented: Binding(
-                    get: { actionError != nil },
-                    set: {
-                        if !$0 {
-                            actionError = nil
-                        }
-                    }
-                )
-            ) {
-                Button("action.close", role: .cancel) {}
-            } message: {
-                Text(actionError ?? "")
             }
         } else {
             LoadingStateView()
@@ -194,23 +140,14 @@ struct ParticipantProfileView: View {
                 .foregroundStyle(Color.appSecondaryText)
             }
 
-            Button {
-                presentedSheet = .scanCoach
-            } label: {
-                Label(
-                    "participant.profile.coach.change",
-                    systemImage: "qrcode.viewfinder"
-                )
-                .frame(minHeight: 44)
-            }
-            .disabled(isChangingCoach)
-            .accessibilityIdentifier(
-                "participant.profile.change-coach"
-            )
         } header: {
             Text("participant.profile.coach.section")
         } footer: {
-            Text("participant.profile.coach.scan_help")
+            Text(
+                "Coach ditetapkan saat pertama kali mengikuti program. "
+                    + "Perubahan hanya dapat dilakukan Admin dengan alasan "
+                    + "yang tercatat."
+            )
         }
     }
 
@@ -291,52 +228,15 @@ struct ParticipantProfileView: View {
         }
     }
 
-    private func resolveCoach(_ identifier: String) {
-        do {
-            pendingCoach = try store.coach(
-                matchingEnrollmentIdentifier: identifier
-            )
-        } catch let error as DomainError {
-            actionError = ParticipantFormatting.fieldReason(error)
-        } catch {
-            actionError = String(
-                localized: "participant.error.generic",
-                defaultValue: "Terjadi kendala. Coba lagi."
-            )
-        }
-    }
-
-    private func changeCoach(to coach: CoachProfile) {
-        isChangingCoach = true
-        Task {
-            defer {
-                isChangingCoach = false
-                pendingCoach = nil
-            }
-            do {
-                try await store.changeCoach(to: coach)
-            } catch let error as DomainError {
-                actionError = ParticipantFormatting.fieldReason(error)
-            } catch {
-                actionError = String(
-                    localized: "participant.error.generic",
-                    defaultValue: "Terjadi kendala. Coba lagi."
-                )
-            }
-        }
-    }
 }
 
 private enum ParticipantProfileSheet: Identifiable {
     case edit(ParticipantProfile, String)
-    case scanCoach
 
     var id: String {
         switch self {
         case .edit:
             "edit"
-        case .scanCoach:
-            "scan-coach"
         }
     }
 }

@@ -679,7 +679,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
-    func testParticipantEditsProfileAndChangesCoachByQR() throws {
+    func testParticipantEditsProfileWithoutChangingCoach() throws {
         let app = XCUIApplication()
         app.launchArguments = [
             "-AppleLanguages", "(id)",
@@ -741,29 +741,8 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertTrue(phoneRow.waitForExistence(timeout: 5))
         XCTAssertTrue(phoneRow.label.contains("+628123456700"))
 
-        let changeCoach = app.buttons[
-            "participant.profile.change-coach"
-        ]
-        for _ in 0..<3
-        where !changeCoach.waitForExistence(timeout: 1)
-            || !changeCoach.isHittable {
-            app.swipeUp()
-        }
-        XCTAssertTrue(changeCoach.waitForExistence(timeout: 5))
-        changeCoach.tap()
-
-        let demoQR = app.buttons["participant.qr.use-demo"]
-        XCTAssertTrue(demoQR.waitForExistence(timeout: 8))
-        demoQR.tap()
-
-        let confirmCoach = app.sheets[
-            "Ganti coach pendamping?"
-        ].buttons["Ganti coach"]
-        XCTAssertTrue(confirmCoach.waitForExistence(timeout: 5))
-        confirmCoach.tap()
-
-        XCTAssertTrue(
-            app.staticTexts["Coach Maya"].waitForExistence(timeout: 8)
+        XCTAssertFalse(
+            app.buttons["participant.profile.change-coach"].exists
         )
         XCTAssertFalse(app.textFields["Kode coach"].exists)
     }
@@ -1106,6 +1085,10 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 .waitForExistence(timeout: 5)
         )
 
+        let availableFilter = app.segmentedControls.buttons["Tersedia"]
+        XCTAssertTrue(availableFilter.waitForExistence(timeout: 5))
+        availableFilter.tap()
+
         let availableProgram = app.buttons[
             "participant.program.select."
                 + "10000000-0000-0000-0000-000000000003"
@@ -1294,11 +1277,11 @@ final class MSCBodyTransformationUITests: XCTestCase {
                 .waitForExistence(timeout: 5)
         )
         XCTAssertTrue(
-            app.buttons["coach.invite.share"]
+            app.buttons["coach.identifier.share"]
                 .waitForExistence(timeout: 5)
         )
         XCTAssertFalse(app.staticTexts["COACH-RAKA-7K9Q"].exists)
-        app.buttons["coach.invite.share"].tap()
+        app.buttons["coach.identifier.share"].tap()
         XCTAssertTrue(
             app.otherElements["ActivityListView"]
                 .waitForExistence(timeout: 5)
@@ -1316,18 +1299,31 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "coach.participants", in: app)
                 .waitForExistence(timeout: 5)
         )
-        let participant = app.buttons.matching(
-            NSPredicate(
-                format: "identifier BEGINSWITH %@",
-                "coach.participant.open."
-            )
-        ).firstMatch
+        let participant = app.buttons[
+            "coach.participant.open."
+                + "20000000-0000-0000-0000-000000000001"
+        ]
         XCTAssertTrue(participant.waitForExistence(timeout: 5))
+        if !participant.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(participant.isHittable)
         participant.tap()
         XCTAssertTrue(
             element(identifier: "coach.participant.detail", in: app)
                 .waitForExistence(timeout: 5)
         )
+        let dailyWeighIn = app.descendants(matching: .any)
+            .matching(identifier: "coach.participant.weight-history")
+            .matching(
+                NSPredicate(
+                    format: "label CONTAINS %@ AND label CONTAINS %@",
+                    "Timbang harian",
+                    "78,1 kg"
+                )
+            )
+            .firstMatch
+        XCTAssertTrue(dailyWeighIn.waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -1722,7 +1718,10 @@ final class MSCBodyTransformationUITests: XCTestCase {
 
     @MainActor
     func testAdminCreatesDraftAddsDayStepPreviewsAndPublishes() throws {
-        let app = launchAdmin()
+        let app = launchAdmin(
+            language: "en",
+            locale: "en_US"
+        )
 
         tabButton(label: "Program", in: app).tap()
         XCTAssertTrue(
@@ -1753,6 +1752,33 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Kelola program"].exists)
         XCTAssertFalse(app.buttons["Atur program"].exists)
 
+        app.buttons["admin.program.editor.open.settings"].tap()
+        XCTAssertTrue(
+            element(identifier: "admin.program.settings-hub", in: app)
+                .waitForExistence(timeout: 5)
+        )
+        app.buttons["admin.program.editor.open.info"].tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.cover.picker"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(app.staticTexts["Jenis cover"].exists)
+        XCTAssertFalse(
+            app.textFields["Referensi gambar lokal"].exists
+        )
+        assertNoVisibleLocalizationKeys(in: app)
+        app.buttons["navigation.back"].tap()
+        app.buttons["admin.program.editor.open.rules"].tap()
+        XCTAssertTrue(
+            app.staticTexts["Poin langkah"].waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.staticTexts["Poin penurunan berat badan"].exists
+        )
+        assertNoVisibleLocalizationKeys(in: app)
+        app.buttons["navigation.back"].tap()
+        app.buttons["navigation.back"].tap()
+
         app.buttons["admin.program.editor.open.content"].tap()
         XCTAssertTrue(
             app.buttons["navigation.back"].waitForExistence(timeout: 5)
@@ -1773,6 +1799,9 @@ final class MSCBodyTransformationUITests: XCTestCase {
         ).firstMatch
         XCTAssertTrue(addStep.waitForExistence(timeout: 5))
         addStep.tap()
+        XCTAssertTrue(
+            app.buttons["Timbang harian"].waitForExistence(timeout: 5)
+        )
         let article = app.buttons.matching(
             NSPredicate(format: "label CONTAINS %@", "Artikel")
         ).firstMatch
@@ -1800,6 +1829,45 @@ final class MSCBodyTransformationUITests: XCTestCase {
             element(identifier: "admin.editor.preview", in: app)
                 .waitForExistence(timeout: 5)
         )
+        XCTAssertTrue(app.buttons["Peserta"].exists)
+        XCTAssertTrue(app.buttons["Coach"].exists)
+        XCTAssertFalse(app.staticTexts["Perangkat kecil"].exists)
+        XCTAssertFalse(app.staticTexts["Perangkat besar"].exists)
+        let previewRolePicker = element(
+            identifier: "admin.program.preview.role-picker",
+            in: app
+        )
+        XCTAssertTrue(previewRolePicker.waitForExistence(timeout: 5))
+        XCTAssertGreaterThanOrEqual(previewRolePicker.frame.height, 48)
+        let pinnedRolePickerY = previewRolePicker.frame.minY
+        app.swipeUp()
+        XCTAssertTrue(previewRolePicker.isHittable)
+        XCTAssertEqual(
+            previewRolePicker.frame.minY,
+            pinnedRolePickerY,
+            accuracy: 2
+        )
+        XCTAssertTrue(
+            app.staticTexts[
+                "Tampilan ini sama dengan yang dilihat Peserta."
+            ].exists
+        )
+
+        app.buttons["Coach"].tap()
+        XCTAssertTrue(
+            element(
+                identifier:
+                    "admin.program.preview.monitored-participant",
+                in: app
+            )
+            .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.staticTexts[
+                "Tampilan ini sama dengan yang dilihat Coach."
+            ].exists
+        )
+        XCTAssertTrue(app.staticTexts["Ayu Lestari"].exists)
         app.buttons["navigation.back"].tap()
 
         let publish = app.buttons["admin.editor.publish"]
@@ -1818,6 +1886,161 @@ final class MSCBodyTransformationUITests: XCTestCase {
             app.buttons["Publikasi demo selesai"]
                 .waitForExistence(timeout: 8)
         )
+    }
+
+    @MainActor
+    func testAdminSwipeDeletesDayWithoutConfirmation() {
+        let app = launchAdmin()
+
+        tabButton(label: "Program", in: app).tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.create"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.create"].tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.content"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.editor.open.content"].tap()
+
+        let dayRow = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.day.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(dayRow.waitForExistence(timeout: 5))
+
+        let swipeStart = dayRow.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)
+        )
+        let swipeEnd = dayRow.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+        )
+        swipeStart.press(forDuration: 0.05, thenDragTo: swipeEnd)
+
+        let deleteAction = app.buttons["admin.program.day.delete"]
+        XCTAssertTrue(deleteAction.waitForExistence(timeout: 5))
+        XCTAssertTrue(deleteAction.isHittable)
+        XCTAssertFalse(app.staticTexts["Hapus"].exists)
+        deleteAction.tap()
+
+        XCTAssertFalse(app.staticTexts["Hapus hari program?"].exists)
+        XCTAssertTrue(
+            app.staticTexts["Belum ada hari"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertFalse(dayRow.exists)
+
+        let addDay = app.buttons["admin.program.day.add"]
+        XCTAssertTrue(addDay.waitForExistence(timeout: 5))
+        addDay.tap()
+
+        let replacementDayRow = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.day.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(replacementDayRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(replacementDayRow.isHittable)
+        XCTAssertFalse(
+            deleteAction.exists,
+            "Hari baru tidak boleh mewarisi posisi swipe hari yang dihapus."
+        )
+    }
+
+    @MainActor
+    func testAdminCopiesDayContentToAnotherDay() {
+        let app = launchAdmin(language: "en", locale: "en_US")
+
+        tabButton(label: "Program", in: app).tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.create"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.create"].tap()
+        XCTAssertTrue(
+            app.buttons["admin.program.editor.open.content"]
+                .waitForExistence(timeout: 8)
+        )
+        app.buttons["admin.program.editor.open.content"].tap()
+
+        let addDay = app.buttons["admin.program.day.add"]
+        XCTAssertTrue(addDay.waitForExistence(timeout: 5))
+        addDay.tap()
+
+        let dayRows = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.day.open."
+            )
+        )
+        XCTAssertEqual(dayRows.count, 2)
+        dayRows.element(boundBy: 0).tap()
+
+        let addStep = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.editor.add-step."
+            )
+        ).firstMatch
+        XCTAssertTrue(addStep.waitForExistence(timeout: 5))
+        addStep.tap()
+        XCTAssertTrue(app.buttons["Artikel"].waitForExistence(timeout: 5))
+        app.buttons["Artikel"].tap()
+
+        let createdStep = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.step.open."
+            )
+        ).firstMatch
+        XCTAssertTrue(createdStep.waitForExistence(timeout: 5))
+
+        let copyContent = app.buttons[
+            "admin.program.day.copy-content"
+        ]
+        XCTAssertTrue(copyContent.waitForExistence(timeout: 5))
+        XCTAssertTrue(copyContent.isEnabled)
+        copyContent.tap()
+
+        XCTAssertTrue(
+            app.otherElements["admin.program.copy-content.sheet"]
+                .waitForExistence(timeout: 5)
+        )
+        let copyTarget = app.buttons.matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@",
+                "admin.program.copy-content.target."
+            )
+        ).firstMatch
+        XCTAssertTrue(copyTarget.waitForExistence(timeout: 5))
+        copyTarget.tap()
+
+        let confirmCopy = app.buttons[
+            "admin.program.copy-content.confirm"
+        ]
+        XCTAssertTrue(confirmCopy.isEnabled)
+        confirmCopy.tap()
+        XCTAssertFalse(
+            app.otherElements["admin.program.copy-content.sheet"]
+                .waitForExistence(timeout: 2)
+        )
+
+        app.buttons["navigation.back"].tap()
+
+        let copiedTarget = app.buttons.matching(
+            NSPredicate(
+                format:
+                    "identifier BEGINSWITH %@ AND label CONTAINS %@",
+                "admin.program.day.open.",
+                "Hari ke-2"
+            )
+        ).firstMatch
+        XCTAssertTrue(copiedTarget.waitForExistence(timeout: 5))
+        XCTAssertTrue(copiedTarget.label.contains("1 langkah"))
     }
 
     @MainActor
@@ -2540,18 +2763,18 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
-    func testLegacyCoachAndAdminWinnerScenariosRemainNavigable() throws {
+    func testCoachIdentifierAndAdminWinnerScenariosRemainNavigable() throws {
         let coachApp = XCUIApplication()
         coachApp.launchArguments = [
             "-AppleLanguages", "(id)",
             "-AppleLocale", "id_ID",
             "-DemoRole", "coach",
-            "-DemoScenario", "coach_wallet_zero",
+            "-DemoScenario", "coach_identifier",
             "-SkipDemoLanding"
         ]
         coachApp.launch()
         XCTAssertTrue(
-            element(identifier: "coach.invite", in: coachApp)
+            element(identifier: "coach.identifier", in: coachApp)
                 .waitForExistence(timeout: 8)
         )
         coachApp.terminate()
@@ -2573,11 +2796,14 @@ final class MSCBodyTransformationUITests: XCTestCase {
     }
 
     @MainActor
-    private func launchAdmin() -> XCUIApplication {
+    private func launchAdmin(
+        language: String = "id",
+        locale: String = "id_ID"
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
-            "-AppleLanguages", "(id)",
-            "-AppleLocale", "id_ID",
+            "-AppleLanguages", "(\(language))",
+            "-AppleLocale", locale,
             "-DemoRole", "admin",
             "-DemoScenario", "admin_draft_editor",
             "-SkipDemoLanding"

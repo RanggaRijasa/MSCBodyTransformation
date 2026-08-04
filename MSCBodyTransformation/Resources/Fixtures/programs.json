@@ -1,157 +1,777 @@
 {
   "programs": [
     {
-      "id":"10000000-0000-0000-0000-000000000001",
-      "title":"Transformasi 7 hari",
-      "summary":"Program demo lokal untuk membangun kebiasaan aktif secara bertahap.",
-      "price":149000,
-      "status":"active",
-      "startDate":"2026-07-24T00:00:00Z",
-      "endDate":"2026-07-30T23:59:59Z",
-      "timeZoneIdentifier":"Asia/Makassar",
-      "weightPointsPerKilogram":800,
-      "days":[
+      "id": "10000000-0000-0000-0000-000000000001",
+      "title": "Transformasi 7 hari",
+      "summary": "Program demo lokal untuk membangun kebiasaan aktif secara bertahap.",
+      "price": 149000,
+      "status": "active",
+      "startDate": "2026-07-24T00:00:00Z",
+      "endDate": "2026-07-30T23:59:59Z",
+      "timeZoneIdentifier": "Asia/Makassar",
+      "weightPointsPerKilogram": 800,
+      "days": [
         {
-          "id":"11000000-0000-0000-0000-000000000001",
-          "programID":"10000000-0000-0000-0000-000000000001",
-          "dayNumber":1,
-          "title":"Mulai dengan ringan",
-          "scheduledDate":"2026-07-24T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000001","programDayID":"11000000-0000-0000-0000-000000000001","order":1,"title":"Foto persiapan","instructions":"Siapkan area yang aman dan terang untuk memulai program.","points":10,"instructionMedia":{"kind":"image","resourceName":"instruction_day_1","accessibilityLabel":"Contoh area latihan yang aman"},"requirements":[{"id":"13000000-0000-0000-0000-000000000001","kind":"photo_evidence","isRequired":true,"prompt":"Unggah foto persiapan."}],"verificationMode":"coach_review"},
-            {"id":"12000000-0000-0000-0000-000000000002","programDayID":"11000000-0000-0000-0000-000000000001","order":2,"title":"Pemanasan","instructions":"Ikuti gerakan pemanasan ringan sesuai kemampuan.","points":10,"instructionMedia":{"kind":"video","resourceName":"video_placeholder_day_1","accessibilityLabel":"Video contoh pemanasan"},"requirements":[],"verificationMode":"automatic"},
-            {"id":"12000000-0000-0000-0000-000000000003","programDayID":"11000000-0000-0000-0000-000000000001","order":3,"title":"Minum air","instructions":"Siapkan air minum sebelum melanjutkan aktivitas.","points":5,"requirements":[],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000001",
+          "programID": "10000000-0000-0000-0000-000000000001",
+          "dayNumber": 1,
+          "title": "Mulai dengan ringan",
+          "scheduledDate": "2026-07-24T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12900000-0000-0000-0000-000000000001",
+              "programDayID": "11000000-0000-0000-0000-000000000001",
+              "order": 1,
+              "title": "Timbang awal",
+              "instructions": "Catat berat awal untuk enrollment program ini.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "initial_weigh_in",
+                "questions": [],
+                "completionPolicy": "submit_weigh_in"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000001",
+              "programDayID": "11000000-0000-0000-0000-000000000001",
+              "order": 2,
+              "title": "Foto persiapan",
+              "instructions": "Siapkan area yang aman dan terang untuk memulai program.",
+              "instructionMedia": {
+                "kind": "image",
+                "resourceName": "instruction_day_1",
+                "accessibilityLabel": "Contoh area latihan yang aman"
+              },
+              "verificationMode": "coach_review",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000001",
+                    "order": 1,
+                    "kind": "photo_upload",
+                    "prompt": "Unggah foto persiapan.",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000002",
+              "programDayID": "11000000-0000-0000-0000-000000000001",
+              "order": 3,
+              "title": "Pemanasan",
+              "instructions": "Ikuti gerakan pemanasan ringan sesuai kemampuan.",
+              "instructionMedia": {
+                "kind": "video",
+                "resourceName": "video_placeholder_day_1",
+                "accessibilityLabel": "Video contoh pemanasan"
+              },
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "video",
+                "questions": [],
+                "completionPolicy": "watch_video",
+                "videoConfiguration": {
+                  "isRequiredToWatch": true,
+                  "completionThresholdPercentage": 90,
+                  "isAutoplayEnabled": false
+                }
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000003",
+              "programDayID": "11000000-0000-0000-0000-000000000001",
+              "order": 4,
+              "title": "Minum air",
+              "instructions": "Siapkan air minum sebelum melanjutkan aktivitas.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000002",
-          "programID":"10000000-0000-0000-0000-000000000001",
-          "dayNumber":2,
-          "title":"Jaga ritme",
-          "scheduledDate":"2026-07-25T00:00:00Z",
-          "visibilityMode":"read_only",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000004","programDayID":"11000000-0000-0000-0000-000000000002","order":1,"title":"Jalan santai","instructions":"Berjalan santai selama waktu yang nyaman.","points":10,"requirements":[{"id":"13000000-0000-0000-0000-000000000004","kind":"photo_evidence","isRequired":true,"prompt":"Unggah foto setelah berjalan."}],"verificationMode":"coach_review"},
-            {"id":"12000000-0000-0000-0000-000000000005","programDayID":"11000000-0000-0000-0000-000000000002","order":2,"title":"Peregangan","instructions":"Lakukan peregangan ringan tanpa memaksakan gerakan.","points":10,"requirements":[],"verificationMode":"automatic"},
-            {"id":"12000000-0000-0000-0000-000000000006","programDayID":"11000000-0000-0000-0000-000000000002","order":3,"title":"Catatan energi","instructions":"Catat bagaimana energi Anda hari ini.","points":5,"requirements":[{"id":"13000000-0000-0000-0000-000000000006","kind":"text_answer","isRequired":true,"prompt":"Bagaimana tingkat energi Anda hari ini?"}],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000002",
+          "programID": "10000000-0000-0000-0000-000000000001",
+          "dayNumber": 2,
+          "title": "Jaga ritme",
+          "scheduledDate": "2026-07-25T00:00:00Z",
+          "visibilityMode": "read_only",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000004",
+              "programDayID": "11000000-0000-0000-0000-000000000002",
+              "order": 1,
+              "title": "Jalan santai",
+              "instructions": "Berjalan santai selama waktu yang nyaman.",
+              "verificationMode": "coach_review",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000004",
+                    "order": 1,
+                    "kind": "photo_upload",
+                    "prompt": "Unggah foto setelah berjalan.",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000005",
+              "programDayID": "11000000-0000-0000-0000-000000000002",
+              "order": 2,
+              "title": "Peregangan",
+              "instructions": "Lakukan peregangan ringan tanpa memaksakan gerakan.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000006",
+              "programDayID": "11000000-0000-0000-0000-000000000002",
+              "order": 3,
+              "title": "Catatan energi",
+              "instructions": "Catat bagaimana energi Anda hari ini.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000006",
+                    "order": 1,
+                    "kind": "short_answer",
+                    "prompt": "Bagaimana tingkat energi Anda hari ini?",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12900000-0000-0000-0000-000000000007",
+              "programDayID": "11000000-0000-0000-0000-000000000002",
+              "order": 4,
+              "title": "Timbang harian",
+              "instructions": "Catat berat badan hari ini untuk memantau progres.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "daily_weigh_in",
+                "questions": [],
+                "completionPolicy": "submit_weigh_in"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000003",
-          "programID":"10000000-0000-0000-0000-000000000001",
-          "dayNumber":3,
-          "title":"Jaga konsistensi",
-          "scheduledDate":"2026-07-26T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000007","programDayID":"11000000-0000-0000-0000-000000000003","order":1,"title":"Gerak pagi","instructions":"Lakukan aktivitas ringan di pagi hari sesuai kondisi Anda.","points":10,"requirements":[{"id":"13000000-0000-0000-0000-000000000007","kind":"photo_evidence","isRequired":true,"prompt":"Unggah bukti aktivitas."}],"verificationMode":"coach_review"},
-            {"id":"12000000-0000-0000-0000-000000000008","programDayID":"11000000-0000-0000-0000-000000000003","order":2,"title":"Pilihan makan seimbang","instructions":"Pilih porsi makan yang beragam dan seimbang.","points":10,"instructionMedia":{"kind":"video","resourceName":"video_placeholder_day_1","accessibilityLabel":"Video panduan pilihan makan seimbang"},"requirements":[{"id":"13000000-0000-0000-0000-000000000008","kind":"photo_evidence","isRequired":true,"prompt":"Unggah foto pilihan makan Anda."}],"verificationMode":"coach_review"},
-            {"id":"12000000-0000-0000-0000-000000000009","programDayID":"11000000-0000-0000-0000-000000000003","order":3,"title":"Refleksi singkat","instructions":"Tuliskan satu kebiasaan yang ingin Anda pertahankan.","points":5,"requirements":[{"id":"13000000-0000-0000-0000-000000000009","kind":"text_answer","isRequired":true,"prompt":"Kebiasaan apa yang ingin Anda pertahankan?"}],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000003",
+          "programID": "10000000-0000-0000-0000-000000000001",
+          "dayNumber": 3,
+          "title": "Jaga konsistensi",
+          "scheduledDate": "2026-07-26T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000007",
+              "programDayID": "11000000-0000-0000-0000-000000000003",
+              "order": 1,
+              "title": "Gerak pagi",
+              "instructions": "Lakukan aktivitas ringan di pagi hari sesuai kondisi Anda.",
+              "verificationMode": "coach_review",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000007",
+                    "order": 1,
+                    "kind": "photo_upload",
+                    "prompt": "Unggah bukti aktivitas.",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000008",
+              "programDayID": "11000000-0000-0000-0000-000000000003",
+              "order": 2,
+              "title": "Pilihan makan seimbang",
+              "instructions": "Pilih porsi makan yang beragam dan seimbang.",
+              "instructionMedia": {
+                "kind": "video",
+                "resourceName": "video_placeholder_day_1",
+                "accessibilityLabel": "Video panduan pilihan makan seimbang"
+              },
+              "verificationMode": "coach_review",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000008",
+                    "order": 1,
+                    "kind": "photo_upload",
+                    "prompt": "Unggah foto pilihan makan Anda.",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000009",
+              "programDayID": "11000000-0000-0000-0000-000000000003",
+              "order": 3,
+              "title": "Refleksi singkat",
+              "instructions": "Tuliskan satu kebiasaan yang ingin Anda pertahankan.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000009",
+                    "order": 1,
+                    "kind": "short_answer",
+                    "prompt": "Kebiasaan apa yang ingin Anda pertahankan?",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000004",
-          "programID":"10000000-0000-0000-0000-000000000001",
-          "dayNumber":4,
-          "title":"Bangun kebiasaan",
-          "scheduledDate":"2026-07-27T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000010","programDayID":"11000000-0000-0000-0000-000000000004","order":1,"title":"Latihan inti","instructions":"Konten akan dibuka sesuai pengaturan program.","points":10,"requirements":[],"verificationMode":"automatic"},
-            {"id":"12000000-0000-0000-0000-000000000011","programDayID":"11000000-0000-0000-0000-000000000004","order":2,"title":"Jeda aktif","instructions":"Konten akan dibuka sesuai pengaturan program.","points":10,"requirements":[],"verificationMode":"automatic"},
-            {"id":"12000000-0000-0000-0000-000000000012","programDayID":"11000000-0000-0000-0000-000000000004","order":3,"title":"Refleksi","instructions":"Konten akan dibuka sesuai pengaturan program.","points":5,"requirements":[],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000004",
+          "programID": "10000000-0000-0000-0000-000000000001",
+          "dayNumber": 4,
+          "title": "Bangun kebiasaan",
+          "scheduledDate": "2026-07-27T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000010",
+              "programDayID": "11000000-0000-0000-0000-000000000004",
+              "order": 1,
+              "title": "Latihan inti",
+              "instructions": "Konten akan dibuka sesuai pengaturan program.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000011",
+              "programDayID": "11000000-0000-0000-0000-000000000004",
+              "order": 2,
+              "title": "Jeda aktif",
+              "instructions": "Konten akan dibuka sesuai pengaturan program.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000012",
+              "programDayID": "11000000-0000-0000-0000-000000000004",
+              "order": 3,
+              "title": "Refleksi",
+              "instructions": "Konten akan dibuka sesuai pengaturan program.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000005",
-          "programID":"10000000-0000-0000-0000-000000000001",
-          "dayNumber":5,
-          "title":"Bangun konsistensi",
-          "scheduledDate":"2026-07-28T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000013","programDayID":"11000000-0000-0000-0000-000000000005","order":1,"title":"Aktivitas pilihan","instructions":"Pilih aktivitas ringan yang Anda sukai.","points":10,"requirements":[{"id":"13000000-0000-0000-0000-000000000013","kind":"photo_evidence","isRequired":true,"prompt":"Unggah bukti aktivitas."}],"verificationMode":"coach_review"},
-            {"id":"12000000-0000-0000-0000-000000000014","programDayID":"11000000-0000-0000-0000-000000000005","order":2,"title":"Peregangan santai","instructions":"Bergerak perlahan dan hentikan bila tidak nyaman.","points":10,"requirements":[],"verificationMode":"automatic"},
-            {"id":"12000000-0000-0000-0000-000000000015","programDayID":"11000000-0000-0000-0000-000000000005","order":3,"title":"Catatan kemajuan","instructions":"Tuliskan kemajuan kecil yang Anda rasakan.","points":5,"requirements":[{"id":"13000000-0000-0000-0000-000000000015","kind":"text_answer","isRequired":true,"prompt":"Kemajuan kecil apa yang Anda rasakan?"}],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000005",
+          "programID": "10000000-0000-0000-0000-000000000001",
+          "dayNumber": 5,
+          "title": "Bangun konsistensi",
+          "scheduledDate": "2026-07-28T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000013",
+              "programDayID": "11000000-0000-0000-0000-000000000005",
+              "order": 1,
+              "title": "Aktivitas pilihan",
+              "instructions": "Pilih aktivitas ringan yang Anda sukai.",
+              "verificationMode": "coach_review",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000013",
+                    "order": 1,
+                    "kind": "photo_upload",
+                    "prompt": "Unggah bukti aktivitas.",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000014",
+              "programDayID": "11000000-0000-0000-0000-000000000005",
+              "order": 2,
+              "title": "Peregangan santai",
+              "instructions": "Bergerak perlahan dan hentikan bila tidak nyaman.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000015",
+              "programDayID": "11000000-0000-0000-0000-000000000005",
+              "order": 3,
+              "title": "Catatan kemajuan",
+              "instructions": "Tuliskan kemajuan kecil yang Anda rasakan.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000015",
+                    "order": 1,
+                    "kind": "short_answer",
+                    "prompt": "Kemajuan kecil apa yang Anda rasakan?",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000006",
-          "programID":"10000000-0000-0000-0000-000000000001",
-          "dayNumber":6,
-          "title":"Tetap bergerak",
-          "scheduledDate":"2026-07-29T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000016","programDayID":"11000000-0000-0000-0000-000000000006","order":1,"title":"Gerak singkat","instructions":"Lakukan rangkaian gerak singkat sesuai kemampuan.","points":10,"requirements":[{"id":"13000000-0000-0000-0000-000000000016","kind":"photo_evidence","isRequired":true,"prompt":"Unggah bukti aktivitas."}],"verificationMode":"coach_review"},
-            {"id":"12000000-0000-0000-0000-000000000017","programDayID":"11000000-0000-0000-0000-000000000006","order":2,"title":"Istirahat cukup","instructions":"Atur waktu istirahat yang mendukung rutinitas Anda.","points":10,"requirements":[],"verificationMode":"automatic"},
-            {"id":"12000000-0000-0000-0000-000000000018","programDayID":"11000000-0000-0000-0000-000000000006","order":3,"title":"Rencana besok","instructions":"Tuliskan satu hal yang akan disiapkan untuk besok.","points":5,"requirements":[{"id":"13000000-0000-0000-0000-000000000018","kind":"text_answer","isRequired":true,"prompt":"Apa yang akan Anda siapkan?"}],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000006",
+          "programID": "10000000-0000-0000-0000-000000000001",
+          "dayNumber": 6,
+          "title": "Tetap bergerak",
+          "scheduledDate": "2026-07-29T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000016",
+              "programDayID": "11000000-0000-0000-0000-000000000006",
+              "order": 1,
+              "title": "Gerak singkat",
+              "instructions": "Lakukan rangkaian gerak singkat sesuai kemampuan.",
+              "verificationMode": "coach_review",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000016",
+                    "order": 1,
+                    "kind": "photo_upload",
+                    "prompt": "Unggah bukti aktivitas.",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000017",
+              "programDayID": "11000000-0000-0000-0000-000000000006",
+              "order": 2,
+              "title": "Istirahat cukup",
+              "instructions": "Atur waktu istirahat yang mendukung rutinitas Anda.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000018",
+              "programDayID": "11000000-0000-0000-0000-000000000006",
+              "order": 3,
+              "title": "Rencana besok",
+              "instructions": "Tuliskan satu hal yang akan disiapkan untuk besok.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000018",
+                    "order": 1,
+                    "kind": "short_answer",
+                    "prompt": "Apa yang akan Anda siapkan?",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000007",
-          "programID":"10000000-0000-0000-0000-000000000001",
-          "dayNumber":7,
-          "title":"Tutup program",
-          "scheduledDate":"2026-07-30T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000019","programDayID":"11000000-0000-0000-0000-000000000007","order":1,"title":"Aktivitas penutup","instructions":"Selesaikan aktivitas terakhir sesuai kemampuan.","points":10,"requirements":[{"id":"13000000-0000-0000-0000-000000000019","kind":"photo_evidence","isRequired":true,"prompt":"Unggah bukti aktivitas penutup."}],"verificationMode":"coach_review"},
-            {"id":"12000000-0000-0000-0000-000000000020","programDayID":"11000000-0000-0000-0000-000000000007","order":2,"title":"Berat badan akhir","instructions":"Catat berat badan akhir dengan alat ukur yang sama bila tersedia.","points":10,"requirements":[],"verificationMode":"automatic"},
-            {"id":"12000000-0000-0000-0000-000000000021","programDayID":"11000000-0000-0000-0000-000000000007","order":3,"title":"Refleksi akhir","instructions":"Tuliskan kebiasaan yang ingin dilanjutkan setelah program.","points":5,"requirements":[{"id":"13000000-0000-0000-0000-000000000021","kind":"text_answer","isRequired":true,"prompt":"Kebiasaan apa yang ingin Anda lanjutkan?"}],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000007",
+          "programID": "10000000-0000-0000-0000-000000000001",
+          "dayNumber": 7,
+          "title": "Tutup program",
+          "scheduledDate": "2026-07-30T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000019",
+              "programDayID": "11000000-0000-0000-0000-000000000007",
+              "order": 1,
+              "title": "Aktivitas penutup",
+              "instructions": "Selesaikan aktivitas terakhir sesuai kemampuan.",
+              "verificationMode": "coach_review",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000019",
+                    "order": 1,
+                    "kind": "photo_upload",
+                    "prompt": "Unggah bukti aktivitas penutup.",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000020",
+              "programDayID": "11000000-0000-0000-0000-000000000007",
+              "order": 2,
+              "title": "Berat badan akhir",
+              "instructions": "Catat berat badan akhir dengan alat ukur yang sama bila tersedia.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000021",
+              "programDayID": "11000000-0000-0000-0000-000000000007",
+              "order": 3,
+              "title": "Refleksi akhir",
+              "instructions": "Tuliskan kebiasaan yang ingin dilanjutkan setelah program.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "form",
+                "questions": [
+                  {
+                    "id": "13000000-0000-0000-0000-000000000021",
+                    "order": 1,
+                    "kind": "short_answer",
+                    "prompt": "Kebiasaan apa yang ingin Anda lanjutkan?",
+                    "options": []
+                  }
+                ],
+                "completionPolicy": "answer_all_questions"
+              }
+            },
+            {
+              "id": "12900000-0000-0000-0000-000000000002",
+              "programDayID": "11000000-0000-0000-0000-000000000007",
+              "order": 4,
+              "title": "Timbang akhir",
+              "instructions": "Catat berat akhir setelah menyelesaikan program.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "final_weigh_in",
+                "questions": [],
+                "completionPolicy": "submit_weigh_in"
+              }
+            }
           ]
         }
-      ]
+      ],
+      "scoringConfiguration": {
+        "pointsPerActivity": 10,
+        "pointsPerWeightLossKilogram": 800,
+        "quizPassingPercentage": 70
+      },
+      "commerceConfiguration": {
+        "pricingMode": "paid",
+        "desiredPrice": 149000,
+        "platformAvailability": [
+          {
+            "platform": "app_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          },
+          {
+            "platform": "play_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          }
+        ]
+      }
     },
-    {"id":"10000000-0000-0000-0000-000000000002","title":"Program kebiasaan baru","summary":"Draft lokal untuk latihan CMS admin.","price":50000,"status":"draft","startDate":"2026-08-10T00:00:00Z","endDate":"2026-08-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
-    {"id":"10000000-0000-0000-0000-000000000003","title":"Gerak bersama Agustus","summary":"Program terjadwal untuk membangun rutinitas aktif bersama selama tujuh hari.","price":99000,"status":"scheduled","startDate":"2026-08-20T00:00:00Z","endDate":"2026-08-26T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]},
     {
-      "id":"10000000-0000-0000-0000-000000000005",
-      "title":"Gerak konsisten 3 hari",
-      "summary":"Program aktif kedua untuk mencoba perpindahan Papan peringkat.",
-      "price":79000,
-      "status":"active",
-      "startDate":"2026-07-27T00:00:00Z",
-      "endDate":"2026-07-29T23:59:59Z",
-      "timeZoneIdentifier":"Asia/Makassar",
-      "weightPointsPerKilogram":800,
-      "days":[
+      "id": "10000000-0000-0000-0000-000000000002",
+      "title": "Program kebiasaan baru",
+      "summary": "Draft lokal untuk latihan CMS admin.",
+      "price": 50000,
+      "status": "draft",
+      "startDate": "2026-08-10T00:00:00Z",
+      "endDate": "2026-08-16T23:59:59Z",
+      "timeZoneIdentifier": "Asia/Makassar",
+      "weightPointsPerKilogram": 800,
+      "days": [],
+      "scoringConfiguration": {
+        "pointsPerActivity": 10,
+        "pointsPerWeightLossKilogram": 800,
+        "quizPassingPercentage": 70
+      },
+      "commerceConfiguration": {
+        "pricingMode": "paid",
+        "desiredPrice": 50000,
+        "platformAvailability": [
+          {
+            "platform": "app_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          },
+          {
+            "platform": "play_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          }
+        ]
+      }
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000003",
+      "title": "Gerak bersama Agustus",
+      "summary": "Program terjadwal untuk membangun rutinitas aktif bersama selama tujuh hari.",
+      "price": 99000,
+      "status": "scheduled",
+      "startDate": "2026-08-20T00:00:00Z",
+      "endDate": "2026-08-26T23:59:59Z",
+      "timeZoneIdentifier": "Asia/Makassar",
+      "weightPointsPerKilogram": 800,
+      "days": [],
+      "scoringConfiguration": {
+        "pointsPerActivity": 10,
+        "pointsPerWeightLossKilogram": 800,
+        "quizPassingPercentage": 70
+      },
+      "commerceConfiguration": {
+        "pricingMode": "paid",
+        "desiredPrice": 99000,
+        "platformAvailability": [
+          {
+            "platform": "app_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          },
+          {
+            "platform": "play_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          }
+        ]
+      }
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000005",
+      "title": "Gerak konsisten 3 hari",
+      "summary": "Program aktif kedua untuk mencoba perpindahan Papan peringkat.",
+      "price": 79000,
+      "status": "active",
+      "startDate": "2026-07-27T00:00:00Z",
+      "endDate": "2026-07-29T23:59:59Z",
+      "timeZoneIdentifier": "Asia/Makassar",
+      "weightPointsPerKilogram": 800,
+      "days": [
         {
-          "id":"11000000-0000-0000-0000-000000000051",
-          "programID":"10000000-0000-0000-0000-000000000005",
-          "dayNumber":1,
-          "title":"Bangun momentum",
-          "scheduledDate":"2026-07-27T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000051","programDayID":"11000000-0000-0000-0000-000000000051","order":1,"title":"Gerak pembuka","instructions":"Lakukan aktivitas ringan sesuai kemampuan Anda.","points":15,"requirements":[],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000051",
+          "programID": "10000000-0000-0000-0000-000000000005",
+          "dayNumber": 1,
+          "title": "Bangun momentum",
+          "scheduledDate": "2026-07-27T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12900000-0000-0000-0000-000000000005",
+              "programDayID": "11000000-0000-0000-0000-000000000051",
+              "order": 1,
+              "title": "Timbang awal",
+              "instructions": "Catat berat awal untuk enrollment program ini.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "initial_weigh_in",
+                "questions": [],
+                "completionPolicy": "submit_weigh_in"
+              }
+            },
+            {
+              "id": "12000000-0000-0000-0000-000000000051",
+              "programDayID": "11000000-0000-0000-0000-000000000051",
+              "order": 2,
+              "title": "Gerak pembuka",
+              "instructions": "Lakukan aktivitas ringan sesuai kemampuan Anda.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000052",
-          "programID":"10000000-0000-0000-0000-000000000005",
-          "dayNumber":2,
-          "title":"Pertahankan ritme",
-          "scheduledDate":"2026-07-28T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000052","programDayID":"11000000-0000-0000-0000-000000000052","order":1,"title":"Aktivitas pilihan","instructions":"Pilih aktivitas ringan yang nyaman dilakukan hari ini.","points":15,"requirements":[],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000052",
+          "programID": "10000000-0000-0000-0000-000000000005",
+          "dayNumber": 2,
+          "title": "Pertahankan ritme",
+          "scheduledDate": "2026-07-28T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000052",
+              "programDayID": "11000000-0000-0000-0000-000000000052",
+              "order": 1,
+              "title": "Aktivitas pilihan",
+              "instructions": "Pilih aktivitas ringan yang nyaman dilakukan hari ini.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12900000-0000-0000-0000-000000000008",
+              "programDayID": "11000000-0000-0000-0000-000000000052",
+              "order": 2,
+              "title": "Timbang harian",
+              "instructions": "Catat berat badan hari ini untuk memantau progres.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "daily_weigh_in",
+                "questions": [],
+                "completionPolicy": "submit_weigh_in"
+              }
+            }
           ]
         },
         {
-          "id":"11000000-0000-0000-0000-000000000053",
-          "programID":"10000000-0000-0000-0000-000000000005",
-          "dayNumber":3,
-          "title":"Tutup dengan konsisten",
-          "scheduledDate":"2026-07-29T00:00:00Z",
-          "visibilityMode":"standard",
-          "steps":[
-            {"id":"12000000-0000-0000-0000-000000000053","programDayID":"11000000-0000-0000-0000-000000000053","order":1,"title":"Refleksi gerak","instructions":"Selesaikan aktivitas ringan dan catat kebiasaan yang ingin dilanjutkan.","points":15,"requirements":[],"verificationMode":"automatic"}
+          "id": "11000000-0000-0000-0000-000000000053",
+          "programID": "10000000-0000-0000-0000-000000000005",
+          "dayNumber": 3,
+          "title": "Tutup dengan konsisten",
+          "scheduledDate": "2026-07-29T00:00:00Z",
+          "visibilityMode": "standard",
+          "steps": [
+            {
+              "id": "12000000-0000-0000-0000-000000000053",
+              "programDayID": "11000000-0000-0000-0000-000000000053",
+              "order": 1,
+              "title": "Refleksi gerak",
+              "instructions": "Selesaikan aktivitas ringan dan catat kebiasaan yang ingin dilanjutkan.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "article",
+                "questions": [],
+                "completionPolicy": "mark_complete"
+              }
+            },
+            {
+              "id": "12900000-0000-0000-0000-000000000006",
+              "programDayID": "11000000-0000-0000-0000-000000000053",
+              "order": 2,
+              "title": "Timbang akhir",
+              "instructions": "Catat berat akhir setelah menyelesaikan program.",
+              "verificationMode": "automatic",
+              "content": {
+                "kind": "final_weigh_in",
+                "questions": [],
+                "completionPolicy": "submit_weigh_in"
+              }
+            }
           ]
         }
-      ]
+      ],
+      "scoringConfiguration": {
+        "pointsPerActivity": 10,
+        "pointsPerWeightLossKilogram": 800,
+        "quizPassingPercentage": 70
+      },
+      "commerceConfiguration": {
+        "pricingMode": "paid",
+        "desiredPrice": 79000,
+        "platformAvailability": [
+          {
+            "platform": "app_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          },
+          {
+            "platform": "play_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          }
+        ]
+      }
     },
-    {"id":"10000000-0000-0000-0000-000000000004","title":"Konsisten Juni","summary":"Program selesai untuk riwayat lokal.","price":129000,"status":"completed","startDate":"2026-06-10T00:00:00Z","endDate":"2026-06-16T23:59:59Z","timeZoneIdentifier":"Asia/Makassar","weightPointsPerKilogram":800,"days":[]}
+    {
+      "id": "10000000-0000-0000-0000-000000000004",
+      "title": "Konsisten Juni",
+      "summary": "Program selesai untuk riwayat lokal.",
+      "price": 129000,
+      "status": "completed",
+      "startDate": "2026-06-10T00:00:00Z",
+      "endDate": "2026-06-16T23:59:59Z",
+      "timeZoneIdentifier": "Asia/Makassar",
+      "weightPointsPerKilogram": 800,
+      "days": [],
+      "scoringConfiguration": {
+        "pointsPerActivity": 10,
+        "pointsPerWeightLossKilogram": 800,
+        "quizPassingPercentage": 70
+      },
+      "commerceConfiguration": {
+        "pricingMode": "paid",
+        "desiredPrice": 129000,
+        "platformAvailability": [
+          {
+            "platform": "app_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          },
+          {
+            "platform": "play_store",
+            "isEnabled": true,
+            "provisioningStatus": "ready"
+          }
+        ]
+      }
+    }
   ]
 }

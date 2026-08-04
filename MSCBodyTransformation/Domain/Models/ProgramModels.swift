@@ -2,6 +2,7 @@ import Foundation
 
 nonisolated enum ProgramStatus: String, Codable, CaseIterable, Sendable {
     case draft
+    case preparingCommerce = "preparing_commerce"
     case scheduled
     case active
     case completed
@@ -19,18 +20,6 @@ nonisolated enum ProgramDayAccess: String, Equatable, Sendable {
     case locked
     case readOnly = "read_only"
     case available
-}
-
-nonisolated enum StepRequirementKind: String, Codable, CaseIterable, Sendable {
-    case photoEvidence = "photo_evidence"
-    case textAnswer = "text_answer"
-}
-
-nonisolated struct StepRequirement: Codable, Equatable, Identifiable, Sendable {
-    let id: UUID
-    let kind: StepRequirementKind
-    let isRequired: Bool
-    let prompt: String?
 }
 
 nonisolated enum StepInstructionMediaKind: String, Codable, CaseIterable, Sendable {
@@ -55,10 +44,9 @@ nonisolated struct ProgramStep: Codable, Equatable, Identifiable, Sendable {
     var order: Int
     var title: String
     var instructions: String
-    var points: Int
     var instructionMedia: StepInstructionMedia?
-    var requirements: [StepRequirement]
     var verificationMode: SubmissionVerificationMode
+    var content: ProgramStepContent? = nil
 }
 
 nonisolated struct ProgramDay: Codable, Equatable, Identifiable, Sendable {
@@ -69,19 +57,54 @@ nonisolated struct ProgramDay: Codable, Equatable, Identifiable, Sendable {
     var scheduledDate: Date
     var visibilityMode: ProgramDayVisibilityMode
     var steps: [ProgramStep]
+    var summary: String? = nil
 }
 
 nonisolated struct Program: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
+    var sourceProgramID: UUID? = nil
     var title: String
     var summary: String
+    var category: String? = nil
+    var coverLocalReference: String? = nil
+    var coverAlternativeText: String? = nil
     var price: Decimal?
     var status: ProgramStatus
     var startDate: Date
     var endDate: Date
     var timeZoneIdentifier: String
     var weightPointsPerKilogram: Decimal
+    var scoringConfiguration: ProgramScoringConfiguration? = nil
+    var commerceConfiguration: ProgramCommerceConfiguration? = nil
+    var pace: AdminProgramPace? = nil
+    var durationMode: AdminProgramDurationMode? = nil
+    var participantLimit: Int? = nil
+    var pastStepPolicy: PastStepPolicy? = nil
+    var futureStepPolicy: FutureStepPolicy? = nil
+    var wellnessDisclaimer: String? = nil
     var days: [ProgramDay]
+
+    var effectiveScoringConfiguration: ProgramScoringConfiguration {
+        scoringConfiguration ?? ProgramScoringConfiguration(
+            pointsPerActivity: 0,
+            pointsPerWeightLossKilogram: weightPointsPerKilogram,
+            quizPassingPercentage: 70
+        )
+    }
+
+    var effectiveCommerceConfiguration: ProgramCommerceConfiguration {
+        commerceConfiguration ?? ProgramCommerceConfiguration(
+            pricingMode: price == nil ? .free : .paid,
+            desiredPrice: price,
+            platformAvailability: CommercePlatform.allCases.map {
+                ProgramPlatformAvailability(
+                    platform: $0,
+                    isEnabled: true,
+                    provisioningStatus: price == nil ? .notRequired : .notRequested
+                )
+            }
+        )
+    }
 
     var durationInDays: Int {
         if !days.isEmpty {
@@ -95,7 +118,7 @@ nonisolated struct Program: Codable, Equatable, Identifiable, Sendable {
 
     func lifecycleStatus(at date: Date) -> ProgramStatus {
         switch status {
-        case .draft, .completed, .archived:
+        case .draft, .preparingCommerce, .completed, .archived:
             return status
         case .scheduled, .active:
             if date < startDate {

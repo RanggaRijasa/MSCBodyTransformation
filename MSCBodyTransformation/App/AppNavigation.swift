@@ -6,7 +6,6 @@ nonisolated enum ParticipantRoute: Hashable, Sendable {
     case joinProgram(UUID?)
     case programDetail(UUID, ParticipantTab)
     case stepDetail(UUID)
-    case weighIn(WeighInType)
     case leaderboard
     case coach(UUID)
     case profile
@@ -23,7 +22,7 @@ nonisolated enum CoachRoute: Hashable, Sendable {
     case participantDetail(UUID)
     case activity
     case reviewQueue
-    case invite
+    case coachIdentifier
     case programDetail(UUID)
     case joinProgram(UUID?)
     case stepDetail(UUID)

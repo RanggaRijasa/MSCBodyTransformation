@@ -64,21 +64,21 @@ struct Phase07LocalScoringTests {
         #expect(result.completion == .incomplete)
     }
 
-    @Test("Pengali berat wajib positif")
-    func positiveWeightMultiplier() {
-        #expect(throws: DomainError.self) {
-            try WeightScoreCalculator().score(
-                initialWeightKilograms: 80,
-                finalWeightKilograms: 79,
-                pointsPerKilogram: 0
-            )
-        }
+    @Test("Pengali berat nol menonaktifkan poin tanpa membuat skor negatif")
+    func zeroWeightMultiplier() throws {
+        let result = try WeightScoreCalculator().score(
+            initialWeightKilograms: 80,
+            finalWeightKilograms: 79,
+            pointsPerKilogram: 0
+        )
+        #expect(result.points == 0)
+        #expect(result.lossKilograms == 1)
     }
 
     @Test("Hanya submission approved unik mendapat poin fixture")
     func stepStatusMatrix() throws {
-        let first = step(1, points: 10)
-        let second = step(2, points: 20)
+        let first = step(1)
+        let second = step(2)
         let submissions = [
             submission(1, step: first, status: .approved),
             submission(2, step: first, status: .approved),
@@ -92,15 +92,17 @@ struct Phase07LocalScoringTests {
                 submissions: [
                     submission(10, step: first, status: .approved),
                     submission(11, step: second, status: .approved)
-                ]
-            ) == 30
+                ],
+                pointsPerActivity: 10
+            ) == 20
         )
         #expect(
             try StepScoreCalculator().calculate(
                 steps: [first],
                 submissions: [
                     submission(12, step: first, status: .pending)
-                ]
+                ],
+                pointsPerActivity: 10
             ) == 0
         )
         #expect(
@@ -108,62 +110,63 @@ struct Phase07LocalScoringTests {
                 steps: [first],
                 submissions: [
                     submission(13, step: first, status: .rejected)
-                ]
+                ],
+                pointsPerActivity: 10
             ) == 0
         )
         #expect(
             try StepScoreCalculator().calculate(
                 steps: [first, second],
-                submissions: submissions
+                submissions: submissions,
+                pointsPerActivity: 10
             ) == 10
         )
     }
 
-    @Test("Langkah optional dan zero-point mengikuti poin terbit")
-    func optionalAndZeroPointSteps() throws {
-        let optional = step(
-            1,
-            points: 7,
-            hasRequiredEvidence: false
-        )
-        let zero = step(2, points: 0)
+    @Test("Semua aktivitas memakai poin tingkat program")
+    func activitiesUseProgramWidePoints() throws {
+        let first = step(1)
+        let second = step(2)
 
         #expect(
             try StepScoreCalculator().calculate(
-                steps: [optional, zero],
+                steps: [first, second],
                 submissions: [
-                    submission(1, step: optional, status: .approved),
-                    submission(2, step: zero, status: .approved)
-                ]
-            ) == 7
+                    submission(1, step: first, status: .approved),
+                    submission(2, step: second, status: .approved)
+                ],
+                pointsPerActivity: 7
+            ) == 14
         )
     }
 
     @Test("Langkah inactive tidak dihitung dan poin negatif ditolak")
     func inactiveAndNegativeStep() {
-        let inactive = step(1, points: 50)
+        let inactive = step(1)
         #expect(
             (
                 try? StepScoreCalculator().calculate(
                     steps: [],
                     submissions: [
                         submission(1, step: inactive, status: .approved)
-                    ]
+                    ],
+                    pointsPerActivity: 10
                 )
             ) == 0
         )
         #expect(throws: DomainError.self) {
             try StepScoreCalculator().calculate(
-                steps: [step(2, points: -1)],
-                submissions: []
+                steps: [step(2)],
+                submissions: [],
+                pointsPerActivity: -1
             )
         }
     }
 
     @Test("Progress memisahkan required, optional, pending, dan rejected")
     func progressRules() {
-        let required = [step(1, points: 10), step(2, points: 10)]
-        let optional = [step(3, points: 5)]
+        let required = [step(1), step(2)]
+        let optional = [step(3)]
         let result = ProgressCalculator().calculate(
             requiredSteps: required,
             optionalSteps: optional,
@@ -176,10 +179,10 @@ struct Phase07LocalScoringTests {
         )
 
         #expect(result.requiredStepCount == 2)
-        #expect(result.completedRequiredStepCount == 1)
+        #expect(result.completedRequiredStepCount == 0)
         #expect(result.completedOptionalStepCount == 1)
-        #expect(result.overallPercentage == 50)
-        #expect(result.currentDayPercentage == 67)
+        #expect(result.overallPercentage == 0)
+        #expect(result.currentDayPercentage == 33)
         #expect(!result.isOverallComplete)
         #expect(!result.isCurrentDayComplete)
     }
@@ -188,7 +191,7 @@ struct Phase07LocalScoringTests {
     func enrollmentScoreBreakdown() throws {
         let program = program(
             timeZone: "Asia/Makassar",
-            days: [day(1, date: Date(), steps: [step(1, points: 25)])]
+            days: [day(1, date: Date(), steps: [step(1)])]
         )
         let result = try EnrollmentScoreCalculator().calculate(
             program: program,
@@ -527,30 +530,21 @@ struct Phase07LocalScoringTests {
         )
     }
 
-    private func step(
-        _ value: Int,
-        points: Int,
-        hasRequiredEvidence: Bool = true
-    ) -> ProgramStep {
+    private func step(_ value: Int) -> ProgramStep {
         ProgramStep(
             id: id(value),
             programDayID: id(900),
             order: value,
             title: "Langkah \(value)",
             instructions: "Petunjuk lokal.",
-            points: points,
             instructionMedia: nil,
-            requirements: hasRequiredEvidence
-                ? [
-                    StepRequirement(
-                        id: id(value + 100),
-                        kind: .photoEvidence,
-                        isRequired: true,
-                        prompt: nil
-                    )
-                ]
-                : [],
-            verificationMode: .coachReview
+            verificationMode: .coachReview,
+            content: ProgramStepContent(
+                kind: .article,
+                questions: [],
+                completionPolicy: .markComplete,
+                videoConfiguration: nil
+            )
         )
     }
 
@@ -563,7 +557,6 @@ struct Phase07LocalScoringTests {
             id: id(value + 200),
             enrollmentID: id(800),
             stepID: step.id,
-            evidence: [],
             status: status,
             submittedAt: Date(timeIntervalSince1970: TimeInterval(value)),
             reviewedAt: nil,
@@ -641,6 +634,11 @@ struct Phase07LocalScoringTests {
             endDate: days.map(\.scheduledDate).max() ?? .distantFuture,
             timeZoneIdentifier: timeZone,
             weightPointsPerKilogram: 800,
+            scoringConfiguration: ProgramScoringConfiguration(
+                pointsPerActivity: 25,
+                pointsPerWeightLossKilogram: 800,
+                quizPassingPercentage: 70
+            ),
             days: days
         )
     }

@@ -1,56 +1,44 @@
-# Inventaris Layar
-
-## Bersama
-
-- Launcher Debug: pemilih peran, skenario, dan status fake session.
-- State: loading, kosong, offline, izin ditolak, sesi keluar, dan error dengan
-  retry.
-- Sheet informasi skenario, konfirmasi, kode undangan, dan native share.
+# Inventaris layar
 
 ## Peserta
 
-- Hari ini: program aktif, hari, progres, timbang, langkah, dan status bukti.
-- Alur masuk: login lokal, profil, disclaimer, undangan, konfirmasi, timbang
-  awal.
-- Detail langkah: petunjuk, gambar/video lokal, foto, jawaban, validasi.
-- Program: timeline hari serta state tersedia, read-only, terkunci, tersembunyi.
-- Papan peringkat: pemilih program aktif, podium tiga besar, posisi sendiri,
-  ranking lengkap, dan arsip hasil program selesai.
-- Coach: direktori dan detail publik.
-- Profil: identitas, riwayat program, pengaturan, dan alat Debug.
+- Hari ini: pilihan fokus program, langkah hari aktif, progres.
+- Program: katalog publik, detail, scan QR Coach, dan status enrollment.
+- Langkah: artikel, video dengan resume/ambang tonton, form typed, kuis,
+  unggah foto, timbang awal/harian/akhir, serta status pemeriksaan.
+- Peringkat: pemilih program aktif dan riwayat snapshot.
+- Coach: direktori dan profil Coach aktif.
+- Profil: data peserta dan enrollment.
 
 ## Coach
 
-- Ringkasan: kuota, program, peserta, antrean pemeriksaan, dan aksi utama.
-- Peserta: pencarian, filter, sort, progres, dan detail timeline.
-- Pemeriksaan: antrean, bukti, jawaban, setujui, dan tolak beralasan.
-- Undangan: saldo, program, masa berlaku, QR, bagikan, riwayat, dan cabut.
-- Pratinjau kuota: paket fixture, konfirmasi lokal, status, dan ledger.
-- Papan peringkat: program, lima pemenang, ranking, dan peserta sendiri.
-- Profil: visibilitas publik, wallet, serta riwayat kuota.
+- Dashboard: metrik peserta, perhatian, antrean, serta akses cepat.
+- Program: program yang terkait peserta Coach.
+- Peserta: roster, detail progres, jawaban, dan foto.
+- Pemeriksaan: filter, detail submission, answer key, approve/reject.
+- Aktivitas dan peringkat.
+- Profil dan QR identifier Coach.
+
+Tidak ada wallet, store kuota, invite composer, riwayat invite, atau kode
+manual.
 
 ## Admin
 
-- Ringkasan: metrik operasional, status skor, aksi, dan audit.
-- Program: pencarian, filter, draft, duplikasi, arsip, dan editor.
-- Ringkasan editor Program: Info program, Jadwal dan peserta, Aturan dan poin,
-  Konten, Pratinjau peserta, serta Tinjau dan publikasi.
-- Info Program: nama, kategori, deskripsi, cover gambar/video, dan teks
-  alternatif.
-- Jadwal Program: pola mandiri/terjadwal, durasi tetap/tanggal tertentu, zona
-  waktu, akses, kapasitas, serta jendela timbang.
-- Aturan Program: poin, pemeriksaan, akses hari, dan informasi wellness.
-- Perencana Konten: sinkronisasi jadwal non-destruktif dan daftar hari.
-- Editor Hari: informasi hari dan banyak langkah terurut.
-- Editor Langkah: Artikel, Video, atau Kuis; bukti, poin, dan banyak
-  pertanyaan pendamping.
-- Editor Pertanyaan: daftar dan detail jawaban singkat/panjang, angka, pilihan
-  tunggal/ganda/gambar, unggah file, judul bagian, dan teks penjelas.
-- Orang: peran, persetujuan Coach, visibilitas, dan pendaftaran manual.
-- Konten: disclaimer, banner pemenang, jadwal, urutan, publikasi, dan arsip.
-- Pemenang: ranking, penyesuaian, lock, peringatan perubahan, dan reset Debug.
-- Pengaturan: informasi demo, fake session, dan navigasi Admin.
+- Dashboard: perlu tindakan, akses cepat, gambaran hari ini, audit.
+- Program: header/search/aksi tetap, hanya daftar kartu yang scroll.
+- Hub draft: Pengaturan, Konten, Tinjau & terbitkan.
+- Pratinjau program: pemilih Peserta/Coach di wrapper Admin dan renderer
+  aktivitas runtime yang sama dengan kedua peran.
+- Hub published: read-only, duplikasi sebagai draft, status publikasi,
+  closure, reopen kuis, dan winner lock.
+- Orang: segmented Peserta/Coach/Admin, detail profil konsisten, transfer
+  Coach beralasan.
+- Konten: header/aksi tetap, hanya galeri poster yang scroll; poster terkait
+  program dan winner snapshot.
+- Pengaturan dan Debug launcher.
 
-Semua layar memakai copy Indonesia, format `id-ID`, Dynamic Type, semantic
-colors, target sentuh minimal 44 poin, dan label VoiceOver untuk kontrol
-ikon penting.
+## Presentasi
+
+Bottom tab tidak menduplikasi akses cepat. Sheet dipakai untuk editor
+terfokus, scan, alasan audit, poster, dan detail. Semua UI aplikasi memakai
+Bahasa Indonesia.

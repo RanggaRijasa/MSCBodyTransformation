@@ -46,40 +46,13 @@ nonisolated struct ParticipantStepPresentation: Sendable {
     }
 }
 
-nonisolated struct ParticipantProgramDayUIState: Equatable, Sendable {
-    let showsActivities: Bool
-    let allowsStepNavigation: Bool
-    let allowsCompletion: Bool
-    let showsUnavailableMessage: Bool
-
-    init(access: ProgramDayAccess) {
-        switch access {
-        case .available:
-            showsActivities = true
-            allowsStepNavigation = true
-            allowsCompletion = true
-            showsUnavailableMessage = false
-        case .readOnly:
-            showsActivities = true
-            allowsStepNavigation = true
-            allowsCompletion = false
-            showsUnavailableMessage = false
-        case .locked, .hidden:
-            showsActivities = false
-            allowsStepNavigation = false
-            allowsCompletion = false
-            showsUnavailableMessage = true
-        }
-    }
-}
-
 nonisolated struct ParticipantEntryStagePresentation: Equatable, Sendable {
     let currentStep: Int
     let totalSteps: Int
     let titleKey: String
 
     init(stage: ParticipantEntryStage) {
-        totalSteps = 4
+        totalSteps = 3
         switch stage {
         case .login:
             currentStep = 1
@@ -90,11 +63,8 @@ nonisolated struct ParticipantEntryStagePresentation: Equatable, Sendable {
         case .disclaimer:
             currentStep = 3
             titleKey = "participant.entry.stage.disclaimer"
-        case .initialWeighIn:
-            currentStep = 4
-            titleKey = "participant.entry.stage.initial_weigh_in"
         case .complete:
-            currentStep = 4
+            currentStep = 3
             titleKey = "participant.entry.stage.complete"
         }
     }

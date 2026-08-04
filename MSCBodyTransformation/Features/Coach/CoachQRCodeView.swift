@@ -15,9 +15,9 @@ struct CoachQRCodeView: View {
                     .scaledToFit()
             } else {
                 ContentUnavailableView(
-                    "coach.invite.qr.error.title",
+                    "coach.identifier.qr.error.title",
                     systemImage: "qrcode",
-                    description: Text("coach.invite.qr.error.message")
+                    description: Text("coach.identifier.qr.error.message")
                 )
             }
         }

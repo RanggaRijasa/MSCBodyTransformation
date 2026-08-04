@@ -8,7 +8,9 @@ struct AdminPersonDetailSheet: View {
     let features: AdminFeatureContainer
 
     @State private var selectedProgramID: UUID?
+    @State private var selectedCoachID: UUID?
     @State private var enrollmentReason = ""
+    @State private var coachTransferReason = ""
     @State private var error: DomainError?
     @State private var isSaving = false
 
@@ -20,6 +22,7 @@ struct AdminPersonDetailSheet: View {
 
                 if let participant = person.participantProfile {
                     participantCoachSection(participant)
+                    coachTransferSection(participant)
                     manualEnrollmentSection(participant)
                 }
 
@@ -52,7 +55,44 @@ struct AdminPersonDetailSheet: View {
                 if selectedProgramID == nil {
                     selectedProgramID = availablePrograms.first?.id
                 }
+                if selectedCoachID == nil {
+                    selectedCoachID = person.participantProfile?.coachID
+                        ?? availableCoaches.first?.id
+                }
             }
+        }
+    }
+
+    private func coachTransferSection(
+        _ participant: ParticipantProfile
+    ) -> some View {
+        Section {
+            Picker("Coach baru", selection: $selectedCoachID) {
+                ForEach(availableCoaches) { coach in
+                    Text(coach.displayName)
+                        .tag(Optional(coach.id))
+                }
+            }
+            TextField(
+                "Alasan perubahan Coach",
+                text: $coachTransferReason,
+                axis: .vertical
+            )
+            Button(isSaving ? "Menyimpan…" : "Ubah Coach") {
+                Task { await transferCoach(for: participant) }
+            }
+            .disabled(
+                isSaving
+                    || selectedCoachID == nil
+                    || selectedCoachID == participant.coachID
+            )
+        } header: {
+            Text("Perubahan Coach")
+        } footer: {
+            Text(
+                "Enrollment aktif dan terjadwal ikut dipindahkan. Enrollment "
+                    + "selesai tetap menyimpan Coach lamanya untuk audit."
+            )
         }
     }
 
@@ -304,6 +344,18 @@ struct AdminPersonDetailSheet: View {
         return programs.filter { $0.status != .archived }
     }
 
+    private var availableCoaches: [CoachProfile] {
+        guard case .loaded(let people) = features.peopleState else {
+            return []
+        }
+        return people.compactMap(\.coachProfile)
+            .filter(\.isApproved)
+            .sorted {
+                $0.displayName.localizedStandardCompare($1.displayName)
+                    == .orderedAscending
+            }
+    }
+
     private func assignedCoach(
         for participant: ParticipantProfile
     ) -> CoachProfile? {
@@ -336,6 +388,33 @@ struct AdminPersonDetailSheet: View {
                 participant: participant,
                 programID: programID,
                 reason: enrollmentReason
+            )
+            dismiss()
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
+    }
+
+    private func transferCoach(for participant: ParticipantProfile) async {
+        guard let coachID = selectedCoachID,
+              let coach = availableCoaches.first(where: {
+                  $0.id == coachID
+              }) else {
+            error = .validation(
+                field: "coach",
+                reason: "Pilih Coach baru terlebih dahulu."
+            )
+            return
+        }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            try await features.transferCoach(
+                participant: participant,
+                to: coach,
+                reason: coachTransferReason
             )
             dismiss()
         } catch let domainError as DomainError {

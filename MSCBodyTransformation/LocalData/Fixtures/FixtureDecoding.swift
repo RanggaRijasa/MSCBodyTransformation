@@ -7,9 +7,6 @@ nonisolated struct UsersFixture: Codable, Sendable {
 
 nonisolated struct CoachesFixture: Codable, Sendable {
     let coachProfiles: [CoachProfile]
-    let wallets: [CoachWallet]
-    let creditLedgerEntries: [CreditLedgerEntry]
-    let invites: [CoachInvite]
 }
 
 nonisolated struct ProgramsFixture: Codable, Sendable {

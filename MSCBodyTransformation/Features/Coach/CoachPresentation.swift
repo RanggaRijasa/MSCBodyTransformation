@@ -180,7 +180,7 @@ nonisolated struct CoachParticipantSummary:
     }
 
     var evidenceCount: Int {
-        submissions.map(\.evidence.count).reduce(0, +)
+        submissions.map(\.photoAnswers.count).reduce(0, +)
     }
 
     var activeDayCount: Int {
@@ -321,7 +321,7 @@ nonisolated struct CoachReviewDecisionResult: Equatable, Sendable {
     let pointsAfter: Int
 }
 
-nonisolated struct CoachInviteSnapshot: Equatable, Sendable {
+nonisolated struct CoachIdentifierSnapshot: Equatable, Sendable {
     let profile: CoachProfile
 }
 

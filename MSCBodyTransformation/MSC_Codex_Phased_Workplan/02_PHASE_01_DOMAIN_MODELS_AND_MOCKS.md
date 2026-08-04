@@ -1,5 +1,11 @@
 # Phase 01: Domain Models, Repository Protocols, and Mock Data
 
+> Status: arsip baseline Phase 01. Untuk perubahan program, kontrak aktif
+> berada di `PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md` dan
+> `PROGRAM_END_TO_END_CONTRACT_MATRIX.md`. Requirement invite program,
+> wallet/seat, bukti terpisah, poin per langkah, dan timbang global di bawah
+> tidak boleh dipakai untuk implementasi baru.
+
 ## Tujuan
 
 Mendefinisikan bahasa domain aplikasi dan membuat local data layer yang cukup lengkap agar seluruh UI dapat dibangun tanpa Supabase.

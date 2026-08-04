@@ -7,6 +7,7 @@ nonisolated enum PastStepPolicy: String, Codable, CaseIterable, Sendable {
 }
 
 nonisolated enum FutureStepPolicy: String, Codable, CaseIterable, Sendable {
+    case available
     case locked
     case hidden
 }
@@ -31,27 +32,6 @@ nonisolated enum AdminProgramDurationMode:
     case specificDates = "specific_dates"
 }
 
-nonisolated enum AdminProgramAccess:
-    String,
-    Codable,
-    CaseIterable,
-    Sendable
-{
-    case publicAccess = "public"
-    case approvalRequired = "approval_required"
-    case inviteOnly = "invite_only"
-}
-
-nonisolated enum AdminCoverMediaKind:
-    String,
-    Codable,
-    CaseIterable,
-    Sendable
-{
-    case image
-    case video
-}
-
 nonisolated enum AdminStepContentKind:
     String,
     Codable,
@@ -60,7 +40,20 @@ nonisolated enum AdminStepContentKind:
 {
     case article
     case video
+    case form
     case quiz
+    case initialWeighIn = "initial_weigh_in"
+    case dailyWeighIn = "daily_weigh_in"
+    case finalWeighIn = "final_weigh_in"
+
+    var isWeighIn: Bool {
+        switch self {
+        case .initialWeighIn, .dailyWeighIn, .finalWeighIn:
+            true
+        case .article, .video, .form, .quiz:
+            false
+        }
+    }
 }
 
 nonisolated enum AdminQuizQuestionKind:
@@ -75,7 +68,7 @@ nonisolated enum AdminQuizQuestionKind:
     case singleChoice = "single_choice"
     case multipleChoice = "multiple_choice"
     case imageChoice = "image_choice"
-    case fileUpload = "file_upload"
+    case photoUpload = "photo_upload"
     case heading
     case text
 
@@ -83,7 +76,7 @@ nonisolated enum AdminQuizQuestionKind:
         switch self {
         case .singleChoice, .multipleChoice, .imageChoice:
             true
-        case .shortAnswer, .longAnswer, .number, .fileUpload,
+        case .shortAnswer, .longAnswer, .number, .photoUpload,
              .heading, .text:
             false
         }
@@ -91,6 +84,26 @@ nonisolated enum AdminQuizQuestionKind:
 
     var isLayoutElement: Bool {
         self == .heading || self == .text
+    }
+
+    init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer().decode(String.self)
+        if value == "file_upload" {
+            self = .photoUpload
+            return
+        }
+        guard let decoded = Self(rawValue: value) else {
+            throw DecodingError.dataCorruptedError(
+                in: try decoder.singleValueContainer(),
+                debugDescription: "Jenis pertanyaan tidak dikenal: \(value)"
+            )
+        }
+        self = decoded
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
     }
 }
 
@@ -104,8 +117,65 @@ nonisolated struct AdminQuizQuestionDraft:
     var order: Int
     var kind: AdminQuizQuestionKind
     var prompt: String
-    var isRequired: Bool
     var options: [String]
+    var optionIDs: [UUID]
+    var optionMediaReferences: [String?]
+    var answerKey: ProgramQuestionAnswerKey?
+
+    init(
+        id: UUID,
+        order: Int,
+        kind: AdminQuizQuestionKind,
+        prompt: String,
+        options: [String],
+        optionIDs: [UUID] = [],
+        optionMediaReferences: [String?] = [],
+        answerKey: ProgramQuestionAnswerKey? = nil
+    ) {
+        self.id = id
+        self.order = order
+        self.kind = kind
+        self.prompt = prompt
+        self.options = options
+        self.optionIDs = optionIDs
+        self.optionMediaReferences = optionMediaReferences
+        self.answerKey = answerKey
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case order
+        case kind
+        case prompt
+        case options
+        case optionIDs
+        case optionMediaReferences
+        case answerKey
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        order = try container.decode(Int.self, forKey: .order)
+        kind = try container.decode(AdminQuizQuestionKind.self, forKey: .kind)
+        prompt = try container.decode(String.self, forKey: .prompt)
+        options = try container.decodeIfPresent(
+            [String].self,
+            forKey: .options
+        ) ?? []
+        optionIDs = try container.decodeIfPresent(
+            [UUID].self,
+            forKey: .optionIDs
+        ) ?? []
+        optionMediaReferences = try container.decodeIfPresent(
+            [String?].self,
+            forKey: .optionMediaReferences
+        ) ?? []
+        answerKey = try container.decodeIfPresent(
+            ProgramQuestionAnswerKey.self,
+            forKey: .answerKey
+        )
+    }
 }
 
 nonisolated struct AdminQuizDraft: Codable, Equatable, Sendable {
@@ -118,11 +188,6 @@ nonisolated struct AdminStepDraft: Codable, Equatable, Identifiable, Sendable {
     var order: Int
     var title: String
     var instructions: String
-    var points: Int
-    var requiresPhoto: Bool
-    var isPhotoRequired: Bool
-    var requiresTextAnswer: Bool
-    var isTextAnswerRequired: Bool
     var mediaKind: StepInstructionMediaKind?
     var localMediaReference: String?
     var isActive: Bool
@@ -131,17 +196,13 @@ nonisolated struct AdminStepDraft: Codable, Equatable, Identifiable, Sendable {
     var isVideoRequiredToWatch: Bool
     var isVideoAutoplayEnabled: Bool
     var quiz: AdminQuizDraft?
+    var publishedContent: ProgramStepContent?
 
     init(
         id: UUID,
         order: Int,
         title: String,
         instructions: String,
-        points: Int,
-        requiresPhoto: Bool,
-        isPhotoRequired: Bool,
-        requiresTextAnswer: Bool,
-        isTextAnswerRequired: Bool,
         mediaKind: StepInstructionMediaKind?,
         localMediaReference: String?,
         isActive: Bool,
@@ -149,17 +210,13 @@ nonisolated struct AdminStepDraft: Codable, Equatable, Identifiable, Sendable {
         contentKind: AdminStepContentKind = .article,
         isVideoRequiredToWatch: Bool = false,
         isVideoAutoplayEnabled: Bool = false,
-        quiz: AdminQuizDraft? = nil
+        quiz: AdminQuizDraft? = nil,
+        publishedContent: ProgramStepContent? = nil
     ) {
         self.id = id
         self.order = order
         self.title = title
         self.instructions = instructions
-        self.points = points
-        self.requiresPhoto = requiresPhoto
-        self.isPhotoRequired = isPhotoRequired
-        self.requiresTextAnswer = requiresTextAnswer
-        self.isTextAnswerRequired = isTextAnswerRequired
         self.mediaKind = mediaKind
         self.localMediaReference = localMediaReference
         self.isActive = isActive
@@ -168,6 +225,7 @@ nonisolated struct AdminStepDraft: Codable, Equatable, Identifiable, Sendable {
         self.isVideoRequiredToWatch = isVideoRequiredToWatch
         self.isVideoAutoplayEnabled = isVideoAutoplayEnabled
         self.quiz = quiz
+        self.publishedContent = publishedContent
     }
 }
 
@@ -187,12 +245,12 @@ nonisolated struct AdminProgramDraft:
     Sendable
 {
     let id: UUID
+    var sourceProgramID: UUID?
     var title: String
     var summary: String
     var price: Decimal?
     var category: String
     var coverLocalReference: String?
-    var coverMediaKind: AdminCoverMediaKind
     var coverAlternativeText: String
     var verificationMode: SubmissionVerificationMode
     var wellnessDisclaimer: String
@@ -205,9 +263,11 @@ nonisolated struct AdminProgramDraft:
     var initialWeighInWindowHours: Int
     var finalWeighInWindowHours: Int
     var weightPointsPerKilogram: Decimal
+    var pointsPerActivity: Int
+    var quizPassingPercentage: Int
+    var commerceConfiguration: ProgramCommerceConfiguration?
     var pastStepPolicy: PastStepPolicy
     var futureStepPolicy: FutureStepPolicy
-    var access: AdminProgramAccess
     var participantLimit: Int?
     var status: ProgramStatus
     var days: [AdminDayDraft]
@@ -233,21 +293,23 @@ nonisolated struct AdminProgramDraft:
         days: [AdminDayDraft],
         updatedAt: Date,
         category: String = "",
-        coverMediaKind: AdminCoverMediaKind = .image,
         coverAlternativeText: String = "",
         pace: AdminProgramPace = .scheduled,
         durationMode: AdminProgramDurationMode = .specificDates,
         fixedDurationDays: Int = 7,
-        access: AdminProgramAccess = .inviteOnly,
-        participantLimit: Int? = nil
+        participantLimit: Int? = nil,
+        sourceProgramID: UUID? = nil,
+        pointsPerActivity: Int = 10,
+        quizPassingPercentage: Int = 70,
+        commerceConfiguration: ProgramCommerceConfiguration? = nil
     ) {
         self.id = id
+        self.sourceProgramID = sourceProgramID
         self.title = title
         self.summary = summary
         self.price = price
         self.category = category
         self.coverLocalReference = coverLocalReference
-        self.coverMediaKind = coverMediaKind
         self.coverAlternativeText = coverAlternativeText
         self.verificationMode = verificationMode
         self.wellnessDisclaimer = wellnessDisclaimer
@@ -260,9 +322,11 @@ nonisolated struct AdminProgramDraft:
         self.initialWeighInWindowHours = initialWeighInWindowHours
         self.finalWeighInWindowHours = finalWeighInWindowHours
         self.weightPointsPerKilogram = weightPointsPerKilogram
+        self.pointsPerActivity = pointsPerActivity
+        self.quizPassingPercentage = quizPassingPercentage
+        self.commerceConfiguration = commerceConfiguration
         self.pastStepPolicy = pastStepPolicy
         self.futureStepPolicy = futureStepPolicy
-        self.access = access
         self.participantLimit = participantLimit
         self.status = status
         self.days = days
@@ -282,19 +346,21 @@ nonisolated struct AdminProgramDraft:
 
     init(program: Program, updatedAt: Date) {
         id = program.id
+        sourceProgramID = program.sourceProgramID
         title = program.title
         summary = program.summary
         price = program.price
-        category = ""
-        coverLocalReference = nil
-        coverMediaKind = .image
-        coverAlternativeText = ""
+        category = program.category ?? ""
+        coverLocalReference = program.coverLocalReference
+        coverAlternativeText = program.coverAlternativeText ?? ""
         verificationMode = .coachReview
-        wellnessDisclaimer =
-            "Program ini mendukung kebiasaan hidup sehat dan bukan "
-            + "pengganti diagnosis atau perawatan medis."
-        pace = .scheduled
-        durationMode = .specificDates
+        wellnessDisclaimer = program.wellnessDisclaimer
+            ?? (
+                "Program ini mendukung kebiasaan hidup sehat dan bukan "
+                    + "pengganti diagnosis atau perawatan medis."
+            )
+        pace = program.pace ?? .scheduled
+        durationMode = program.durationMode ?? .specificDates
         fixedDurationDays = program.durationInDays
         startDate = program.startDate
         endDate = program.endDate
@@ -302,40 +368,45 @@ nonisolated struct AdminProgramDraft:
         initialWeighInWindowHours = 24
         finalWeighInWindowHours = 24
         weightPointsPerKilogram = program.weightPointsPerKilogram
-        pastStepPolicy = .readOnly
-        futureStepPolicy = .locked
-        access = .inviteOnly
-        participantLimit = nil
+        pointsPerActivity =
+            program.effectiveScoringConfiguration.pointsPerActivity
+        quizPassingPercentage =
+            program.effectiveScoringConfiguration.quizPassingPercentage
+        commerceConfiguration = program.commerceConfiguration
+        pastStepPolicy = program.pastStepPolicy ?? .available
+        futureStepPolicy = program.futureStepPolicy ?? .locked
+        participantLimit = program.participantLimit
         status = program.status
         days = program.days.map { day in
             AdminDayDraft(
                 id: day.id,
                 dayNumber: day.dayNumber,
                 title: day.title,
-                summary: "",
+                summary: day.summary ?? "",
                 scheduledDate: day.scheduledDate,
                 steps: day.steps.map { step in
-                    let photo = step.requirements.first {
-                        $0.kind == .photoEvidence
-                    }
-                    let text = step.requirements.first {
-                        $0.kind == .textAnswer
-                    }
                     return AdminStepDraft(
                         id: step.id,
                         order: step.order,
                         title: step.title,
                         instructions: step.instructions,
-                        points: step.points,
-                        requiresPhoto: photo != nil,
-                        isPhotoRequired: photo?.isRequired ?? false,
-                        requiresTextAnswer: text != nil,
-                        isTextAnswerRequired: text?.isRequired ?? false,
                         mediaKind: step.instructionMedia?.kind,
                         localMediaReference:
                             step.instructionMedia?.resourceName,
                         isActive: true,
-                        verificationMode: step.verificationMode
+                        verificationMode: step.verificationMode,
+                        contentKind: Self.adminContentKind(for: step.content),
+                        isVideoRequiredToWatch:
+                            step.content?.videoConfiguration?
+                                .isRequiredToWatch ?? false,
+                        isVideoAutoplayEnabled:
+                            step.content?.videoConfiguration?
+                                .isAutoplayEnabled ?? false,
+                        quiz: Self.adminQuestions(
+                            from: step.content,
+                            title: step.title
+                        ),
+                        publishedContent: step.content
                     )
                 }
             )
@@ -346,14 +417,43 @@ nonisolated struct AdminProgramDraft:
     func program() -> Program {
         Program(
             id: id,
+            sourceProgramID: sourceProgramID,
             title: title,
             summary: summary,
+            category: category,
+            coverLocalReference: coverLocalReference,
+            coverAlternativeText: coverAlternativeText,
             price: price,
             status: status,
             startDate: startDate,
             endDate: endDate,
             timeZoneIdentifier: timeZoneIdentifier,
             weightPointsPerKilogram: weightPointsPerKilogram,
+            scoringConfiguration: ProgramScoringConfiguration(
+                pointsPerActivity: pointsPerActivity,
+                pointsPerWeightLossKilogram: weightPointsPerKilogram,
+                quizPassingPercentage: quizPassingPercentage
+            ),
+            commerceConfiguration: commerceConfiguration
+                ?? ProgramCommerceConfiguration(
+                    pricingMode: price == nil ? .free : .paid,
+                    desiredPrice: price,
+                    platformAvailability: CommercePlatform.allCases.map {
+                        ProgramPlatformAvailability(
+                            platform: $0,
+                            isEnabled: true,
+                            provisioningStatus: price == nil
+                                ? .notRequired
+                                : .notRequested
+                        )
+                    }
+                ),
+            pace: pace,
+            durationMode: durationMode,
+            participantLimit: participantLimit,
+            pastStepPolicy: pastStepPolicy,
+            futureStepPolicy: futureStepPolicy,
+            wellnessDisclaimer: wellnessDisclaimer,
             days: days.map { day in
                 ProgramDay(
                     id: day.id,
@@ -369,14 +469,174 @@ nonisolated struct AdminProgramDraft:
                             order: step.order,
                             title: step.title,
                             instructions: step.instructions,
-                            points: step.points,
                             instructionMedia: media(for: step),
-                            requirements: requirements(for: step),
-                            verificationMode: step.verificationMode
+                            verificationMode: step.contentKind.isWeighIn
+                                ? .automatic
+                                : step.verificationMode,
+                            content: content(for: step)
                         )
-                    }
+                    },
+                    summary: day.summary.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ).isEmpty ? nil : day.summary
                 )
             }
+        )
+    }
+
+    private static func adminContentKind(
+        for content: ProgramStepContent?
+    ) -> AdminStepContentKind {
+        switch content?.kind {
+        case .video:
+            .video
+        case .form:
+            .form
+        case .quiz:
+            .quiz
+        case .initialWeighIn:
+            .initialWeighIn
+        case .dailyWeighIn:
+            .dailyWeighIn
+        case .finalWeighIn:
+            .finalWeighIn
+        case .article, .none:
+            .article
+        }
+    }
+
+    private static func adminQuestions(
+        from content: ProgramStepContent?,
+        title: String
+    ) -> AdminQuizDraft? {
+        guard let content, !content.questions.isEmpty else {
+            return content?.kind == .quiz || content?.kind == .form
+                ? AdminQuizDraft(title: title, questions: [])
+                : nil
+        }
+        return AdminQuizDraft(
+            title: title,
+            questions: content.questions.map { question in
+                AdminQuizQuestionDraft(
+                    id: question.id,
+                    order: question.order,
+                    kind: AdminQuizQuestionKind(
+                        rawValue: question.kind.rawValue
+                    ) ?? .shortAnswer,
+                    prompt: question.prompt,
+                    options: question.options.map(\.title),
+                    optionIDs: question.options.map(\.id),
+                    optionMediaReferences: question.options.map(
+                        \.mediaReference
+                    ),
+                    answerKey: question.answerKey
+                )
+            }
+        )
+    }
+
+    private func content(for step: AdminStepDraft) -> ProgramStepContent {
+        let kind: ProgramContentKind
+        switch step.contentKind {
+        case .article:
+            kind = .article
+        case .video:
+            kind = .video
+        case .form:
+            kind = .form
+        case .quiz:
+            kind = .quiz
+        case .initialWeighIn:
+            kind = .initialWeighIn
+        case .dailyWeighIn:
+            kind = .dailyWeighIn
+        case .finalWeighIn:
+            kind = .finalWeighIn
+        }
+        return ProgramStepContent(
+            kind: kind,
+            questions: (step.quiz?.questions ?? []).map {
+                question(for: $0)
+            },
+            completionPolicy: completionPolicy(for: step),
+            videoConfiguration: step.contentKind == .video
+                ? ProgramVideoCompletionConfiguration(
+                    isRequiredToWatch: step.isVideoRequiredToWatch,
+                    completionThresholdPercentage:
+                        step.isVideoRequiredToWatch ? 100 : 0,
+                    isAutoplayEnabled: step.isVideoAutoplayEnabled
+                )
+                : nil
+        )
+    }
+
+    private func completionPolicy(
+        for step: AdminStepDraft
+    ) -> ProgramStepCompletionPolicy {
+        switch step.contentKind {
+        case .article:
+            .markComplete
+        case .video:
+            step.isVideoRequiredToWatch ? .watchVideo : .markComplete
+        case .form:
+            .answerAllQuestions
+        case .quiz:
+            .automaticQuiz
+        case .initialWeighIn, .dailyWeighIn, .finalWeighIn:
+            .submitWeighIn
+        }
+    }
+
+    private func question(
+        for draft: AdminQuizQuestionDraft
+    ) -> ProgramQuestionDefinition {
+        let optionIDs: [UUID] = draft.options.indices.map { index in
+            if draft.optionIDs.indices.contains(index) {
+                return draft.optionIDs[index]
+            }
+            return AdminProgramDraftValidator().childIdentifier(
+                parent: draft.id,
+                discriminator: index + 1
+            )
+        }
+        let kind = ProgramQuestionKind(
+            rawValue: draft.kind.rawValue
+        ) ?? .shortAnswer
+        let validOptionIDs = Set(optionIDs)
+        let answerKey = draft.answerKey.map {
+            ProgramQuestionAnswerKey(
+                acceptedTextValues: $0.acceptedTextValues,
+                numberValue: $0.numberValue,
+                selectedOptionIDs: $0.selectedOptionIDs.filter {
+                    validOptionIDs.contains($0)
+                },
+                matchingMode: $0.matchingMode
+            )
+        }
+        return ProgramQuestionDefinition(
+            id: draft.id,
+            order: draft.order,
+            kind: kind,
+            prompt: draft.prompt,
+            options: zip(optionIDs, draft.options.enumerated()).map {
+                optionID, indexedTitle in
+                ProgramQuestionOption(
+                    id: optionID,
+                    order: indexedTitle.offset + 1,
+                    title: indexedTitle.element,
+                    mediaReference:
+                        draft.optionMediaReferences.indices.contains(
+                            indexedTitle.offset
+                        )
+                        ? draft.optionMediaReferences[indexedTitle.offset]
+                        : nil,
+                    mediaAlternativeText:
+                        draft.kind == .imageChoice
+                        ? indexedTitle.element
+                        : nil
+                )
+            },
+            answerKey: answerKey
         )
     }
 
@@ -394,34 +654,6 @@ nonisolated struct AdminProgramDraft:
         )
     }
 
-    private func requirements(
-        for step: AdminStepDraft
-    ) -> [StepRequirement] {
-        var result: [StepRequirement] = []
-        if step.requiresPhoto {
-            result.append(
-                StepRequirement(
-                    id: step.id,
-                    kind: .photoEvidence,
-                    isRequired: step.isPhotoRequired,
-                    prompt: "Tambahkan bukti foto."
-                )
-            )
-        }
-        if step.requiresTextAnswer {
-            var identifierBytes = step.id.uuid
-            identifierBytes.15 &+= 1
-            result.append(
-                StepRequirement(
-                    id: UUID(uuid: identifierBytes),
-                    kind: .textAnswer,
-                    isRequired: step.isTextAnswerRequired,
-                    prompt: "Tulis jawaban singkat."
-                )
-            )
-        }
-        return result
-    }
 }
 
 nonisolated enum AdminValidationField: String, Sendable {
@@ -430,7 +662,7 @@ nonisolated enum AdminValidationField: String, Sendable {
     case dates
     case timeZone
     case scoring
-    case access
+    case participantLimit
     case days
     case dayNumbers
     case dayDates

@@ -27,6 +27,53 @@ enum LocalMediaImageResolver {
     }
 }
 
+struct ProgramCoverImage: View {
+    let reference: String?
+    let alternativeText: String
+
+    var body: some View {
+        Group {
+            if let image = LocalMediaImageResolver.image(
+                reference: reference
+            ) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ZStack {
+                    LinearGradient(
+                        colors: [
+                            Color.programPosterBase,
+                            Color.programPosterPrimary
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    Image(systemName: "photo")
+                        .font(.largeTitle.weight(.semibold))
+                        .foregroundStyle(Color.white.opacity(0.72))
+                }
+            }
+        }
+        .aspectRatio(16.0 / 9.0, contentMode: .fit)
+        .clipped()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            Text(
+                alternativeText.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ).isEmpty
+                    ? String(
+                        localized: "program.cover.default_alternative",
+                        defaultValue: "Cover program"
+                    )
+                    : alternativeText
+            )
+        )
+        .accessibilityAddTraits(.isImage)
+    }
+}
+
 struct UserAvatar: View {
     let displayName: String
     let imageName: String?

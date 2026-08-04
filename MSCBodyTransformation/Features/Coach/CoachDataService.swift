@@ -100,13 +100,28 @@ nonisolated struct CoachDataService: Sendable {
                     .submissions(enrollmentID: enrollment.id)
                 let leaderboard = try await repositories.leaderboard
                     .leaderboard(programID: program.id)
-                let score = leaderboard.first {
+                let entry = leaderboard.first {
                     $0.participantID == profile.id
-                }?.score.totalPoints ?? 0
+                }
+                let weighIns = try await repositories.weighIns.weighIns(
+                    enrollmentID: enrollment.id
+                )
+                let score = (
+                    try? EnrollmentScoreCalculator().calculate(
+                        program: program,
+                        submissions: submissions,
+                        weighIns: weighIns,
+                        adjustmentPoints:
+                            entry?.score.adjustmentPoints ?? 0
+                    ).score.totalPoints
+                ) ?? entry?.score.totalPoints ?? 0
 
                 reviewItems.append(
                     contentsOf: submissions.compactMap { submission in
-                        guard !submission.evidence.isEmpty,
+                        guard (
+                            !submission.typedAnswers.isEmpty
+                                || submission.quizResult != nil
+                        ),
                               let day = program.days.first(where: { day in
                                   day.steps.contains {
                                       $0.id == submission.stepID
@@ -238,7 +253,13 @@ nonisolated struct CoachDataService: Sendable {
                             programTitle: program.title,
                             stepTitle: step.title,
                             points: submission.status == .approved
-                                ? step.points
+                                ? (
+                                    submission.quizResult?.awardedPoints
+                                        ?? activityPoints(
+                                            step: step,
+                                            program: program
+                                        )
+                                )
                                 : nil,
                             kind: isEvidenceActivity
                                 ? .evidenceSubmitted
@@ -262,6 +283,19 @@ nonisolated struct CoachDataService: Sendable {
                 $0.startDate > $1.startDate
             }
         )
+    }
+
+    private func activityPoints(
+        step: ProgramStep,
+        program: Program
+    ) -> Int {
+        switch step.content?.kind {
+        case .article, .video, .form:
+            program.effectiveScoringConfiguration.pointsPerActivity
+        case .quiz, .initialWeighIn, .dailyWeighIn, .finalWeighIn,
+             nil:
+            0
+        }
     }
 
     private func summary(

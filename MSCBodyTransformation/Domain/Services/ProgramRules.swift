@@ -20,6 +20,24 @@ nonisolated struct ProgramProgressCalculator: Sendable {
 nonisolated struct ProgramDayAccessCalculator: Sendable {
     func access(
         for day: ProgramDay,
+        in program: Program,
+        now: Date
+    ) -> ProgramDayAccess {
+        VisibilityPolicyEvaluator().access(
+            for: day,
+            now: now,
+            timeZoneIdentifier: program.timeZoneIdentifier,
+            pastPolicy: temporalPolicy(
+                for: program.pastStepPolicy ?? .available
+            ),
+            futurePolicy: temporalPolicy(
+                for: program.futureStepPolicy ?? .locked
+            )
+        )
+    }
+
+    func access(
+        for day: ProgramDay,
         now: Date,
         timeZoneIdentifier: String
     ) -> ProgramDayAccess {
@@ -30,6 +48,32 @@ nonisolated struct ProgramDayAccessCalculator: Sendable {
             pastPolicy: .open,
             futurePolicy: .locked
         )
+    }
+
+    private func temporalPolicy(
+        for policy: PastStepPolicy
+    ) -> TemporalVisibilityPolicy {
+        switch policy {
+        case .available:
+            .open
+        case .readOnly:
+            .readOnly
+        case .hidden:
+            .hidden
+        }
+    }
+
+    private func temporalPolicy(
+        for policy: FutureStepPolicy
+    ) -> TemporalVisibilityPolicy {
+        switch policy {
+        case .available:
+            .open
+        case .locked:
+            .locked
+        case .hidden:
+            .hidden
+        }
     }
 }
 

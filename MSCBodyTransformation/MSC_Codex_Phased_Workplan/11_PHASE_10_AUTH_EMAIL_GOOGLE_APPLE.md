@@ -1,5 +1,9 @@
 # Phase 10: Authentication and Session
 
+> Status: menunggu project Supabase dan credential provider. Auth harus
+> mempertahankan program yang dipilih serta QR Coach opaque selama login,
+> bukan invite token atau kode program. Registrasi selalu menjadi Peserta.
+
 ## Tujuan
 
 Mengganti fake session dengan Supabase Auth untuk real environments sambil mempertahankan local demo mode.

@@ -159,7 +159,7 @@ struct CoachDashboardView: View {
                         "coach.dashboard.action.qr"
                 ) {
                     router.navigate(
-                        to: .coach(.invite),
+                        to: .coach(.coachIdentifier),
                         in: .coach(.dashboard)
                     )
                 }

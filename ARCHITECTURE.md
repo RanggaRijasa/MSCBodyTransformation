@@ -4,60 +4,89 @@
 
 ```text
 SwiftUI View
-  → feature state / @Observable model
-  → use case atau domain service
+  → feature state / @Observable
+  → use case / domain service
   → repository protocol
-  → InMemoryAppRepository
+  → local actor atau adapter eksternal
+  → Supabase / StoreKit / Play Billing
 ```
 
-View hanya merender state dan meneruskan aksi. Aturan skor, validasi,
-visibilitas hari, ranking, izin peran, dan idempotensi berada di lapisan
-domain atau repository.
+View tidak menentukan otorisasi, scoring, atau transaksi. Domain tidak
+mengimpor SwiftUI, UIKit, StoreKit, Supabase, maupun Play Billing.
 
-## Lapisan
+## Aggregate program
 
-- `App`: bootstrap, dependency environment, fake session, router, tab, dan
-  launcher skenario Debug.
-- `Domain/Models`: nilai portable tanpa tipe SwiftUI, UIKit, StoreKit, atau
-  Supabase.
-- `Domain/Services` dan `Domain/UseCases`: aturan bisnis deterministik.
-- `Domain/Repositories`: kontrak adapter.
-- `LocalData`: decoder fixture dan actor repository in-memory.
-- `Features`: state serta View terpisah untuk Peserta, Coach, Admin, media,
-  dan app shell.
-- `SharedUI`: token visual semantik, komponen reusable, aksesibilitas, dan
-  fallback Liquid Glass.
-- `Resources`: asset, fixture JSON, video lokal, dan `Localizable.xcstrings`.
+```text
+ParticipantProfile
+ └─ currentCoachID
+    └─ ProgramEnrollment[]
+       ├─ Program published contract
+       ├─ Coach snapshot
+       ├─ StepSubmission + typed answers
+       ├─ QuizAttemptResult[]
+       ├─ WeighIn initial/daily/final, terikat ke step
+       ├─ ScoreBreakdown
+       └─ Entitlement / payment reference
+```
 
-## State dan konkurensi
+Semua runtime state dipisahkan berdasarkan `enrollmentID`. Program tidak
+memiliki poin per langkah; scoring berada pada
+`ProgramScoringConfiguration`.
 
-Root memasang `AppEnvironment`. Mutable data demo diisolasi oleh actor
-`InMemoryAppRepository`; feature state yang mengubah UI hidup di main actor.
-Pemuatan menggunakan structured concurrency, memeriksa cancellation sebelum
-menulis hasil, dan terikat lifecycle melalui `.task`.
+## Lapisan repository
 
-## Navigasi
+- `ProgramRepository`: catalog dan published program.
+- `AdminProgramDraftRepository`: draft lossless dan editor.
+- `EnrollmentRepository`: same-Coach guard dan enrollment idempoten.
+- `SubmissionRepository`: typed answers, review, quiz history, reopen.
+- `WeighInRepository`: nilai awal/akhir per enrollment, nilai harian per
+  step, dan koreksi Admin.
+- `LeaderboardRepository`: rekonsiliasi, ranking, winner snapshot.
+- `ManagedContentRepository`: poster terkait program/snapshot.
+- `AuditRepository`: mutation istimewa dengan actor dan alasan.
 
-Setiap peran memiliki lima tab. `ShellTabRouter` mempertahankan
-`NavigationStack` terpisah per tab. Route divalidasi terhadap peran sebelum
-dibuka. Sheet dan alert memakai enum agar presentasi saling eksklusif.
+`InMemoryAppRepository` adalah adapter deterministik untuk demo/test.
+`Contracts/program-api-v1.openapi.yaml` dan migration Supabase mendefinisikan
+boundary adapter produksi serta Android.
+
+## Konten dan scoring
+
+Admin draft dipetakan lossless ke renderer Peserta. Foto adalah
+`StepSubmissionAnswer.localPhotoReference`. Kuis dinilai otomatis dan answer
+key hanya tersedia pada boundary Coach/Admin.
+
+```text
+total =
+  approved_activity_points
+  + quiz_correct_answer_points
+  + weight_points
+  + adjustment_points
+```
+
+Weight math memakai `Decimal`. Winner lock menghasilkan snapshot immutable.
+Timbang harian hanya menjadi riwayat progres. `weight_points` selalu memakai
+selisih timbang awal dan akhir.
+
+## Commerce
+
+Satu program/cohort mempunyai external Product ID unik per platform. Desired
+price Admin bukan harga authoritative. StoreKit/Play Billing menghasilkan
+transaksi platform; backend memverifikasi, membuat entitlement lintas
+platform, lalu mengaktifkan enrollment dan leaderboard secara atomik.
+
+Private store credential hanya boleh berada di backend.
 
 ## Media
 
-Tipe domain hanya menyimpan referensi lokal. `NativeImageProcessor`
-menormalisasi orientasi, downsample, membuat JPEG baru tanpa metadata lokasi,
-dan menyediakan thumbnail. File sementara diberi proteksi yang tersedia,
-dikecualikan dari backup, serta dibersihkan bila yatim.
+`NativeImageProcessor` menormalisasi orientasi, ukuran, JPEG, dan metadata.
+Foto pertanyaan disimpan private pada backend; avatar/media publik dipisah.
+Cover program selalu gambar dan disimpan sebagai media publik program.
+Video lokal mendukung resume, konfigurasi autoplay, serta completion
+threshold.
 
-## Skor
+## Navigasi dan platform
 
-`EnrollmentScoreCalculator` menyatukan poin langkah approved, poin berat
-berbasis `Decimal`, penyesuaian, dan progres. `LeaderboardSorter` menerapkan
-tie-break stabil. `WinnerSelector` membuat snapshot final yang tidak berubah
-setelah dikunci.
-
-## Adaptasi platform
-
-iOS 26+ memakai Liquid Glass hanya pada surface interaktif yang ringkas.
-iOS 17–25 memakai fallback SwiftUI native. Semua API baru dilindungi
-availability check. Tidak ada package pihak ketiga pada Track A.
+Setiap tab mempunyai `NavigationStack` sendiri. Admin dibuka pada Dashboard.
+iOS 26+ memakai Liquid Glass secara selektif; iOS 17–25 memakai fallback
+native. Android harus memetakan kontrak OpenAPI yang sama tanpa menyalin
+aturan authoritative ke client.

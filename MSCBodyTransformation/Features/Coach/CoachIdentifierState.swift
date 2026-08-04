@@ -3,10 +3,10 @@ import Observation
 
 @MainActor
 @Observable
-final class CoachInviteComposerState {
+final class CoachIdentifierState {
     private let service: CoachDataService
 
-    var state: CoachFeatureLoadState<CoachInviteSnapshot> = .idle
+    var state: CoachFeatureLoadState<CoachIdentifierSnapshot> = .idle
 
     init(environment: AppEnvironment) {
         service = CoachDataService(environment: environment)
@@ -18,7 +18,7 @@ final class CoachInviteComposerState {
             let identity = try await service.identity()
             guard !Task.isCancelled else { return }
             state = .loaded(
-                CoachInviteSnapshot(profile: identity.profile)
+                CoachIdentifierSnapshot(profile: identity.profile)
             )
         } catch is CancellationError {
             return

@@ -1,85 +1,47 @@
-# Checklist Adapter Backend
+# Checklist adapter backend
 
-## Prinsip
+## Contract
 
-- Pertahankan View, feature state, use case, dan model domain.
-- Ganti implementasi protocol repository melalui `AppEnvironment`.
-- Jangan membawa tipe SDK, URL media, token, atau response mentah ke domain.
-- Petakan error teknis ke `DomainError` sebelum mencapai UI.
+- [x] Model platform-neutral dan enum raw value stabil.
+- [x] OpenAPI untuk program, enrollment, submission, kuis, timbang, Coach,
+  winner, poster, dan commerce.
+- [x] Decimal ditransportasikan sebagai string.
+- [x] Participant payload tidak memuat answer key.
+- [ ] Generate/verify Swift dan Kotlin client dari contract pada CI.
 
-## Autentikasi dan izin
+## Supabase
 
-- [ ] Pasang session adapter dengan refresh serta pemulihan sesi.
-- [ ] Registrasi baru selalu menjadi Peserta.
-- [ ] Ambil peran istimewa dari data server-controlled.
-- [ ] Pertahankan pending invite melewati login.
-- [ ] Tambahkan Google dan Apple hanya pada fase yang ditugaskan.
-- [ ] Terapkan Row Level Security dan uji permission denied.
+- [x] Schema program end-to-end tanpa invite/wallet/seat table.
+- [x] Satu `current_coach_id` dan Coach snapshot pada enrollment.
+- [x] Typed questions, answers, quiz results, weigh-ins, scores, commerce,
+  entitlement, winners, poster, audit.
+- [x] Cover gambar, future policy `available`, dan timbang harian
+  step-scoped tercakup pada OpenAPI serta draft schema.
+- [x] RLS dasar untuk Peserta, Coach terkait, dan Admin.
+- [x] Bucket publik dan private question-photo.
+- [x] Atomic free enrollment dan Admin Coach transfer.
+- [ ] Jalankan fresh migration, lint, RLS matrix, serta race suite pada
+  Supabase lokal/staging.
+- [ ] Implementasikan seluruh Edge Function/mutation produksi dan scoring
+  server-authoritative.
 
-## Data dan konkurensi
+## Commerce
 
-- [ ] Implementasikan setiap protocol repository tanpa mengubah kontrak UI.
-- [ ] Gunakan server time untuk hari aktif, expiry, dan lock.
-- [ ] Simpan tanggal jadwal, timezone program, dan raw visibility mode secara
-      terpisah; jangan mengubah hari published yang sudah lewat menjadi hidden.
-- [ ] Pertahankan kontrak akses: published day dapat dikerjakan sejak
-      tanggalnya tiba, future published terkunci, read-only hanya untuk mode
-      eksplisit, dan hidden hanya untuk konten yang memang belum
-      dipublikasikan.
-- [ ] Terapkan idempotency untuk submission, enrollment, review, dan purchase.
-- [ ] Tangani pagination, cancellation, timeout, offline cache, dan retry.
-- [ ] Hindari duplicate load serta pastikan list identity tetap stabil.
+- [x] Store product mapping unik per program dan platform.
+- [x] StoreKit 2 client adapter untuk load/purchase/restore/update.
+- [x] Client tidak membuat enrollment dari purchase state saja.
+- [ ] Provisioning App Store Connect dan Google Play dari backend.
+- [ ] Verifikasi transaksi Apple/Google server-side.
+- [ ] Notification, refund, revocation, replay protection, dan retry queue.
+- [ ] Uji StoreKit sandbox dan Google Play test track.
 
-## Skor dan pemenang
+## Keamanan
 
-- [ ] Pindahkan skor authoritative ke transaction atau function server.
-- [ ] Gunakan numeric/decimal untuk berat.
-- [ ] Hitung hanya submission approved unik.
-- [ ] Simpan adjustment terpisah beserta alasan dan audit.
-- [ ] Lock pemenang dalam transaction dan simpan snapshot stabil.
-- [ ] Jangan mengekspos berat pada query papan peringkat publik.
+- [x] Tidak ada store credential atau service role di app/repository.
+- [x] QR Coach opaque dan tanpa input kode manual.
+- [x] Mutation Admin lokal memerlukan alasan dan audit.
+- [ ] Signed URL private media dan policy retention produksi.
+- [ ] Security advisor, penetration review, dan account deletion.
 
-## Media
-
-- [ ] Pertahankan resize, orientasi, dan penghapusan metadata di klien.
-- [ ] Unggah dengan path privat dan content type tervalidasi.
-- [ ] Gunakan signed URL berumur pendek untuk bukti.
-- [ ] Terapkan batas ukuran, retry, progress, cleanup, dan authorization.
-- [ ] Jangan log path privat, signed URL, berat, atau token.
-
-## Coach, enrollment, dan pembayaran program
-
-- [ ] Buat satu identifier enrollment QR unik dan stabil untuk setiap coach.
-- [ ] Cocokkan QR coach di server tanpa menampilkan fallback kode manual.
-- [ ] Terapkan enrollment peserta secara idempoten setelah konfirmasi coach
-      dan pembayaran program berhasil.
-- [ ] Tambahkan StoreKit dan App Store Server API pada fase pembayaran
-      program.
-- [ ] Verifikasi transaksi di server; jangan mempercayai status pembayaran
-      dari klien.
-
-## Admin dan operasional
-
-- [ ] Validasi draft dan perubahan published program di server.
-- [ ] Simpan kategori, cover, alt text, pace, duration mode, akses, dan
-      kapasitas Program.
-- [ ] Terapkan approval dan kapasitas secara transactional saat enrollment.
-- [ ] Simpan tipe konten Artikel/Video/Kuis beserta ID dan urutan stabil untuk
-      hari, langkah, dan pertanyaan.
-- [ ] Simpan pertanyaan sebagai anak Langkah; Kuis mewajibkan pertanyaan,
-      sedangkan Artikel/Video boleh memiliki pertanyaan pendamping.
-- [ ] Terapkan perubahan susunan secara transactional dan idempoten.
-- [ ] Cegah sinkronisasi jadwal menimpa konten tanpa keputusan eksplisit.
-- [ ] Validasi upload cover/video dan respons kuis di server.
-- [ ] Lindungi persetujuan Coach, pendaftaran manual, adjustment, dan lock.
-- [ ] Simpan audit append-only untuk semua tindakan istimewa.
-- [ ] Tambahkan observability tanpa data sensitif.
-- [ ] Jalankan migration, seed nonproduksi, backup, dan rollback rehearsal.
-
-## Gerbang sebelum produksi
-
-- [ ] Unit, integration, UI, RLS, dan security test lulus.
-- [ ] Offline, session expiry, conflict, timeout, dan retry tervalidasi.
-- [ ] Privacy manifest, usage description, signing, dan entitlement selesai.
-- [ ] Kamera serta QR diuji pada perangkat fisik.
-- [ ] Dynamic Type, VoiceOver, contrast, transparency, dan Reduce Motion diaudit.
+Checklist kosong memerlukan environment/credential eksternal dan tidak boleh
+ditandai selesai hanya dari build client lokal.

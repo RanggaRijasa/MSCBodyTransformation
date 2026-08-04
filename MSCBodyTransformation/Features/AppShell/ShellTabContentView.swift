@@ -130,7 +130,7 @@ struct ShellTabContentView: View {
              .participantActive,
              .participantDayOne, .participantMidProgram,
              .participantFinalWeighIn, .participantFinalLeaderboard,
-             .coachWalletZero, .coachActiveParticipants,
+             .coachIdentifier, .coachActiveParticipants,
              .coachReviewQueue, .adminDashboard, .adminDraftCMS,
              .adminActiveProgram, .adminWinnerLock:
             loadedContent(showsOfflineBanner: false)

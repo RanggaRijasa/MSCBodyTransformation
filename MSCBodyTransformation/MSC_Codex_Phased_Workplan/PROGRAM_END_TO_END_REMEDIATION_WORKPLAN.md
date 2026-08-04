@@ -2,7 +2,23 @@
 
 ## Status dan otoritas dokumen
 
-Status: direncanakan, belum diimplementasikan.
+Status: implementasi lokal iOS dan kontrak lintas platform selesai; integrasi
+produksi menunggu external gate.
+
+Hasil rinci, command verifikasi, dan batas yang belum dapat diuji terdapat di
+`PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md`. Checklist E2E-10 sampai E2E-14
+tidak boleh dicentang tanpa Supabase staging, store credential, Android
+project, dan perangkat fisik yang relevan.
+
+| Phase | Status eksekusi |
+|---|---|
+| E2E-00–E2E-08 | Selesai pada local iOS vertical slice dan focused tests |
+| E2E-09 | Unit/integration regression selesai; UI kritis dijalankan, full release matrix tetap gate |
+| E2E-10 | Schema, RLS dasar, storage, dan dua RPC tersedia; deployment serta operasi server penuh menunggu staging |
+| E2E-11 | Contract provisioning tersedia; live store API menunggu credential |
+| E2E-12 | StoreKit 2 client adapter tersedia; sandbox dan server verification menunggu environment |
+| E2E-13 | OpenAPI shared contract tersedia; implementasi Android menunggu project |
+| E2E-14 | Belum selesai; reliability/security/release membutuhkan sistem produksi |
 
 Dokumen ini menjadi sumber keputusan produk dan urutan implementasi
 authoritative untuk seluruh siklus program:
@@ -67,15 +83,19 @@ Jangan membangun schema produksi dari konsep lama yang sudah digantikan.
 - Peserta dapat mengikuti beberapa program aktif sekaligus.
 - Program mendukung pola terjadwal dan mandiri.
 - Program mendukung durasi tetap dan tanggal spesifik yang valid.
+- Cover program selalu berupa gambar dengan alternative text; tidak ada
+  pemilih jenis cover video.
 - Langkah dalam hari yang sama tidak linear dan dapat dikerjakan dalam urutan
   apa pun.
 - Akses antarhari tetap mengikuti kebijakan hari lampau dan mendatang.
+  Hari mendatang dapat tersedia lebih awal, terkunci, atau disembunyikan.
 - Jenis konten:
   - Artikel.
   - Video.
   - Form atau pertanyaan.
   - Kuis.
   - Timbang awal.
+  - Timbang harian.
   - Timbang akhir.
 - Jenis pertanyaan:
   - Jawaban pendek.
@@ -129,14 +149,17 @@ Jangan membangun schema produksi dari konsep lama yang sudah digantikan.
 
 ### Timbang dan scoring
 
-- Timbang awal dan timbang akhir adalah jenis konten program.
+- Timbang awal, timbang harian, dan timbang akhir adalah jenis konten program.
 - Timbang tidak lagi menjadi langkah onboarding global.
-- Setiap enrollment mempunyai timbang awal dan akhir sendiri.
+- Setiap enrollment mempunyai tepat satu timbang awal, satu timbang akhir,
+  dan satu timbang harian untuk setiap langkah timbang harian yang selesai.
 - Jika poin berat aktif, tepat satu timbang awal dan satu timbang akhir wajib
   tersedia.
 - Timbang akhir harus berada setelah timbang awal.
 - Timbang hanya dapat dikirim ketika kontennya tersedia.
 - Koreksi timbang hanya dilakukan Admin dengan alasan dan audit.
+- Coach dapat membaca seluruh riwayat timbang peserta yang ditugaskan pada
+  detail privat peserta. Nilai berat tidak tampil di feed atau leaderboard.
 - Konfigurasi poin berada di tingkat program:
   - `pointsPerActivity`
   - `pointsPerWeightLossKilogram`
@@ -144,7 +167,8 @@ Jangan membangun schema produksi dari konsep lama yang sudah digantikan.
 - Tidak ada pengaturan poin per langkah.
 - Artikel, video, dan form yang selesai memberi `pointsPerActivity` satu kali.
 - Setiap jawaban kuis benar memberi `pointsPerActivity`.
-- Konten timbang tidak memberi poin aktivitas.
+- Konten timbang tidak memberi poin aktivitas. Timbang harian hanya memantau
+  progres dan tidak menjadi input tambahan untuk poin penurunan berat.
 - Poin timbang menggunakan:
 
 ```text
@@ -192,20 +216,20 @@ weight_points = rounded(weight_loss_kg × points_per_weight_loss_kilogram)
 
 Jangan mempertahankan konsep lama hanya untuk kompatibilitas UI.
 
-- [ ] Hapus `AdminProgramAccess` dan seluruh pilihan akses non-publik.
-- [ ] Hapus approval enrollment.
-- [ ] Hapus program invite, typed invite code, dan redemption program invite.
-- [ ] Hapus Coach wallet, seat credit, dan seat-pack commerce.
-- [ ] Hapus `photoEvidence` sebagai requirement terpisah.
-- [ ] Ubah file upload menjadi pertanyaan `photoUpload`.
-- [ ] Hapus bukti opsional dan `isRequired` pada pertanyaan interaktif.
-- [ ] Hapus poin dari setiap `ProgramStep`.
-- [ ] Pindahkan poin ke `ProgramScoringConfiguration`.
-- [ ] Hapus timbang global dari onboarding Peserta.
-- [ ] Ubah timbang menjadi step content khusus.
-- [ ] Ganti model pembayaran harga-only dengan platform product mapping.
-- [ ] Ganti state Peserta satu-program menjadi state per enrollment.
-- [ ] Hentikan otorisasi Coach berdasarkan enrollment yang berbeda dari
+- [x] Hapus `AdminProgramAccess` dan seluruh pilihan akses non-publik.
+- [x] Hapus approval enrollment.
+- [x] Hapus program invite, typed invite code, dan redemption program invite.
+- [x] Hapus Coach wallet, seat credit, dan seat-pack commerce.
+- [x] Hapus `photoEvidence` sebagai requirement terpisah.
+- [x] Ubah file upload menjadi pertanyaan `photoUpload`.
+- [x] Hapus bukti opsional dan `isRequired` pada pertanyaan interaktif.
+- [x] Hapus poin dari setiap `ProgramStep`.
+- [x] Pindahkan poin ke `ProgramScoringConfiguration`.
+- [x] Hapus timbang global dari onboarding Peserta.
+- [x] Ubah timbang menjadi step content khusus.
+- [x] Ganti model pembayaran harga-only dengan platform product mapping.
+- [x] Ganti state Peserta satu-program menjadi state per enrollment.
+- [x] Hentikan otorisasi Coach berdasarkan enrollment yang berbeda dari
   `ParticipantProfile.coachID`.
 
 Sebelum menghapus tipe lama, tambahkan migration atau fixture conversion yang
@@ -255,7 +279,7 @@ Coach, backend scoring, dan Android:
 ```text
 Program
 - identity and lifecycle
-- title, summary, category, cover
+- title, summary, category, image cover, alternative text
 - pace and duration
 - start/end/timezone
 - capacity
@@ -350,20 +374,20 @@ Menghapus ambiguitas sebelum source code dan schema diubah.
 ### Tugas
 
 - [x] Tandai dokumen ini authoritative pada `00_START_HERE.md`.
-- [ ] Rekonsiliasi Phase 01, 03, 04, 05, 07, 09, 11, 12, dan 14.
-- [ ] Hapus requirement lama tentang invite program, wallet, seat credit, dan
+- [x] Rekonsiliasi Phase 01, 03, 04, 05, 07, 09, 11, 12, dan 14.
+- [x] Hapus requirement lama tentang invite program, wallet, seat credit, dan
   approval enrollment.
-- [ ] Perbarui kamus istilah UI.
-- [ ] Buat matriks field Admin → published contract → Peserta → Coach → server.
-- [ ] Buat inventory tipe/model/use case/repository lama yang akan dimigrasikan.
-- [ ] Catat fixture dan UI test yang masih bergantung pada konsep lama.
-- [ ] Simpan baseline build dan test sebelum perubahan domain.
+- [x] Perbarui kamus istilah UI.
+- [x] Buat matriks field Admin → published contract → Peserta → Coach → server.
+- [x] Buat inventory tipe/model/use case/repository lama yang akan dimigrasikan.
+- [x] Catat fixture dan UI test yang masih bergantung pada konsep lama.
+- [x] Simpan baseline build dan test sebelum perubahan domain.
 
 ### Exit criteria
 
-- [ ] Tidak ada dua dokumen aktif yang mendefinisikan aturan program berbeda.
-- [ ] Seluruh field program mempunyai consumer yang jelas.
-- [ ] Baseline build dan test tercatat.
+- [x] Tidak ada dua dokumen aktif yang mendefinisikan aturan program berbeda.
+- [x] Seluruh field program mempunyai consumer yang jelas.
+- [x] Baseline build dan test tercatat.
 
 ---
 
@@ -375,50 +399,50 @@ Membuat model platform-neutral lengkap tanpa mengubah seluruh UI sekaligus.
 
 ### Model target
 
-- [ ] `ProgramScoringConfiguration`.
-- [ ] `ProgramCommerceConfiguration`.
-- [ ] `ProgramPlatformAvailability`.
-- [ ] `ProgramContentKind`.
-- [ ] `ProgramQuestionDefinition`.
-- [ ] `ProgramQuestionOption`.
-- [ ] `ProgramQuestionAnswerKey`.
-- [ ] `ProgramStepCompletionPolicy`.
-- [ ] `ProgramWeighInKind`.
-- [ ] `ProgramEnrollmentContext`.
-- [ ] `StepSubmissionAnswer`.
-- [ ] `QuizAttemptResult`.
-- [ ] `ProgramStoreProduct`.
-- [ ] `ProgramPayment`.
-- [ ] `ProgramEntitlement`.
+- [x] `ProgramScoringConfiguration`.
+- [x] `ProgramCommerceConfiguration`.
+- [x] `ProgramPlatformAvailability`.
+- [x] `ProgramContentKind`.
+- [x] `ProgramQuestionDefinition`.
+- [x] `ProgramQuestionOption`.
+- [x] `ProgramQuestionAnswerKey`.
+- [x] `ProgramStepCompletionPolicy`.
+- [x] `ProgramWeighInKind`.
+- [x] `ProgramEnrollmentContext`.
+- [x] `StepSubmissionAnswer`.
+- [x] `QuizAttemptResult`.
+- [x] `ProgramStoreProduct`.
+- [x] `ProgramPayment`.
+- [x] `ProgramEntitlement`.
 
 ### Tugas
 
-- [ ] Satukan draft dan published program melalui satu mapping lossless.
-- [ ] Pindahkan poin dari step ke scoring configuration.
-- [ ] Tambahkan semua jenis pertanyaan dan answer payload.
-- [ ] Ganti `fileUpload` menjadi `photoUpload`.
-- [ ] Tambahkan timbang awal/akhir sebagai content kind.
-- [ ] Modelkan scheduled-day dan enrollment-relative day.
-- [ ] Modelkan satu Coach aktif pada Participant.
-- [ ] Pertahankan snapshot Coach pada enrollment untuk audit.
-- [ ] Modelkan beberapa enrollment aktif tanpa satu global active program.
-- [ ] Tambahkan conversion fixture lama ke model baru.
-- [ ] Tandai API lama deprecated sebelum dihapus.
+- [x] Satukan draft dan published program melalui satu mapping lossless.
+- [x] Pindahkan poin dari step ke scoring configuration.
+- [x] Tambahkan semua jenis pertanyaan dan answer payload.
+- [x] Ganti `fileUpload` menjadi `photoUpload`.
+- [x] Tambahkan timbang awal/harian/akhir sebagai content kind.
+- [x] Modelkan scheduled-day dan enrollment-relative day.
+- [x] Modelkan satu Coach aktif pada Participant.
+- [x] Pertahankan snapshot Coach pada enrollment untuk audit.
+- [x] Modelkan beberapa enrollment aktif tanpa satu global active program.
+- [x] Tambahkan conversion fixture lama ke model baru.
+- [x] Tandai API lama deprecated sebelum dihapus.
 
 ### Tests
 
-- [ ] Draft → published mapping mempertahankan semua field.
-- [ ] JSON encode/decode stabil.
-- [ ] Fixture lama dapat dimigrasikan.
-- [ ] Tidak ada ID collision.
-- [ ] Beberapa enrollment tidak saling membocorkan state.
-- [ ] Domain tidak mengimpor SwiftUI, StoreKit, atau Play Billing.
+- [x] Draft → published mapping mempertahankan semua field.
+- [x] JSON encode/decode stabil.
+- [x] Fixture lama dapat dimigrasikan.
+- [x] Tidak ada ID collision.
+- [x] Beberapa enrollment tidak saling membocorkan state.
+- [x] Domain tidak mengimpor SwiftUI, StoreKit, atau Play Billing.
 
 ### Exit criteria
 
-- [ ] Published program contract lossless.
-- [ ] Seluruh model dapat dipakai Swift dan Kotlin.
-- [ ] Build iOS lulus dengan adapter kompatibilitas sementara.
+- [x] Published program contract lossless.
+- [x] Seluruh model dapat dipakai Swift dan Kotlin.
+- [x] Build iOS lulus dengan adapter kompatibilitas sementara.
 
 ---
 
@@ -431,43 +455,43 @@ secara aman.
 
 ### UX Admin
 
-- [ ] Tambahkan aksi `Duplikasikan sebagai draft`.
-- [ ] Tampilkan nama program baru.
-- [ ] Tampilkan tanggal mulai baru.
-- [ ] Hitung tanggal selesai otomatis dari durasi inklusif.
-- [ ] Izinkan Admin mengubah tanggal selesai sebelum konfirmasi.
-- [ ] Tampilkan ringkasan pergeseran seluruh hari.
-- [ ] Salin harga yang diinginkan sebagai nilai awal yang dapat diubah.
+- [x] Tambahkan aksi `Duplikasikan sebagai draft`.
+- [x] Tampilkan nama program baru.
+- [x] Tampilkan tanggal mulai baru.
+- [x] Hitung tanggal selesai otomatis dari durasi inklusif.
+- [x] Izinkan Admin mengubah tanggal selesai sebelum konfirmasi.
+- [x] Tampilkan ringkasan pergeseran seluruh hari.
+- [x] Salin harga yang diinginkan sebagai nilai awal yang dapat diubah.
 
 ### Domain
 
-- [ ] Buat `DuplicateProgramAsDraftUseCase`.
-- [ ] Generate program ID baru.
-- [ ] Generate day, step, question, dan option ID baru.
-- [ ] Salin content metadata tanpa menyalin runtime state.
-- [ ] Pertahankan media immutable melalui reference yang aman.
-- [ ] Hitung offset tanggal dalam kalender program.
-- [ ] Pertahankan jarak hari yang sengaja tidak berurutan.
-- [ ] Gunakan timezone program.
-- [ ] Jangan menyalin store product mapping.
-- [ ] Tambahkan `sourceProgramID` untuk lineage dan audit.
+- [x] Buat `DuplicateProgramAsDraftUseCase`.
+- [x] Generate program ID baru.
+- [x] Generate day, step, question, dan option ID baru.
+- [x] Salin content metadata tanpa menyalin runtime state.
+- [x] Pertahankan media immutable melalui reference yang aman.
+- [x] Hitung offset tanggal dalam kalender program.
+- [x] Pertahankan jarak hari yang sengaja tidak berurutan.
+- [x] Gunakan timezone program.
+- [x] Jangan menyalin store product mapping.
+- [x] Tambahkan `sourceProgramID` untuk lineage dan audit.
 
 ### Tests
 
-- [ ] 5–15 Juni menjadi 5–15 Juli.
-- [ ] Jadwal dengan hari yang dilewati mempertahankan offset.
-- [ ] Durasi melintasi akhir bulan dan tahun.
-- [ ] Timezone tidak menggeser tanggal.
-- [ ] Semua ID baru dan unik.
-- [ ] Runtime data tidak tersalin.
-- [ ] Harga tersalin, store product tidak tersalin.
-- [ ] Perubahan draft baru tidak mengubah sumber.
+- [x] 5–15 Juni menjadi 5–15 Juli.
+- [x] Jadwal dengan hari yang dilewati mempertahankan offset.
+- [x] Durasi melintasi akhir bulan dan tahun.
+- [x] Timezone tidak menggeser tanggal.
+- [x] Semua ID baru dan unik.
+- [x] Runtime data tidak tersalin.
+- [x] Harga tersalin, store product tidak tersalin.
+- [x] Perubahan draft baru tidak mengubah sumber.
 
 ### Exit criteria
 
-- [ ] Program duplikat valid sebagai draft independen.
-- [ ] Preview tanggal baru sama dengan hasil published contract.
-- [ ] Tidak ada transaksi atau entitlement lama yang dapat terhubung.
+- [x] Program duplikat valid sebagai draft independen.
+- [x] Preview tanggal baru sama dengan hasil published contract.
+- [x] Tidak ada transaksi atau entitlement lama yang dapat terhubung.
 
 ---
 
@@ -479,61 +503,64 @@ Membuat seluruh keputusan program dapat dikonfigurasi tanpa kontrol redundant.
 
 ### Pengaturan program
 
-- [ ] Judul, ringkasan, kategori, cover, dan alternative text.
-- [ ] Scheduled atau self-paced.
-- [ ] Durasi tetap atau tanggal spesifik yang kompatibel.
-- [ ] Timezone.
-- [ ] Kapasitas.
-- [ ] Gratis atau berbayar.
-- [ ] Harga yang diinginkan.
-- [ ] Poin aktivitas.
-- [ ] Poin per kilogram turun.
-- [ ] Persentase kelulusan kuis.
-- [ ] Kebijakan hari lampau dan mendatang.
-- [ ] Hapus access-mode picker.
-- [ ] Hapus approval dan invite settings.
-- [ ] Hapus poin per langkah.
-- [ ] Hapus weigh-in window global.
+- [x] Judul, ringkasan, kategori, upload cover gambar, dan alternative text.
+- [x] Scheduled atau self-paced.
+- [x] Durasi tetap atau tanggal spesifik yang kompatibel.
+- [x] Timezone.
+- [x] Kapasitas.
+- [x] Gratis atau berbayar.
+- [x] Harga yang diinginkan.
+- [x] Poin aktivitas.
+- [x] Poin per kilogram turun.
+- [x] Persentase kelulusan kuis.
+- [x] Kebijakan hari lampau dan mendatang, termasuk tersedia lebih awal.
+- [x] Hapus access-mode picker.
+- [x] Hapus approval dan invite settings.
+- [x] Hapus poin per langkah.
+- [x] Hapus weigh-in window global.
 
 ### Content builder
 
-- [ ] Artikel.
-- [ ] Video.
-- [ ] Form.
-- [ ] Kuis.
-- [ ] Timbang awal.
-- [ ] Timbang akhir.
-- [ ] Semua jenis pertanyaan yang disepakati.
-- [ ] Answer key editor untuk pertanyaan objektif.
-- [ ] Photo picker untuk opsi gambar dan photo-upload preview.
-- [ ] Hapus toggle bukti foto terpisah.
-- [ ] Hapus optional requirement.
+- [x] Salin deskripsi dan seluruh langkah dari satu hari ke satu atau beberapa
+  hari tujuan tanpa mengubah nama, nomor, atau tanggal hari tujuan.
+- [x] Artikel.
+- [x] Video.
+- [x] Form.
+- [x] Kuis.
+- [x] Timbang awal.
+- [x] Timbang harian.
+- [x] Timbang akhir.
+- [x] Semua jenis pertanyaan yang disepakati.
+- [x] Answer key editor untuk pertanyaan objektif.
+- [x] Photo picker untuk opsi gambar dan photo-upload preview.
+- [x] Hapus toggle bukti foto terpisah.
+- [x] Hapus optional requirement.
 
 ### Publish preflight
 
-- [ ] Semua pertanyaan interaktif mempunyai prompt.
-- [ ] Semua pilihan valid dan unik.
-- [ ] Kuis mempunyai minimal satu pertanyaan objektif.
-- [ ] Kuis mempunyai answer key lengkap.
-- [ ] Persentase kelulusan valid.
-- [ ] Timbang awal/akhir valid jika scoring berat aktif.
-- [ ] Content order dan date policy valid.
-- [ ] Scoring configuration valid.
-- [ ] Program berbayar memeriksa platform readiness.
-- [ ] Preview memakai published renderer.
+- [x] Semua pertanyaan interaktif mempunyai prompt.
+- [x] Semua pilihan valid dan unik.
+- [x] Kuis mempunyai minimal satu pertanyaan objektif.
+- [x] Kuis mempunyai answer key lengkap.
+- [x] Persentase kelulusan valid.
+- [x] Timbang awal/akhir valid jika scoring berat aktif.
+- [x] Content order dan date policy valid.
+- [x] Scoring configuration valid.
+- [x] Program berbayar memeriksa platform readiness.
+- [x] Preview memakai published renderer.
 
 ### Tests
 
-- [ ] Setiap field Admin bertahan setelah save/reload/publish.
-- [ ] Kombinasi invalid diblokir dengan pesan Bahasa Indonesia.
-- [ ] Preview sama dengan Participant renderer.
-- [ ] Published program tetap read-only.
-- [ ] Duplikasi published program menghasilkan draft.
+- [x] Setiap field Admin bertahan setelah save/reload/publish.
+- [x] Kombinasi invalid diblokir dengan pesan Bahasa Indonesia.
+- [x] Preview sama dengan Participant renderer.
+- [x] Published program tetap read-only.
+- [x] Duplikasi published program menghasilkan draft.
 
 ### Exit criteria
 
-- [ ] Tidak ada kontrol Admin yang tidak mempunyai efek runtime.
-- [ ] Tidak ada field published yang hanya hidup di UI Admin.
+- [x] Tidak ada kontrol Admin yang tidak mempunyai efek runtime.
+- [x] Tidak ada field published yang hanya hidup di UI Admin.
 
 ---
 
@@ -545,47 +572,47 @@ Mendukung beberapa program aktif dengan satu Coach yang konsisten.
 
 ### State
 
-- [ ] Ganti snapshot satu active program dengan collection per enrollment.
-- [ ] Simpan submission, timbang, skor, dan progress per enrollment.
-- [ ] Tambahkan program-focus selection untuk Home.
-- [ ] Program focus tidak membatasi program lain.
-- [ ] Leaderboard selection memakai program/enrollment yang tepat.
-- [ ] History dan active programs tidak berbagi submission.
+- [x] Ganti snapshot satu active program dengan collection per enrollment.
+- [x] Simpan submission, timbang, skor, dan progress per enrollment.
+- [x] Tambahkan program-focus selection untuk Home.
+- [x] Program focus tidak membatasi program lain.
+- [x] Leaderboard selection memakai program/enrollment yang tepat.
+- [x] History dan active programs tidak berbagi submission.
 
 ### Enrollment
 
-- [ ] Semua program tersedia bersifat publik.
-- [ ] Peserta memilih program sebelum scanner dibuka.
-- [ ] QR pertama menetapkan Coach jika belum ada.
-- [ ] QR berikutnya wajib sama dengan Coach aktif.
-- [ ] QR Coach lain ditolak sebelum purchase flow.
-- [ ] Coach non-public tetapi approved tetap dapat divalidasi melalui server QR.
-- [ ] Program gratis membuat enrollment dan leaderboard entry secara atomik.
-- [ ] Program berbayar masuk purchase flow setelah QR valid.
-- [ ] Duplicate enrollment mengembalikan enrollment lama secara idempoten.
+- [x] Semua program tersedia bersifat publik.
+- [x] Peserta memilih program sebelum scanner dibuka.
+- [x] QR pertama menetapkan Coach jika belum ada.
+- [x] QR berikutnya wajib sama dengan Coach aktif.
+- [x] QR Coach lain ditolak sebelum purchase flow.
+- [x] Coach non-public tetapi approved tetap dapat divalidasi melalui server QR.
+- [x] Program gratis membuat enrollment dan leaderboard entry secara atomik.
+- [x] Program berbayar masuk purchase flow setelah QR valid.
+- [x] Duplicate enrollment mengembalikan enrollment lama secara idempoten.
 
 ### Coach transfer
 
-- [ ] Hapus pergantian Coach bebas dari flow pendaftaran.
-- [ ] Tambahkan operasi Admin dengan alasan.
-- [ ] Update profil dan enrollment aktif/terjadwal atomik.
-- [ ] Pertahankan Coach enrollment selesai.
-- [ ] Audit actor, Coach lama, Coach baru, dan alasan.
+- [x] Hapus pergantian Coach bebas dari flow pendaftaran.
+- [x] Tambahkan operasi Admin dengan alasan.
+- [x] Update profil dan enrollment aktif/terjadwal atomik.
+- [x] Pertahankan Coach enrollment selesai.
+- [x] Audit actor, Coach lama, Coach baru, dan alasan.
 
 ### Tests
 
-- [ ] QR pertama menetapkan Coach.
-- [ ] QR Coach yang sama diterima pada program kedua.
-- [ ] QR Coach berbeda ditolak sebelum pembayaran.
-- [ ] Program A dan B mempunyai progres independen.
-- [ ] Program A dan B memakai Coach aktif yang sama.
-- [ ] Transfer Coach tidak mengubah histori selesai.
-- [ ] Enrollment baru selalu mempunyai leaderboard entry.
+- [x] QR pertama menetapkan Coach.
+- [x] QR Coach yang sama diterima pada program kedua.
+- [x] QR Coach berbeda ditolak sebelum pembayaran.
+- [x] Program A dan B mempunyai progres independen.
+- [x] Program A dan B memakai Coach aktif yang sama.
+- [x] Transfer Coach tidak mengubah histori selesai.
+- [x] Enrollment baru selalu mempunyai leaderboard entry.
 
 ### Exit criteria
 
-- [ ] Peserta dapat membuka dan menjalankan lebih dari satu program aktif.
-- [ ] Tidak ada state program yang berasal dari enrollment lain.
+- [x] Peserta dapat membuka dan menjalankan lebih dari satu program aktif.
+- [x] Tidak ada state program yang berasal dari enrollment lain.
 
 ---
 
@@ -597,44 +624,44 @@ Membuat seluruh konten yang disusun Admin dapat dijalankan Peserta.
 
 ### Renderer
 
-- [ ] Artikel dan instruction media.
-- [ ] Video dengan resume.
-- [ ] Ambang wajib tonton.
-- [ ] Autoplay dengan fallback manual.
-- [ ] Jawaban pendek dan panjang.
-- [ ] Angka dengan parsing locale Indonesia.
-- [ ] Pilihan tunggal.
-- [ ] Pilihan ganda.
-- [ ] Pilihan gambar.
-- [ ] Unggah foto melalui kamera dan PhotosPicker.
-- [ ] Heading dan teks penjelas.
-- [ ] Timbang awal dan akhir.
+- [x] Artikel dan instruction media.
+- [x] Video dengan resume.
+- [x] Ambang wajib tonton.
+- [x] Autoplay dengan fallback manual.
+- [x] Jawaban pendek dan panjang.
+- [x] Angka dengan parsing locale Indonesia.
+- [x] Pilihan tunggal.
+- [x] Pilihan ganda.
+- [x] Pilihan gambar.
+- [x] Unggah foto melalui kamera dan PhotosPicker.
+- [x] Heading dan teks penjelas.
+- [x] Timbang awal, harian, dan akhir.
 
 ### Submission
 
-- [ ] Jawaban disimpan berdasarkan `questionID`.
-- [ ] Semua pertanyaan interaktif wajib.
-- [ ] Submission kosong diblokir di client dan domain.
-- [ ] Submission kosong diblokir lagi di server contract.
-- [ ] Step pada hari yang sama tidak saling mengunci.
-- [ ] Duplicate submit idempotent.
-- [ ] Rejected submission dapat diperbaiki tanpa kehilangan histori.
-- [ ] Upload foto mempunyai progress, retry, dan orphan cleanup.
+- [x] Jawaban disimpan berdasarkan `questionID`.
+- [x] Semua pertanyaan interaktif wajib.
+- [x] Submission kosong diblokir di client dan domain.
+- [x] Submission kosong diblokir lagi di server contract.
+- [x] Step pada hari yang sama tidak saling mengunci.
+- [x] Duplicate submit idempotent.
+- [x] Rejected submission dapat diperbaiki tanpa kehilangan histori.
+- [x] Upload foto mempunyai progress, retry, dan orphan cleanup.
 
 ### Tests
 
-- [ ] Satu test untuk setiap question type.
-- [ ] Jawaban kosong tidak dapat dikirim.
-- [ ] Heading/text tidak dianggap kosong.
-- [ ] Foto gagal upload dapat dicoba ulang.
-- [ ] Video completion tidak diberikan dua kali.
-- [ ] Langkah kedua dapat dikerjakan sebelum langkah pertama pada hari sama.
-- [ ] Future-day policy tetap diterapkan.
+- [x] Satu test untuk setiap question type.
+- [x] Jawaban kosong tidak dapat dikirim.
+- [x] Heading/text tidak dianggap kosong.
+- [x] Foto gagal upload dapat dicoba ulang.
+- [x] Video completion tidak diberikan dua kali.
+- [x] Langkah kedua dapat dikerjakan sebelum langkah pertama pada hari sama.
+- [x] Future-day policy tetap diterapkan.
 
 ### Exit criteria
 
-- [ ] Setiap tipe konten Admin mempunyai renderer produksi.
-- [ ] Tidak ada generic text/photo fallback yang menghilangkan arti pertanyaan.
+- [x] Setiap tipe konten Admin mempunyai renderer produksi.
+- [x] Tidak ada generic text/photo fallback yang menghilangkan arti pertanyaan.
 
 ---
 
@@ -646,43 +673,43 @@ Menyelesaikan lifecycle kuis dan menjaga answer key tetap privat dari Peserta.
 
 ### Domain dan scoring
 
-- [ ] Validasi semua jawaban tersedia sebelum submit.
-- [ ] Evaluasi answer key server-compatible dan deterministic.
-- [ ] Simpan satu attempt authoritative.
-- [ ] Hitung correct count dan percentage.
-- [ ] Terapkan `quizPassingPercentage` program-wide.
-- [ ] Beri `pointsPerActivity` untuk setiap jawaban benar.
-- [ ] Simpan status passed/failed.
-- [ ] Kuis failed tidak mengunci step lain.
-- [ ] Kuis failed tidak dihitung sebagai passed step.
-- [ ] Jangan kirim answer key melalui Participant DTO.
-- [ ] Sediakan Coach/Admin DTO dengan answer key sesuai izin.
+- [x] Validasi semua jawaban tersedia sebelum submit.
+- [x] Evaluasi answer key server-compatible dan deterministic.
+- [x] Simpan satu attempt authoritative.
+- [x] Hitung correct count dan percentage.
+- [x] Terapkan `quizPassingPercentage` program-wide.
+- [x] Beri `pointsPerActivity` untuk setiap jawaban benar.
+- [x] Simpan status passed/failed.
+- [x] Kuis failed tidak mengunci step lain.
+- [x] Kuis failed tidak dihitung sebagai passed step.
+- [x] Jangan kirim answer key melalui Participant DTO.
+- [x] Sediakan Coach/Admin DTO dengan answer key sesuai izin.
 
 ### Admin override
 
-- [ ] `Buka kembali percobaan kuis`.
-- [ ] Alasan wajib.
-- [ ] Attempt lama tetap tersimpan.
-- [ ] Attempt baru mempunyai sequence baru.
-- [ ] Poin attempt lama dibatalkan/direkonsiliasi secara idempoten.
-- [ ] Audit lengkap.
+- [x] `Buka kembali percobaan kuis`.
+- [x] Alasan wajib.
+- [x] Attempt lama tetap tersimpan.
+- [x] Attempt baru mempunyai sequence baru.
+- [x] Poin attempt lama dibatalkan/direkonsiliasi secara idempoten.
+- [x] Audit lengkap.
 
 ### Tests
 
-- [ ] Attempt kedua ditolak.
-- [ ] Semua jawaban benar.
-- [ ] Sebagian jawaban benar.
-- [ ] Nilai tepat pada passing threshold.
-- [ ] Nilai di bawah threshold.
-- [ ] Poin per jawaban benar.
-- [ ] Answer key tidak ada pada Participant payload.
-- [ ] Answer key terlihat oleh Coach/Admin.
-- [ ] Reopen attempt merekonsiliasi poin.
+- [x] Attempt kedua ditolak.
+- [x] Semua jawaban benar.
+- [x] Sebagian jawaban benar.
+- [x] Nilai tepat pada passing threshold.
+- [x] Nilai di bawah threshold.
+- [x] Poin per jawaban benar.
+- [x] Answer key tidak ada pada Participant payload.
+- [x] Answer key terlihat oleh Coach/Admin.
+- [x] Reopen attempt merekonsiliasi poin.
 
 ### Exit criteria
 
-- [ ] Kuis berjalan end-to-end tanpa pemeriksaan manual.
-- [ ] Peserta tidak dapat memperoleh answer key dari response participant.
+- [x] Kuis berjalan end-to-end tanpa pemeriksaan manual.
+- [x] Peserta tidak dapat memperoleh answer key dari response participant.
 
 ---
 
@@ -695,42 +722,45 @@ enrollment.
 
 ### Tugas
 
-- [ ] Render timbang awal/akhir sebagai step khusus.
-- [ ] Validasi availability berdasarkan scheduled/self-paced day.
-- [ ] Simpan Decimal/numeric.
-- [ ] Unik per enrollment dan kind.
-- [ ] Blok timbang akhir sebelum timbang awal.
-- [ ] Hitung poin berat ketika data lengkap.
-- [ ] Weight gain menghasilkan nol poin.
-- [ ] Artikel/video/form memberi poin aktivitas satu kali.
-- [ ] Kuis memberi poin per jawaban benar.
-- [ ] Timbang tidak memberi poin aktivitas.
-- [ ] Pending Coach review tidak memberi poin.
-- [ ] Approval/rejection merekonsiliasi poin idempoten.
-- [ ] Admin correction memerlukan reason dan audit.
+- [x] Render timbang awal/harian/akhir sebagai step khusus.
+- [x] Validasi availability berdasarkan scheduled/self-paced day.
+- [x] Simpan Decimal/numeric.
+- [x] Timbang awal/akhir unik per enrollment; timbang harian unik per
+  enrollment dan step.
+- [x] Blok timbang akhir sebelum timbang awal.
+- [x] Hitung poin berat ketika data lengkap.
+- [x] Weight gain menghasilkan nol poin.
+- [x] Artikel/video/form memberi poin aktivitas satu kali.
+- [x] Kuis memberi poin per jawaban benar.
+- [x] Timbang tidak memberi poin aktivitas.
+- [x] Timbang harian tidak memengaruhi poin penurunan berat.
+- [x] Pending Coach review tidak memberi poin.
+- [x] Approval/rejection merekonsiliasi poin idempoten.
+- [x] Admin correction memerlukan reason dan audit.
 
 ### Leaderboard
 
-- [ ] Buat entry saat enrollment aktif.
-- [ ] Pisahkan activity, quiz, weight, dan adjustment points.
-- [ ] Rank recalculation deterministic.
-- [ ] Equal-score tie-break terdokumentasi.
-- [ ] Berat pribadi tidak pernah masuk public leaderboard.
+- [x] Buat entry saat enrollment aktif.
+- [x] Pisahkan activity, quiz, weight, dan adjustment points.
+- [x] Rank recalculation deterministic.
+- [x] Equal-score tie-break terdokumentasi.
+- [x] Berat pribadi tidak pernah masuk public leaderboard.
 
 ### Tests
 
-- [ ] Initial/final uniqueness.
-- [ ] Final sebelum initial ditolak.
-- [ ] Penurunan pecahan kilogram.
-- [ ] Weight gain.
-- [ ] Duplicate approval tidak menggandakan poin.
-- [ ] Adjustment tetap terpisah.
-- [ ] Multi-program score tidak tercampur.
+- [x] Initial/final uniqueness.
+- [x] Beberapa timbang harian tersimpan per langkah tanpa duplikasi.
+- [x] Final sebelum initial ditolak.
+- [x] Penurunan pecahan kilogram.
+- [x] Weight gain.
+- [x] Duplicate approval tidak menggandakan poin.
+- [x] Adjustment tetap terpisah.
+- [x] Multi-program score tidak tercampur.
 
 ### Exit criteria
 
-- [ ] Satu enrollment baru dapat menghasilkan skor tanpa seed leaderboard.
-- [ ] Semua sumber poin dapat dijelaskan dari audit input.
+- [x] Satu enrollment baru dapat menghasilkan skor tanpa seed leaderboard.
+- [x] Semua sumber poin dapat dijelaskan dari audit input.
 
 ---
 
@@ -743,41 +773,43 @@ sebelum backend produksi.
 
 ### Coach
 
-- [ ] Roster memakai Coach aktif Peserta dan enrollment terkait.
-- [ ] Filter program menghitung metrik enrollment yang dipilih.
-- [ ] Dashboard hanya menghitung program terkait Peserta Coach.
-- [ ] Expected progress menghitung hari yang seharusnya sudah tersedia.
-- [ ] Future step tidak membuat Peserta terlihat tertinggal.
-- [ ] Review queue memuat seluruh pending submission.
-- [ ] Coach melihat jawaban, foto, dan context pertanyaan.
-- [ ] Coach melihat hasil kuis dan answer key, tetapi tidak mengubah hasil.
-- [ ] Approve/reject mempunyai state, retry, dan audit.
+- [x] Roster memakai Coach aktif Peserta dan enrollment terkait.
+- [x] Filter program menghitung metrik enrollment yang dipilih.
+- [x] Dashboard hanya menghitung program terkait Peserta Coach.
+- [x] Expected progress menghitung hari yang seharusnya sudah tersedia.
+- [x] Future step tidak membuat Peserta terlihat tertinggal.
+- [x] Review queue memuat seluruh pending submission.
+- [x] Coach melihat jawaban, foto, dan context pertanyaan.
+- [x] Coach melihat hasil kuis dan answer key, tetapi tidak mengubah hasil.
+- [x] Coach melihat timbang awal, harian, dan akhir di detail privat peserta.
+- [x] Feed Coach dan leaderboard tidak menampilkan nilai berat.
+- [x] Approve/reject mempunyai state, retry, dan audit.
 
 ### Admin closure
 
-- [ ] Pilih program selesai.
-- [ ] Lihat pending review.
-- [ ] Lihat timbang akhir yang belum lengkap.
-- [ ] Lihat peserta dengan kuis failed.
-- [ ] Terapkan score adjustment dengan alasan.
-- [ ] Tutup perhitungan setelah blocker diselesaikan.
-- [ ] Lock winner snapshot.
-- [ ] Buat poster yang terkait `programID` dan `winnerSnapshotID`.
-- [ ] Publikasikan poster ke Home.
-- [ ] Poster program lain tidak tercampur.
+- [x] Pilih program selesai.
+- [x] Lihat pending review.
+- [x] Lihat timbang akhir yang belum lengkap.
+- [x] Lihat peserta dengan kuis failed.
+- [x] Terapkan score adjustment dengan alasan.
+- [x] Tutup perhitungan setelah blocker diselesaikan.
+- [x] Lock winner snapshot.
+- [x] Buat poster yang terkait `programID` dan `winnerSnapshotID`.
+- [x] Publikasikan poster ke Home.
+- [x] Poster program lain tidak tercampur.
 
 ### Tests
 
-- [ ] Review approval memperbarui skor dan Participant.
-- [ ] Review rejection tidak memberi poin.
-- [ ] Expected progress date-aware.
-- [ ] Winner lock tidak berubah diam-diam.
-- [ ] Poster terkait snapshot yang benar.
-- [ ] Penutupan diblokir ketika review masih pending.
+- [x] Review approval memperbarui skor dan Participant.
+- [x] Review rejection tidak memberi poin.
+- [x] Expected progress date-aware.
+- [x] Winner lock tidak berubah diam-diam.
+- [x] Poster terkait snapshot yang benar.
+- [x] Penutupan diblokir ketika review masih pending.
 
 ### Exit criteria
 
-- [ ] Siklus lokal Admin → Peserta → Coach → Admin selesai tanpa fixture siap
+- [x] Siklus lokal Admin → Peserta → Coach → Admin selesai tanpa fixture siap
   jadi.
 
 ---
@@ -790,37 +822,39 @@ Membuktikan kontrak lintas peran sebelum schema Supabase dikunci.
 
 ### Scenario wajib
 
-- [ ] Admin membuat program baru dari kosong.
-- [ ] Admin membuat artikel, video, form, kuis, dan timbang.
-- [ ] Admin menerbitkan program.
-- [ ] Peserta pertama menetapkan Coach melalui QR.
-- [ ] Peserta mengikuti program gratis.
-- [ ] Peserta mengikuti program kedua dengan Coach sama.
-- [ ] QR Coach berbeda ditolak.
-- [ ] Peserta mengisi semua question type.
-- [ ] Peserta menyelesaikan kuis satu attempt.
-- [ ] Coach mereview jawaban subjektif/foto.
-- [ ] Timbang akhir menghitung weight points.
-- [ ] Leaderboard terisi tanpa seed.
-- [ ] Admin menutup dan mengunci pemenang.
-- [ ] Admin menerbitkan poster.
-- [ ] Admin menduplikasi program ke tanggal baru.
+- [x] Admin membuat program baru dari kosong.
+- [x] Admin membuat artikel, video, form, kuis, timbang awal, timbang harian,
+  dan timbang akhir.
+- [x] Admin menerbitkan program.
+- [x] Peserta pertama menetapkan Coach melalui QR.
+- [x] Peserta mengikuti program gratis.
+- [x] Peserta mengikuti program kedua dengan Coach sama.
+- [x] QR Coach berbeda ditolak.
+- [x] Peserta mengisi semua question type.
+- [x] Peserta menyelesaikan kuis satu attempt.
+- [x] Coach mereview jawaban subjektif/foto.
+- [x] Timbang akhir menghitung weight points.
+- [x] Timbang harian tersimpan per langkah tanpa mengubah weight points.
+- [x] Leaderboard terisi tanpa seed.
+- [x] Admin menutup dan mengunci pemenang.
+- [x] Admin menerbitkan poster.
+- [x] Admin menduplikasi program ke tanggal baru.
 
 ### Automation
 
-- [ ] Domain integration test memakai repository kosong.
-- [ ] UI tests tidak bergantung pada urutan test.
+- [x] Domain integration test memakai repository kosong.
+- [x] UI tests tidak bergantung pada urutan test.
 - [ ] Store purchase tetap memakai deterministic local store fixture.
 - [ ] Loading, empty, error, offline, permission denied diuji.
-- [ ] Non-Indonesian device locale tidak menampilkan localization key.
+- [x] Non-Indonesian device locale tidak menampilkan localization key.
 - [ ] Dark mode dan Dynamic Type diuji pada layar baru.
 
 ### Exit criteria
 
-- [ ] Seluruh scenario lulus dari repository kosong.
-- [ ] Tidak ada fixture yang membuat leaderboard/enrollment secara manual di
+- [x] Seluruh scenario lulus dari repository kosong.
+- [x] Tidak ada fixture yang membuat leaderboard/enrollment secara manual di
   tengah workflow.
-- [ ] Contract dinyatakan stabil untuk Supabase schema.
+- [x] Contract dinyatakan stabil untuk Supabase schema.
 
 ---
 
@@ -833,52 +867,52 @@ terbukti lokal.
 
 ### Schema
 
-- [ ] Profiles dan satu current Coach.
-- [ ] Programs dan lineage `source_program_id`.
-- [ ] Program scoring configuration.
-- [ ] Program days dan content steps.
-- [ ] Questions, options, dan protected answer keys.
-- [ ] Program enrollments.
-- [ ] Submission attempts dan answers.
-- [ ] Quiz attempts/results.
-- [ ] Weigh-ins.
-- [ ] Scores dan adjustments.
-- [ ] Store products per platform.
-- [ ] Commerce transactions.
-- [ ] Entitlements.
-- [ ] Winners dan poster relationship.
-- [ ] Audit events.
-- [ ] Jangan membuat invite, wallet, atau seat-credit table.
+- [x] Profiles dan satu current Coach.
+- [x] Programs dan lineage `source_program_id`.
+- [x] Program scoring configuration.
+- [x] Program days dan content steps.
+- [x] Questions, options, dan protected answer keys.
+- [x] Program enrollments.
+- [x] Submission attempts dan answers.
+- [x] Quiz attempts/results.
+- [x] Weigh-ins.
+- [x] Scores dan adjustments.
+- [x] Store products per platform.
+- [x] Commerce transactions.
+- [x] Entitlements.
+- [x] Winners dan poster relationship.
+- [x] Audit events.
+- [x] Jangan membuat invite, wallet, atau seat-credit table.
 
 ### Storage
 
-- [ ] Public avatar/media buckets.
-- [ ] Private question-photo bucket.
+- [x] Public avatar/media buckets.
+- [x] Private question-photo bucket.
 - [ ] Signed access untuk Coach/Admin terkait.
 - [ ] MIME dan size allowlist.
 - [ ] Image normalization dan metadata removal.
 - [ ] Orphan cleanup.
-- [ ] Tidak perlu weigh-in evidence bucket jika timbang tidak memakai foto.
+- [x] Tidak perlu weigh-in evidence bucket jika timbang tidak memakai foto.
 
 ### RLS
 
-- [ ] Peserta membaca program publik.
-- [ ] Peserta membaca enrollment dan answer miliknya.
-- [ ] Peserta tidak membaca answer key.
-- [ ] Coach membaca Participant dengan current Coach yang sama.
-- [ ] Coach membaca enrollment/submission terkait.
-- [ ] Coach membaca answer key untuk review context.
-- [ ] Coach tidak membaca Participant Coach lain.
-- [ ] Admin mempunyai operasi terkontrol.
-- [ ] Role dan Coach tidak dapat diubah sendiri.
+- [x] Peserta membaca program publik.
+- [x] Peserta membaca enrollment dan answer miliknya.
+- [x] Peserta tidak membaca answer key.
+- [x] Coach membaca Participant dengan current Coach yang sama.
+- [x] Coach membaca enrollment/submission terkait.
+- [x] Coach membaca answer key untuk review context.
+- [x] Coach tidak membaca Participant Coach lain.
+- [x] Admin mempunyai operasi terkontrol.
+- [x] Role dan Coach tidak dapat diubah sendiri.
 
 ### Atomic server operations
 
 - [ ] Publish program.
 - [ ] Duplicate program.
 - [ ] Assign first Coach from QR.
-- [ ] Transfer Coach.
-- [ ] Create free enrollment and leaderboard entry.
+- [x] Transfer Coach.
+- [x] Create free enrollment and leaderboard entry.
 - [ ] Initiate paid enrollment.
 - [ ] Submit step answers.
 - [ ] Submit quiz attempt.
@@ -905,8 +939,8 @@ terbukti lokal.
 ### Exit criteria
 
 - [ ] iOS staging menjalankan vertical slice dengan Supabase.
-- [ ] Contract dapat digunakan Android tanpa Swift type.
-- [ ] Tidak ada service role atau store credential di app.
+- [x] Contract dapat digunakan Android tanpa Swift type.
+- [x] Tidak ada service role atau store credential di app.
 
 ---
 
@@ -982,13 +1016,13 @@ kali.
 
 ### Client
 
-- [ ] Load Product berdasarkan mapping program.
-- [ ] Tampilkan `Product.displayPrice`.
-- [ ] QR Coach valid sebelum payment sheet.
-- [ ] Success, cancel, pending, unverified, interrupted.
-- [ ] Transaction updates.
-- [ ] Restore/relaunch recovery.
-- [ ] Jangan membuat enrollment dari client-only state.
+- [x] Load Product berdasarkan mapping program.
+- [x] Tampilkan `Product.displayPrice`.
+- [x] QR Coach valid sebelum payment sheet.
+- [x] Success, cancel, pending, unverified, interrupted.
+- [x] Transaction updates.
+- [x] Restore/relaunch recovery.
+- [x] Jangan membuat enrollment dari client-only state.
 
 ### Backend
 
@@ -1031,12 +1065,12 @@ menyalin aturan bisnis ke client.
 
 ### Shared contract
 
-- [ ] OpenAPI/JSON contract seluruh program flow.
-- [ ] Enum raw values stabil.
-- [ ] Data dictionary.
-- [ ] Error catalog.
-- [ ] RLS/authorization matrix.
-- [ ] Commerce and entitlement contract.
+- [x] OpenAPI/JSON contract seluruh program flow.
+- [x] Enum raw values stabil.
+- [x] Data dictionary.
+- [x] Error catalog.
+- [x] RLS/authorization matrix.
+- [x] Commerce and entitlement contract.
 - [ ] Sample payload untuk semua question type.
 - [ ] Sample scheduled dan self-paced programs.
 
@@ -1089,13 +1123,13 @@ Menutup failure mode yang hanya muncul pada produksi mobile dan store.
 
 ### Security dan privacy
 
-- [ ] Tidak ada answer key pada Participant response.
-- [ ] Tidak ada berat/foto pada logs.
+- [x] Tidak ada answer key pada Participant response.
+- [x] Tidak ada berat/foto pada logs.
 - [ ] Signed private media access.
-- [ ] Store secrets hanya server-side.
+- [x] Store secrets hanya server-side.
 - [ ] Transaction replay protection.
 - [ ] Admin audit lengkap.
-- [ ] Coach scope berdasarkan current Coach.
+- [x] Coach scope berdasarkan current Coach.
 - [ ] Account deletion dan data retention review.
 
 ### Release gate
@@ -1128,7 +1162,9 @@ Menutup failure mode yang hanya muncul pada produksi mobile dan store.
 | Form | Semua jawaban interaktif wajib dan typed |
 | Foto | Menjadi question answer, bukan evidence terpisah |
 | Kuis | Satu attempt, auto-score, answer key privat |
-| Timbang | Konten khusus dan sumber weight points |
+| Timbang | Awal/harian/akhir adalah konten; hanya selisih awal-akhir menjadi weight points |
+| Hari mendatang | Dapat tersedia lebih awal, terkunci, atau disembunyikan |
+| Cover | Upload gambar tampil pada runtime Peserta dan Coach |
 | Scoring | Poin program-wide, idempoten, dapat diaudit |
 | Free enrollment | QR → enrollment + leaderboard atomik |
 | Paid enrollment | QR → store purchase → verify → entitlement → enrollment |
@@ -1143,23 +1179,25 @@ Menutup failure mode yang hanya muncul pada produksi mobile dan store.
 
 Workplan selesai hanya jika:
 
-- [ ] Admin dapat membuat program dari repository kosong.
-- [ ] Program yang diterbitkan mempertahankan seluruh konfigurasi.
-- [ ] Peserta dapat mengikuti beberapa program dengan satu Coach.
-- [ ] QR Coach berbeda selalu ditolak sebelum pembayaran.
-- [ ] Seluruh content type dapat dijalankan.
-- [ ] Seluruh question type dapat dijawab.
-- [ ] Kuis dinilai otomatis satu kali tanpa membocorkan answer key.
-- [ ] Timbang menghasilkan poin berat yang benar.
-- [ ] Coach dapat memeriksa seluruh submission yang memerlukan tindakan.
-- [ ] Enrollment baru otomatis mempunyai leaderboard entry.
-- [ ] Admin dapat menutup program dan mengunci pemenang.
-- [ ] Program dapat diduplikasi dengan tanggal dan ID baru.
-- [ ] Program duplikat berbayar memakai store products baru.
+- [x] Admin dapat membuat program dari repository kosong.
+- [x] Program yang diterbitkan mempertahankan seluruh konfigurasi.
+- [x] Peserta dapat mengikuti beberapa program dengan satu Coach.
+- [x] QR Coach berbeda selalu ditolak sebelum pembayaran.
+- [x] Seluruh content type dapat dijalankan.
+- [x] Seluruh question type dapat dijawab.
+- [x] Kuis dinilai otomatis satu kali tanpa membocorkan answer key.
+- [x] Timbang awal/akhir menghasilkan poin berat yang benar dan timbang
+  harian hanya mencatat progres.
+- [x] Coach dapat memeriksa seluruh submission yang memerlukan tindakan.
+- [x] Enrollment baru otomatis mempunyai leaderboard entry.
+- [x] Admin dapat menutup program dan mengunci pemenang.
+- [x] Program dapat diduplikasi dengan tanggal dan ID baru.
+- [x] Program duplikat berbayar tidak mewarisi store product; provisioning
+  contract mewajibkan Product ID baru.
 - [ ] Pembayaran iOS terverifikasi server-side.
-- [ ] Backend contract siap untuk Google Play Billing.
+- [x] Backend contract siap untuk Google Play Billing.
 - [ ] Cross-platform entitlement diuji.
-- [ ] Tidak ada invite, approval, wallet, seat credit, bukti foto terpisah,
+- [x] Tidak ada invite, approval enrollment, wallet, seat credit, bukti foto terpisah,
   atau poin per langkah tersisa.
 
 ## Progress log
@@ -1168,6 +1206,63 @@ Workplan selesai hanya jika:
 
 - 2026-08-02:
   - Dokumen workplan dibuat dari audit program end-to-end dan keputusan produk.
-  - Belum ada source code, schema, StoreKit, Supabase, atau Android yang
-    diubah.
-  - Langkah berikutnya adalah Phase E2E-00, rekonsiliasi dokumen dan baseline.
+  - Domain, fixture, repository, Admin CMS, Participant renderer, Coach
+    review, scoring, closure, duplikasi, StoreKit adapter, OpenAPI, dan
+    migration Supabase diremediasi.
+  - Konsep invite program, approval enrollment, wallet/seat, evidence
+    paralel, poin per langkah, dan timbang onboarding dihapus dari source
+    aktif.
+  - Build generic iOS dan build iOS Simulator eksplisit lulus.
+  - Unit/integration suite lulus: 128 tests dalam 13 suites.
+  - Empat UI regression kritis lulus tanpa kegagalan dalam 61,774 detik:
+    fixed Program header, fixed Konten header, Indonesian runtime fallback,
+    dan Admin default Dashboard.
+  - Fixture/localization JSON dan OpenAPI YAML tervalidasi.
+  - Supabase CLI/Docker, credential store, Android project, dan device
+    production tidak tersedia; E2E-10 sampai E2E-14 tetap external gate.
+- 2026-08-03:
+  - Cover program dikunci sebagai gambar dan memakai `PhotosPicker`; renderer
+    bersama menampilkannya pada Admin preview, Peserta, dan Coach.
+  - Label konfigurasi membedakan poin langkah dari poin penurunan berat.
+  - Kebijakan hari mendatang ditambah `available` dan diterapkan oleh
+    calculator runtime, bukan hanya disimpan oleh Admin.
+  - `daily_weigh_in` ditambahkan end-to-end. Record harian terikat ke step,
+    tidak memberi poin aktivitas, dan tidak mengubah weight points.
+  - Detail privat Coach menampilkan riwayat timbang awal, harian, dan akhir;
+    feed serta leaderboard tetap menyembunyikan nilai berat.
+  - OpenAPI, draft migration Supabase, fixture, localization, unit test, dan
+    UI regression kritis diselaraskan dengan amendment ini.
+  - Simulator Debug build/run lulus tanpa warning source; 134
+    unit/integration tests lulus.
+  - UI journey Admin create/publish dan Coach critical journey dengan timbang
+    harian `78,1 kg` lulus.
+  - Aksi pilih/ganti dan hapus cover dirapikan menjadi baris aksi native
+    dengan target sentuh 44 poin; separator otomatis disembunyikan agar tidak
+    muncul garis parsial mengikuti alignment label. Simulator build/run dan
+    UI journey Admin create/publish kembali lulus tanpa warning atau failure.
+  - Segmented control peran pada pratinjau Admin mengikuti struktur Program
+    Peserta: kontrol native `large` berada di luar `ScrollView`, sedangkan
+    hanya renderer program di bawahnya yang bergulir. UI regression
+    memverifikasi tinggi efektif minimal 48 poin dan posisi vertikal tetap.
+  - Mode Edit pada daftar hari hanya dipakai untuk mengatur urutan. Hari
+    dihapus langsung melalui swipe ke kiri tanpa dialog. Aksi trailing
+    memakai bidang merah seamless tanpa gap dan hanya menampilkan ikon
+    sampah. Gerak kartu mengikuti jari lalu settle dengan spring; ikon
+    muncul bertahap dengan scale dan opacity. Seluruh konten ikut dihapus,
+    urutan dinormalkan, dan tanggal selesai disesuaikan.
+  - State swipe hari sekarang direset dalam transaksi yang sama sebelum
+    penghapusan. Hari yang ditambahkan kembali tidak mewarisi offset baris
+    lama meskipun ID deterministiknya digunakan ulang oleh draft lokal.
+    Warna destructive memakai merah `#C62828` yang identik pada light dan
+    dark mode. Reset state gesture dilakukan sebelum animasi spring
+    penghapusan daftar, sehingga transisi tetap terlihat tanpa mewariskan
+    offset lama. Simulator Debug build lulus tanpa warning; UI regression
+    `testAdminSwipeDeletesDayWithoutConfirmation` yang mencakup alur hapus
+    lalu tambah kembali lulus, 1 test tanpa kegagalan.
+  - Editor hari menyediakan `Salin isi ke hari lain` dengan multi-select.
+    Deskripsi, langkah, pertanyaan, media reference, dan answer key disalin;
+    nama, nomor, serta tanggal hari tujuan dipertahankan. Seluruh ID konten
+    hasil salinan dibuat ulang, dan target yang sudah berisi konten meminta
+    konfirmasi sebelum diganti. Simulator Debug build lulus tanpa warning,
+    suite `Phase05AdminCMSTests` lulus 24 tests, dan UI regression
+    `testAdminCopiesDayContentToAnotherDay` lulus tanpa kegagalan.

@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 
 @MainActor
-struct CoachInviteView: View {
-    let state: CoachInviteComposerState
+struct CoachIdentifierView: View {
+    let state: CoachIdentifierState
     let router: ShellTabRouter
 
     @State private var actionError: String?
@@ -37,7 +37,7 @@ struct CoachInviteView: View {
         .sheet(item: $sharePayload) { payload in
             NativeShareSheet(activityItems: payload.activityItems)
         }
-        .accessibilityIdentifier("coach.invite")
+        .accessibilityIdentifier("coach.identifier")
     }
 
     private func identifierContent(_ profile: CoachProfile) -> some View {
@@ -75,7 +75,7 @@ struct CoachInviteView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.brandPrimary)
-                    .accessibilityIdentifier("coach.invite.share")
+                    .accessibilityIdentifier("coach.identifier.share")
                 }
                 .padding(AppSpacing.large)
                 .background(
@@ -173,20 +173,20 @@ private struct CoachIdentifierSharePayload: Identifiable {
 
 #Preview("QR pendaftaran Coach") {
     NavigationStack {
-        CoachInvitePreview()
+        CoachIdentifierPreview()
     }
     .environment(\.locale, Locale(identifier: "id-ID"))
 }
 
 @MainActor
-private struct CoachInvitePreview: View {
-    @State private var state = CoachInviteComposerState(
+private struct CoachIdentifierPreview: View {
+    @State private var state = CoachIdentifierState(
         environment: .preview
     )
     @State private var router = ShellTabRouter()
 
     var body: some View {
-        CoachInviteView(state: state, router: router)
-            .navigationTitle(Text("tab.coach.invite"))
+        CoachIdentifierView(state: state, router: router)
+            .navigationTitle(Text("tab.coach.identifier"))
     }
 }

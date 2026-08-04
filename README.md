@@ -1,187 +1,108 @@
 # MSC Body Transformation
 
-Aplikasi native iOS dan iPadOS untuk program transformasi tubuh. Phase 00
-sampai Phase 08 menyediakan fondasi, model domain, repository protocol, use
-case, fixture JSON, semantic design system, app shell role-aware, serta
-participant, coach, dan Admin CMS journey lokal yang dapat dibangun dan
-dijalankan tanpa internet maupun layanan eksternal.
+Aplikasi native iOS/iPadOS untuk program transformasi tubuh dengan tiga peran:
+Peserta, Coach, dan Admin. Implementasi lokal sekarang mengikuti kontrak
+program end-to-end yang sama untuk iOS, backend Supabase, dan port Android
+mendatang.
 
-## Kebutuhan lokal
+## Alur produk
 
-- macOS dengan Xcode yang menyediakan simulator iOS yang sesuai dengan
-  deployment target project saat ini.
-- Tidak diperlukan akun layanan, API key, package pihak ketiga, atau koneksi
-  internet.
+1. Admin menyusun pengaturan, konten, scoring, dan harga program.
+2. Peserta memilih program publik lalu memindai QR Coach.
+3. QR pertama menetapkan satu Coach aktif; QR Coach lain ditolak.
+4. Program gratis langsung membuat enrollment. Program berbayar menunggu
+   transaksi store yang terverifikasi server.
+5. Peserta menjalankan artikel, video, form, kuis, serta timbang
+   awal/harian/akhir.
+6. Coach memeriksa jawaban subjektif dan unggah foto.
+7. Skor dihitung per enrollment; Admin menyelesaikan blocker, mengunci
+   pemenang, lalu menerbitkan poster yang terkait snapshot.
 
-## Membuka project
+Tidak ada invite program, kode manual, approval enrollment, wallet Coach,
+seat credit, bukti foto paralel, poin per langkah, atau timbang onboarding
+global.
 
-Buka `MSCBodyTransformation.xcodeproj`, pilih scheme
-`MSCBodyTransformation`, lalu pilih simulator iPhone atau iPad yang tersedia.
+## Implementasi saat ini
 
-## Build dari command line
+- SwiftUI dan Swift 6 dengan repository protocol serta adapter lokal actor.
+- Admin CMS tiga tahap: Pengaturan, Konten, Tinjau & terbitkan.
+- Duplikasi program dengan semua ID baru dan pergeseran tanggal berbasis
+  kalender/zona waktu.
+- State Peserta per enrollment untuk beberapa program aktif.
+- Semua tipe pertanyaan typed, termasuk pilihan gambar dan unggah foto.
+- Kuis otomatis satu percobaan; Admin dapat membuka satu percobaan baru
+  dengan alasan dan audit.
+- Timbang awal/harian/akhir sebagai konten program; scoring `Decimal` memakai
+  selisih awal-akhir.
+- Review Coach, transfer Coach Admin, koreksi timbang, winner lock, dan poster.
+- Adapter StoreKit 2 diisolasi dari domain.
+- Schema/RLS Supabase dan kontrak OpenAPI lintas platform tersedia sebagai
+  artefak integrasi.
 
-Daftar scheme dan target:
+Status rinci dan external gate dicatat di
+`MSCBodyTransformation/MSC_Codex_Phased_Workplan/PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md`.
 
-```bash
-xcodebuild -list -project MSCBodyTransformation.xcodeproj
-```
-
-Build Debug pada simulator:
+## Build
 
 ```bash
 xcodebuild \
   -project MSCBodyTransformation.xcodeproj \
   -scheme MSCBodyTransformation \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
+  -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
   build
 ```
 
-## Menjalankan test
-
-Unit test Swift Testing:
+Build generik tanpa signing:
 
 ```bash
 xcodebuild \
   -project MSCBodyTransformation.xcodeproj \
   -scheme MSCBodyTransformation \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
-  -only-testing:MSCBodyTransformationTests \
-  test
+  -destination 'generic/platform=iOS' \
+  CODE_SIGNING_ALLOWED=NO \
+  build
 ```
 
-UI test XCTest:
+## Test
 
 ```bash
-xcodebuild \
+xcodebuild test \
   -project MSCBodyTransformation.xcodeproj \
   -scheme MSCBodyTransformation \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
-  -only-testing:MSCBodyTransformationUITests \
-  test
+  -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+  -parallel-testing-enabled NO \
+  -only-testing:MSCBodyTransformationTests
 ```
 
-## Konfigurasi lokal
+`-parallel-testing-enabled NO` dipakai karena suite Swift Testing berbagi satu
+adapter lokal deterministik pada beberapa skenario.
 
-App menggunakan `AppConfiguration.localDemo` dan memasang dependency melalui
-`AppEnvironment`. Preview dan test dapat mengganti clock serta generator UUID
-tanpa global mutable singleton.
+## Data dan demo lokal
 
-Kontrol pilihan peran Peserta, Coach, dan Admin hanya dikompilasi pada build
-Debug.
+Fixture berada di `MSCBodyTransformation/Resources/Fixtures`. Debug launcher
+menyediakan role switcher dan skenario deterministik. QR Coach berisi
+identifier opaque; tidak ada field kode manual. Foto hanya dipilih melalui
+PhotosPicker atau kamera native.
 
-Source Phase 00 sudah diverifikasi dengan override command line
-`SWIFT_VERSION=6`, `SWIFT_STRICT_CONCURRENCY=complete`, dan
-`IPHONEOS_DEPLOYMENT_TARGET=17.0`. Nilai tersebut belum dipersist ke project
-karena perubahan `project.pbxproj` tidak termasuk izin task ini.
+## Integrasi eksternal
 
-## Data lokal Phase 01
+- `supabase/` berisi migration, RLS, storage policy, dan seed aman.
+- `Contracts/program-api-v1.openapi.yaml` adalah kontrak iOS/Android.
+- Kredensial App Store Connect dan Google Play harus berada di backend.
+- Harga aktual harus berasal dari StoreKit/Play Billing, bukan nilai client.
+- Live Supabase, StoreKit sandbox, Google Play, OAuth, dan Android belum dapat
+  diklaim terverifikasi tanpa project/credential serta environment eksternal.
 
-Data demo dimuat dari `Resources/Fixtures` melalui decoder ISO 8601 yang
-memetakan kegagalan ke domain error. Satu actor repository menyimpan state
-lokal dengan aman untuk konkurensi, lalu diekspos melalui protocol di
-`AppEnvironment`. Debug role switcher mengganti fake session Peserta, Coach,
-atau Admin.
+## Dokumentasi sumber kebenaran
 
-## App shell Phase 02
+1. `AGENTS.md`
+2. `MSCBodyTransformation/MSC_Codex_Phased_Workplan/00_START_HERE.md`
+3. `MSCBodyTransformation/MSC_Codex_Phased_Workplan/UI_REFERENCE_SHEET.md`
+4. `MSCBodyTransformation/MSC_Codex_Phased_Workplan/PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md`
+5. `MSCBodyTransformation/MSC_Codex_Phased_Workplan/PROGRAM_END_TO_END_CONTRACT_MATRIX.md`
 
-Build Debug menyediakan pilihan peran Peserta, Coach, dan Admin, ditambah
-skenario state bersama serta alur khusus tiap peran. Setiap peran memiliki
-lima tab dan
-`NavigationStack` terpisah per tab. Surface interaktif menggunakan Liquid
-Glass secara selektif di iOS 26+, dengan fallback SwiftUI native untuk iOS 17
-sampai iOS 25.
-
-## Participant journey Phase 03
-
-Peserta dapat menjalankan onboarding demo, bergabung dengan kode `MSC7HARI`,
-mengisi berat badan awal dan akhir, melihat program harian, menambahkan bukti
-foto contoh lokal, menyelesaikan langkah, serta melihat progres dan papan
-peringkat berubah. Tab Program, Coach, dan Profil menyediakan timeline,
-direktori coach, riwayat enrollment, pengaturan, dan alat simulasi khusus
-Debug.
-
-## Coach experience Phase 04
-
-Coach dapat melihat dashboard, saldo kuota, program aktif, peserta yang
-ditugaskan, filter dan detail progres, bukti serta jawaban lokal, antrean
-pemeriksaan, undangan dengan QR lokal, papan peringkat, profil publik, dan
-pratinjau paket kuota. Persetujuan atau penolakan menghitung ulang poin lokal.
-Pembuatan undangan tidak memakai kuota; satu kuota baru terpakai setelah
-enrollment demo berhasil dan enrollment duplikat tetap idempoten.
-
-Store Coach hanya menampilkan fixture paket 10, 25, dan 50 kuota dengan harga
-contoh. Konfirmasi demo menambah saldo repository lokal tanpa membuat
-transaksi atau prompt App Store.
-
-## Admin CMS Phase 05
-
-Admin dapat melihat ringkasan operasional dan audit lokal, mencari serta
-memfilter program, membuat dan menduplikasi draft, menyusun program melalui
-ringkasan non-linear, lalu mengelola hierarki Program → Hari → Langkah →
-Pertanyaan. Sinkronisasi jadwal mempertahankan konten dan meminta konfirmasi
-sebelum memangkas hari berisi konten. Admin dapat mem-preview pengalaman
-peserta dan mensimulasikan publish. Tab Orang mendukung persetujuan Coach,
-visibilitas profil,
-enrollment manual beralasan, serta penyesuaian poin beralasan. Tab Konten
-menyediakan banner pemenang, jadwal visibilitas, pengarsipan, dan snapshot
-lima pemenang yang deterministik.
-
-Semua tindakan istimewa dicatat dalam audit in-memory. Publish, media, skor,
-dan pemenang tetap berstatus simulasi lokal serta tidak dianggap sebagai
-hasil yang diverifikasi server.
-
-## Native media dan QR Phase 06
-
-Peserta dapat memilih foto dengan `PhotosPicker`, mengambil foto melalui
-wrapper kamera native, memproses evidence menjadi JPEG terorientasi benar
-tanpa metadata lokasi, melihat thumbnail, mengganti, menghapus, dan mencoba
-ulang. Video petunjuk diputar dari MP4 bundle menggunakan `AVKit.VideoPlayer`
-tanpa autoplay.
-
-Identitas Coach memakai QR `msc-demo://join/{opaque-token}`, padding aman,
-native share sheet, serta label aksesibilitas yang tidak membacakan token.
-Peserta memindai dengan AVFoundation dan kamera wide fisik yang stabil,
-memakai QR demo pada simulator, dan tidak memiliki jalur input kode manual.
-File evidence demo disimpan sementara, dikecualikan dari backup, dilindungi
-saat memungkinkan, dan dibersihkan bila yatim.
-
-## Scoring dan leaderboard Phase 07
-
-Scoring lokal memakai satu rangkaian service deterministik untuk poin langkah
-approved, poin berat berbasis `Decimal`, adjustment terpisah, progress, hari
-aktif, visibilitas, ranking, dan pemilihan pemenang. Default program adalah
-800 poin per kilogram, setara 80 poin per 0,1 kg, dengan pembulatan
-`Decimal` nearest.
-
-Ranking memecah seri berdasarkan total, poin langkah, poin berat, waktu
-selesai, lalu UUID enrollment. Participant, Coach, dan Admin membaca hasil
-repository yang dihitung melalui service yang sama. Snapshot pemenang tetap
-immutable setelah dikunci; perubahan skor berikutnya menampilkan peringatan
-dan reset hanya tersedia pada build Debug.
-
-Papan peringkat Peserta memprioritaskan program aktif yang benar-benar
-diikuti, menyediakan pemilih ketika lebih dari satu program berjalan, serta
-menempatkan hasil program selesai pada sheet Riwayat yang terpisah.
-
-## Accessibility, reliability, dan demo Phase 08
-
-Launcher Debug menyediakan 18 skenario deterministik untuk sesi keluar,
-loading, offline, izin, error repository, perjalanan Peserta, state Coach,
-dan state Admin. Unit test meliputi model, fixture, repository, validasi,
-media, QR, skor, ranking, timezone, feature state, navigasi, dan error.
-UI test mencakup alur kritis ketiga peran, pergantian peran, dark mode,
-Dynamic Type aksesibilitas, offline, saldo nol, serta lock pemenang.
-
-Panduan demo, arsitektur, glosarium, fixture, inventaris layar, dan checklist
-adapter tersedia pada dokumen Markdown di root repository.
-
-## Batasan Phase 08
-
-Supabase, OAuth, StoreKit production, App Store Connect, networking, dan
-package pihak ketiga belum digunakan. Kamera dan QR scanner pada perangkat
-fisik memakai `NSCameraUsageDescription` yang sudah dikonfigurasi pada target;
-perilaku capture tetap perlu diregresikan di perangkat fisik. Mock access
-check bukan pengganti Row Level Security produksi.
+Dokumen fase lama adalah catatan historis apabila bertentangan dengan kontrak
+end-to-end di atas.

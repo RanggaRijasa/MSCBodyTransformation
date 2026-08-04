@@ -1,5 +1,6 @@
 import AVFoundation
 import AVKit
+import Combine
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -41,9 +42,16 @@ struct LocalMediaThumbnailView: View {
 struct LocalVideoPlayerView: View {
     let resourceName: String
     let textAlternative: String
+    let configuration: ProgramVideoCompletionConfiguration?
+    @Binding var completionPercentage: Int
 
     @State private var player: AVPlayer?
     @State private var isUnavailable = false
+    private let progressTimer = Timer.publish(
+        every: 0.5,
+        on: .main,
+        in: .common
+    ).autoconnect()
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.small) {
@@ -58,8 +66,9 @@ struct LocalVideoPlayerView: View {
                     )
                     .accessibilityLabel("Video petunjuk lokal")
                     .accessibilityHint(
-                        "Video tidak diputar otomatis. Gunakan kontrol "
-                            + "pemutar untuk memulai."
+                        configuration?.isAutoplayEnabled == true
+                            ? "Video diputar otomatis dan dapat dijeda."
+                            : "Gunakan kontrol pemutar untuk memulai."
                     )
                     .accessibilityIdentifier("participant.video.player")
             } else if isUnavailable {
@@ -76,12 +85,27 @@ struct LocalVideoPlayerView: View {
             Label(textAlternative, systemImage: "captions.bubble")
                 .font(AppTypography.secondary)
                 .foregroundStyle(Color.appSecondaryText)
+            if configuration?.isRequiredToWatch == true {
+                ProgressView(
+                    value: Double(completionPercentage),
+                    total: 100
+                ) {
+                    Text("Progres tontonan")
+                } currentValueLabel: {
+                    Text("\(completionPercentage)%")
+                        .monospacedDigit()
+                }
+            }
         }
         .task(id: resourceName) {
             preparePlayer()
         }
         .onDisappear {
+            persistCurrentPosition()
             player?.pause()
+        }
+        .onReceive(progressTimer) { _ in
+            updateProgress()
         }
     }
 
@@ -94,8 +118,52 @@ struct LocalVideoPlayerView: View {
             player = nil
             return
         }
-        player = AVPlayer(url: url)
+        let player = AVPlayer(url: url)
+        let savedPosition = UserDefaults.standard.double(
+            forKey: resumeKey
+        )
+        if savedPosition > 0 {
+            player.seek(
+                to: CMTime(
+                    seconds: savedPosition,
+                    preferredTimescale: 600
+                )
+            )
+        }
+        self.player = player
         isUnavailable = false
+        if configuration?.isAutoplayEnabled == true {
+            player.play()
+        }
+    }
+
+    private var resumeKey: String {
+        "participant.video.resume.\(resourceName)"
+    }
+
+    private func updateProgress() {
+        guard let player else { return }
+        let currentSeconds = player.currentTime().seconds
+        let durationSeconds = player.currentItem?.duration.seconds ?? 0
+        guard currentSeconds.isFinite,
+              durationSeconds.isFinite,
+              durationSeconds > 0 else {
+            return
+        }
+        completionPercentage = min(
+            max(Int((currentSeconds / durationSeconds * 100).rounded()), 0),
+            100
+        )
+        persistCurrentPosition()
+    }
+
+    private func persistCurrentPosition() {
+        guard let seconds = player?.currentTime().seconds,
+              seconds.isFinite,
+              seconds >= 0 else {
+            return
+        }
+        UserDefaults.standard.set(seconds, forKey: resumeKey)
     }
 }
 

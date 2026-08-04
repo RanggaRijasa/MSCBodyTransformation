@@ -58,40 +58,79 @@ nonisolated struct LoadTodayProgramUseCase: Sendable {
             access: day.map {
                 accessCalculator.access(
                     for: $0,
-                    now: now,
-                    timeZoneIdentifier: program.timeZoneIdentifier
+                    in: program,
+                    now: now
                 )
             }
         )
     }
 }
 
-nonisolated struct CompleteLocalStepUseCase: Sendable {
+nonisolated struct CompleteTypedStepUseCase: Sendable {
     let repository: any SubmissionRepository
     let identifierGenerator: any IdentifierGenerating
     let clock: any AppClock
-    let validator: StepSubmissionValidator
 
     func callAsFunction(
         enrollmentID: UUID,
         step: ProgramStep,
-        evidence: [SubmissionEvidence]
+        answers: [StepSubmissionAnswer],
+        scoring: ProgramScoringConfiguration
     ) async throws -> StepSubmission {
-        try validator.validate(step: step, evidence: evidence)
-        let status: SubmissionStatus =
-            step.verificationMode == .automatic ? .approved : .pending
-        let submission = StepSubmission(
-            id: identifierGenerator.makeIdentifier(),
-            enrollmentID: enrollmentID,
-            stepID: step.id,
-            evidence: evidence,
-            status: status,
-            submittedAt: clock.now(),
-            reviewedAt: nil,
-            reviewerID: nil,
-            reviewNote: nil
+        guard let content = step.content else {
+            throw DomainError.validation(
+                field: "content",
+                reason: "Konten langkah belum tersedia."
+            )
+        }
+        if !content.questions.isEmpty || content.kind == .form
+            || content.kind == .quiz {
+            try StepAnswerValidator().validate(
+                questions: content.questions,
+                answers: answers
+            )
+        }
+
+        let quizResult: QuizAttemptResult?
+        if content.kind == .quiz {
+            let evaluation = try QuizEvaluator().evaluate(
+                questions: content.questions,
+                answers: answers,
+                scoring: scoring
+            )
+            quizResult = QuizAttemptResult(
+                id: identifierGenerator.makeIdentifier(),
+                enrollmentID: enrollmentID,
+                stepID: step.id,
+                sequence: 1,
+                correctAnswerCount: evaluation.correctAnswerCount,
+                totalQuestionCount: evaluation.totalQuestionCount,
+                percentage: evaluation.percentage,
+                isPassed: evaluation.isPassed,
+                awardedPoints: evaluation.awardedPoints,
+                submittedAt: clock.now()
+            )
+        } else {
+            quizResult = nil
+        }
+
+        let needsReview = step.verificationMode == .coachReview
+            && content.kind != .quiz
+        return try await repository.completeStep(
+            submission: StepSubmission(
+                id: identifierGenerator.makeIdentifier(),
+                enrollmentID: enrollmentID,
+                stepID: step.id,
+                status: needsReview ? .pending : .approved,
+                submittedAt: clock.now(),
+                reviewedAt: nil,
+                reviewerID: nil,
+                reviewNote: nil,
+                answers: answers,
+                attemptSequence: content.kind == .quiz ? 1 : nil,
+                quizResult: quizResult
+            )
         )
-        return try await repository.completeStep(submission: submission)
     }
 }
 
@@ -103,14 +142,22 @@ nonisolated struct SubmitLocalWeighInUseCase: Sendable {
 
     func callAsFunction(
         enrollmentID: UUID,
+        stepID: UUID? = nil,
         type: WeighInType,
         weightKilograms: Decimal
     ) async throws -> WeighIn {
         try validator.validate(weightKilograms: weightKilograms)
+        if type == .daily, stepID == nil {
+            throw DomainError.validation(
+                field: "stepID",
+                reason: "Timbang harian harus terkait dengan satu langkah."
+            )
+        }
         return try await repository.save(
             weighIn: WeighIn(
                 id: identifierGenerator.makeIdentifier(),
                 enrollmentID: enrollmentID,
+                stepID: stepID,
                 type: type,
                 weightKilograms: weightKilograms,
                 recordedAt: clock.now()

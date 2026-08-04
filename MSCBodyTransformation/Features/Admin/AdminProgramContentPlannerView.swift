@@ -6,7 +6,6 @@ struct AdminProgramContentPlannerView: View {
     let state: AdminProgramEditorState
 
     @State private var showsScheduleSyncConfirmation = false
-    @State private var dayPendingDeletion: AdminDayDraft?
 
     var body: some View {
         List {
@@ -69,21 +68,29 @@ struct AdminProgramContentPlannerView: View {
                     )
                 } else {
                     ForEach(draft.days) { day in
-                        NavigationLink {
-                            AdminProgramDayEditorView(
-                                draft: $draft,
-                                dayID: day.id,
-                                timeZoneIdentifier:
-                                    draft.timeZoneIdentifier,
-                                state: state
+                        SeamlessDeleteSwipeRow(id: day.id) {
+                            applyStateMutation {
+                                state.removeDay(day.id)
+                            }
+                        } content: {
+                            NavigationLink {
+                                AdminProgramDayEditorView(
+                                    draft: $draft,
+                                    dayID: day.id,
+                                    timeZoneIdentifier:
+                                        draft.timeZoneIdentifier,
+                                    state: state
+                                )
+                                .singlePressNavigationBackButton()
+                            } label: {
+                                AdminProgramDayRow(day: day)
+                            }
+                            .accessibilityIdentifier(
+                                "admin.program.day.open.\(day.id)"
                             )
-                            .singlePressNavigationBackButton()
-                        } label: {
-                            AdminProgramDayRow(day: day)
                         }
-                        .accessibilityIdentifier(
-                            "admin.program.day.open.\(day.id)"
-                        )
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                         .swipeActions(edge: .leading) {
                             Button {
                                 applyStateMutation {
@@ -96,13 +103,6 @@ struct AdminProgramContentPlannerView: View {
                                 )
                             }
                             .tint(.appInfo)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                dayPendingDeletion = day
-                            } label: {
-                                Label("Hapus", systemImage: "trash")
-                            }
                         }
                     }
                     .onMove { offsets, destination in
@@ -159,32 +159,6 @@ struct AdminProgramContentPlannerView: View {
                     + "akan dihapus dari draft."
             )
         }
-        .confirmationDialog(
-            "Hapus hari program?",
-            isPresented: Binding(
-                get: { dayPendingDeletion != nil },
-                set: { if !$0 { dayPendingDeletion = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Hapus hari", role: .destructive) {
-                if let dayPendingDeletion {
-                    applyStateMutation {
-                        state.removeDay(dayPendingDeletion.id)
-                    }
-                }
-                dayPendingDeletion = nil
-            }
-            Button("Batal", role: .cancel) {
-                dayPendingDeletion = nil
-            }
-        } message: {
-            Text(
-                dayPendingDeletion?.steps.isEmpty == false
-                    ? "Semua langkah dan pertanyaan di hari ini ikut dihapus."
-                    : "Tanggal selesai program akan disesuaikan."
-            )
-        }
         .accessibilityIdentifier("admin.program.content")
     }
 
@@ -211,6 +185,161 @@ struct AdminProgramContentPlannerView: View {
         if let updatedDraft = state.draft {
             draft = updatedDraft
         }
+    }
+}
+
+@MainActor
+private struct SeamlessDeleteSwipeRow<Content: View>: View {
+    @Environment(\.accessibilityReduceMotion)
+    private var reduceMotion
+    @Environment(\.editMode)
+    private var editMode
+
+    @State private var currentOffset: CGFloat = 0
+    @State private var dragStartOffset: CGFloat?
+
+    let id: UUID
+    let onDelete: () -> Void
+    let content: Content
+
+    private let actionWidth: CGFloat = 72
+
+    init(
+        id: UUID,
+        onDelete: @escaping () -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.id = id
+        self.onDelete = onDelete
+        self.content = content()
+    }
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            Color.appDestructive
+
+            content
+                .padding(.horizontal, AppSpacing.medium)
+                .padding(.vertical, AppSpacing.xSmall)
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: 64,
+                    alignment: .leading
+                )
+                .background(Color.appSecondaryBackground)
+                .offset(x: visibleOffset)
+
+            if visibleOffset < 0 {
+                Button(role: .destructive, action: performDelete) {
+                    Image(systemName: "trash")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .scaleEffect(0.72 + (0.28 * revealProgress))
+                        .opacity(revealProgress)
+                        .frame(width: actionWidth)
+                        .frame(maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Hapus")
+                .accessibilityIdentifier("admin.program.day.delete")
+            }
+        }
+        .clipped()
+        .contentShape(Rectangle())
+        .simultaneousGesture(swipeGesture)
+        .accessibilityAction(
+            named: Text("Hapus"),
+            performDelete
+        )
+        .onChange(of: editMode?.wrappedValue) { _, mode in
+            guard mode == .active else { return }
+            resetSwipeState()
+        }
+        .onChange(of: id) {
+            resetSwipeState()
+        }
+    }
+
+    private var visibleOffset: CGFloat {
+        guard editMode?.wrappedValue != .active else { return 0 }
+        return min(0, currentOffset)
+    }
+
+    private var revealProgress: CGFloat {
+        min(max(-visibleOffset / actionWidth, 0), 1)
+    }
+
+    private var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: 12)
+            .onChanged { value in
+                guard editMode?.wrappedValue != .active,
+                      abs(value.translation.width)
+                        > abs(value.translation.height) else {
+                    return
+                }
+
+                if dragStartOffset == nil {
+                    dragStartOffset = currentOffset
+                }
+                currentOffset = min(
+                    0,
+                    (dragStartOffset ?? 0) + value.translation.width
+                )
+            }
+            .onEnded { value in
+                guard editMode?.wrappedValue != .active,
+                      abs(value.translation.width)
+                        > abs(value.translation.height) else {
+                    dragStartOffset = nil
+                    return
+                }
+
+                if value.translation.width < -(actionWidth * 2.4) {
+                    dragStartOffset = nil
+                    performDelete()
+                    return
+                }
+
+                let startOffset = dragStartOffset ?? 0
+                dragStartOffset = nil
+                let projectedOffset =
+                    startOffset + value.predictedEndTranslation.width
+                settle(at: projectedOffset < -(actionWidth / 2)
+                    ? -actionWidth
+                    : 0)
+            }
+    }
+
+    private func settle(at offset: CGFloat) {
+        if reduceMotion {
+            currentOffset = offset
+        } else {
+            withAnimation(
+                .spring(response: 0.32, dampingFraction: 0.78)
+            ) {
+                currentOffset = offset
+            }
+        }
+    }
+
+    private func performDelete() {
+        resetSwipeState()
+
+        if reduceMotion {
+            onDelete()
+        } else {
+            withAnimation(
+                .spring(response: 0.28, dampingFraction: 0.86)
+            ) {
+                onDelete()
+            }
+        }
+    }
+
+    private func resetSwipeState() {
+        currentOffset = 0
+        dragStartOffset = nil
     }
 }
 
@@ -249,6 +378,8 @@ struct AdminProgramDayEditorView: View {
     let timeZoneIdentifier: String
     let state: AdminProgramEditorState
 
+    @State private var copySourceDay: AdminDayDraft?
+
     var body: some View {
         Group {
             if let day = currentDay {
@@ -274,6 +405,40 @@ struct AdminProgramDayEditorView: View {
                             )
                         } label: {
                             Label("Tanggal", systemImage: "calendar")
+                        }
+                    }
+
+                    Section {
+                        Button {
+                            copySourceDay = day.wrappedValue
+                        } label: {
+                            Label(
+                                "Salin isi ke hari lain",
+                                systemImage: "doc.on.doc"
+                            )
+                        }
+                        .disabled(
+                            targetDays.isEmpty
+                                || !hasCopyableContent(day.wrappedValue)
+                        )
+                        .accessibilityIdentifier(
+                            "admin.program.day.copy-content"
+                        )
+                    } header: {
+                        Text("Salin isi")
+                    } footer: {
+                        if targetDays.isEmpty {
+                            Text(
+                                "Tambahkan hari lain untuk menggunakan kembali isi hari ini."
+                            )
+                        } else if !hasCopyableContent(day.wrappedValue) {
+                            Text(
+                                "Tambahkan deskripsi atau langkah sebelum menyalin isi hari."
+                            )
+                        } else {
+                            Text(
+                                "Salin deskripsi dan seluruh langkah ke satu atau beberapa hari tujuan."
+                            )
                         }
                     }
 
@@ -397,6 +562,19 @@ struct AdminProgramDayEditorView: View {
                 EditButton()
             }
         }
+        .sheet(item: $copySourceDay) { sourceDay in
+            AdminCopyDayContentSheet(
+                sourceDay: sourceDay,
+                targetDays: targetDays
+            ) { targetDayIDs in
+                applyStateMutation {
+                    state.copyDayContent(
+                        from: sourceDay.id,
+                        to: targetDayIDs
+                    )
+                }
+            }
+        }
         .accessibilityIdentifier("admin.program.day.editor")
     }
 
@@ -417,6 +595,17 @@ struct AdminProgramDayEditorView: View {
                 state.updateValidation()
             }
         )
+    }
+
+    private var targetDays: [AdminDayDraft] {
+        draft.days
+            .filter { $0.id != dayID }
+            .sorted { $0.dayNumber < $1.dayNumber }
+    }
+
+    private func hasCopyableContent(_ day: AdminDayDraft) -> Bool {
+        !day.summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !day.steps.isEmpty
     }
 
     private var dateFormat: Date.FormatStyle {

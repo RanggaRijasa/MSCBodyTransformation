@@ -9,6 +9,8 @@ Sebelum mengubah domain, UI program, Supabase schema, scoring, pembayaran, atau
 Android contract, baca:
 
 - `PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md`
+- `PROGRAM_END_TO_END_CONTRACT_MATRIX.md`
+- `PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md`
 
 Dokumen tersebut memuat keputusan produk terbaru tentang satu Coach per
 Peserta, multi-program, QR enrollment, konten dan kuis, timbang, scoring,
@@ -16,13 +18,20 @@ duplikasi cohort, serta commerce lintas App Store dan Google Play. Jika ada
 konflik dengan phase lama, workplan remediation tersebut berlaku sampai file
 phase terkait direkonsiliasi.
 
+Semua file phase lama yang bertentangan sekarang diperlakukan sebagai catatan
+historis implementasi lokal. Kontrak baru dan matriks consumer di atas adalah
+satu-satunya sumber requirement program yang aktif.
+
 ## Target produk
 
 Aplikasi native iOS dan iPadOS untuk program transformasi berat badan dengan tiga role:
 
-- Participant menyelesaikan langkah harian, mengunggah foto bukti, mengisi berat awal dan akhir, memperoleh poin, dan melihat leaderboard.
+- Participant mengikuti beberapa program, menjawab konten typed termasuk
+  unggah foto, mengisi timbang melalui langkah program, memperoleh poin, dan
+  melihat leaderboard.
 - Coach memiliki QR identifier unik untuk pendaftaran peserta dan memantau peserta.
-- Admin mengelola program melalui CMS di aplikasi, mengatur user, melakukan enrollment fallback, mengoreksi poin secara tercatat, dan mengunci juara 1 sampai 5.
+- Admin mengelola program melalui CMS, transfer Coach, koreksi/audit, closure,
+  pemenang, poster, serta konfigurasi commerce program.
 
 ## Keputusan teknis utama
 
@@ -155,7 +164,8 @@ Track A selesai bila:
 - Aplikasi berjalan tanpa internet.
 - Debug role switcher dapat membuka Participant, Coach, dan Admin.
 - Semua tab role tersedia.
-- Participant dapat mengikuti sample program dari timbang awal hingga timbang akhir.
+- Participant dapat mengikuti sample program dengan timbang awal, harian,
+  dan akhir.
 - Setiap step dapat menerima foto lokal dan status selesai.
 - Coach dapat melihat sample peserta, progress, bukti, dan review queue.
 - Admin dapat membuat dan mengedit draft program lokal.

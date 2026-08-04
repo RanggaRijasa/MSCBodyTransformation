@@ -82,7 +82,6 @@ struct Phase01RepositoryTests {
             )!,
             enrollmentID: enrollmentID,
             stepID: stepID,
-            evidence: [],
             status: .approved,
             submittedAt: Date(timeIntervalSince1970: 1_785_028_400),
             reviewedAt: nil,
@@ -118,11 +117,8 @@ struct Phase01RepositoryTests {
             coachID: coachID
         )
         let queue = try await repository.reviewQueue(coachID: coachID)
-        let wallet = try await repository.wallet(coachID: coachID)
-
         #expect(participants.count == 6)
         #expect(queue.count == 3)
-        #expect(wallet.availableSeatCredits == 8)
     }
 
     private func makeRepository() throws -> InMemoryAppRepository {

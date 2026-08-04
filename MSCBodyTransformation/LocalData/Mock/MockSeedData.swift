@@ -10,9 +10,6 @@ nonisolated struct MockSeedData: Sendable {
     let submissions: [StepSubmission]
     let leaderboardEntries: [LeaderboardEntry]
     let winners: [ProgramWinner]
-    let wallets: [CoachWallet]
-    let creditLedgerEntries: [CreditLedgerEntry]
-    let invites: [CoachInvite]
     let managedContent: [ManagedContent]
     let auditEvents: [AuditEvent]
 
@@ -52,9 +49,6 @@ nonisolated struct MockSeedData: Sendable {
             submissions: submissions.submissions,
             leaderboardEntries: leaderboard.entries,
             winners: leaderboard.winners,
-            wallets: coaches.wallets,
-            creditLedgerEntries: coaches.creditLedgerEntries,
-            invites: coaches.invites,
             managedContent: managedContent.content,
             auditEvents: managedContent.auditEvents
         )

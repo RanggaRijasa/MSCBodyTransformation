@@ -1,5 +1,8 @@
 # Phase 13: Security, Privacy, Reliability, and App Store Release
 
+> Status: external release gate. Review memakai commerce program per cohort;
+> checklist seat credit dan invite dari baseline lama tidak berlaku.
+
 ## Tujuan
 
 Mengeraskan aplikasi dan backend untuk TestFlight dan App Store submission.

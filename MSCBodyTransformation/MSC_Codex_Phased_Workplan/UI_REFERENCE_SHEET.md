@@ -40,9 +40,10 @@ Aturan:
 | Program | Program |
 | Program day | Hari program |
 | Step | Langkah |
-| Evidence | Bukti |
-| Upload evidence | Unggah bukti |
+| Photo answer | Jawaban foto |
+| Upload photo | Unggah foto |
 | Initial weight | Berat badan awal |
+| Daily weigh-in | Timbang harian |
 | Final weight | Berat badan akhir |
 | Weight loss points | Poin penurunan berat badan |
 | Step points | Poin langkah |
@@ -55,8 +56,8 @@ Aturan:
 | Rejected | Ditolak |
 | Locked | Terkunci |
 | Current program | Program aktif |
-| Join program | Gabung program |
-| Coach enrollment QR | QR pendaftaran coach |
+| Join program | Ikuti program |
+| Coach enrollment QR | QR Coach |
 | Purchase history | Riwayat pembelian |
 | Managed content | Konten aplikasi |
 
@@ -182,7 +183,7 @@ Nilai berikut menjadi titik awal. Implementasikan sebagai color assets dengan An
 | AppPrimaryText | `#F5F5F5` | Teks utama |
 | AppSecondaryText | `#B0B0B5` | Teks sekunder |
 | AppBorder | `#3A3A3C` | Divider dan border |
-| AppDestructive | `#FF6961` | Hapus, gagal, ditolak |
+| AppDestructive | `#C62828` | Hapus, gagal, ditolak |
 | AppSuccess | `#5ED39A` | Berhasil, disetujui |
 | AppWarning | `#FFD166` | Peringatan |
 | AppInfo | `#78A9FF` | Informasi netral |
@@ -266,10 +267,11 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
 - Hari fokus harus ditentukan dari tanggal aktif dalam timezone program.
   Auto-open, label `Hari ini`, posisi scroll awal, dan border highlight harus
   memakai hasil tanggal yang sama; jangan fallback ke hari pertama.
-- Kebijakan akses hari harus dipetakan konsisten dari `ProgramDayAccess`:
-  hari standar yang tanggalnya sudah tiba menampilkan langkah dan dapat
-  dikerjakan, sedangkan hari standar mendatang terkunci. Status read-only
-  hanya digunakan jika ditetapkan secara eksplisit pada konten.
+- Kebijakan akses hari harus dipetakan konsisten dari `ProgramDayAccess`.
+  Hari mendatang mengikuti pilihan program: `Tersedia lebih awal` dapat
+  dibuka dan dikerjakan, `Terkunci` menampilkan status belum tersedia, dan
+  `Disembunyikan` tidak menampilkan hari. Status read-only hanya digunakan
+  jika ditetapkan secara eksplisit pada konten lampau.
 - Gunakan status hidden hanya untuk konten yang memang belum dipublikasikan.
   Jangan menyembunyikan hari yang sudah lewat jika langkahnya sudah
   dipublikasikan.
@@ -314,6 +316,10 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
 - Feed aktivitas tidak menampilkan foto bukti atau data berat. Gunakan avatar
   profil netral, ringkasan aktivitas, waktu, status yang relevan, dan satu
   target navigasi pada seluruh baris.
+- Detail privat peserta milik Coach menampilkan `Riwayat berat badan` secara
+  kronologis untuk timbang awal, harian, dan akhir. Setiap baris memuat jenis,
+  tanggal/waktu program, dan kilogram. Pembatasan data berat hanya berlaku
+  untuk feed, daftar program, dan leaderboard publik.
 - Filter aktivitas memakai pola filter systemwide: satu kartu ringkasan,
   `Form` native berisi Program, Jenis aktivitas, dan Waktu, serta footer
   bersama `Atur ulang` dan `Terapkan filter`.
@@ -323,7 +329,24 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
 - Admin membuka `Dashboard` sebagai tab awal. Pemilih demo menyediakan
   skenario `Dashboard Admin`; skenario yang secara khusus menguji draft atau
   program aktif boleh langsung membuka tab Program.
+- Pratinjau program memakai segmented control `Peserta` dan `Coach`, bukan
+  pemilih ukuran perangkat. Konten pratinjau wajib memakai renderer program
+  bersama yang juga dipakai pada layar runtime peran terkait; jangan membuat
+  kartu ringkasan khusus Admin yang menduplikasi hierarchy program.
+- Mode Peserta dan Coach mempertahankan cover gambar, identitas program,
+  progres, urutan hari, urutan langkah, status, icon, dan copy yang sama.
+  Perbedaannya hanya
+  pada capability: Peserta dapat mengerjakan, sedangkan Coach memantau atau
+  membuka pemeriksaan. Daftar Coach tidak menampilkan nilai berat atau foto.
+- Banner `Tampilan ini sama dengan yang dilihat …` dan pemilih peran berada
+  di luar renderer bersama sehingga tidak ikut muncul pada layar Peserta atau
+  Coach sebenarnya.
 - Form dan CMS memakai background system/netral.
+- Editor hari menempatkan aksi `Salin isi ke hari lain` sebagai section form
+  tersendiri. Pemilih tujuan memakai sheet native dan mendukung beberapa hari
+  sekaligus. Nama, nomor, dan tanggal target tetap; deskripsi serta seluruh
+  langkah diganti. Hari yang sudah berisi konten harus ditandai dengan teks
+  dan dikonfirmasi sebelum penggantian.
 - Direktori Orang memakai segmented control native `Peserta`, `Coach`, dan
   `Admin` seperti katalog Program peserta. Judul serta segmented control
   tetap terlihat dan hanya daftar orang yang digulir. Segmen menggantikan
@@ -500,6 +523,8 @@ Foreground harus near-black.
 - Coach photo memakai aspect fill dan accessible name.
 - Evidence photo tidak boleh dipotong secara menyesatkan pada full viewer.
 - Program cover dapat memakai gradient overlay agar teks tetap terbaca.
+- Cover program selalu gambar rasio lebar dan dipilih melalui `PhotosPicker`;
+  jangan tampilkan pemilih jenis cover atau input path/reference kepada Admin.
 - Decorative image harus hidden dari VoiceOver.
 
 ## 11. Liquid Glass iOS 26+
@@ -573,28 +598,28 @@ Contoh copy:
 
 ```text
 Belum ada program aktif
-Gabung melalui kode undangan dari coach untuk mulai mengikuti program.
+Pilih program publik, lalu pindai QR Coach untuk mulai.
 ```
 
-### Missing evidence
+### Missing photo answer
 
 ```text
-Bukti foto belum ditambahkan
-Unggah foto sesuai petunjuk sebelum menyelesaikan langkah ini.
+Jawaban foto belum ditambahkan
+Unggah foto sesuai pertanyaan sebelum mengirim langkah ini.
 ```
 
 ### Pending review
 
 ```text
-Menunggu pemeriksaan coach
-Bukti sudah dikirim. Poin akan diperbarui setelah disetujui.
+Menunggu pemeriksaan Coach
+Jawaban sudah dikirim. Poin akan diperbarui setelah disetujui.
 ```
 
 ### Rejected
 
 ```text
-Bukti perlu diperbaiki
-Baca alasan dari coach, lalu unggah bukti baru.
+Jawaban perlu diperbaiki
+Baca alasan dari Coach, lalu perbaiki dan kirim kembali.
 ```
 
 ### Locked future day

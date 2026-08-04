@@ -10,14 +10,11 @@ nonisolated struct AppRepositories: Sendable {
     let weighIns: any WeighInRepository
     let leaderboard: any LeaderboardRepository
     let coachParticipants: any CoachParticipantRepository
-    let invites: any InviteRepository
-    let wallet: any WalletRepository
     let managedContent: any ManagedContentRepository
     let adminPeople: any AdminPeopleRepository
     let adminProgramDrafts: any AdminProgramDraftRepository
     let audit: any AuditRepository
     let participantDemo: any ParticipantDemoRepository
-    let coachDemo: any CoachDemoRepository
 
     init(repository: InMemoryAppRepository) {
         session = repository
@@ -29,13 +26,10 @@ nonisolated struct AppRepositories: Sendable {
         weighIns = repository
         leaderboard = repository
         coachParticipants = repository
-        invites = repository
-        wallet = repository
         managedContent = repository
         adminPeople = repository
         adminProgramDrafts = repository
         audit = repository
         participantDemo = repository
-        coachDemo = repository
     }
 }

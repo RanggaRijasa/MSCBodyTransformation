@@ -85,6 +85,66 @@ struct Phase05AdminCMSTests {
         #expect(fields.contains(.days))
     }
 
+    @Test(
+        "Pratinjau program memakai published mapping dan state deterministik"
+    )
+    func programPreviewUsesPublishedMappingAndDeterministicState() throws {
+        let draft = try validDraft()
+        let scenario = AdminProgramPreviewScenario(draft: draft)
+        let focusedDay = try #require(
+            scenario.program.days.first {
+                $0.id == scenario.focusedDayID
+            }
+        )
+
+        #expect(scenario.program == draft.program())
+        #expect(scenario.referenceDate == focusedDay.scheduledDate)
+        #expect(scenario.access(for: focusedDay) == .available)
+        #expect(
+            scenario.program.days
+                .filter { $0.id != focusedDay.id }
+                .allSatisfy {
+                    scenario.access(for: $0) == .locked
+                }
+        )
+        #expect(
+            scenario.submissions.map(\.stepID)
+                == Array(
+                    focusedDay.steps
+                        .sorted { $0.order < $1.order }
+                        .prefix(2)
+                        .map(\.id)
+                )
+        )
+        #expect(
+            scenario.submissions.map(\.status)
+                == [.approved, .pending]
+        )
+    }
+
+    @Test("Draft baru tidak mengaktifkan poin timbang tanpa langkah timbang")
+    func newDraftKeepsWeightScoringDisabledByDefault() async throws {
+        let repository = try makeRepository()
+        let draft = try await CreateAdminProgramDraftUseCase(
+            drafts: repository,
+            audit: repository,
+            identifierGenerator: DeterministicIdentifierGenerator(
+                identifier: UUID(
+                    uuidString:
+                        "72000000-0000-0000-0000-000000000088"
+                )!
+            ),
+            clock: FixedClock(now: fixedDate)
+        )(adminID: adminID)
+
+        #expect(draft.weightPointsPerKilogram == 0)
+        #expect(
+            !AdminProgramDraftValidator()
+                .validate(draft)
+                .contains { $0.field == .scoring }
+        )
+    }
+
     @Test("Hari dibuat inklusif dari rentang tanggal")
     func dayGeneration() throws {
         let calendar = Calendar(identifier: .gregorian)
@@ -102,6 +162,128 @@ struct Phase05AdminCMSTests {
 
         #expect(days.map(\.dayNumber) == [1, 2, 3])
         #expect(Set(days.map(\.id)).count == 3)
+    }
+
+    @Test(
+        "Isi hari dapat disalin ke beberapa hari dengan ID konten baru"
+    )
+    func dayContentCanBeCopiedToMultipleDays() throws {
+        var draft = try validDraft()
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Makassar") ?? .gmt
+        let endDate = try #require(
+            calendar.date(byAdding: .day, value: 3, to: fixedDate)
+        )
+        draft.startDate = fixedDate
+        draft.endDate = endDate
+        draft.days = try AdminProgramDraftValidator().generateDays(
+            startDate: fixedDate,
+            endDate: endDate,
+            timeZoneIdentifier: "Asia/Makassar",
+            programID: draft.id
+        )
+
+        let firstOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000011"
+        )!
+        let secondOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000012"
+        )!
+        let sourceStepID = UUID(
+            uuidString: "93000000-0000-0000-0000-000000000011"
+        )!
+        draft.days[0].summary = "Rutinitas pagi yang sama."
+        draft.days[0].steps = [
+            AdminStepDraft(
+                id: sourceStepID,
+                order: 1,
+                title: "Kuis hidrasi",
+                instructions: "Jawab setelah minum air.",
+                mediaKind: .image,
+                localMediaReference: "media/hidrasi.jpg",
+                isActive: true,
+                verificationMode: .automatic,
+                contentKind: .quiz,
+                quiz: AdminQuizDraft(
+                    title: "Kuis hidrasi",
+                    questions: [
+                        AdminQuizQuestionDraft(
+                            id: UUID(
+                                uuidString:
+                                    "91000000-0000-0000-0000-000000000011"
+                            )!,
+                            order: 1,
+                            kind: .singleChoice,
+                            prompt: "Apa pilihan yang benar?",
+                            options: ["Air putih", "Minuman manis"],
+                            optionIDs: [firstOptionID, secondOptionID],
+                            answerKey: ProgramQuestionAnswerKey(
+                                selectedOptionIDs: [firstOptionID]
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+
+        draft.days[1].summary = "Isi lama."
+        draft.days[1].steps = [
+            sampleStep(
+                id: UUID(
+                    uuidString: "93000000-0000-0000-0000-000000000099"
+                )!
+            )
+        ]
+
+        let firstTargetMetadata = draft.days[1]
+        let secondTargetMetadata = draft.days[2]
+        let untouchedDay = draft.days[3]
+        let result = try AdminDayContentCopyService()(
+            draft: draft,
+            sourceDayID: draft.days[0].id,
+            targetDayIDs: [draft.days[1].id, draft.days[2].id]
+        )
+
+        let firstTarget = result.days[1]
+        let secondTarget = result.days[2]
+        #expect(firstTarget.id == firstTargetMetadata.id)
+        #expect(firstTarget.dayNumber == firstTargetMetadata.dayNumber)
+        #expect(firstTarget.title == firstTargetMetadata.title)
+        #expect(
+            firstTarget.scheduledDate
+                == firstTargetMetadata.scheduledDate
+        )
+        #expect(secondTarget.id == secondTargetMetadata.id)
+        #expect(
+            secondTarget.scheduledDate
+                == secondTargetMetadata.scheduledDate
+        )
+        #expect(firstTarget.summary == draft.days[0].summary)
+        #expect(secondTarget.summary == draft.days[0].summary)
+        #expect(firstTarget.steps.count == 1)
+        #expect(secondTarget.steps.count == 1)
+        #expect(firstTarget.steps[0].id != sourceStepID)
+        #expect(secondTarget.steps[0].id != sourceStepID)
+        #expect(firstTarget.steps[0].id != secondTarget.steps[0].id)
+        #expect(firstTarget.steps[0].title == "Kuis hidrasi")
+        #expect(
+            firstTarget.steps[0].localMediaReference
+                == "media/hidrasi.jpg"
+        )
+
+        let firstQuestion = try #require(
+            firstTarget.steps[0].quiz?.questions.first
+        )
+        #expect(firstQuestion.optionIDs != [firstOptionID, secondOptionID])
+        #expect(
+            firstQuestion.answerKey?.selectedOptionIDs
+                == [firstQuestion.optionIDs[0]]
+        )
+        #expect(result.days[3] == untouchedDay)
+        #expect(result.days[0].steps[0].id == sourceStepID)
+
+        let allStepIDs = result.days.flatMap(\.steps).map(\.id)
+        #expect(Set(allStepIDs).count == allStepIDs.count)
     }
 
     @Test("ID langkah tetap unik pada program multi-hari")
@@ -147,11 +329,6 @@ struct Phase05AdminCMSTests {
                 order: 1,
                 title: "Refleksi",
                 instructions: "Jawab sesuai kondisi hari ini.",
-                points: 10,
-                requiresPhoto: false,
-                isPhotoRequired: false,
-                requiresTextAnswer: false,
-                isTextAnswerRequired: false,
                 mediaKind: nil,
                 localMediaReference: nil,
                 isActive: true,
@@ -168,7 +345,6 @@ struct Phase05AdminCMSTests {
                             order: 1,
                             kind: .shortAnswer,
                             prompt: "Apa yang terasa lebih mudah?",
-                            isRequired: true,
                             options: []
                         )
                     ]
@@ -340,14 +516,20 @@ struct Phase05AdminCMSTests {
         )
 
         #expect(fields.contains(.cover))
-        #expect(fields.contains(.access))
+        #expect(fields.contains(.participantLimit))
     }
 
     @Test("Kuis wajib memiliki nama dan pertanyaan")
     func quizContentValidation() throws {
         var draft = try validDraft()
-        draft.days[0].steps[0].contentKind = .quiz
-        draft.days[0].steps[0].quiz = AdminQuizDraft(
+        let stepIndex = try #require(
+            draft.days[0].steps.firstIndex {
+                $0.contentKind != .initialWeighIn
+                    && $0.contentKind != .finalWeighIn
+            }
+        )
+        draft.days[0].steps[stepIndex].contentKind = .quiz
+        draft.days[0].steps[stepIndex].quiz = AdminQuizDraft(
             title: "Kuis kebiasaan",
             questions: []
         )
@@ -355,17 +537,26 @@ struct Phase05AdminCMSTests {
         var issues = AdminProgramDraftValidator().validate(draft)
         #expect(issues.contains { $0.field == .content })
 
-        draft.days[0].steps[0].quiz?.questions = [
+        let firstOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000001"
+        )!
+        let secondOptionID = UUID(
+            uuidString: "92000000-0000-0000-0000-000000000002"
+        )!
+        draft.days[0].steps[stepIndex].quiz?.questions = [
             AdminQuizQuestionDraft(
                 id: UUID(
                     uuidString:
                         "91000000-0000-0000-0000-000000000001"
                 )!,
                 order: 1,
-                kind: .shortAnswer,
-                prompt: "Apa fokusmu hari ini?",
-                isRequired: true,
-                options: []
+                kind: .singleChoice,
+                prompt: "Pilih kebiasaan yang tepat.",
+                options: ["Minum air", "Melewatkan sarapan"],
+                optionIDs: [firstOptionID, secondOptionID],
+                answerKey: ProgramQuestionAnswerKey(
+                    selectedOptionIDs: [firstOptionID]
+                )
             )
         ]
         issues = AdminProgramDraftValidator().validate(draft)
@@ -386,7 +577,6 @@ struct Phase05AdminCMSTests {
                     order: 1,
                     kind: .multipleChoice,
                     prompt: "Pilih kebiasaan yang sudah dilakukan.",
-                    isRequired: true,
                     options: ["Minum air", " "]
                 )
             ]
@@ -432,7 +622,6 @@ struct Phase05AdminCMSTests {
                         order: questionOrder,
                         kind: .shortAnswer,
                         prompt: "Pertanyaan \(questionOrder)",
-                        isRequired: true,
                         options: []
                     )
                 }
@@ -441,11 +630,6 @@ struct Phase05AdminCMSTests {
                     order: stepOrder,
                     title: "Langkah \(stepOrder)",
                     instructions: "Petunjuk langkah.",
-                    points: 10,
-                    requiresPhoto: false,
-                    isPhotoRequired: false,
-                    requiresTextAnswer: false,
-                    isTextAnswerRequired: false,
                     mediaKind: nil,
                     localMediaReference: nil,
                     isActive: true,
@@ -689,11 +873,6 @@ struct Phase05AdminCMSTests {
             order: 1,
             title: "Langkah contoh",
             instructions: "Ikuti petunjuk dengan aman.",
-            points: 10,
-            requiresPhoto: false,
-            isPhotoRequired: false,
-            requiresTextAnswer: false,
-            isTextAnswerRequired: false,
             mediaKind: nil,
             localMediaReference: nil,
             isActive: true,

@@ -333,6 +333,8 @@ private struct AdminProgramsView: View {
         switch status {
         case .draft:
             .warning
+        case .preparingCommerce:
+            .pending
         case .scheduled, .active:
             .success
         case .completed, .archived:
