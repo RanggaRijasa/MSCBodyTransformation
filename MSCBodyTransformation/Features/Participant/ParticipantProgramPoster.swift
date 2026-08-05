@@ -6,6 +6,7 @@ nonisolated enum ParticipantProgramParticipationStatus:
 {
     case enrolled
     case notEnrolled
+    case registrationClosed
 
     static func make(
         programID: UUID,
@@ -205,6 +206,8 @@ struct ParticipantProgramPoster: View {
             "participant.program.participation.enrolled"
         case .notEnrolled:
             "participant.program.participation.not_enrolled"
+        case .registrationClosed:
+            "participant.program.registration.closed"
         case nil:
             statusTitle
         }
@@ -216,6 +219,8 @@ struct ParticipantProgramPoster: View {
             "checkmark.circle.fill"
         case .notEnrolled:
             "plus.circle"
+        case .registrationClosed:
+            "clock.badge.xmark"
         case nil:
             "calendar"
         }

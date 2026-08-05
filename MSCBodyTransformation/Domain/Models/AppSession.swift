@@ -21,6 +21,7 @@ nonisolated struct AppSession: Codable, Equatable, Sendable {
 
 nonisolated enum DebugSessionScenario: Equatable, Sendable {
     case role(UserRole)
+    case user(UUID)
     case loggedOut
     case onboardingIncomplete(UserRole)
     case expired

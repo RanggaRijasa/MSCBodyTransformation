@@ -339,6 +339,31 @@ struct AdminProgramScheduleView: View {
                         in: 1...10_000
                     )
                 }
+
+                Toggle(
+                    "admin.program.registration_deadline.toggle",
+                    isOn: registrationDeadlineToggle
+                )
+                .accessibilityIdentifier(
+                    "admin.program.registration-deadline-toggle"
+                )
+
+                if draft.registrationClosesAt != nil {
+                    DatePicker(
+                        "admin.program.registration_deadline.picker",
+                        selection: registrationDeadlineValue,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .accessibilityIdentifier(
+                        "admin.program.registration-deadline"
+                    )
+
+                    Text(
+                        "admin.program.registration_deadline.help"
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(Color.appSecondaryText)
+                }
             }
 
             Section {
@@ -372,6 +397,40 @@ struct AdminProgramScheduleView: View {
             get: { draft.participantLimit ?? 50 },
             set: { draft.participantLimit = $0 }
         )
+    }
+
+    private var registrationDeadlineToggle: Binding<Bool> {
+        Binding(
+            get: { draft.registrationClosesAt != nil },
+            set: { isLimited in
+                draft.registrationClosesAt = isLimited
+                    ? defaultRegistrationClosesAt
+                    : nil
+            }
+        )
+    }
+
+    private var registrationDeadlineValue: Binding<Date> {
+        Binding(
+            get: {
+                draft.registrationClosesAt ?? defaultRegistrationClosesAt
+            },
+            set: { draft.registrationClosesAt = $0 }
+        )
+    }
+
+    private var defaultRegistrationClosesAt: Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone =
+            TimeZone(identifier: draft.timeZoneIdentifier)
+            ?? TimeZone(identifier: "Asia/Makassar")
+            ?? .gmt
+        let programStart = calendar.startOfDay(for: draft.startDate)
+        return calendar.date(
+            byAdding: .minute,
+            value: -1,
+            to: programStart
+        ) ?? programStart
     }
 }
 

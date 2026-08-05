@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ParticipantProgramOfferView: View {
     let program: Program
+    let registrationAvailability: ProgramRegistrationAvailability
     let join: () -> Void
 
     var body: some View {
@@ -49,6 +50,22 @@ struct ParticipantProgramOfferView: View {
                     durationLabel
                     stepCountLabel
                 }
+            }
+
+            if let registrationClosesAt = program.registrationClosesAt {
+                Label(
+                    registrationStatusText(registrationClosesAt),
+                    systemImage: registrationAvailability == .open
+                        ? "clock"
+                        : "clock.badge.xmark"
+                )
+                .font(AppTypography.secondary)
+                .foregroundStyle(
+                    registrationAvailability == .open
+                        ? Color.appSecondaryText
+                        : Color.appDestructive
+                )
+                .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(AppSpacing.large)
@@ -107,14 +124,27 @@ struct ParticipantProgramOfferView: View {
     private var joinBar: some View {
         VStack(spacing: 0) {
             Divider()
-            Button(action: join) {
-                Text("participant.program.offer.join")
+            VStack(spacing: AppSpacing.xSmall) {
+                Button(action: join) {
+                    joinButtonLabel
                     .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+                .disabled(registrationAvailability == .closed)
+                .accessibilityIdentifier("participant.program.offer.join")
+
+                if registrationAvailability == .closed {
+                    Text(
+                        "participant.program.registration.admin_help"
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(Color.appSecondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
             }
-            .buttonStyle(PrimaryActionButtonStyle())
             .padding(.horizontal, AppSpacing.medium)
             .padding(.vertical, AppSpacing.small)
-            .accessibilityIdentifier("participant.program.offer.join")
         }
         .background(Color.appBackground)
     }
@@ -164,5 +194,39 @@ struct ParticipantProgramOfferView: View {
             timeZoneIdentifier: program.timeZoneIdentifier
         )
         return "\(start) – \(end)"
+    }
+
+    private func deadlineText(_ date: Date) -> String {
+        ParticipantFormatting.dateAndTime(
+            date,
+            timeZoneIdentifier: program.timeZoneIdentifier
+        )
+    }
+
+    @ViewBuilder
+    private var joinButtonLabel: some View {
+        if registrationAvailability == .open {
+            Text("participant.program.offer.join")
+        } else {
+            Text("participant.program.registration.closed")
+        }
+    }
+
+    private func registrationStatusText(_ date: Date) -> String {
+        guard registrationAvailability == .open else {
+            return String(
+                localized: "participant.program.registration.closed",
+                defaultValue: "Pendaftaran ditutup"
+            )
+        }
+        let format = String(
+            localized: "participant.program.registration.open_until",
+            defaultValue: "Pendaftaran sampai %@"
+        )
+        return String(
+            format: format,
+            locale: ParticipantFormatting.locale,
+            deadlineText(date)
+        )
     }
 }

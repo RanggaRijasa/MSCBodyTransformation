@@ -22,6 +22,10 @@ This directory is the reproducible backend contract for the program flow.
   adds idempotent submission preparation/finalization, automatic quiz
   evaluation, Coach review, authoritative score refresh, and auditable orphan
   media cleanup candidates.
+- `migrations/20260805013707_program_registration_deadline.sql` adds the
+  optional exact registration cutoff, blocks Participant self-enrollment at
+  the server boundary, and adds an audited Admin enrollment RPC that bypasses
+  only the cutoff.
 - `tests/database` contains transactional pgTAP grants, RLS, and private-media
   tests.
 - `tests/integration` contains local Auth/Storage API and concurrent enrollment
@@ -45,9 +49,10 @@ supabase test db --local supabase/tests/database
 
 Supabase CLI `2.111.0`, Docker CLI, and Colima are installed on the current
 development machine. The local PostgreSQL 17 stack, fresh reset, lint,
-advisors, 76 pgTAP assertions, 16 Storage API assertions, 10 enrollment race
+advisors, 89 pgTAP assertions, 16 Storage API assertions, 14 enrollment race
 assertions, and 15 submission/review/quiz race assertions passed on 4 August
-2026.
+2026. The registration deadline migration and expanded assertions were
+verified again on 5 August 2026.
 
 The iOS Phase 09 boundary uses native Foundation `URLSession` instead of
 adding a package dependency. `supabase-swift` `2.54.1` was checked against its
@@ -71,6 +76,29 @@ Environment policy:
 - Debug clients may use local credentials returned by `supabase status`.
 - Release clients must never contain local endpoints or sensitive server
   credentials.
+
+## Phase 09.5 handoff
+
+Phase 09.5 is intentionally local UI/mock and adds no database migration:
+
+- Guest is logged out; it is not a database role and does not create an
+  anonymous Auth identity.
+- Every fake registration creates Participant first.
+- Member level, Coach eligibility, Coach application, payment preview, Admin
+  decision, protected role, and three-month entitlement are separate states.
+- A fake verified payment never grants Coach access.
+
+Required backend work remains:
+
+1. Phase 10 adds Auth/profile bootstrap and RLS-safe session persistence.
+2. Phase 11 adds public-safe Guest reads, Coach application tables/policies,
+   and atomic audited approve/reject operations.
+3. Phase 12 adds StoreKit verification, unique transactions, manual
+   three-month entitlement, expiry/renewal/revocation, and refund policy.
+
+Do not add `anon` grants to private profiles, applications, payments,
+entitlements, weights, submissions, or private media. Explicit Data API
+grants remain mandatory because automatic table exposure is disabled.
 
 Before production deployment:
 

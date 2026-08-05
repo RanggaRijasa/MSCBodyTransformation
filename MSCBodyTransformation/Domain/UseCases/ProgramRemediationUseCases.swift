@@ -80,11 +80,34 @@ nonisolated struct DuplicateProgramAsDraftUseCase: Sendable {
             pace: source.pace,
             durationMode: source.durationMode,
             participantLimit: source.participantLimit,
+            registrationClosesAt: duplicatedRegistrationClosesAt(
+                source: source,
+                sourceStart: sourceStart,
+                duplicatedStart: requestedStart,
+                calendar: calendar
+            ),
             pastStepPolicy: source.pastStepPolicy,
             futureStepPolicy: source.futureStepPolicy,
             wellnessDisclaimer: source.wellnessDisclaimer,
             days: duplicatedDays
         )
+    }
+
+    private func duplicatedRegistrationClosesAt(
+        source: Program,
+        sourceStart: Date,
+        duplicatedStart: Date,
+        calendar: Calendar
+    ) -> Date? {
+        guard let sourceDeadline = source.registrationClosesAt else {
+            return nil
+        }
+        let offset = calendar.dateComponents(
+            [.day, .hour, .minute, .second],
+            from: sourceStart,
+            to: sourceDeadline
+        )
+        return calendar.date(byAdding: offset, to: duplicatedStart)
     }
 
     private func duplicatedCommerce(

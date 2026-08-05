@@ -1768,6 +1768,35 @@ final class MSCBodyTransformationUITests: XCTestCase {
         )
         assertNoVisibleLocalizationKeys(in: app)
         app.buttons["navigation.back"].tap()
+        app.buttons["admin.program.editor.open.schedule"].tap()
+        let registrationDeadlineToggle = app.switches[
+            "admin.program.registration-deadline-toggle"
+        ]
+        XCTAssertTrue(
+            registrationDeadlineToggle.waitForExistence(timeout: 5)
+        )
+        for _ in 0..<4 where !registrationDeadlineToggle.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(registrationDeadlineToggle.isHittable)
+        registrationDeadlineToggle.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)
+        ).tap()
+        app.swipeUp()
+        XCTAssertEqual(
+            app.switches[
+                "admin.program.registration-deadline-toggle"
+            ].value as? String,
+            "1"
+        )
+        XCTAssertTrue(
+            app.staticTexts[
+                "Setelah waktu ini Peserta tidak dapat mendaftar sendiri. "
+                    + "Admin tetap dapat mendaftarkan secara manual."
+            ].waitForExistence(timeout: 5)
+        )
+        assertNoVisibleLocalizationKeys(in: app)
+        app.buttons["navigation.back"].tap()
         app.buttons["admin.program.editor.open.rules"].tap()
         XCTAssertTrue(
             app.staticTexts["Poin langkah"].waitForExistence(timeout: 5)
@@ -2244,27 +2273,55 @@ final class MSCBodyTransformationUITests: XCTestCase {
             28
         )
 
-        let coachSegment = app.segmentedControls.buttons["Coach"]
         XCTAssertTrue(
             app.segmentedControls.buttons["Peserta"]
                 .waitForExistence(timeout: 5)
         )
-        XCTAssertTrue(coachSegment.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            app.segmentedControls.buttons["Coach"]
+                .waitForExistence(timeout: 5)
+        )
         XCTAssertTrue(
             app.segmentedControls.buttons["Admin"]
                 .waitForExistence(timeout: 5)
         )
-        coachSegment.tap()
 
-        let approve = app.buttons[
-            "admin.people.approve."
+        let applicant = app.buttons[
+            "admin.people.open."
                 + "00000000-0000-0000-0000-000000000105"
         ]
-        for _ in 0..<4 where !approve.exists {
+        for _ in 0..<4 where !applicant.exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(applicant.waitForExistence(timeout: 5))
+        applicant.tap()
+
+        XCTAssertTrue(
+            element(
+                identifier: "admin.coach-application.detail",
+                in: app
+            ).waitForExistence(timeout: 5)
+        )
+        let approve = app.buttons["admin.coach-application.approve"]
+        for _ in 0..<4 where !approve.exists || !approve.isHittable {
             app.swipeUp()
         }
         XCTAssertTrue(approve.waitForExistence(timeout: 5))
+        XCTAssertTrue(approve.isEnabled)
         approve.tap()
+        let confirmApproval = app.buttons
+            .matching(
+                identifier: "admin.coach-application.confirm-approve"
+            )
+            .firstMatch
+        XCTAssertTrue(
+            confirmApproval.waitForExistence(timeout: 5)
+        )
+        confirmApproval.tap()
+        XCTAssertTrue(
+            element(identifier: "admin.people", in: app)
+                .waitForExistence(timeout: 8)
+        )
 
         let participantSegment = app.segmentedControls.buttons["Peserta"]
         XCTAssertTrue(participantSegment.waitForExistence(timeout: 5))

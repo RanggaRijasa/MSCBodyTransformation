@@ -30,6 +30,7 @@ nonisolated enum AuditEventKind: String, Codable, CaseIterable, Sendable {
     case programPublished = "program_published"
     case programArchived = "program_archived"
     case coachApproved = "coach_approved"
+    case coachApplicationRejected = "coach_application_rejected"
     case coachVisibilityChanged = "coach_visibility_changed"
     case coachTransferred = "coach_transferred"
     case participantEnrolled = "participant_enrolled"

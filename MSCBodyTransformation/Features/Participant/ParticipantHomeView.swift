@@ -7,7 +7,13 @@ struct ParticipantHomeView: View {
     let onSelectTab: (ParticipantTab) -> Void
 
     var body: some View {
-        if store.entryStage != .complete {
+        if store.isGuest {
+            ParticipantGuestHomeView(
+                store: store,
+                router: router,
+                onSelectTab: onSelectTab
+            )
+        } else if store.entryStage != .complete {
             ParticipantEntryFlowView(store: store)
         } else if let snapshot = store.snapshot {
             ScrollView {

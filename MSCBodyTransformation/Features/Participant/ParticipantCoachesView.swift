@@ -6,8 +6,8 @@ struct ParticipantCoachesView: View {
     let router: ShellTabRouter
 
     var body: some View {
-        if let coaches = store.snapshot?.coaches, !coaches.isEmpty {
-            List(coaches) { coach in
+        if !store.publicCoaches.isEmpty {
+            List(store.publicCoaches) { coach in
                 Button {
                     router.navigate(
                         to: .participant(.coach(coach.id)),

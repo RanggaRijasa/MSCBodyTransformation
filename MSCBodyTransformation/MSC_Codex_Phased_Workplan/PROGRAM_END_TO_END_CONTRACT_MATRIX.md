@@ -16,6 +16,7 @@ dengan matriks ini.
 | Lifecycle | status, start/end, timezone | Menerbitkan/menutup | Membaca status efektif | Membaca status efektif | Menentukan transisi |
 | Ritme | scheduled/self-paced, duration mode | Mengatur | Menentukan hari tersedia | Menghitung expected progress | Menentukan akses hari |
 | Kapasitas | participant limit | Mengatur | Melihat availability | Tidak mengubah | Menegakkan atomik |
+| Batas pendaftaran | `registrationClosesAt` exact timestamp atau `null` | Mengatur; dapat melakukan enrollment manual setelah tutup dengan alasan | Melihat cutoff; self-enrollment ditolak tepat pada/selewat cutoff | Tidak mengubah | Mengunci program, mengecek server clock, dan mengaudit override Admin |
 | Akses | publik | Tidak ada picker | Memilih dari katalog | Tidak mengundang | Menegakkan program publik |
 | Commerce | gratis/berbayar, desired price, platform availability | Mengatur intent | Membaca harga store | Tidak mengubah | Memetakan produk/entitlement |
 | Scoring | activity points, weight points/kg, quiz threshold | Mengatur sebelum enrollment | Melihat aturan | Melihat breakdown | Menghitung authoritative |
@@ -24,12 +25,31 @@ dengan matriks ini.
 | Pertanyaan | ID, kind, prompt, options/media | Menyusun | Menjawab | Melihat saat berwenang | Memvalidasi payload |
 | Answer key | answer key objektif | Menyusun | **Tidak pernah menerima** | Membaca untuk konteks | Menilai kuis |
 | Coach | `ParticipantProfile.coachID` | Transfer dengan alasan | Membaca | Membaca assignment | Menjaga satu Coach aktif |
-| Enrollment | program, participant, Coach snapshot, status | Membaca/admin fallback | Memilih per program | Membaca yang terkait | Membuat idempoten |
+| Enrollment | program, participant, Coach snapshot, status | Membaca/admin fallback; hanya deadline yang boleh dioverride | Memilih per program | Membaca yang terkait | Membuat idempoten; lifecycle, kapasitas, Coach, dan pembayaran tetap authoritative |
 | Submission | answers per `questionID`, status, attempt | Membaca | Membuat/memperbaiki | Review subjektif/foto | Validasi dan audit |
 | Timbang | enrollment, step, kind awal/harian/akhir, Decimal, waktu | Koreksi dengan alasan | Mengisi dari content step | Melihat riwayat privat; tidak di feed | Menghitung weight points dari awal-akhir saja |
 | Peringkat | score breakdown dan rank | Menutup/mengunci | Membaca tanpa berat privat | Membaca program terkait | Menghitung deterministik |
 | Pemenang | immutable snapshot | Mengunci | Membaca | Membaca | Menjaga snapshot |
 | Poster | program dan winner snapshot | Mengunggah/menerbitkan | Membaca di Home | Membaca bila relevan | Menjaga relasi |
+
+## Matriks Guest, membership, dan Coach access
+
+| Area | Owner authoritative | Guest | Participant/applicant | Admin | Backend phase |
+|---|---|---|---|---|---|
+| Guest access | Session state | Public read tanpa user row | — | — | Public-safe view/grant tanpa anonymous signup |
+| Profile | User input + protected persistence | Tidak membaca | Menulis nama, nomor HP, level sendiri | Membaca sesuai kebutuhan | Phase 10 profile bootstrap/RLS |
+| Member level | Profile/application snapshot | Tidak membaca | Memilih; tidak memberi capability | Membaca | Phase 10/11 validation |
+| Eligibility | Domain/server rule | — | Attest HOM STS dan ICT | Membaca hasil | Server menghitung ulang |
+| Coach application | Application aggregate | — | Membuat satu active application | Approve/reject | Phase 11 atomic operation |
+| Price band | Server/store mapping | — | Membaca preview | Membaca | Phase 12 authoritative mapping |
+| Payment | Store verification | — | Tidak dapat menandai verified | Membaca | Phase 12 idempotent verification |
+| Approval | Protected server decision | — | Tidak dapat menulis | Konfirmasi/rejection reason | Phase 11 atomic dan audited |
+| Role | Protected role table | Tidak ada | Tetap Participant selama pending | Tidak mengedit metadata client | Berubah hanya setelah approval valid |
+| Entitlement | Server clock/store state | Public only | Membaca miliknya | Membaca untuk review | Phase 12 expiry/renewal/revocation |
+
+Phase 09.5 mengimplementasikan presentation dan repository lokal untuk
+matriks ini. Kolom Backend belum production dan tidak boleh disimpulkan
+selesai dari fake payment atau local Admin approval.
 
 ## Inventory migrasi source
 
@@ -94,4 +114,7 @@ divalidasi.
 - Participant DTO tidak pernah memuat answer key.
 - Semua mutation membawa idempotency key ketika adapter server dibuat.
 - Harga client hanya presentasi; entitlement server adalah sumber kebenaran.
+- Guest tidak pernah dipetakan menjadi role atau anonymous Auth identity.
+- Member level, application, payment, approval, role, dan entitlement adalah
+  state terpisah; satu state tidak boleh menyiratkan state berikutnya.
 - Semua audit reason disimpan sebagai data, bukan hanya copy UI.

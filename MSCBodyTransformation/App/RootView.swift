@@ -28,7 +28,7 @@ struct RootView: View {
         _activeDemo = State(
             initialValue: launchConfiguration.skipsLanding
                 ? DemoShellLaunch(
-                    role: launchConfiguration.role.userRole,
+                    role: launchConfiguration.role,
                     scenario: launchConfiguration.scenario
                 )
                 : nil
@@ -41,7 +41,7 @@ struct RootView: View {
         Group {
             if let activeDemo {
                 RoleAppShellView(
-                    role: activeDemo.role,
+                    demoRole: activeDemo.role,
                     scenario: activeDemo.scenario
                 )
             } else {
@@ -50,8 +50,8 @@ struct RootView: View {
         }
 #else
         RoleAppShellView(
-            role: .participant,
-            scenario: .participantActive
+            demoRole: .guest,
+            scenario: .guestHome
         )
 #endif
     }
@@ -78,7 +78,7 @@ struct RootView: View {
         }
         .tint(.brandPrimary)
         .onChange(of: selectedRole) { _, role in
-            selectedScenario = .defaultScenario(for: role.userRole)
+            selectedScenario = .defaultScenario(for: role)
         }
         .task(id: selectedRole) {
             await switchDebugSession()
@@ -162,12 +162,12 @@ struct RootView: View {
             Label("root.enter_demo", systemImage: "arrow.right")
         }
         .buttonStyle(PrimaryActionButtonStyle())
-        .disabled(!sessionSwitchState.isReady(for: selectedRole.userRole))
+        .disabled(!sessionSwitchState.isReady(for: selectedRole))
         .accessibilityIdentifier("root.enter-demo")
     }
 
     private var availableScenarios: [AppDemoScenario] {
-        AppDemoScenario.scenarios(for: selectedRole.userRole)
+        AppDemoScenario.scenarios(for: selectedRole)
     }
 
     private var validScenarioSelection: Binding<AppDemoScenario> {
@@ -175,7 +175,7 @@ struct RootView: View {
             get: {
                 guard availableScenarios.contains(selectedScenario) else {
                     return AppDemoScenario.defaultScenario(
-                        for: selectedRole.userRole
+                        for: selectedRole
                     )
                 }
                 return selectedScenario
@@ -258,14 +258,17 @@ struct RootView: View {
         }
 
         do {
-            let session = try await repository.switchDebugRole(
-                to: selectedRole.userRole
-            )
+            guard let userRole = selectedRole.userRole else {
+                await repository.setDebugScenario(.loggedOut)
+                sessionSwitchState = .ready(.guest)
+                return
+            }
+            let session = try await repository.switchDebugRole(to: userRole)
             guard !Task.isCancelled else {
                 return
             }
-            if let role = session.role {
-                sessionSwitchState = .ready(role)
+            if session.role != nil {
+                sessionSwitchState = .ready(selectedRole)
             } else {
                 sessionSwitchState = .failed(.unknown)
             }
@@ -280,7 +283,7 @@ struct RootView: View {
 
     private func openSelectedDemo() {
         activeDemo = DemoShellLaunch(
-            role: selectedRole.userRole,
+            role: selectedRole,
             scenario: selectedScenario
         )
     }
@@ -290,16 +293,16 @@ struct RootView: View {
 #if DEBUG
 private enum DemoSessionSwitchState: Equatable {
     case switching
-    case ready(UserRole)
+    case ready(DemoRole)
     case failed(DomainError)
 
-    func isReady(for role: UserRole) -> Bool {
+    func isReady(for role: DemoRole) -> Bool {
         self == .ready(role)
     }
 }
 
 private struct DemoShellLaunch: Equatable {
-    let role: UserRole
+    let role: DemoRole
     let scenario: AppDemoScenario
 }
 #endif

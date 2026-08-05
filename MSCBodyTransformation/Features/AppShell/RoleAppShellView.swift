@@ -2,6 +2,7 @@ import SwiftUI
 
 @MainActor
 struct RoleAppShellView: View {
+    let demoRole: DemoRole
     let role: UserRole
     let scenario: AppDemoScenario
 
@@ -18,13 +19,31 @@ struct RoleAppShellView: View {
     @State private var isResumingLoggedOutSession = false
     @State private var loggedOutRecoveryError: String?
 
-    init(role: UserRole, scenario: AppDemoScenario) {
-        self.role = role
+    init(demoRole: DemoRole, scenario: AppDemoScenario) {
+        self.demoRole = demoRole
+        let shellRole = demoRole.shellRole
+        self.role = shellRole
         self.scenario = scenario
-        let tabs = AppTab.tabs(for: role)
+        let tabs = AppTab.tabs(for: shellRole)
         self.tabs = tabs
         _selectedTab = State(
-            initialValue: scenario.initialTab(for: role)
+            initialValue: scenario.initialTab(for: demoRole)
+        )
+    }
+
+    init(role: UserRole, scenario: AppDemoScenario) {
+        let demoRole: DemoRole
+        switch role {
+        case .participant:
+            demoRole = .participant
+        case .coach:
+            demoRole = .coach
+        case .admin:
+            demoRole = .admin
+        }
+        self.init(
+            demoRole: demoRole,
+            scenario: scenario
         )
     }
 
@@ -33,7 +52,7 @@ struct RoleAppShellView: View {
 
         shellContent
             .tint(.brandPrimary)
-            .accessibilityIdentifier("shell.\(role.rawValue)")
+            .accessibilityIdentifier("shell.\(demoRole.rawValue)")
             .sheet(item: $router.presentedSheet) { sheet in
                 ShellSheetView(sheet: sheet)
             }
@@ -47,7 +66,24 @@ struct RoleAppShellView: View {
                     )
                 }
             }
-            .task(id: "\(role.rawValue).\(scenario.rawValue)") {
+            .fullScreenCover(
+                item: authenticationPresentationBinding
+            ) { presentation in
+                if let participantStore {
+                    AuthenticationFlowView(
+                        environment: appEnvironment,
+                        store: participantStore,
+                        presentation: presentation,
+                        scenario: scenario
+                    )
+                }
+            }
+            .onChange(
+                of: participantStore?.completedAuthenticatedIntent
+            ) { _, _ in
+                handleCompletedAuthenticationIntent()
+            }
+            .task(id: "\(demoRole.rawValue).\(scenario.rawValue)") {
                 await prepareFeatureStateIfNeeded()
             }
     }
@@ -152,6 +188,16 @@ struct RoleAppShellView: View {
     }
 
     private func prepareFeatureStateIfNeeded() async {
+        if demoRole == .guest {
+            await appEnvironment.repositories?.session
+                .setDebugScenario(.loggedOut)
+            coachFeatures = nil
+            adminFeatures = nil
+            await prepareParticipantStoreIfNeeded()
+            prepareGuestScenarioIfNeeded()
+            return
+        }
+
         if scenario == .loggedOut {
             await appEnvironment.repositories?.session
                 .setDebugScenario(.loggedOut)
@@ -219,7 +265,8 @@ struct RoleAppShellView: View {
 
         let store = ParticipantJourneyStore(
             environment: appEnvironment,
-            startsWithoutEnrollment: scenario == .participantOnboarding
+            startsWithoutEnrollment: scenario == .participantOnboarding,
+            allowsGuestAccess: demoRole == .guest
         )
         participantStore = store
         await store.load()
@@ -247,6 +294,68 @@ struct RoleAppShellView: View {
             try? await store.simulateFinalProgramState()
         default:
             break
+        }
+    }
+
+    private var authenticationPresentationBinding:
+        Binding<AuthenticationPresentation?>
+    {
+        Binding(
+            get: { participantStore?.authenticationPresentation },
+            set: { participantStore?.authenticationPresentation = $0 }
+        )
+    }
+
+    private func prepareGuestScenarioIfNeeded() {
+        guard let participantStore else {
+            return
+        }
+        let destination: AuthenticationDestination? = switch scenario {
+        case .authLogin:
+            .login
+        case .authRegister:
+            .register
+        case .authForgotPassword:
+            .forgotPassword
+        case .authProfileOnboarding:
+            .profileOnboarding
+        case .coachApplicationEligible,
+             .coachApplicationIneligible:
+            .coachEligibility
+        case .coachPaymentSuccess:
+            .coachPayment
+        case .coachPendingApproval:
+            .pendingCoachApproval
+        default:
+            nil
+        }
+        if let destination {
+            participantStore.requestAuthentication(
+                destination: destination
+            )
+        }
+    }
+
+    private func handleCompletedAuthenticationIntent() {
+        guard let intent =
+                participantStore?.consumeCompletedAuthenticatedIntent()
+        else {
+            return
+        }
+        switch intent {
+        case .joinProgram(let programID):
+            let participantTab: ParticipantTab = switch selectedTab {
+            case .participant(let tab):
+                tab
+            case .coach, .admin:
+                .program
+            }
+            router.navigate(
+                to: .participant(.joinProgram(programID)),
+                in: .participant(participantTab)
+            )
+        case .openProfile:
+            selectTab(.participant(.profile))
         }
     }
 

@@ -126,7 +126,11 @@ struct ShellTabContentView: View {
             }
         case .offline:
             loadedContent(showsOfflineBanner: true)
-        case .participantOnboarding, .participantNoProgram,
+        case .guestHome, .guestProgramCatalog, .authLogin, .authRegister,
+             .authForgotPassword, .authProfileOnboarding,
+             .coachApplicationEligible, .coachApplicationIneligible,
+             .coachPaymentSuccess, .coachPendingApproval,
+             .participantOnboarding, .participantNoProgram,
              .participantActive,
              .participantDayOne, .participantMidProgram,
              .participantFinalWeighIn, .participantFinalLeaderboard,

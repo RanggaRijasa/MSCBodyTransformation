@@ -508,6 +508,7 @@ Membuat seluruh keputusan program dapat dikonfigurasi tanpa kontrol redundant.
 - [x] Durasi tetap atau tanggal spesifik yang kompatibel.
 - [x] Timezone.
 - [x] Kapasitas.
+- [x] Batas waktu pendaftaran opsional dengan tanggal dan jam program.
 - [x] Gratis atau berbayar.
 - [x] Harga yang diinginkan.
 - [x] Poin aktivitas.
@@ -590,6 +591,12 @@ Mendukung beberapa program aktif dengan satu Coach yang konsisten.
 - [x] Program gratis membuat enrollment dan leaderboard entry secara atomik.
 - [x] Program berbayar masuk purchase flow setelah QR valid.
 - [x] Duplicate enrollment mengembalikan enrollment lama secara idempoten.
+- [x] Self-enrollment ditolak tepat pada atau setelah batas pendaftaran.
+- [x] Program yang sudah tutup tetap dapat dibaca tanpa membuka scanner atau
+  purchase flow.
+- [x] Admin dapat mendaftarkan manual setelah batas waktu dengan alasan.
+- [x] Override Admin hanya melewati deadline; lifecycle, kapasitas, Coach
+  approved, dan pembayaran program berbayar tetap diperiksa.
 
 ### Coach transfer
 
@@ -869,6 +876,7 @@ terbukti lokal.
 
 - [x] Profiles dan satu current Coach.
 - [x] Programs dan lineage `source_program_id`.
+- [x] Exact registration cutoff `registration_closes_at`.
 - [x] Program scoring configuration.
 - [x] Program days dan content steps.
 - [x] Questions, options, dan protected answer keys.
@@ -913,6 +921,7 @@ terbukti lokal.
 - [ ] Assign first Coach from QR.
 - [x] Transfer Coach.
 - [x] Create free enrollment and leaderboard entry.
+- [x] Admin manual enrollment setelah cutoff dengan audit.
 - [ ] Initiate paid enrollment.
 - [ ] Submit step answers.
 - [ ] Submit quiz attempt.
@@ -925,11 +934,11 @@ terbukti lokal.
 
 ### Tests
 
-- [ ] Fresh database migration.
-- [ ] RLS matrix.
-- [ ] Wrong-Coach QR race.
-- [ ] Capacity race.
-- [ ] Duplicate enrollment.
+- [x] Fresh database migration.
+- [x] RLS matrix.
+- [x] Wrong-Coach QR race.
+- [x] Capacity race.
+- [x] Duplicate enrollment.
 - [ ] Duplicate submission.
 - [ ] Quiz attempt race.
 - [ ] Score reconciliation.
@@ -1154,7 +1163,14 @@ Menutup failure mode yang hanya muncul pada produksi mobile dan store.
 
 | Flow | Acceptance |
 |---|---|
+| Guest | Public Participant shell dapat dijelajahi tanpa akun atau data personal |
+| Auth gate | Aksi personal membuka Login dan mempertahankan destination aman |
+| Registrasi | Apple/Google/email berakhir pada Participant + profile onboarding |
+| Pengajuan Coach | Level SC+, HOM STS, ICT, dan payment verified diperlukan |
+| Approval Coach | Applicant tetap Participant sampai approval Admin authoritative |
+| Coach entitlement | Akses tiga bulan manual mengikuti server clock dan dapat kedaluwarsa |
 | Program baru | Admin-created program dapat dijalankan tanpa fixture khusus |
+| Batas pendaftaran | Peserta ditolak tepat pada cutoff; Admin tetap dapat mendaftarkan manual melalui operasi audited tanpa melewati kapasitas, Coach, lifecycle, atau pembayaran |
 | Duplikasi | Konten sama, seluruh ID baru, tanggal bergeser, runtime kosong |
 | Coach pertama | QR valid menetapkan Coach sebelum enrollment |
 | Coach berbeda | Ditolak sebelum payment sheet |
@@ -1179,6 +1195,10 @@ Menutup failure mode yang hanya muncul pada produksi mobile dan store.
 
 Workplan selesai hanya jika:
 
+- [x] Guest local demo membuka area publik tanpa authenticated user palsu.
+- [x] Local auth/profile/Coach application preview tidak dapat self-promote.
+- [ ] Guest public reads dan Coach application dilindungi RLS production.
+- [ ] Coach payment, approval, dan entitlement terverifikasi server-side.
 - [x] Admin dapat membuat program dari repository kosong.
 - [x] Program yang diterbitkan mempertahankan seluruh konfigurasi.
 - [x] Peserta dapat mengikuti beberapa program dengan satu Coach.
@@ -1204,6 +1224,28 @@ Workplan selesai hanya jika:
 
 ### Log
 
+- 2026-08-05:
+  - Admin CMS menambahkan batas tanggal dan jam pendaftaran per program.
+  - Participant catalog/detail/deep-link menampilkan state tertutup dan
+    mencegah scanner atau purchase flow setelah cutoff.
+  - Migration menambahkan `registration_closes_at`, memperkeras
+    `enroll_free_program`, dan menambahkan RPC
+    `admin_enroll_participant` dengan pemeriksaan role, lifecycle, kapasitas,
+    Coach approved, entitlement program berbayar, score initialization, dan
+    audit deadline override.
+  - Fresh reset, lint, security advisors, 89 pgTAP assertions, serta 14
+    integration race assertions lulus.
+- 2026-08-04:
+  - Phase 09.5 menambahkan Guest logged-out shell, centralized auth gate,
+    Login/Register/Forgot Password presentation, profile onboarding, sembilan
+    Member level, Coach eligibility, fake payment tiga bulan, dan review
+    Admin.
+  - Self-registration serta applicant pending tetap Participant. Payment
+    verified tidak memberi Coach access; local Admin decision idempoten dan
+    teraudit.
+  - Guest/Auth/Coach application tetap local/mock. Supabase Auth,
+    public-safe read model, Coach application RLS/operations, StoreKit
+    verification, dan entitlement menjadi handoff Phase 10–12.
 - 2026-08-02:
   - Dokumen workplan dibuat dari audit program end-to-end dan keputusan produk.
   - Domain, fixture, repository, Admin CMS, Participant renderer, Coach

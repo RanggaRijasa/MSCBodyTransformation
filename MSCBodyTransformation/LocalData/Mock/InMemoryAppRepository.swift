@@ -2,6 +2,7 @@ import Foundation
 
 actor InMemoryAppRepository:
     SessionRepository,
+    AuthenticationRepository,
     ProfileRepository,
     CoachDirectoryRepository,
     ProgramRepository,
@@ -12,6 +13,7 @@ actor InMemoryAppRepository:
     CoachParticipantRepository,
     ManagedContentRepository,
     AdminPeopleRepository,
+    CoachApplicationRepository,
     AdminProgramDraftRepository,
     AuditRepository,
     ParticipantDemoRepository
@@ -30,6 +32,7 @@ actor InMemoryAppRepository:
     private var winners: [ProgramWinner]
     private var managedContentStorage: [ManagedContent]
     private var auditEvents: [AuditEvent]
+    private var coachApplicationsStorage: [CoachApplication]
     private var sessionScenario: DebugSessionScenario
 
     init(
@@ -52,6 +55,7 @@ actor InMemoryAppRepository:
         winners = seed.winners
         managedContentStorage = seed.managedContent
         auditEvents = seed.auditEvents
+        coachApplicationsStorage = seed.coachApplications
         self.sessionScenario = sessionScenario
     }
 
@@ -60,6 +64,11 @@ actor InMemoryAppRepository:
         case .role(let role):
             return AppSession(
                 user: try userForSession(role: role),
+                state: .active
+            )
+        case .user(let userID):
+            return AppSession(
+                user: try await user(id: userID),
                 state: .active
             )
         case .loggedOut:
@@ -83,6 +92,283 @@ actor InMemoryAppRepository:
 
     func setDebugScenario(_ scenario: DebugSessionScenario) async {
         sessionScenario = scenario
+    }
+
+    func signInForDemo(
+        provider: AuthenticationProvider,
+        email: String?
+    ) async throws -> AppSession {
+        _ = provider
+        _ = email
+        let user = try userForSession(role: .participant)
+        sessionScenario = .user(user.id)
+        return AppSession(user: user, state: .active)
+    }
+
+    func registerForDemo(
+        provider: AuthenticationProvider,
+        email: String?
+    ) async throws -> AppSession {
+        _ = provider
+        let userID = UUID(
+            uuid: (
+                0, 0, 0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0, 0, 0, 9, 1
+            )
+        )
+        let profileID = UUID(
+            uuid: (
+                32, 0, 0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0, 0, 0, 9, 1
+            )
+        )
+        let normalizedEmail = email?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let accountEmail = (
+            normalizedEmail?.isEmpty == false ? normalizedEmail : nil
+        ) ?? "akun-baru@demo.local"
+        let now = Date(timeIntervalSince1970: 1_785_456_000)
+        let newUser = AppUser(
+            id: userID,
+            email: accountEmail,
+            displayName: "",
+            role: .participant,
+            hasCompletedOnboarding: false,
+            isCoachApprovalPending: false,
+            createdAt: now
+        )
+        if let userIndex = users.firstIndex(where: { $0.id == userID }) {
+            users[userIndex] = newUser
+        } else {
+            users.append(newUser)
+        }
+        let newProfile = ParticipantProfile(
+            id: profileID,
+            userID: userID,
+            coachID: nil,
+            displayName: "",
+            city: "",
+            phoneNumber: nil,
+            localPhotoReference: nil,
+            memberLevel: nil
+        )
+        if let profileIndex = participantProfiles.firstIndex(where: {
+            $0.userID == userID
+        }) {
+            participantProfiles[profileIndex] = newProfile
+        } else {
+            participantProfiles.append(newProfile)
+        }
+        coachApplicationsStorage.removeAll { $0.userID == userID }
+        sessionScenario = .user(userID)
+        return AppSession(user: newUser, state: .active)
+    }
+
+    func finalizeRegistrationForDemo(
+        _ completion: DemoRegistrationCompletion
+    ) async throws -> DemoRegistrationResult {
+        let trimmedName = completion.displayName.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let trimmedPhone = completion.phoneNumber.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard (2...80).contains(trimmedName.count) else {
+            throw DomainError.validation(
+                field: "displayName",
+                reason: "Masukkan nama antara 2 sampai 80 karakter."
+            )
+        }
+        let phoneDigits = trimmedPhone.filter(\.isNumber)
+        guard trimmedPhone.allSatisfy({
+            $0.isNumber || $0 == "+"
+        }), (8...15).contains(phoneDigits.count) else {
+            throw DomainError.validation(
+                field: "phoneNumber",
+                reason: "Masukkan nomor HP yang valid."
+            )
+        }
+
+        let assignedCoachID: UUID?
+        var completedApplication: CoachApplication?
+        switch completion.accountPurpose {
+        case .participant:
+            guard let coachID = completion.participantCoachID,
+                  coachProfiles.contains(where: {
+                      $0.id == coachID && $0.isApproved
+                  }) else {
+                throw DomainError.validation(
+                    field: "coachQR",
+                    reason: "Pindai QR Coach yang aktif untuk membuat akun."
+                )
+            }
+            assignedCoachID = coachID
+        case .coachApplicant:
+            let eligibility = CoachEligibilityService().evaluate(
+                memberLevel: completion.memberLevel,
+                hasCompletedHOMSTS: completion.hasCompletedHOMSTS,
+                hasCompletedICT: completion.hasCompletedICT
+            )
+            guard eligibility.isComplete else {
+                throw DomainError.validation(
+                    field: "coachEligibility",
+                    reason: "Lengkapi seluruh syarat Coach."
+                )
+            }
+            guard let payment = completion.coachPayment,
+                  payment.state == .verified else {
+                throw DomainError.validation(
+                    field: "coachPayment",
+                    reason: "Pembayaran Coach belum terverifikasi."
+                )
+            }
+            assignedCoachID = nil
+        }
+
+        let userID = UUID(
+            uuid: (
+                0, 0, 0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0, 0, 0, 9, 1
+            )
+        )
+        let profileID = UUID(
+            uuid: (
+                32, 0, 0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0, 0, 0, 9, 1
+            )
+        )
+        let applicationID = UUID(
+            uuid: (
+                33, 0, 0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0, 0, 0, 9, 1
+            )
+        )
+        let normalizedEmail = completion.email?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let accountEmail = (
+            normalizedEmail?.isEmpty == false ? normalizedEmail : nil
+        ) ?? "akun-baru@demo.local"
+        let now = Date(timeIntervalSince1970: 1_785_456_000)
+        let isCoachApplicant = switch completion.accountPurpose {
+        case .participant:
+            false
+        case .coachApplicant:
+            true
+        }
+        let newUser = AppUser(
+            id: userID,
+            email: accountEmail,
+            displayName: trimmedName,
+            role: .participant,
+            hasCompletedOnboarding: true,
+            isCoachApprovalPending: isCoachApplicant,
+            createdAt: now
+        )
+        let newProfile = ParticipantProfile(
+            id: profileID,
+            userID: userID,
+            coachID: assignedCoachID,
+            displayName: trimmedName,
+            city: "",
+            phoneNumber: trimmedPhone,
+            localPhotoReference: nil,
+            memberLevel: completion.memberLevel
+        )
+
+        if case .coachApplicant = completion.accountPurpose,
+           let payment = completion.coachPayment {
+            completedApplication = CoachApplication(
+                id: applicationID,
+                userID: userID,
+                participantProfileID: profileID,
+                displayNameSnapshot: trimmedName,
+                phoneNumberSnapshot: trimmedPhone,
+                memberLevel: completion.memberLevel,
+                hasCompletedHOMSTS: completion.hasCompletedHOMSTS,
+                hasCompletedICT: completion.hasCompletedICT,
+                termsVersion: completion.termsVersion,
+                status: .pendingAdminApproval,
+                payment: payment,
+                createdAt: now,
+                submittedAt: now,
+                updatedAt: now,
+                decision: nil
+            )
+        }
+
+        if let userIndex = users.firstIndex(where: { $0.id == userID }) {
+            users[userIndex] = newUser
+        } else {
+            users.append(newUser)
+        }
+        if let profileIndex = participantProfiles.firstIndex(where: {
+            $0.userID == userID
+        }) {
+            participantProfiles[profileIndex] = newProfile
+        } else {
+            participantProfiles.append(newProfile)
+        }
+        coachApplicationsStorage.removeAll { $0.userID == userID }
+        if let completedApplication {
+            coachApplicationsStorage.append(completedApplication)
+        }
+        sessionScenario = .user(userID)
+        return DemoRegistrationResult(
+            session: AppSession(user: newUser, state: .active),
+            coachApplication: completedApplication
+        )
+    }
+
+    func requestPasswordResetForDemo(email: String) async throws {
+        let trimmedEmail = email.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard trimmedEmail.contains("@") else {
+            throw DomainError.validation(
+                field: "email",
+                reason: "Masukkan alamat email yang valid."
+            )
+        }
+    }
+
+    func completeParticipantOnboarding(
+        userID: UUID,
+        displayName: String,
+        phoneNumber: String,
+        memberLevel: MemberLevel
+    ) async throws -> AppSession {
+        guard let userIndex = users.firstIndex(where: { $0.id == userID }),
+              let profileIndex = participantProfiles.firstIndex(where: {
+                  $0.userID == userID
+              }) else {
+            throw DomainError.notFound(resource: "participant_profile")
+        }
+        users[userIndex].displayName = displayName
+        users[userIndex].role = .participant
+        users[userIndex].hasCompletedOnboarding = true
+        users[userIndex].isCoachApprovalPending = false
+        participantProfiles[profileIndex].displayName = displayName
+        participantProfiles[profileIndex].phoneNumber = phoneNumber
+        participantProfiles[profileIndex].memberLevel = memberLevel
+        sessionScenario = .user(userID)
+        return AppSession(user: users[userIndex], state: .active)
     }
 
     func user(id: UUID) async throws -> AppUser {
@@ -688,6 +974,240 @@ actor InMemoryAppRepository:
             coachProfiles[coachIndex].isApproved = isApproved
         }
         return users[userIndex]
+    }
+
+    func coachApplication(
+        userID: UUID
+    ) async throws -> CoachApplication? {
+        coachApplicationsStorage
+            .filter { $0.userID == userID }
+            .sorted { $0.updatedAt > $1.updatedAt }
+            .first
+    }
+
+    func coachApplicationsForAdministration() async throws
+        -> [CoachApplication]
+    {
+        coachApplicationsStorage.sorted { lhs, rhs in
+            if lhs.status == rhs.status {
+                return lhs.updatedAt > rhs.updatedAt
+            }
+            if lhs.status == .pendingAdminApproval {
+                return true
+            }
+            if rhs.status == .pendingAdminApproval {
+                return false
+            }
+            return lhs.updatedAt > rhs.updatedAt
+        }
+    }
+
+    func saveCoachApplication(
+        _ application: CoachApplication
+    ) async throws -> CoachApplication {
+        if let existing = coachApplicationsStorage.first(where: {
+            $0.userID == application.userID
+                && $0.status.isActive
+                && $0.id != application.id
+        }) {
+            return existing
+        }
+
+        var normalized = application
+        let eligibility = normalized.eligibility
+        if !eligibility.isLevelEligible {
+            normalized.status = .ineligible
+        } else if eligibility.isComplete {
+            normalized.status = normalized.payment?.state == .verified
+                ? .paymentVerified
+                : .readyForPayment
+        } else {
+            normalized.status = .draft
+        }
+
+        if let index = coachApplicationsStorage.firstIndex(where: {
+            $0.id == normalized.id
+        }) {
+            coachApplicationsStorage[index] = normalized
+        } else {
+            coachApplicationsStorage.append(normalized)
+        }
+        return normalized
+    }
+
+    func recordCoachPayment(
+        applicationID: UUID,
+        result: FakeCoachPurchaseResult
+    ) async throws -> CoachApplication {
+        guard let index = coachApplicationsStorage.firstIndex(where: {
+            $0.id == applicationID
+        }) else {
+            throw DomainError.notFound(resource: "coach_application")
+        }
+        try CoachApplicationValidator().validateForPayment(
+            coachApplicationsStorage[index]
+        )
+        guard var payment = coachApplicationsStorage[index].payment else {
+            throw DomainError.validation(
+                field: "coachPayment",
+                reason: "Harga akses Coach belum tersedia."
+            )
+        }
+        if payment.state == .verified {
+            return coachApplicationsStorage[index]
+        }
+        payment.state = result.state
+        payment.verifiedAt = result.verifiedAt
+        payment.accessStartsAt = result.accessStartsAt
+        payment.accessEndsAt = result.accessEndsAt
+        coachApplicationsStorage[index].payment = payment
+        coachApplicationsStorage[index].status = switch result.state {
+        case .verified:
+            .paymentVerified
+        case .pending, .processing:
+            .paymentProcessing
+        case .notStarted, .cancelled, .failed, .interrupted:
+            .readyForPayment
+        }
+        coachApplicationsStorage[index].updatedAt =
+            result.verifiedAt ?? coachApplicationsStorage[index].updatedAt
+        return coachApplicationsStorage[index]
+    }
+
+    func submitCoachApplication(
+        applicationID: UUID
+    ) async throws -> CoachApplication {
+        guard let index = coachApplicationsStorage.firstIndex(where: {
+            $0.id == applicationID
+        }) else {
+            throw DomainError.notFound(resource: "coach_application")
+        }
+        if coachApplicationsStorage[index].status == .pendingAdminApproval {
+            return coachApplicationsStorage[index]
+        }
+        try CoachApplicationValidator().validateForApproval(
+            coachApplicationsStorage[index]
+        )
+        let submittedAt =
+            coachApplicationsStorage[index].payment?.verifiedAt
+            ?? coachApplicationsStorage[index].updatedAt
+        coachApplicationsStorage[index].status = .pendingAdminApproval
+        coachApplicationsStorage[index].submittedAt = submittedAt
+        coachApplicationsStorage[index].updatedAt = submittedAt
+        return coachApplicationsStorage[index]
+    }
+
+    func approveCoachApplication(
+        applicationID: UUID,
+        adminUserID: UUID,
+        decidedAt: Date
+    ) async throws -> CoachApplication {
+        guard let applicationIndex = coachApplicationsStorage.firstIndex(
+            where: { $0.id == applicationID }
+        ) else {
+            throw DomainError.notFound(resource: "coach_application")
+        }
+        if coachApplicationsStorage[applicationIndex].status == .approved {
+            return coachApplicationsStorage[applicationIndex]
+        }
+        var application = coachApplicationsStorage[applicationIndex]
+        try CoachApplicationValidator().validateForApproval(application)
+        guard let userIndex = users.firstIndex(where: {
+            $0.id == application.userID
+        }), users[userIndex].role == .participant else {
+            throw DomainError.permissionDenied
+        }
+
+        users[userIndex].role = .coach
+        users[userIndex].isCoachApprovalPending = false
+        let coachProfile = CoachProfile(
+            id: application.id,
+            userID: application.userID,
+            enrollmentIdentifier:
+                "LOCAL-\(application.id.uuidString.prefix(8))",
+            displayName: application.displayNameSnapshot,
+            biography: "Profil Coach baru menunggu dilengkapi.",
+            city: "",
+            localPhotoReference: nil,
+            isPublic: false,
+            isApproved: true
+        )
+        if let coachIndex = coachProfiles.firstIndex(where: {
+            $0.userID == application.userID
+        }) {
+            coachProfiles[coachIndex] = coachProfile
+        } else {
+            coachProfiles.append(coachProfile)
+        }
+
+        application.status = .approved
+        application.updatedAt = decidedAt
+        application.decision = CoachApplicationDecision(
+            adminUserID: adminUserID,
+            decidedAt: decidedAt,
+            rejectionReason: nil
+        )
+        coachApplicationsStorage[applicationIndex] = application
+        auditEvents.append(
+            AuditEvent(
+                id: application.id,
+                kind: .coachApproved,
+                actorUserID: adminUserID,
+                subjectID: application.id,
+                summary: "Pengajuan Coach disetujui dalam demo lokal.",
+                createdAt: decidedAt
+            )
+        )
+        return application
+    }
+
+    func rejectCoachApplication(
+        applicationID: UUID,
+        adminUserID: UUID,
+        reason: String,
+        decidedAt: Date
+    ) async throws -> CoachApplication {
+        let trimmedReason = reason.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmedReason.isEmpty else {
+            throw DomainError.validation(
+                field: "rejectionReason",
+                reason: "Alasan penolakan wajib diisi."
+            )
+        }
+        guard let index = coachApplicationsStorage.firstIndex(where: {
+            $0.id == applicationID
+        }) else {
+            throw DomainError.notFound(resource: "coach_application")
+        }
+        if coachApplicationsStorage[index].status == .rejected,
+           coachApplicationsStorage[index].decision?.rejectionReason
+            == trimmedReason {
+            return coachApplicationsStorage[index]
+        }
+        guard coachApplicationsStorage[index].status != .approved else {
+            throw DomainError.permissionDenied
+        }
+        coachApplicationsStorage[index].status = .rejected
+        coachApplicationsStorage[index].updatedAt = decidedAt
+        coachApplicationsStorage[index].decision =
+            CoachApplicationDecision(
+                adminUserID: adminUserID,
+                decidedAt: decidedAt,
+                rejectionReason: trimmedReason
+            )
+        auditEvents.append(
+            AuditEvent(
+                id: applicationID,
+                kind: .coachApplicationRejected,
+                actorUserID: adminUserID,
+                subjectID: applicationID,
+                summary: "Pengajuan Coach ditolak: \(trimmedReason)",
+                createdAt: decidedAt
+            )
+        )
+        return coachApplicationsStorage[index]
     }
 
     func transferActiveCoach(

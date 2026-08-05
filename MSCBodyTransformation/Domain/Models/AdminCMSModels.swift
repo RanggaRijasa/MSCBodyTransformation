@@ -269,6 +269,7 @@ nonisolated struct AdminProgramDraft:
     var pastStepPolicy: PastStepPolicy
     var futureStepPolicy: FutureStepPolicy
     var participantLimit: Int?
+    var registrationClosesAt: Date?
     var status: ProgramStatus
     var days: [AdminDayDraft]
     var updatedAt: Date
@@ -298,6 +299,7 @@ nonisolated struct AdminProgramDraft:
         durationMode: AdminProgramDurationMode = .specificDates,
         fixedDurationDays: Int = 7,
         participantLimit: Int? = nil,
+        registrationClosesAt: Date? = nil,
         sourceProgramID: UUID? = nil,
         pointsPerActivity: Int = 10,
         quizPassingPercentage: Int = 70,
@@ -328,6 +330,7 @@ nonisolated struct AdminProgramDraft:
         self.pastStepPolicy = pastStepPolicy
         self.futureStepPolicy = futureStepPolicy
         self.participantLimit = participantLimit
+        self.registrationClosesAt = registrationClosesAt
         self.status = status
         self.days = days
         self.updatedAt = updatedAt
@@ -376,6 +379,7 @@ nonisolated struct AdminProgramDraft:
         pastStepPolicy = program.pastStepPolicy ?? .available
         futureStepPolicy = program.futureStepPolicy ?? .locked
         participantLimit = program.participantLimit
+        registrationClosesAt = program.registrationClosesAt
         status = program.status
         days = program.days.map { day in
             AdminDayDraft(
@@ -451,6 +455,7 @@ nonisolated struct AdminProgramDraft:
             pace: pace,
             durationMode: durationMode,
             participantLimit: participantLimit,
+            registrationClosesAt: registrationClosesAt,
             pastStepPolicy: pastStepPolicy,
             futureStepPolicy: futureStepPolicy,
             wellnessDisclaimer: wellnessDisclaimer,
@@ -663,6 +668,7 @@ nonisolated enum AdminValidationField: String, Sendable {
     case timeZone
     case scoring
     case participantLimit
+    case registrationDeadline
     case days
     case dayNumbers
     case dayDates

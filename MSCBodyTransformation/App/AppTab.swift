@@ -105,6 +105,16 @@ nonisolated enum AppTab: Hashable, Identifiable, Sendable {
 }
 
 nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
+    case guestHome = "guest_home"
+    case guestProgramCatalog = "guest_program_catalog"
+    case authLogin = "auth_login"
+    case authRegister = "auth_register"
+    case authForgotPassword = "auth_forgot_password"
+    case authProfileOnboarding = "auth_profile_onboarding"
+    case coachApplicationEligible = "coach_application_eligible"
+    case coachApplicationIneligible = "coach_application_ineligible"
+    case coachPaymentSuccess = "coach_payment_success"
+    case coachPendingApproval = "coach_pending_approval"
     case loggedOut = "logged_out"
     case loading
     case offline
@@ -133,6 +143,11 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
 
     func supports(_ role: UserRole) -> Bool {
         switch self {
+        case .guestHome, .guestProgramCatalog, .authLogin, .authRegister,
+             .authForgotPassword, .authProfileOnboarding,
+             .coachApplicationEligible, .coachApplicationIneligible,
+             .coachPaymentSuccess, .coachPendingApproval:
+            false
         case .loggedOut, .loading, .offline, .permissionDenied,
              .repositoryError:
             true
@@ -150,7 +165,32 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    func supports(_ role: DemoRole) -> Bool {
+        switch role {
+        case .guest:
+            return switch self {
+            case .guestHome, .guestProgramCatalog, .authLogin, .authRegister,
+                 .authForgotPassword, .authProfileOnboarding,
+                 .coachApplicationEligible, .coachApplicationIneligible,
+                 .coachPaymentSuccess, .coachPendingApproval, .loading,
+                 .offline, .repositoryError:
+                true
+            default:
+                false
+            }
+        case .participant, .coach, .admin:
+            guard let userRole = role.userRole else {
+                return false
+            }
+            return supports(userRole)
+        }
+    }
+
     static func scenarios(for role: UserRole) -> [Self] {
+        allCases.filter { $0.supports(role) }
+    }
+
+    static func scenarios(for role: DemoRole) -> [Self] {
         allCases.filter { $0.supports(role) }
     }
 
@@ -163,6 +203,13 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         case .admin:
             .adminDashboard
         }
+    }
+
+    static func defaultScenario(for role: DemoRole) -> Self {
+        guard let userRole = role.userRole else {
+            return .guestHome
+        }
+        return defaultScenario(for: userRole)
     }
 
     func initialTab(for role: UserRole) -> AppTab {
@@ -180,5 +227,14 @@ nonisolated enum AppDemoScenario: String, CaseIterable, Identifiable, Sendable {
         default:
             AppTab.tabs(for: role).first ?? .participant(.today)
         }
+    }
+
+    func initialTab(for role: DemoRole) -> AppTab {
+        if role == .guest {
+            return self == .guestProgramCatalog
+                ? .participant(.program)
+                : .participant(.today)
+        }
+        return initialTab(for: role.shellRole)
     }
 }

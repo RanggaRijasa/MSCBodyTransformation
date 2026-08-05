@@ -510,6 +510,9 @@ struct Phase05AdminCMSTests {
         draft.coverLocalReference = "cover_program"
         draft.coverAlternativeText = ""
         draft.participantLimit = 0
+        draft.registrationClosesAt = draft.endDate.addingTimeInterval(
+            24 * 60 * 60
+        )
 
         let fields = Set(
             AdminProgramDraftValidator().validate(draft).map(\.field)
@@ -517,6 +520,7 @@ struct Phase05AdminCMSTests {
 
         #expect(fields.contains(.cover))
         #expect(fields.contains(.participantLimit))
+        #expect(fields.contains(.registrationDeadline))
     }
 
     @Test("Kuis wajib memiliki nama dan pertanyaan")
@@ -726,10 +730,13 @@ struct Phase05AdminCMSTests {
             ),
             clock: FixedClock(now: fixedDate)
         )
+        let program = try await repository.program(
+            id: scheduledProgramID
+        )
 
         do {
             _ = try await useCase(
-                programID: scheduledProgramID,
+                program: program,
                 participantID: participantID,
                 coachID: nil,
                 reason: " ",
@@ -744,6 +751,53 @@ struct Phase05AdminCMSTests {
                 )
             )
         }
+    }
+
+    @Test("Admin dapat mendaftar manual setelah batas waktu")
+    func manualEnrollmentBypassesOnlyDeadline() async throws {
+        let repository = try makeRepository()
+        let participantID = UUID(
+            uuidString: "20000000-0000-0000-0000-000000000001"
+        )!
+        let coachID = UUID(
+            uuidString: "30000000-0000-0000-0000-000000000101"
+        )!
+        var program = try await repository.program(id: activeProgramID)
+        program.registrationClosesAt = fixedDate
+        program.price = nil
+        program.commerceConfiguration = ProgramCommerceConfiguration(
+            pricingMode: .free,
+            desiredPrice: nil,
+            platformAvailability: []
+        )
+        await repository.resetParticipantDemo(participantID: participantID)
+
+        let enrollment = try await ManualAdminEnrollmentUseCase(
+            enrollments: repository,
+            audit: repository,
+            identifierGenerator: DeterministicIdentifierGenerator(
+                identifier: UUID(
+                    uuidString: "40000000-0000-0000-0000-000000009998"
+                )!
+            ),
+            clock: FixedClock(now: fixedDate)
+        )(
+            program: program,
+            participantID: participantID,
+            coachID: coachID,
+            reason: "Dibantu Admin setelah verifikasi.",
+            adminID: adminID
+        )
+
+        #expect(enrollment.programID == program.id)
+        #expect(enrollment.participantID == participantID)
+        #expect(enrollment.coachID == coachID)
+        #expect(
+            try await repository.auditEventsForAdministration().contains {
+                $0.kind == .participantEnrolled
+                    && $0.subjectID == participantID
+            }
+        )
     }
 
     @Test("Penyesuaian skor wajib memiliki alasan")

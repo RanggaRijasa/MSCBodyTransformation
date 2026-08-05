@@ -54,7 +54,8 @@ nonisolated struct AdminProgramFlowProgress: Equatable, Sendable {
         .dates,
         .timeZone,
         .scoring,
-        .participantLimit
+        .participantLimit,
+        .registrationDeadline
     ]
 
     private static let contentFields: Set<AdminValidationField> = [
@@ -201,6 +202,7 @@ nonisolated extension AuditEventKind {
         case .programPublished: "Program dipublikasikan"
         case .programArchived: "Program diarsipkan"
         case .coachApproved: "Coach disetujui"
+        case .coachApplicationRejected: "Pengajuan Coach ditolak"
         case .coachVisibilityChanged: "Visibilitas Coach diubah"
         case .coachTransferred: "Coach peserta diubah"
         case .participantEnrolled: "Peserta didaftarkan"

@@ -11,7 +11,7 @@ struct ParticipantProgramCatalogView: View {
         ParticipantProgramCatalogFilter.enrolled
 
     var body: some View {
-        if let snapshot = store.snapshot {
+        if store.snapshot != nil || store.guestSnapshot != nil {
             VStack(spacing: 0) {
                 catalogHeader
 
@@ -37,12 +37,17 @@ struct ParticipantProgramCatalogView: View {
                     "participant.program.catalog.filter"
                 )
 
-                programList(snapshot)
+                programList
                     .frame(maxHeight: .infinity)
             }
             .background(Color.appBackground)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                if store.isGuest {
+                    selectedFilter = .available
+                }
+            }
         } else {
             EmptyStateView(
                 title: "participant.program.empty.title",
@@ -67,10 +72,8 @@ struct ParticipantProgramCatalogView: View {
         .padding(.bottom, AppSpacing.xSmall)
     }
 
-    private func programList(
-        _ snapshot: ParticipantJourneySnapshot
-    ) -> some View {
-        let programs = filteredPrograms(snapshot)
+    private var programList: some View {
+        let programs = filteredPrograms
 
         return ScrollView {
             LazyVStack(alignment: .leading, spacing: AppSpacing.large) {
@@ -81,7 +84,12 @@ struct ParticipantProgramCatalogView: View {
                             systemImage: selectedFilter.emptySystemImage
                         )
                     } description: {
-                        Text(selectedFilter.emptyMessage)
+                        Text(
+                            store.isGuest
+                                && selectedFilter != .available
+                                ? "guest.program.account_required"
+                                : selectedFilter.emptyMessage
+                        )
                     }
                     .frame(maxWidth: .infinity, minHeight: 280)
                 } else {
@@ -92,8 +100,7 @@ struct ParticipantProgramCatalogView: View {
                             ParticipantProgramPoster(
                                 program: program,
                                 participationStatus: participationStatus(
-                                    for: program,
-                                    snapshot: snapshot
+                                    for: program
                                 )
                             )
                         }
@@ -111,11 +118,12 @@ struct ParticipantProgramCatalogView: View {
         }
     }
 
-    private func filteredPrograms(
-        _ snapshot: ParticipantJourneySnapshot
-    ) -> [Program] {
-        return snapshot.programs
+    private var filteredPrograms: [Program] {
+        store.programs
             .filter { program in
+                if store.isGuest, selectedFilter != .available {
+                    return false
+                }
                 return selectedFilter.includes(
                     program,
                     enrollment: store.visibleEnrollments.first {
@@ -136,13 +144,22 @@ struct ParticipantProgramCatalogView: View {
     }
 
     private func participationStatus(
-        for program: Program,
-        snapshot: ParticipantJourneySnapshot
+        for program: Program
     ) -> ParticipantProgramParticipationStatus {
-        .make(
+        guard let snapshot = store.snapshot else {
+            return store.registrationAvailability(for: program) == .closed
+                ? .registrationClosed
+                : .notEnrolled
+        }
+        let status = ParticipantProgramParticipationStatus.make(
             programID: program.id,
             enrollments: snapshot.enrollments
         )
+        if status == .notEnrolled,
+           store.registrationAvailability(for: program) == .closed {
+            return .registrationClosed
+        }
+        return status
     }
 }
 

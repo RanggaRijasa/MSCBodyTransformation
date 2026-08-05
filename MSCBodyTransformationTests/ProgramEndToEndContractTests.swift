@@ -252,10 +252,19 @@ struct ProgramEndToEndContractTests {
 
     @Test("Duplikasi mengganti semua ID dan menggeser tanggal kalender")
     func duplicateChangesIdentifiersAndShiftsCalendarDates() throws {
-        let source = makeProgram()
+        var source = makeProgram()
         let identifiers = SequenceIdentifierGenerator()
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = try #require(TimeZone(identifier: "Asia/Makassar"))
+        source.registrationClosesAt = calendar.date(
+            from: DateComponents(
+                year: 2026,
+                month: 6,
+                day: 4,
+                hour: 20,
+                minute: 30
+            )
+        )
         let julyStart = try #require(
             calendar.date(
                 from: DateComponents(year: 2026, month: 7, day: 5)
@@ -277,6 +286,21 @@ struct ProgramEndToEndContractTests {
         #expect(duplicate.sourceProgramID == source.id)
         #expect(duplicate.status == .draft)
         #expect(duplicate.title == "Program Juli")
+        #expect(
+            duplicate.registrationClosesAt.map {
+                calendar.component(.month, from: $0)
+            } == 7
+        )
+        #expect(
+            duplicate.registrationClosesAt.map {
+                calendar.component(.day, from: $0)
+            } == 4
+        )
+        #expect(
+            duplicate.registrationClosesAt.map {
+                calendar.component(.hour, from: $0)
+            } == 20
+        )
         #expect(
             calendar.component(.month, from: duplicate.days[0].scheduledDate)
                 == 7
@@ -1030,7 +1054,8 @@ struct ProgramEndToEndContractTests {
                     leaderboardEntries: [],
                     winners: [],
                     managedContent: [],
-                    auditEvents: []
+                    auditEvents: [],
+                    coachApplications: []
                 )
             ),
             participant,

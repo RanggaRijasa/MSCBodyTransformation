@@ -19,6 +19,7 @@ nonisolated struct SupabaseProgramDTO: Decodable, Sendable {
     let endsOn: String
     let timezone: String
     let participantLimit: Int?
+    let registrationClosesAt: String?
     let pastStepPolicy: String
     let futureStepPolicy: String
     let wellnessDisclaimer: String
@@ -44,6 +45,7 @@ nonisolated struct SupabaseProgramDTO: Decodable, Sendable {
         case endsOn = "ends_on"
         case timezone
         case participantLimit = "participant_limit"
+        case registrationClosesAt = "registration_closes_at"
         case pastStepPolicy = "past_step_policy"
         case futureStepPolicy = "future_step_policy"
         case wellnessDisclaimer = "wellness_disclaimer"
@@ -120,6 +122,9 @@ nonisolated struct SupabaseProgramDTO: Decodable, Sendable {
             pace: pace,
             durationMode: durationMode,
             participantLimit: participantLimit,
+            registrationClosesAt: try registrationClosesAt.map(
+                SupabaseDateParser.timestamp
+            ),
             pastStepPolicy: pastPolicy,
             futureStepPolicy: futurePolicy,
             wellnessDisclaimer: wellnessDisclaimer,
@@ -421,6 +426,18 @@ nonisolated enum SupabaseDateParser {
             throw SupabaseDTOError.invalidField("date")
         }
         return date
+    }
+
+    static func timestamp(_ value: String) throws -> Date {
+        if let date = try? Date.ISO8601FormatStyle(
+            includingFractionalSeconds: true
+        ).parse(value) {
+            return date
+        }
+        if let date = try? Date.ISO8601FormatStyle().parse(value) {
+            return date
+        }
+        throw SupabaseDTOError.invalidField("timestamp")
     }
 }
 

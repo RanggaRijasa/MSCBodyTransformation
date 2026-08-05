@@ -317,7 +317,7 @@ struct ParticipantLeaderboardView: View {
                     rank: entry.rank,
                     totalPoints: entry.score.totalPoints,
                     progressPercentage: entry.progressPercentage,
-                    isCurrentUser: entry.isCurrentUser,
+                    isCurrentUser: store.isGuest ? false : entry.isCurrentUser,
                     hasTie:
                         pointCounts[entry.score.totalPoints, default: 0] > 1
                 )

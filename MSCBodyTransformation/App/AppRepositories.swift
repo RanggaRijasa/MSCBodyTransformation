@@ -2,6 +2,7 @@ import Foundation
 
 nonisolated struct AppRepositories: Sendable {
     let session: any SessionRepository
+    let authentication: any AuthenticationRepository
     let profiles: any ProfileRepository
     let coachDirectory: any CoachDirectoryRepository
     let programs: any ProgramRepository
@@ -12,12 +13,14 @@ nonisolated struct AppRepositories: Sendable {
     let coachParticipants: any CoachParticipantRepository
     let managedContent: any ManagedContentRepository
     let adminPeople: any AdminPeopleRepository
+    let coachApplications: any CoachApplicationRepository
     let adminProgramDrafts: any AdminProgramDraftRepository
     let audit: any AuditRepository
     let participantDemo: any ParticipantDemoRepository
 
     init(repository: InMemoryAppRepository) {
         session = repository
+        authentication = repository
         profiles = repository
         coachDirectory = repository
         programs = repository
@@ -28,6 +31,7 @@ nonisolated struct AppRepositories: Sendable {
         coachParticipants = repository
         managedContent = repository
         adminPeople = repository
+        coachApplications = repository
         adminProgramDrafts = repository
         audit = repository
         participantDemo = repository

@@ -4,12 +4,13 @@ import Testing
 
 @Suite("Phase 08 — aksesibilitas, demo, dan reliabilitas")
 struct Phase08AccessibilityReliabilityTests {
-    @Test("Launcher menyediakan seluruh 19 skenario deterministik")
+    @Test("Launcher menyediakan seluruh skenario deterministik")
     func completeScenarioCatalog() {
-        #expect(AppDemoScenario.allCases.count == 19)
-        #expect(AppDemoScenario.scenarios(for: .participant).count == 12)
-        #expect(AppDemoScenario.scenarios(for: .coach).count == 8)
-        #expect(AppDemoScenario.scenarios(for: .admin).count == 9)
+        #expect(AppDemoScenario.allCases.count == 29)
+        #expect(AppDemoScenario.scenarios(for: DemoRole.guest).count == 13)
+        #expect(AppDemoScenario.scenarios(for: UserRole.participant).count == 12)
+        #expect(AppDemoScenario.scenarios(for: UserRole.coach).count == 8)
+        #expect(AppDemoScenario.scenarios(for: UserRole.admin).count == 9)
 
         for role in UserRole.allCases {
             #expect(
@@ -24,27 +25,27 @@ struct Phase08AccessibilityReliabilityTests {
     func scenarioInitialTabs() {
         #expect(
             AppDemoScenario.participantFinalLeaderboard.initialTab(
-                for: .participant
+                for: UserRole.participant
             ) == .participant(.leaderboard)
         )
         #expect(
-            AppDemoScenario.coachIdentifier.initialTab(for: .coach)
+            AppDemoScenario.coachIdentifier.initialTab(for: UserRole.coach)
                 == .coach(.dashboard)
         )
         #expect(
-            AppDemoScenario.coachActiveParticipants.initialTab(for: .coach)
+            AppDemoScenario.coachActiveParticipants.initialTab(for: UserRole.coach)
                 == .coach(.dashboard)
         )
         #expect(
-            AppDemoScenario.adminDashboard.initialTab(for: .admin)
+            AppDemoScenario.adminDashboard.initialTab(for: UserRole.admin)
                 == .admin(.overview)
         )
         #expect(
-            AppDemoScenario.adminDraftCMS.initialTab(for: .admin)
+            AppDemoScenario.adminDraftCMS.initialTab(for: UserRole.admin)
                 == .admin(.programs)
         )
         #expect(
-            AppDemoScenario.defaultScenario(for: .admin)
+            AppDemoScenario.defaultScenario(for: UserRole.admin)
                 == .adminDashboard
         )
     }
@@ -219,6 +220,7 @@ struct Phase08AccessibilityReliabilityTests {
             #expect(message.messageKey.hasPrefix("error."))
         }
     }
+
 
     private func makeRepository() throws -> InMemoryAppRepository {
         InMemoryAppRepository(

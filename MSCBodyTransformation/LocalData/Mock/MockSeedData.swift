@@ -12,6 +12,7 @@ nonisolated struct MockSeedData: Sendable {
     let winners: [ProgramWinner]
     let managedContent: [ManagedContent]
     let auditEvents: [AuditEvent]
+    let coachApplications: [CoachApplication]
 
     static func load(
         using loader: LocalFixtureLoader = LocalFixtureLoader()
@@ -39,6 +40,11 @@ nonisolated struct MockSeedData: Sendable {
             fileName: "managed_content"
         )
 
+        let coachApplications = try makeCoachApplications(
+            users: users.users,
+            participantProfiles: users.participantProfiles
+        )
+
         return Self(
             users: users.users,
             participantProfiles: users.participantProfiles,
@@ -50,7 +56,63 @@ nonisolated struct MockSeedData: Sendable {
             leaderboardEntries: leaderboard.entries,
             winners: leaderboard.winners,
             managedContent: managedContent.content,
-            auditEvents: managedContent.auditEvents
+            auditEvents: managedContent.auditEvents,
+            coachApplications: coachApplications
         )
+    }
+
+    private static func makeCoachApplications(
+        users: [AppUser],
+        participantProfiles: [ParticipantProfile]
+    ) throws -> [CoachApplication] {
+        guard
+            let userID = UUID(
+                uuidString: "00000000-0000-0000-0000-000000000105"
+            ),
+            let applicationID = UUID(
+                uuidString: "40000000-0000-0000-0000-000000000105"
+            ),
+            let user = users.first(where: { $0.id == userID }),
+            let profile = participantProfiles.first(where: {
+                $0.userID == userID
+            })
+        else {
+            throw DomainError.invalidFixture(
+                file: "users",
+                reason: "Fixture pengajuan Coach tidak lengkap."
+            )
+        }
+
+        let verifiedAt = Date(timeIntervalSince1970: 1_785_456_000)
+        let period = CoachAccessPeriodCalculator().period(
+            startingAt: verifiedAt
+        )
+        return [
+            CoachApplication(
+                id: applicationID,
+                userID: user.id,
+                participantProfileID: profile.id,
+                displayNameSnapshot: profile.displayName,
+                phoneNumberSnapshot: profile.phoneNumber ?? "",
+                memberLevel: .millionaireTeam,
+                hasCompletedHOMSTS: true,
+                hasCompletedICT: true,
+                termsVersion: "coach-terms-v1",
+                status: .pendingAdminApproval,
+                payment: CoachPaymentPreview(
+                    priceBand: .leadership,
+                    amountMinorUnits: CoachPriceBand.leadership
+                        .amountMinorUnits,
+                    state: .verified,
+                    verifiedAt: verifiedAt,
+                    accessStartsAt: period.start,
+                    accessEndsAt: period.end
+                ),
+                createdAt: verifiedAt,
+                submittedAt: verifiedAt,
+                updatedAt: verifiedAt,
+                decision: nil
+            )
+        ]
     }
 }

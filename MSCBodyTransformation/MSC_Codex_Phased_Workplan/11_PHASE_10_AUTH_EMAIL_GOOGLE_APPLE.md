@@ -1,7 +1,9 @@
 # Phase 10: Authentication and Session
 
-> Status: menunggu implementasi local UI Phase 09.5 selesai. Setelah itu,
-> integrasi Auth lokal dapat dikerjakan tanpa menulis ulang Guest,
+> Status: siap dikerjakan setelah local UI Phase 09.5 selesai. Workplan telah
+> direkonsiliasi ulang pada 5 Agustus 2026 terhadap batas pendaftaran program,
+> override enrollment Admin, dan kontrak backend Phase 10–12. Integrasi Auth
+> lokal dapat dikerjakan tanpa menulis ulang Guest,
 > Login/Register, onboarding profil, atau pengajuan Coach.
 >
 > Email/password, profile bootstrap, session lifecycle, callback routing,
@@ -39,10 +41,14 @@ Sumber keputusan produk dan kontrak:
 
 Jika terdapat konflik, remediation workplan dan contract matrix berlaku.
 
-Phase ini hanya menangani identitas, session, profile bootstrap, role load,
+Phase ini hanya menangani identitas, session, profile bootstrap, field profil
+yang dapat diedit user termasuk level member, role load, provisional identity,
 dan pemulihan enrollment intent melewati autentikasi. Phase ini tidak:
 
 - Menerapkan operasi server Phase 11 yang belum selesai.
+- Menyimpan, menyetujui, menolak, atau mengaktifkan Coach application secara
+  authoritative. Phase 10 hanya menyiapkan authenticated handoff dan state
+  profile/onboarding; aggregate serta operasi Coach application tetap Phase 11.
 - Mengaktifkan transaksi StoreKit production.
 - Menyediakan Google atau Apple credential palsu.
 - Mendeploy migration ke hosted Supabase `main`.
@@ -69,11 +75,18 @@ Hasil Phase 10 harus menyediakan:
 - Session state yang aman terhadap refresh race, expiry, logout, dan relaunch.
 - Google OAuth dan Sign in with Apple setelah external gate tersedia.
 - Role yang selalu dibaca dari data backend terlindungi.
-- Persistensi nama, nomor HP, level member, dan Coach application dari UI
-  Phase 09.5.
-- Application Coach yang tidak pernah memberi role berdasarkan state client.
+- Persistensi nama, nomor HP, dan level member melalui operation dengan
+  allowlist yang tidak dapat mengubah role.
+- Authenticated handoff pengajuan Coach ke kontrak Phase 11 tanpa menyimpan
+  payment verified, keputusan Admin, atau role dari state client.
 - Program yang dipilih dan QR Coach opaque tetap tersedia setelah auth tanpa
   diperlakukan sebagai role atau izin akses.
+- Provider chooser Phase 09.5 dipertahankan: Apple, Google, dan email tampil
+  sebelum form email; Login tidak membuka keyboard otomatis.
+- Production onboarding tidak boleh mengekspos account/profile parsial.
+  Participant baru aktif setelah QR Coach tervalidasi server. Jalur pengajuan
+  Coach berhenti pada authenticated handoff sampai operasi application
+  Phase 11 dan payment verification Phase 12 benar-benar tersedia.
 - Local demo yang tetap berjalan tanpa Colima dan tanpa internet.
 - Pemisahan tegas antara local Supabase development dan hosted production.
 
@@ -98,6 +111,14 @@ Hasil Phase 10 harus menyediakan:
 - [x] RLS, explicit Data API grants, private Storage, dan operasi server
   vertical slice Phase 09 sudah diuji.
 - [x] Adapter iOS Phase 09 menggunakan native Foundation `URLSession`.
+- [x] Migration `20260805013707_program_registration_deadline.sql`
+  menambahkan cutoff authoritative berbasis server clock, memperkeras
+  self-enrollment, dan menyediakan `admin_enroll_participant`.
+- [x] Self-enrollment ditolak tepat pada atau setelah cutoff; RPC Admin hanya
+  mengecualikan deadline dan tetap memvalidasi role Admin, lifecycle,
+  kapasitas, Coach approved, entitlement, serta alasan audit.
+- [x] Fresh reset, lint, security advisors, 89 pgTAP assertions, dan 14 race
+  assertions untuk baseline tersebut sudah lulus.
 - [x] Hosted `main` belum menerima migration dan tetap diperlakukan sebagai
   production.
 
@@ -118,28 +139,31 @@ Hasil Phase 10 harus menyediakan:
 
 Keberadaan baseline tersebut tidak berarti production auth sudah selesai.
 
-### Handoff yang harus diselesaikan Phase 09.5
+### Handoff yang sudah diselesaikan Phase 09.5
 
-- [ ] Guest menjadi logged-out access state, bukan `UserRole`.
-- [ ] Guest dapat membuka seluruh Participant tabs dengan public-safe data.
-- [ ] Home Guest menampilkan CTA `Masuk / Daftar`.
-- [ ] Login default, Register, Forgot Password, serta fake Apple/Google/email
+- [x] Guest menjadi logged-out access state, bukan `UserRole`.
+- [x] Guest dapat membuka seluruh Participant tabs dengan public-safe data.
+- [x] Home Guest menampilkan satu CTA `Masuk`; Register berada pada Login.
+- [x] Login default, Register, Forgot Password, serta fake Apple/Google/email
   presentation tersedia.
-- [ ] Onboarding lokal memuat nama, nomor HP, sembilan level member, dan
+- [x] Provider chooser tampil sebelum form email dan tidak membuka keyboard.
+- [x] Onboarding lokal memuat nama, nomor HP, sembilan level member, dan
   pilihan Peserta/pengajuan Coach.
-- [ ] Coach application, eligibility HOM STS/ICT, price preview, payment
+- [x] Participant registration baru difinalisasi setelah QR Coach valid.
+- [x] Coach application, eligibility HOM STS/ICT, price preview, payment
   preview, dan review Admin tersedia pada repository lokal.
-- [ ] Pending applicant tetap Participant sampai approval.
+- [x] Pending applicant tetap Participant sampai approval.
+- [x] Pembatalan sebelum finalisasi membuang draft dan kembali ke Guest.
 
-## Gap yang harus ditutup
+## Gap Phase 10 yang harus ditutup
 
 - [ ] Belum ada migration idempoten untuk membuat profil Participant saat row
   baru dibuat pada `auth.users`.
-- [ ] Belum ada schema/member-level dan Coach application yang
-  merepresentasikan kontrak Phase 09.5.
-- [ ] Belum ada RLS/atomic operation untuk applicant submit, payment status,
-  Admin decision, role activation, dan Coach access period.
-- [ ] Belum ada public-safe Guest read contract untuk hosted Data API.
+- [ ] `public.profiles` belum mempunyai field level member dan operation
+  allowlisted untuk menyimpan nama, nomor HP, serta level tanpa membuka
+  perubahan role atau field privileged.
+- [ ] Belum ada onboarding/provisional status dan expiry server-controlled
+  yang dapat membedakan identity Auth dari application account aktif.
 - [ ] Belum ada backfill aman untuk identity test yang sudah ada tanpa profil.
 - [ ] Belum ada Auth API client dan token lifecycle pada aplikasi.
 - [ ] `SessionRepository` belum mendukung registration, login, logout,
@@ -148,10 +172,37 @@ Keberadaan baseline tersebut tidak berarti production auth sudah selesai.
 - [ ] Root Release masih membuka shell Participant tanpa session nyata.
 - [ ] Token belum disimpan pada Keychain.
 - [ ] Callback scheme belum didaftarkan pada target iOS.
-- [ ] Belum ada UI email/password production.
+- [ ] UI email/password sudah tersedia dari Phase 09.5, tetapi command-nya
+  masih memakai fake adapter dan belum terhubung ke Supabase Auth.
+- [ ] `PendingAuthenticatedIntent` source saat ini baru membawa program ID;
+  belum membawa TTL, nonce, environment, dan QR Coach opaque pada secure
+  storage.
+- [ ] Belum ada revalidasi cutoff program setelah login, verification, OAuth
+  callback, app relaunch, atau perubahan cutoff selama auth berlangsung.
+- [ ] Belum ada lifecycle provisional identity yang membedakan login account
+  lama dari identity baru yang belum menyelesaikan onboarding.
+- [ ] Belum ada cleanup idempoten untuk identity baru yang dibatalkan sebelum
+  QR Participant atau handoff Coach selesai.
 - [ ] Belum ada provider Google/Apple yang dikonfigurasi.
 - [ ] Belum ada account-deletion request yang dapat diakses dari aplikasi.
 - [ ] Belum ada hosted production Auth configuration.
+
+## Handoff yang tetap menjadi Phase 11 dan Phase 12
+
+Item berikut adalah dependency produk setelah fondasi Auth lokal selesai,
+bukan exit criteria Phase 10 lokal:
+
+- [ ] Phase 11 menyediakan public-safe Guest views/grants tanpa membuat
+  anonymous Auth user.
+- [ ] Phase 11 menambahkan Coach application, attestation snapshot, RLS,
+  applicant submit, Admin approve/reject, audit, dan role activation atomik.
+- [ ] Phase 11 menghubungkan Admin enrollment override ke
+  `admin_enroll_participant`; client Participant tidak pernah mendapat akses
+  ke RPC tersebut.
+- [ ] Phase 12 memverifikasi pembayaran Coach/Program dan entitlement secara
+  server-authoritative.
+- [ ] Phase 12 menentukan expiry, renewal, cancellation, refund, dan
+  reconciliation pembayaran.
 
 ## Keputusan environment
 
@@ -217,11 +268,11 @@ Gunakan dependency direction:
 ```text
 SwiftUI Auth View / RootView
     ↓
-Auth Feature State / SessionStore
+AuthenticationFlowState / SessionStore
     ↓
-Use Case
+Authentication command use case / Session use case
     ↓
-SessionRepository
+AuthenticationRepository façade / SessionRepository lifecycle owner
     ↓
 Local Demo Adapter atau Supabase Session Adapter
     ↓
@@ -230,10 +281,15 @@ SupabaseAuthClientProviding
 
 Keputusan:
 
-- Pertahankan `SessionRepository` sebagai domain-facing boundary.
-- Jangan membuat `AuthRepository` kedua dengan responsibility yang sama.
-- Tambahkan method auth secara bertahap pada `SessionRepository` atau protocol
-  turunan sempit hanya bila pemisahan benar-benar mengurangi tanggung jawab.
+- Pertahankan `AuthenticationRepository` Phase 09.5 sebagai façade command
+  yang digunakan flow Login/Register/onboarding agar UI tidak ditulis ulang.
+- Jadikan `SessionRepository` satu-satunya domain-facing owner untuk session,
+  token, restore, refresh, logout, dan auth-state observation.
+- Production `AuthenticationRepository` mendelegasikan identity command ke
+  session use case dan profile operation; repository ini tidak boleh memiliki
+  token store, refresh actor, atau auth-state stream kedua.
+- Jangan membuat repository Auth ketiga atau memasang transport langsung pada
+  `AuthenticationFlowState`.
 - `SupabaseAuthClientProviding` adalah infrastructure transport, bukan domain
   repository.
 - `SessionStore` mengorkestrasi auth state, profile load, onboarding, pending
@@ -247,6 +303,11 @@ Checklist:
   email credential, registration request, auth provider, dan recovery state.
 - [ ] Perluas `SessionRepository` untuk register, login, logout, restore,
   refresh, request reset, update password, dan auth-state updates.
+- [ ] Ubah method `...ForDemo` pada `AuthenticationRepository` menjadi
+  command environment-neutral atau adapter façade yang mendelegasikan ke
+  local demo maupun Supabase tanpa mengubah navigation flow.
+- [ ] Pastikan hanya satu Keychain store, refresh coordinator, dan session
+  observation stream yang hidup untuk satu app environment.
 - [ ] Pertahankan method Debug-only terisolasi dari production adapter.
 - [ ] Tambahkan `SessionStore` berbasis Observation pada app layer.
 - [ ] Gunakan `AsyncStream` atau mekanisme structured-concurrency yang
@@ -257,13 +318,15 @@ Checklist:
   - Menunggu verifikasi email.
   - Password recovery.
   - Profile provisioning.
+  - Provisional onboarding.
+  - Provisional cleanup pending.
   - Onboarding Participant.
   - Authenticated role shell.
   - Session expired.
   - Recoverable error.
 - [ ] Root route tidak pernah memilih shell hanya dari metadata provider.
-- [ ] Session dianggap usable setelah token valid dan protected profile
-  berhasil dimuat.
+- [ ] Token valid dan protected profile yang berhasil dimuat belum cukup untuk
+  membuka role shell; onboarding/finalization status juga harus selesai.
 - [ ] Role-load failure tidak boleh jatuh ke Participant secara diam-diam.
 - [ ] Root Debug tetap dapat memilih local demo secara eksplisit.
 - [ ] Root Release tidak boleh membuka shell Participant ketika tidak ada
@@ -281,6 +344,8 @@ Profile bootstrap:
   `public.profiles` secara idempoten.
 - [ ] Set role secara literal menjadi `participant`; abaikan `role`,
   `current_coach_id`, Coach approval, dan Coach QR dari user metadata.
+- [ ] Set onboarding/provisional status dan expiry secara server-controlled;
+  abaikan field sejenis dari user metadata atau request client.
 - [ ] Gunakan metadata hanya untuk field display/onboarding yang tidak
   authoritative setelah disanitasi.
 - [ ] Sediakan fallback display name yang valid agar metadata kosong tidak
@@ -349,12 +414,19 @@ Role hardening:
 
 Istilah yang digunakan adalah `PendingEnrollmentIntent`, bukan invite.
 
+Source Phase 09.5 saat ini memakai `PendingAuthenticatedIntent` dengan
+`.joinProgram(UUID)` dan `.openProfile`. Phase 10 harus memigrasikannya ke
+model typed yang lebih lengkap atau membungkusnya di boundary yang sama;
+jangan membuat dua intent store yang dapat berbeda state.
+
 Intent minimum:
 
 - Program ID yang dipilih.
-- QR Coach opaque hasil scanner.
+- QR Coach opaque hasil scanner bila scan sudah dilakukan.
 - Waktu pembuatan dan expiry.
 - Nonce/identifier lokal untuk mencegah callback lama memakai intent baru.
+- Environment asal agar callback local tidak dapat memakai intent production
+  dan sebaliknya.
 
 Aturan:
 
@@ -369,7 +441,8 @@ Aturan:
   tidak lagi tersedia, atau QR ditolak secara final.
 - [ ] Jangan mengubah QR menjadi role, entitlement, atau izin akses.
 - [ ] Setelah auth, server RPC authoritative tetap memvalidasi Participant,
-  program, current Coach, QR, kapasitas, pricing mode, dan idempotency.
+  program, current Coach, QR, lifecycle, kapasitas, cutoff pendaftaran,
+  pricing mode, entitlement, dan idempotency.
 - [ ] QR Coach pertama dapat menetapkan current Coach melalui operasi server.
 - [ ] QR Coach berbeda ditolak sebelum payment flow.
 - [ ] Program gratis dapat melanjutkan ke enrollment atomik Phase 09.
@@ -377,6 +450,26 @@ Aturan:
   tidak memberikan entitlement.
 - [ ] Uji callback lama, callback ganda, relaunch, logout, account switch,
   expired intent, wrong-Coach QR, dan duplicate enrollment.
+
+### Batas pendaftaran selama Auth
+
+- [ ] Tampilkan cutoff dari snapshot program hanya untuk informasi UI; hasil
+  client tidak pernah menjadi keputusan authoritative.
+- [ ] Setelah login, email verification, OAuth callback, session restoration,
+  dan app relaunch, muat ulang program sebelum QR atau enrollment dilanjutkan.
+- [ ] Self-enrollment menggunakan server clock dan ditolak tepat pada atau
+  setelah `registration_closes_at`.
+- [ ] Jika cutoff berubah atau terlewati ketika Auth sedang berlangsung,
+  hapus/akhiri join intent secara aman, jangan membuka scanner, dan tampilkan
+  pesan `Pendaftaran program sudah ditutup.`.
+- [ ] Program yang ditutup tetap dapat dibaca pada katalog/detail Guest.
+- [ ] Auth/Participant adapter hanya boleh memakai self-enrollment RPC dan
+  tidak pernah memanggil `admin_enroll_participant`.
+- [ ] `admin_enroll_participant` tetap berada pada Admin command repository,
+  wajib role Admin serta alasan audit, dan hanya mengabaikan deadline.
+- [ ] Uji cutoff sebelum login, saat verification menunggu, tepat pada batas,
+  setelah callback, setelah relaunch, dan race antara perubahan cutoff dengan
+  enrollment.
 
 ## Email dan password
 
@@ -547,21 +640,62 @@ Checklist:
   HP, level member, dan account purpose.
 - [ ] User dapat memilih `Ajukan menjadi Coach`, tetapi tidak dapat memilih
   atau mengirim role Coach/Admin.
-- [ ] Member tidak dapat submit Coach application.
-- [ ] SC ke atas wajib memenuhi HOM STS dan ICT sebelum payment handoff.
-- [ ] Payment verified dan Admin approval tetap server-controlled.
+- [ ] Member tidak dapat melanjutkan ke handoff Coach application.
+- [ ] SC ke atas wajib memenuhi HOM STS dan ICT sebelum handoff Phase 11/12.
+- [ ] Phase 10 tidak menerima atau menyimpan flag `payment_verified` maupun
+  keputusan Admin dari client.
 - [ ] Pending/rejected applicant tetap memakai Participant shell.
 - [ ] Onboarding hanya mengubah field profile yang memang user-editable melalui
   server operation dengan allowlist eksplisit.
 - [ ] Role tetap dibaca dari protected profile.
-- [ ] Coach yang belum approved mendapat state terbatas yang eksplisit, bukan
-  Participant shell atau Admin shell.
+- [ ] Applicant yang belum approved tetap memakai Participant shell dengan
+  status pengajuan eksplisit dan tanpa capability Coach/Admin.
 - [ ] Admin shell hanya terbuka untuk protected role Admin.
 - [ ] Role berubah oleh trusted Admin operation memicu profile/session reload.
 - [ ] Stale role cache tidak boleh mempertahankan akses ke shell privileged.
 - [ ] SessionStore membersihkan navigation path dan private cache ketika role
   atau user berubah.
 - [ ] Deep link ke route role tertentu tetap melewati session dan role guard.
+
+## Provisional identity dan pembatalan registrasi
+
+Kontrak produk tetap: menutup registrasi sebelum finalisasi membuang draft,
+kembali ke Guest, dan tidak membuat application account aktif. Implementasi
+harus jujur membedakan draft aplikasi, identity Supabase, protected profile,
+dan enrollment.
+
+- [ ] Untuk email/password, tunda request signup sampai nama, nomor HP, level,
+  tujuan akun, dan prasyarat Participant/Coach yang termasuk Phase 10 sudah
+  valid; password hanya hidup di memory selama flow dan tidak pernah
+  dipersistenkan oleh aplikasi.
+- [ ] Untuk OAuth yang dapat membuat `auth.users` saat callback, tandai
+  identity baru sebagai provisional sampai profile provisioning dan
+  finalization server berhasil.
+- [ ] Status provisional dan expiry bersifat server-controlled; client tidak
+  mendapat grant untuk mengubah atau memperpanjangnya.
+- [ ] Identity milik account lama yang sedang login tidak pernah dianggap
+  provisional dan tidak boleh dihapus ketika user menutup onboarding.
+- [ ] Profile provisional selalu role Participant, tidak mempunyai enrollment,
+  Coach capability, payment verified, atau application approval.
+- [ ] Menutup flow menghapus draft, pending intent, PKCE/state, dan material
+  session lokal lalu kembali ke Guest.
+- [ ] Bila identity baru sudah dibuat, panggil authenticated trusted cleanup
+  operation yang idempoten. Operation memverifikasi bahwa identity memang
+  provisional, belum mempunyai enrollment/application/audit responsibility,
+  lalu revoke session sebelum menghapus identity.
+- [ ] Auth Admin API atau `service_role` tidak pernah berada di aplikasi;
+  cleanup dijalankan server-side dengan privilege minimum.
+- [ ] Server menjadwalkan expiry cleanup saat identity provisional dibuat,
+  sehingga orphan tetap dibersihkan bila client hilang atau offline.
+- [ ] Jika cleanup langsung gagal atau offline, aplikasi tetap membersihkan
+  data lokal dan kembali ke Guest, tetapi tidak mengklaim penghapusan server
+  telah terkonfirmasi; cleanup terjadwal server menjadi fallback.
+- [ ] Relaunch dapat melanjutkan provisional onboarding yang sah atau
+  menyelesaikan cleanup kedaluwarsa; jangan membuka Participant shell hanya
+  karena token masih valid.
+- [ ] Uji cancel sebelum signup, cancel setelah OAuth callback, callback ganda,
+  offline cleanup, retry, relaunch, account lama, identity linked, dan cleanup
+  yang sudah selesai.
 
 ## Account deletion dan privacy
 
@@ -611,6 +745,35 @@ Phase 13.
   terlihat.
 - [ ] Uji Dynamic Type, VoiceOver, Reduce Motion, light/dark mode, keyboard,
   password AutoFill, dan error focus.
+- [ ] Provider chooser tetap tampil sebelum form email dan Login tidak
+  autofocus atau membuka keyboard otomatis.
+- [ ] Login/Register mempertahankan `.largeTitle.bold`, tidak memakai
+  `minimumScaleFactor`, tidak mengecil saat destination berubah, dan membungkus
+  secara alami pada Dynamic Type besar.
+- [ ] Login menjadi root navigation; Register, form email, Forgot Password,
+  profil, QR, eligibility, dan pembayaran mempertahankan typed back history.
+- [ ] Native leading-edge swipe bekerja pada destination Auth. Edge swipe
+  root Login menutup Auth tanpa bertabrakan dengan scroll/carousel.
+- [ ] Membatalkan onboarding Participant atau Coach membuang draft dan kembali
+  ke Guest tanpa membuka shell account parsial.
+
+## Dokumentasi yang wajib diperbarui
+
+- [ ] Perbarui phase checklist dan progress log setelah setiap gate yang
+  benar-benar diverifikasi.
+- [ ] Perbarui `PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md` untuk membedakan
+  local Auth foundation, external provider gate, dan hosted production.
+- [ ] Perbarui `PROGRAM_END_TO_END_CONTRACT_MATRIX.md` bila field profile,
+  provisional identity, atau owner operation berubah.
+- [ ] Perbarui `Contracts/program-api-v1.openapi.yaml` hanya untuk endpoint
+  aplikasi/server yang memang menjadi kontrak; jangan mendokumentasikan
+  endpoint internal Auth secara spekulatif.
+- [ ] Perbarui `supabase/README.md` dengan migration, Auth test, local inbox,
+  callback, reset, dan cleanup verification yang benar-benar tersedia.
+- [ ] Perbarui `UI_REFERENCE_SHEET.md` hanya bila perilaku Auth production
+  berbeda dari kontrak UI Phase 09.5 yang sudah disetujui.
+- [ ] Catat manual Xcode step untuk URL scheme/capability tanpa mengedit
+  `project.pbxproj`, entitlements, signing, atau capability tanpa persetujuan.
 
 ## Urutan implementasi
 
@@ -620,27 +783,35 @@ Kerjakan satu gate pada satu waktu.
 
 1. Hidupkan Colima dan Supabase lokal bila diperlukan sesuai `AGENTS.md`.
 2. Verifikasi CLI/config keys dan Auth endpoint dari dokumentasi versi aktif.
-3. Buat migration profile bootstrap dan role hardening baru.
-4. Tambahkan pgTAP serta Auth API integration tests.
-5. Jalankan fresh reset, lint, advisors, grants, RLS, dan signup tests.
+3. Buat migration profile bootstrap, field level member,
+   onboarding/provisional status, allowlisted profile operation, role
+   hardening, dan provisional identity cleanup baru.
+4. Pertahankan migration deadline yang sudah ada; jangan mengubah history
+   migration Phase 09 atau migration 5 Agustus.
+5. Tambahkan pgTAP serta Auth API integration tests.
+6. Jalankan fresh reset, lint, advisors, grants, RLS, signup, dan cleanup
+   tests.
 
 ### Gate B — iOS session foundation
 
 1. Tambahkan environment modes dan validation.
 2. Tambahkan Supabase Auth transport boundary.
-3. Perluas `SessionRepository` tanpa membuat repository duplikat.
+3. Perluas `SessionRepository` sebagai lifecycle owner dan ubah
+   `AuthenticationRepository` menjadi façade command tanpa token state kedua.
 4. Tambahkan Keychain store dan actor untuk refresh coordination.
 5. Tambahkan `SessionStore` serta root state machine.
 6. Pertahankan local demo dan seluruh mock tests.
 
 ### Gate C — Email/password dan enrollment intent
 
-1. Registrasi dan profile provisioning.
+1. Registrasi, provisional identity, profile provisioning, dan cancellation.
 2. Verification/resend.
 3. Login/logout/session restoration.
 4. Forgot/reset password callback.
 5. Pending enrollment intent secure persistence dan resume.
-6. Local Auth E2E pada Simulator.
+6. Revalidasi registration cutoff dan pastikan Participant tidak dapat
+   memanggil Admin override.
+7. Local Auth E2E pada Simulator.
 
 ### Gate D — Provider-ready source
 
@@ -677,16 +848,23 @@ Kerjakan satu gate pada satu waktu.
 - [ ] Typed error mapping.
 - [ ] Callback parser dan state/nonce/PKCE validation.
 - [ ] Pending enrollment intent TTL dan consumption.
+- [ ] Provisional identity state, cancellation, cleanup terjadwal, dan expiry.
+- [ ] Registration cutoff berubah selama Auth berlangsung.
 - [ ] Session expiry dan role-load failure.
 - [ ] Account switch membersihkan private state.
 
 ### Database dan Auth API lokal
 
 - [ ] Signup membuat tepat satu Participant profile.
+- [ ] Signup baru memulai status provisional dan tidak membuka role shell
+  sampai finalization server selesai.
 - [ ] Empty/malformed display metadata tidak memblokir signup.
 - [ ] Client-supplied Coach/Admin role diabaikan.
 - [ ] Member level tidak dapat dipakai sebagai authorization claim.
-- [ ] Coach application tidak dapat self-approve atau menulis payment verified.
+- [ ] Auth/profile operation tidak dapat membuat Coach application, menulis
+  payment verified, atau mengirim keputusan Admin.
+- [ ] Profile user hanya dapat mengubah nama, nomor HP, dan level member
+  miliknya melalui allowlisted operation.
 - [ ] Concurrent/repeated bootstrap tetap idempoten.
 - [ ] Authenticated user hanya membaca profile yang diizinkan RLS.
 - [ ] User tidak dapat INSERT/UPDATE role/current Coach/approval/QR.
@@ -698,6 +876,10 @@ Kerjakan satu gate pada satu waktu.
 - [ ] Expired access token menghasilkan satu refresh/retry.
 - [ ] Profile trigger failure terdeteksi dan tidak menghasilkan partial state
   yang diklaim sukses.
+- [ ] Provisional cleanup hanya dapat menghapus identity baru yang belum
+  mempunyai protected relationship dan bersifat idempoten.
+- [ ] Self-enrollment menolak cutoff memakai server clock; authenticated
+  Participant tidak dapat EXECUTE `admin_enroll_participant`.
 - [ ] Advisors tidak menemukan security blocker baru.
 
 ### iOS integration
@@ -708,7 +890,12 @@ Kerjakan satu gate pada satu waktu.
 - [ ] Local demo tetap berjalan saat Colima mati.
 - [ ] Debug Supabase mode memberi error actionable saat Colima mati.
 - [ ] Login success memuat protected role.
+- [ ] Login identity provisional membuka resume/cleanup onboarding, bukan
+  Participant shell.
 - [ ] Pending intent bertahan melalui signup/login/callback.
+- [ ] Program dan cutoff dimuat ulang sebelum scanner/enrollment dilanjutkan.
+- [ ] Cutoff yang terlewati saat Auth menghasilkan pesan actionable dan
+  mengakhiri join intent tanpa enrollment.
 - [ ] Free enrollment melanjutkan melalui RPC Phase 09.
 - [ ] Wrong-Coach QR ditolak sebelum enrollment/payment.
 - [ ] Password reset membuka route yang benar.
@@ -723,6 +910,10 @@ Kerjakan satu gate pada satu waktu.
 - [ ] Forgot password.
 - [ ] Reset password.
 - [ ] Provider loading/cancel/error.
+- [ ] Login/Register tidak mengecil, tidak autofocus, dan native swipe-back
+  tetap bekerja setelah real Auth adapter dipasang.
+- [ ] Cancel Participant/Coach kembali ke Guest tanpa draft lokal atau shell
+  account parsial.
 - [ ] Session expired.
 - [ ] Profile provisioning failure.
 - [ ] Account deletion request.
@@ -818,15 +1009,21 @@ lokal.
   lulus.
 - [ ] Signup selalu membuat tepat satu Participant profile.
 - [ ] Role self-promotion melalui metadata, Data API, atau callback mustahil.
-- [ ] Profile/member level dan Coach application Phase 09.5 tersimpan melalui
-  allowlisted operation tanpa memberi role Coach.
-- [ ] Pending applicant tetap Participant sampai eligibility, payment
-  verification, dan Admin approval lulus.
+- [ ] Nama, nomor HP, dan level member tersimpan melalui allowlisted operation
+  tanpa memberi role Coach atau akses ke field privileged.
+- [ ] Handoff Coach terautentikasi tersedia tanpa mengklaim operasi
+  application/payment/approval Phase 11–12 sudah selesai.
+- [ ] Provisional identity tidak membuka role shell; cancel membersihkan draft,
+  intent, session lokal, dan menjalankan cleanup server idempoten bila perlu.
 - [ ] Email/password registration, verification, login, logout, recovery, dan
   restoration berjalan pada Supabase lokal.
 - [ ] Token tersimpan aman, refresh terkoordinasi, dan session expiry tertangani.
 - [ ] Root route berasal dari session + protected profile + onboarding state.
 - [ ] Pending enrollment intent bertahan melewati auth dan dikonsumsi aman.
+- [ ] Cutoff pendaftaran divalidasi ulang dengan server clock setelah Auth;
+  Participant tidak dapat memakai override Admin.
+- [ ] Provider-first layout, ukuran teks, keyboard behavior, typed navigation,
+  dan swipe-back Phase 09.5 tidak mengalami regresi.
 - [ ] Local demo tetap berjalan tanpa Colima atau internet.
 - [ ] Debug Supabase mode tidak dapat salah menyasar hosted production.
 - [ ] Release tidak dapat memakai local endpoint atau Debug credential.
@@ -834,6 +1031,9 @@ lokal.
 - [ ] Tidak ada token, raw QR Coach, password, provider secret, atau private
   data pada source, bundle, fixture, dan log.
 - [ ] Full Swift tests dan simulator build lulus.
+- [ ] Dokumentasi Phase 10, status implementasi, contract matrix, OpenAPI bila
+  relevan, dan `supabase/README.md` konsisten dengan hasil yang benar-benar
+  diverifikasi.
 
 ### External/production exit criteria
 
@@ -884,6 +1084,44 @@ benar-benar digunakan.
 
 ## Progress log
 
+### 5 Agustus 2026 — Direkonsiliasi dengan deadline dan Auth UI terbaru
+
+- Files changed:
+  - `MSCBodyTransformation/MSC_Codex_Phased_Workplan/11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`.
+- Source/contract baseline:
+  - Migration `20260805013707_program_registration_deadline.sql`,
+    `admin_enroll_participant`, DTO/repository iOS, 89 pgTAP assertions, dan
+    14 race assertions sudah tersedia dan lulus lokal.
+  - Guest/Auth UI Phase 09.5 sudah provider-first, tidak autofocus, memakai
+    typed navigation, mendukung native swipe-back, dan membuang draft saat
+    dibatalkan.
+  - `PendingAuthenticatedIntent` source masih hanya membawa program ID atau
+    tujuan profile dan harus dimigrasikan pada Phase 10.
+- Decisions:
+  - Session/token hanya dimiliki `SessionRepository`; existing
+    `AuthenticationRepository` dipertahankan sebagai command façade.
+  - Phase 10 menyimpan field profil dan menyiapkan authenticated handoff.
+    Coach application/approval tetap Phase 11; payment/entitlement tetap
+    Phase 12.
+  - Cutoff selalu divalidasi ulang dengan server clock setelah Auth.
+    Participant tidak pernah mendapat jalur Admin override.
+  - Identity baru yang belum selesai diperlakukan provisional; pembatalan
+    membersihkan state lokal dan memakai cleanup server idempoten bila
+    identity Supabase sudah terbentuk.
+- Verification:
+  - Workplan dibandingkan dengan implementation status dan contract matrix
+    tanggal 5 Agustus, Phase 09.5, source Auth/current intent, migration
+    deadline, UI Reference Sheet, dan Supabase changelog breaking changes
+    terkini.
+- Build/Test:
+  - Tidak dijalankan; perubahan hanya dokumentasi workplan.
+- Remaining external gates:
+  - Callback scheme target iOS.
+  - Google Cloud credential dan consent screen.
+  - Apple capability/provider configuration.
+  - Hosted production deployment/configuration.
+  - Verifikasi Google dan Apple pada iPhone fisik.
+
 ### 4 Agustus 2026 — Workplan direkonsiliasi setelah Phase 09
 
 - Files changed:
@@ -930,6 +1168,20 @@ benar-benar digunakan.
 - Build/Test:
   - Tidak dijalankan; perubahan hanya dokumentasi workplan.
 - Remaining blockers:
-  - Implementasi Phase 09.5.
-  - Migration/RLS/operation Coach application pada Phase 10/11.
+  - Migration/RLS/operation Coach application pada Phase 11.
   - StoreKit verification dan entitlement pada Phase 12.
+
+### 4 Agustus 2026 — Phase 09.5 selesai sebagai local UI contract
+
+- Guest logged-out shell, centralized auth gate, Login/Register/Forgot
+  Password, provider presentation, onboarding profil, sembilan Member level,
+  Coach application, fake payment tiga bulan, dan Admin review tersedia.
+- Phase 10 harus mengganti fake auth adapter di boundary yang sama; jangan
+  membuat `AuthRepository`/navigation flow duplikat.
+- `AuthenticationRepository`, `SessionRepository`, `AppSession`,
+  `ParticipantJourneyStore`, dan Keychain adapter Phase 10 harus
+  direkonsiliasi sebagai satu session lifecycle.
+- Profile bootstrap tetap selalu Participant. Member level/application
+  persistence tidak boleh menjadi authorization claim.
+- Backend Coach application approval tetap Phase 11 dan payment verification
+  serta entitlement tetap Phase 12.

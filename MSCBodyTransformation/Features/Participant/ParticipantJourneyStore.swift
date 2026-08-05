@@ -25,8 +25,16 @@ nonisolated enum ProgramParticipationAccount: Sendable {
 nonisolated enum ParticipantJourneyLoadState: Equatable, Sendable {
     case idle
     case loading
+    case guestLoaded(GuestBrowsingSnapshot)
     case loaded(ParticipantJourneySnapshot)
     case failed(DomainError)
+}
+
+nonisolated struct GuestBrowsingSnapshot: Equatable, Sendable {
+    let programs: [Program]
+    let featuredWinnerPosters: [ManagedContent]
+    let coaches: [CoachProfile]
+    let managedContent: [ManagedContent]
 }
 
 nonisolated struct ParticipantJourneySnapshot: Equatable, Sendable {
@@ -68,6 +76,7 @@ final class ParticipantJourneyStore {
     private let environment: AppEnvironment
     private let participationAccount: ProgramParticipationAccount
     private let shouldStartWithoutEnrollment: Bool
+    private let allowsGuestAccess: Bool
     private var didPrepareInitialScenario = false
 
     var state: ParticipantJourneyLoadState = .idle
@@ -91,15 +100,21 @@ final class ParticipantJourneyStore {
     var focusedProgramID: UUID?
     var selectedLeaderboardProgramID: UUID?
     var leaderboardState: ParticipantLeaderboardLoadState = .idle
+    var accessState: AppAccessState = .guest
+    var authenticationPresentation: AuthenticationPresentation?
+    var pendingAuthenticatedIntent: PendingAuthenticatedIntent?
+    var completedAuthenticatedIntent: PendingAuthenticatedIntent?
 
     init(
         environment: AppEnvironment,
         participationAccount: ProgramParticipationAccount = .participant,
-        startsWithoutEnrollment: Bool = false
+        startsWithoutEnrollment: Bool = false,
+        allowsGuestAccess: Bool = false
     ) {
         self.environment = environment
         self.participationAccount = participationAccount
         shouldStartWithoutEnrollment = startsWithoutEnrollment
+        self.allowsGuestAccess = allowsGuestAccess
         entryStage = startsWithoutEnrollment ? .login : .complete
     }
 
@@ -108,6 +123,34 @@ final class ParticipantJourneyStore {
             return nil
         }
         return snapshot
+    }
+
+    var guestSnapshot: GuestBrowsingSnapshot? {
+        guard case .guestLoaded(let snapshot) = state else {
+            return nil
+        }
+        return snapshot
+    }
+
+    var isGuest: Bool {
+        if case .guest = accessState {
+            return true
+        }
+        return false
+    }
+
+    var programs: [Program] {
+        snapshot?.programs ?? guestSnapshot?.programs ?? []
+    }
+
+    var publicCoaches: [CoachProfile] {
+        snapshot?.coaches ?? guestSnapshot?.coaches ?? []
+    }
+
+    var featuredWinnerPosters: [ManagedContent] {
+        snapshot?.featuredWinnerPosters
+            ?? guestSnapshot?.featuredWinnerPosters
+            ?? []
     }
 
     var currentProgram: Program? {
@@ -172,6 +215,12 @@ final class ParticipantJourneyStore {
         return environment.clock.now()
     }
 
+    func registrationAvailability(
+        for program: Program
+    ) -> ProgramRegistrationAvailability {
+        program.registrationAvailability(at: environment.clock.now())
+    }
+
     var overallProgress: Int {
         guard let program = currentProgram else {
             return 0
@@ -206,6 +255,17 @@ final class ParticipantJourneyStore {
     }
 
     var activeLeaderboardPrograms: [Program] {
+        if isGuest {
+            return programs
+                .filter { $0.status == .active || $0.status == .scheduled }
+                .sorted {
+                    if $0.startDate == $1.startDate {
+                        return $0.title.localizedStandardCompare($1.title)
+                            == .orderedAscending
+                    }
+                    return $0.startDate > $1.startDate
+                }
+        }
         guard let snapshot, !hidesActiveProgramForDemo else {
             return []
         }
@@ -229,6 +289,13 @@ final class ParticipantJourneyStore {
     }
 
     var archivedLeaderboardPrograms: [Program] {
+        if isGuest {
+            return programs
+                .filter {
+                    $0.status == .completed || $0.status == .archived
+                }
+                .sorted { $0.endDate > $1.endDate }
+        }
         guard let snapshot else {
             return []
         }
@@ -266,13 +333,13 @@ final class ParticipantJourneyStore {
     }
 
     var wellnessDisclaimer: ManagedContent? {
-        snapshot?.managedContent.first {
+        (snapshot?.managedContent ?? guestSnapshot?.managedContent ?? []).first {
             $0.kind == .wellnessDisclaimer && $0.isPublished
         }
     }
 
     var winnerBanner: ManagedContent? {
-        snapshot?.managedContent.first {
+        (snapshot?.managedContent ?? guestSnapshot?.managedContent ?? []).first {
             $0.kind == .winnerBanner && $0.isPublished
         }
     }
@@ -287,14 +354,21 @@ final class ParticipantJourneyStore {
         do {
             var session = try await repositories.session.loadCurrentSession()
             if session.state == .loggedOut {
-                session = try await repositories.session.switchDebugRole(
-                    to: participationAccount.sessionRole
-                )
+                if allowsGuestAccess {
+                    accessState = .guest
+                    try await loadGuestSnapshot(repositories: repositories)
+                    return
+                } else {
+                    session = try await repositories.session.switchDebugRole(
+                        to: participationAccount.sessionRole
+                    )
+                }
             }
             guard let user = session.user,
                   user.role == participationAccount.sessionRole else {
                 throw DomainError.permissionDenied
             }
+            accessState = .authenticated(session)
             let profile = try await repositories.profiles.participantProfile(
                 userID: user.id
             )
@@ -342,6 +416,53 @@ final class ParticipantJourneyStore {
         } catch {
             state = .failed(.unknown)
         }
+    }
+
+    func requestAuthentication(
+        destination: AuthenticationDestination = .login,
+        reason: AuthGateReason? = nil,
+        intent: PendingAuthenticatedIntent? = nil
+    ) {
+        if let intent {
+            pendingAuthenticatedIntent = intent
+        }
+        guard authenticationPresentation == nil else {
+            return
+        }
+        authenticationPresentation = AuthenticationPresentation(
+            destination: destination,
+            reason: reason
+        )
+    }
+
+    func updateAuthenticationDestination(
+        _ destination: AuthenticationDestination
+    ) {
+        guard var presentation = authenticationPresentation else {
+            requestAuthentication(destination: destination)
+            return
+        }
+        presentation.destination = destination
+        authenticationPresentation = presentation
+    }
+
+    func cancelAuthentication() {
+        authenticationPresentation = nil
+        pendingAuthenticatedIntent = nil
+    }
+
+    func completeAuthenticationFlow() async {
+        await load()
+        completedAuthenticatedIntent = pendingAuthenticatedIntent
+        pendingAuthenticatedIntent = nil
+        authenticationPresentation = nil
+    }
+
+    func consumeCompletedAuthenticatedIntent()
+        -> PendingAuthenticatedIntent?
+    {
+        defer { completedAuthenticatedIntent = nil }
+        return completedAuthenticatedIntent
     }
 
     func saveProfile(
@@ -550,7 +671,7 @@ final class ParticipantJourneyStore {
     }
 
     func coach(id: UUID) -> CoachProfile? {
-        snapshot?.coaches.first { $0.id == id }
+        publicCoaches.first { $0.id == id }
     }
 
     func enrollment(for programID: UUID) -> ProgramEnrollment? {
@@ -661,7 +782,7 @@ final class ParticipantJourneyStore {
             identifierGenerator: environment.identifierGenerator,
             clock: environment.clock
         )(
-            programID: programID,
+            program: program,
             participantID: snapshot.profile.id,
             coachID: coach.id
         )
@@ -834,7 +955,56 @@ final class ParticipantJourneyStore {
 
     func logoutLocalDemo() async {
         await environment.repositories?.session.setDebugScenario(.loggedOut)
-        entryStage = .login
+        if allowsGuestAccess {
+            entryStage = .complete
+            await load()
+        } else {
+            entryStage = .login
+        }
+    }
+
+    private func loadGuestSnapshot(
+        repositories: AppRepositories
+    ) async throws {
+        async let programsTask = repositories.programs.programs()
+        async let coachesTask = repositories.coachDirectory.publicCoaches()
+        async let managedContentTask =
+            repositories.managedContent.managedContent()
+        let allPrograms = try await programsTask
+        let programValues = allPrograms.filter {
+            $0.status == .active
+                || $0.status == .scheduled
+                || $0.status == .completed
+                || $0.status == .archived
+        }
+        let managedContent = try await managedContentTask
+        let featuredWinnerPosters = managedContent
+            .filter {
+                $0.kind == .winnerBanner
+                    && ManagedContentValidator().isVisible(
+                        $0,
+                        at: environment.clock.now()
+                    )
+                    && $0.localMediaReference?.isEmpty == false
+            }
+            .sorted {
+                if $0.sortOrder == $1.sortOrder {
+                    return $0.updatedAt > $1.updatedAt
+                }
+                return $0.sortOrder < $1.sortOrder
+            }
+        state = .guestLoaded(
+            GuestBrowsingSnapshot(
+                programs: programValues,
+                featuredWinnerPosters: featuredWinnerPosters,
+                coaches: try await coachesTask,
+                managedContent: managedContent.filter(\.isPublished)
+            )
+        )
+        focusedProgramID = nil
+        selectedDayNumber = nil
+        selectedLeaderboardProgramID = nil
+        leaderboardState = .idle
     }
 
     private func loadSnapshot(

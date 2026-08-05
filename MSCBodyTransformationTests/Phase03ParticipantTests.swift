@@ -256,7 +256,7 @@ struct Phase03ParticipantTests {
             identifierGenerator: identifiers,
             clock: clock
         )(
-            programID: program.id,
+            program: program,
             participantID: profile.id,
             coachID: coachID
         )
@@ -355,7 +355,7 @@ struct Phase03ParticipantTests {
             ),
             clock: FixedClock(now: currentDate)
         )(
-            programID: program.id,
+            program: program,
             participantID: participant.id,
             coachID: coach.id
         )
@@ -364,6 +364,49 @@ struct Phase03ParticipantTests {
         #expect(enrollment.coachID == coach.id)
         #expect(coach.enrollmentIdentifier == "COACH-RAKA-7K9Q")
         #expect(program.price == 99_000)
+    }
+
+    @Test("Batas pendaftaran menutup enrollment tepat pada waktunya")
+    func registrationDeadlineBlocksEnrollmentAtCutoff() async throws {
+        let seed = try MockSeedData.load()
+        let repository = InMemoryAppRepository(seed: seed)
+        let participant = try #require(seed.participantProfiles.first)
+        let coach = try #require(seed.coachProfiles.first)
+        var program = try #require(
+            seed.programs.first { $0.status == .scheduled }
+        )
+        program.registrationClosesAt = currentDate
+
+        do {
+            _ = try await JoinProgramWithCoachUseCase(
+                enrollments: repository,
+                identifierGenerator: DeterministicIdentifierGenerator(
+                    identifier: UUID(
+                        uuidString:
+                            "40000000-0000-0000-0000-000000009996"
+                    )!
+                ),
+                clock: FixedClock(now: currentDate)
+            )(
+                program: program,
+                participantID: participant.id,
+                coachID: coach.id
+            )
+            Issue.record("Enrollment pada waktu penutupan harus ditolak.")
+        } catch let error as DomainError {
+            #expect(
+                error == .conflict(
+                    reason: "Pendaftaran program sudah ditutup."
+                )
+            )
+        }
+
+        #expect(
+            try await repository.enrollment(
+                programID: program.id,
+                participantID: participant.id
+            ) == nil
+        )
     }
 
     @Test("Berat akhir memperbarui poin lokal pada hari terakhir")

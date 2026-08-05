@@ -52,15 +52,33 @@ struct ParticipantJoinProgramView: View {
 
     @ViewBuilder
     private func content(_ program: Program) -> some View {
-        switch stage {
-        case .scanCoach:
-            scannerStep(program)
-        case .confirmCoach:
-            coachConfirmationStep(program)
-        case .payment:
-            paymentStep(program)
-        case .completed:
-            completionStep(program)
+        if stage != .completed,
+           store.registrationAvailability(for: program) == .closed {
+            ContentUnavailableView {
+                Label(
+                    "participant.program.registration.closed",
+                    systemImage: "clock.badge.xmark"
+                )
+            } description: {
+                Text(
+                    "participant.join.registration_closed.message"
+                )
+            } actions: {
+                Button("action.close") {
+                    dismiss()
+                }
+            }
+        } else {
+            switch stage {
+            case .scanCoach:
+                scannerStep(program)
+            case .confirmCoach:
+                coachConfirmationStep(program)
+            case .payment:
+                paymentStep(program)
+            case .completed:
+                completionStep(program)
+            }
         }
     }
 

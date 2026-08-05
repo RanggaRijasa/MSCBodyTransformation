@@ -22,6 +22,11 @@ nonisolated enum ProgramDayAccess: String, Equatable, Sendable {
     case available
 }
 
+nonisolated enum ProgramRegistrationAvailability: Equatable, Sendable {
+    case open
+    case closed
+}
+
 nonisolated enum StepInstructionMediaKind: String, Codable, CaseIterable, Sendable {
     case image
     case video
@@ -79,6 +84,7 @@ nonisolated struct Program: Codable, Equatable, Identifiable, Sendable {
     var pace: AdminProgramPace? = nil
     var durationMode: AdminProgramDurationMode? = nil
     var participantLimit: Int? = nil
+    var registrationClosesAt: Date? = nil
     var pastStepPolicy: PastStepPolicy? = nil
     var futureStepPolicy: FutureStepPolicy? = nil
     var wellnessDisclaimer: String? = nil
@@ -129,5 +135,14 @@ nonisolated struct Program: Codable, Equatable, Identifiable, Sendable {
             }
             return .active
         }
+    }
+
+    func registrationAvailability(
+        at date: Date
+    ) -> ProgramRegistrationAvailability {
+        guard let registrationClosesAt else {
+            return .open
+        }
+        return date < registrationClosesAt ? .open : .closed
     }
 }

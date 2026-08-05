@@ -6,12 +6,17 @@ nonisolated struct JoinProgramWithCoachUseCase: Sendable {
     let clock: any AppClock
 
     func callAsFunction(
-        programID: UUID,
+        program: Program,
         participantID: UUID,
         coachID: UUID
     ) async throws -> ProgramEnrollment {
+        guard program.registrationAvailability(at: clock.now()) == .open else {
+            throw DomainError.conflict(
+                reason: "Pendaftaran program sudah ditutup."
+            )
+        }
         if let existing = try await enrollments.enrollment(
-            programID: programID,
+            programID: program.id,
             participantID: participantID
         ) {
             return existing
@@ -20,7 +25,7 @@ nonisolated struct JoinProgramWithCoachUseCase: Sendable {
         return try await enrollments.createEnrollment(
             ProgramEnrollment(
                 id: identifierGenerator.makeIdentifier(),
-                programID: programID,
+                programID: program.id,
                 participantID: participantID,
                 coachID: coachID,
                 status: .active,
