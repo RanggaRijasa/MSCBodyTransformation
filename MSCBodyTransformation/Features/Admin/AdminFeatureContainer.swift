@@ -14,6 +14,7 @@ nonisolated struct AdminPersonSummary: Identifiable, Sendable {
     let user: AppUser
     let participantProfile: ParticipantProfile?
     let coachProfile: CoachProfile?
+    let coachApplication: CoachApplication?
     let enrollments: [ProgramEnrollment]
 
     var id: UUID { user.id }
@@ -69,7 +70,9 @@ final class AdminFeatureContainer {
         case .all:
             return people
         case .pendingCoachApprovals:
-            return people.filter(\.user.isCoachApprovalPending)
+            return people.filter {
+                $0.coachApplication?.status == .pendingAdminApproval
+            }
         }
     }
 
@@ -108,6 +111,8 @@ final class AdminFeatureContainer {
                 .participantProfilesForAdministration()
             async let coaches = repositories.adminPeople
                 .coachProfilesForAdministration()
+            async let coachApplications = repositories.coachApplications
+                .coachApplicationsForAdministration()
             async let enrollments = repositories.enrollments.allEnrollments()
             async let content = repositories.managedContent.managedContent()
             async let pendingReviews = repositories.submissions
@@ -120,6 +125,7 @@ final class AdminFeatureContainer {
                 users,
                 participants,
                 coaches,
+                coachApplications,
                 enrollments,
                 content,
                 pendingReviews,
@@ -131,7 +137,8 @@ final class AdminFeatureContainer {
             let userValues = values.1
             let participantValues = values.2
             let coachValues = values.3
-            let enrollmentValues = values.4
+            let coachApplicationValues = values.4
+            let enrollmentValues = values.5
             programsState = programValues.isEmpty
                 ? .empty
                 : .loaded(programValues)
@@ -148,6 +155,10 @@ final class AdminFeatureContainer {
                             coachProfile: coachValues.first {
                                 $0.userID == user.id
                             },
+                            coachApplication:
+                                coachApplicationValues.first {
+                                    $0.userID == user.id
+                                },
                             enrollments: participant.map { profile in
                                 enrollmentValues.filter {
                                     $0.participantID == profile.id
@@ -156,9 +167,9 @@ final class AdminFeatureContainer {
                         )
                     }
                 )
-            contentState = values.5.isEmpty
+            contentState = values.6.isEmpty
                 ? .empty
-                : .loaded(values.5)
+                : .loaded(values.6)
 
             let counts = Dictionary(
                 grouping: programValues,
@@ -176,11 +187,11 @@ final class AdminFeatureContainer {
                                 && $0.status == .active
                         }.map(\.participantID)
                     ).count,
-                    pendingCoachApprovals: userValues.filter(
-                        \.isCoachApprovalPending
-                    ).count,
-                    pendingReviews: values.6,
-                    auditEvents: Array(values.7.prefix(6))
+                    pendingCoachApprovals: coachApplicationValues.filter {
+                        $0.status == .pendingAdminApproval
+                    }.count,
+                    pendingReviews: values.7,
+                    auditEvents: Array(values.8.prefix(6))
                 )
             )
         } catch is CancellationError {
@@ -250,7 +261,33 @@ final class AdminFeatureContainer {
         await load()
     }
 
-    func approveCoach(userID: UUID) async throws {
+    func approveCoach(applicationID: UUID) async throws {
+        _ = try await repositories().coachApplications
+            .approveCoachApplication(
+                applicationID: applicationID,
+                adminUserID: try requireAdminID(),
+                decidedAt: environment.clock.now()
+            )
+        lastMessage = "Pengajuan Coach berhasil disetujui."
+        await load()
+    }
+
+    func rejectCoach(
+        applicationID: UUID,
+        reason: String
+    ) async throws {
+        _ = try await repositories().coachApplications
+            .rejectCoachApplication(
+                applicationID: applicationID,
+                adminUserID: try requireAdminID(),
+                reason: reason,
+                decidedAt: environment.clock.now()
+            )
+        lastMessage = "Pengajuan Coach ditolak."
+        await load()
+    }
+
+    func approveLegacyCoach(userID: UUID) async throws {
         _ = try await repositories().adminPeople.setCoachApproval(
             userID: userID,
             isApproved: true
@@ -287,13 +324,15 @@ final class AdminFeatureContainer {
         reason: String
     ) async throws {
         let repositories = try repositories()
+        let programDraft = try await repositories.adminProgramDrafts
+            .programDraftForAdministration(id: programID)
         _ = try await ManualAdminEnrollmentUseCase(
             enrollments: repositories.enrollments,
             audit: repositories.audit,
             identifierGenerator: environment.identifierGenerator,
             clock: environment.clock
         )(
-            programID: programID,
+            program: programDraft.program(),
             participantID: participant.id,
             coachID: participant.coachID,
             reason: reason,

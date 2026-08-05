@@ -295,6 +295,9 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
   manual atau menampilkan identifier mentah.
 - Riwayat program tetap berada di tab Program, bukan diduplikasi di Profil,
   agar Profil berfokus pada identitas, coach, pengaturan, privasi, dan akun.
+- Program dengan deadline lewat tetap dapat dilihat. Poster dan detail
+  memakai label `Pendaftaran ditutup`; CTA join dinonaktifkan dan scanner QR
+  tidak boleh dibuka.
 
 ### Coach
 
@@ -342,6 +345,13 @@ Podium menggunakan warna identitas yang tidak berubah antar-appearance:
   di luar renderer bersama sehingga tidak ikut muncul pada layar Peserta atau
   Coach sebenarnya.
 - Form dan CMS memakai background system/netral.
+- Bagian `Jadwal dan peserta` menyediakan toggle batas pendaftaran. Saat
+  aktif, gunakan `DatePicker` native untuk tanggal dan jam dalam timezone
+  program, disertai penjelasan bahwa Peserta tidak dapat mendaftar sendiri
+  setelah waktu tersebut.
+- Detail Orang tetap menyediakan `Pendaftaran manual` untuk Admin setelah
+  cutoff. Tampilkan deadline program dan jelaskan bahwa kapasitas, Coach,
+  lifecycle, serta pembayaran tetap wajib; alasan Admin selalu dicatat.
 - Editor hari menempatkan aksi `Salin isi ke hari lain` sebagai section form
   tersendiri. Pemilih tujuan memakai sheet native dan mendukung beberapa hari
   sekaligus. Nama, nomor, dan tanggal target tetap; deskripsi serta seluruh
@@ -681,3 +691,98 @@ UI dianggap selesai bila:
 - Tidak ada fixed font size untuk informasi utama.
 - Tidak ada hard-coded hex di feature View.
 - Tidak ada reusable copy yang tersebar tanpa localization key.
+
+## 17. Guest, Auth, dan Pengajuan Coach
+
+### Guest Participant shell
+
+- Guest memakai shell Peserta dengan state logged-out; Guest bukan role akun.
+- Beranda dimulai dengan card `Siap memulai perjalananmu?`, pesan singkat,
+  dan satu tombol primary `Masuk`. Jangan menambahkan tombol `Daftar` kedua;
+  Register dibuka dari CTA pada halaman Login.
+- Jangan tampilkan nama, avatar, progres, streak, Coach aktif, enrollment,
+  berat, submission, atau data personal fixture kepada Guest.
+- Program, peringkat publik, poster pemenang, dan direktori Coach approved
+  tetap dapat dibaca. Area personal diganti penjelasan bahwa akun diperlukan.
+- Seluruh tab Peserta tetap dapat dibuka. Aksi personal seperti `Gabung
+  program` membuka Login melalui satu auth gate terpusat.
+
+### Login, Register, dan Forgot Password
+
+- Login adalah halaman default.
+- Login pertama menampilkan heading serta tiga pilihan: Apple, Google, dan
+  email. Jangan fokuskan input atau membuka keyboard pada halaman ini.
+- Heading utama auth memakai hierarchy judul layar `.largeTitle.bold`, tetap
+  mengikuti Dynamic Type, dan membungkus ke baris berikutnya tanpa
+  diperkecil. Header memakai leading edge penuh yang sama agar Login dan
+  Register mempunyai ukuran serta alignment visual yang konsisten.
+- Pilihan email membuka halaman form terpisah berisi email, password, Forgot
+  Password, dan primary action `Masuk`.
+- Register memakai hierarchy provider-first yang sama. Pilihan email baru
+  membuka form email, password, konfirmasi password, dan primary action
+  `Daftar`.
+- CTA `Belum punya akun? Daftar sekarang` dan `Sudah punya akun? Masuk`
+  dipisahkan menjadi teks penjelas dan tombol link yang jelas, bukan satu card
+  besar.
+- Login menjadi root `NavigationStack`. Daftar, form email, Forgot Password,
+  profil, QR, eligibility, dan pembayaran menjadi typed destination yang
+  benar-benar di-push agar native leading-edge swipe dapat kembali.
+- Leading-edge swipe pada root Login menutup auth dan kembali ke aplikasi.
+  Gesture root hanya aktif bila drag dimulai dari tepi kiri, dominan
+  horizontal, dan melewati ambang minimum agar tidak mengganggu scroll form.
+- Jangan mengganti seluruh auth screen hanya dengan `switch` pada enum tanpa
+  navigation path. Hal tersebut menghilangkan native back history dan dapat
+  membuat layout teks mengalami morph/compression saat Masuk dan Daftar
+  berganti.
+- CTA perpindahan Masuk/Daftar tidak boleh mengecilkan teks agar muat. Gunakan
+  ukuran teks asli dan layout vertikal adaptif ketika ruang horizontal tidak
+  mencukupi.
+- Tampilan Apple menggunakan kontrol native Sign in with Apple. Tampilan
+  Google menggunakan aset brand resmi atau komponen resmi provider; jangan
+  menggambar ulang logo `G`.
+- Forgot Password adalah halaman email terpisah dan selalu memberi response
+  generik agar keberadaan akun tidak terungkap.
+- Form harus dapat digulir ketika keyboard atau Dynamic Type besar aktif.
+  Secure field show/hide harus mempunyai label dan value aksesibilitas.
+- Pada Phase 09.5, outcome provider dan pembayaran hanya tersedia dalam
+  tooling Debug dan harus jelas sebagai simulasi lokal.
+
+### Onboarding profil
+
+- Semua metode registrasi berakhir pada form yang sama: Nama, Nomor HP, Level
+  Member, lalu tujuan `Peserta` atau `Ajukan Coach`.
+- Data form tetap menjadi draft di memory sampai seluruh flow selesai.
+- Peserta wajib memindai dan memvalidasi QR Coach sebelum akun dibuat.
+- Coach applicant baru dibuat setelah eligibility lengkap dan pembayaran
+  verified. Keluar sebelum titik tersebut membuang seluruh draft dan kembali
+  ke Guest.
+- `Member` menonaktifkan pilihan Coach dengan penjelasan; SC ke atas dapat
+  melanjutkan ke halaman eligibility.
+- Level adalah data profil, bukan badge role dan bukan authorization.
+
+### Eligibility dan pembayaran Coach
+
+- Syarat level, HOM STS, dan ICT ditampilkan sebagai state yang dapat dibaca,
+  bukan warna saja. HOM STS dan ICT memakai checkbox persegi dengan state
+  aksesibilitas, bukan toggle; checkbox tidak pernah tercentang otomatis.
+- CTA pembayaran disabled sampai semua syarat lengkap dan menyertakan alasan.
+- CTA `Lanjutkan`, `Lanjut ke pembayaran`, dan `Lanjut bayar` memakai
+  primary button style yang sama dengan CTA utama aplikasi.
+- Harga berasal dari domain pricing service dan diformat IDR:
+  SC/SB Rp100.000; Supervisor/World Team Rp150.000; TAB/GET/Millionaire/
+  President’s Team Rp200.000.
+- Ringkasan menyatakan pembayaran manual untuk tiga bulan, tidak auto-renew,
+  dan tidak langsung mengaktifkan role Coach.
+- State setelah pembayaran adalah `Menunggu persetujuan Admin`; akses Peserta
+  tetap tersedia.
+
+### Review Admin
+
+- Daftar pengajuan menampilkan nama, level, status pembayaran, dan status
+  application tanpa nomor HP penuh.
+- Detail bersifat read-only untuk level, HOM STS, ICT, harga, periode akses,
+  dan status.
+- `Setujui Coach` disabled bila syarat/pembayaran belum lengkap, memakai
+  confirmation, dan rejection wajib alasan.
+- Pending/rejected tetap Participant. Hanya operasi approval authoritative
+  yang dapat mengaktifkan Coach.

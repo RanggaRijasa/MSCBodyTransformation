@@ -6,6 +6,27 @@ nonisolated protocol SessionRepository: Sendable {
     func setDebugScenario(_ scenario: DebugSessionScenario) async
 }
 
+nonisolated protocol AuthenticationRepository: Sendable {
+    func signInForDemo(
+        provider: AuthenticationProvider,
+        email: String?
+    ) async throws -> AppSession
+    func registerForDemo(
+        provider: AuthenticationProvider,
+        email: String?
+    ) async throws -> AppSession
+    func finalizeRegistrationForDemo(
+        _ completion: DemoRegistrationCompletion
+    ) async throws -> DemoRegistrationResult
+    func requestPasswordResetForDemo(email: String) async throws
+    func completeParticipantOnboarding(
+        userID: UUID,
+        displayName: String,
+        phoneNumber: String,
+        memberLevel: MemberLevel
+    ) async throws -> AppSession
+}
+
 nonisolated protocol ProfileRepository: Sendable {
     func user(id: UUID) async throws -> AppUser
     func participantProfile(userID: UUID) async throws -> ParticipantProfile
@@ -133,6 +154,33 @@ nonisolated protocol AdminPeopleRepository: Sendable {
         participantID: UUID,
         coachID: UUID
     ) async throws -> ParticipantProfile
+}
+
+nonisolated protocol CoachApplicationRepository: Sendable {
+    func coachApplication(userID: UUID) async throws -> CoachApplication?
+    func coachApplicationsForAdministration() async throws
+        -> [CoachApplication]
+    func saveCoachApplication(
+        _ application: CoachApplication
+    ) async throws -> CoachApplication
+    func recordCoachPayment(
+        applicationID: UUID,
+        result: FakeCoachPurchaseResult
+    ) async throws -> CoachApplication
+    func submitCoachApplication(
+        applicationID: UUID
+    ) async throws -> CoachApplication
+    func approveCoachApplication(
+        applicationID: UUID,
+        adminUserID: UUID,
+        decidedAt: Date
+    ) async throws -> CoachApplication
+    func rejectCoachApplication(
+        applicationID: UUID,
+        adminUserID: UUID,
+        reason: String,
+        decidedAt: Date
+    ) async throws -> CoachApplication
 }
 
 nonisolated protocol AdminProgramDraftRepository: Sendable {

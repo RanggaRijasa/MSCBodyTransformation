@@ -2,6 +2,7 @@ import Foundation
 import Observation
 
 nonisolated enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendable {
+    case guest
     case participant
     case coach
     case admin
@@ -10,6 +11,8 @@ nonisolated enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendabl
 
     var titleLocalizationKey: String {
         switch self {
+        case .guest:
+            "role.guest"
         case .participant:
             "role.participant"
         case .coach:
@@ -21,6 +24,8 @@ nonisolated enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendabl
 
     var systemImage: String {
         switch self {
+        case .guest:
+            "person.crop.circle.badge.questionmark"
         case .participant:
             "figure.walk"
         case .coach:
@@ -30,8 +35,10 @@ nonisolated enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendabl
         }
     }
 
-    var userRole: UserRole {
+    var userRole: UserRole? {
         switch self {
+        case .guest:
+            nil
         case .participant:
             .participant
         case .coach:
@@ -39,6 +46,10 @@ nonisolated enum DemoRole: String, CaseIterable, Hashable, Identifiable, Sendabl
         case .admin:
             .admin
         }
+    }
+
+    var shellRole: UserRole {
+        userRole ?? .participant
     }
 }
 

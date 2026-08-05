@@ -24,6 +24,7 @@ nonisolated struct ParticipantProfile: Codable, Equatable, Identifiable, Sendabl
     var city: String
     var phoneNumber: String?
     var localPhotoReference: String?
+    var memberLevel: MemberLevel? = nil
 }
 
 nonisolated struct CoachProfile: Codable, Equatable, Identifiable, Sendable {

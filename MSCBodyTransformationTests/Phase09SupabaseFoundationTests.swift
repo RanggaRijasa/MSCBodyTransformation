@@ -18,6 +18,14 @@ struct Phase09SupabaseFoundationTests {
             == "10000000-0000-0000-0000-000000000001")
         #expect(program.status == .active)
         #expect(program.pace == .scheduled)
+        let expectedRegistrationDeadline =
+            try SupabaseDateParser.timestamp(
+                "2026-08-10T13:00:00Z"
+            )
+        #expect(
+            program.registrationClosesAt
+                == expectedRegistrationDeadline
+        )
         #expect(program.effectiveScoringConfiguration.pointsPerActivity == 10)
         #expect(
             program.effectiveScoringConfiguration
@@ -31,6 +39,47 @@ struct Phase09SupabaseFoundationTests {
         )
         #expect(
             program.days[0].steps[0].content?.questions[0].answerKey == nil
+        )
+    }
+
+    @Test("Admin enrollment adapter uses the protected RPC contract")
+    func adminEnrollmentAdapterUsesRPC() async throws {
+        let response = Data(
+            """
+            {
+              "id": "50000000-0000-0000-0000-000000000001",
+              "program_id": "10000000-0000-0000-0000-000000000001",
+              "participant_id": "00000000-0000-0000-0000-000000000011",
+              "coach_id": "00000000-0000-0000-0000-000000000021",
+              "status": "active",
+              "enrolled_at": "2026-08-11T00:00:00Z"
+            }
+            """.utf8
+        )
+        let client = RecordingSupabaseClient(responses: [response])
+        let repository = SupabaseAdminEnrollmentCommandRepository(
+            client: client
+        )
+
+        let enrollment = try await repository.enrollParticipant(
+            programID: UUID(
+                uuidString: "10000000-0000-0000-0000-000000000001"
+            )!,
+            participantID: UUID(
+                uuidString: "00000000-0000-0000-0000-000000000011"
+            )!,
+            reason: "Verifikasi Admin selesai."
+        )
+        let request = try #require(await client.recordedRequests().first)
+        let body = try #require(request.body)
+        let object = try #require(
+            JSONSerialization.jsonObject(with: body) as? [String: Any]
+        )
+
+        #expect(enrollment.status == .active)
+        #expect(request.path == "/rest/v1/rpc/admin_enroll_participant")
+        #expect(
+            object["reason"] as? String == "Verifikasi Admin selesai."
         )
     }
 
@@ -549,6 +598,7 @@ struct Phase09SupabaseFoundationTests {
         "ends_on": "2026-08-31",
         "timezone": "Asia/Jakarta",
         "participant_limit": 20,
+        "registration_closes_at": "2026-08-10T13:00:00Z",
         "past_step_policy": "available",
         "future_step_policy": "locked",
         "wellness_disclaimer": "Program non-diagnostik.",

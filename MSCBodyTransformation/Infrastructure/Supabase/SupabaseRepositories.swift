@@ -125,6 +125,50 @@ nonisolated struct SupabaseEnrollmentCommandRepository: Sendable {
     }
 }
 
+nonisolated struct SupabaseAdminEnrollmentCommandRepository: Sendable {
+    private let client: any SupabaseClientProviding
+
+    init(client: any SupabaseClientProviding) {
+        self.client = client
+    }
+
+    func enrollParticipant(
+        programID: UUID,
+        participantID: UUID,
+        reason: String
+    ) async throws -> ProgramEnrollment {
+        struct Body: Encodable {
+            let targetProgramID: UUID
+            let targetParticipantID: UUID
+            let reason: String
+
+            enum CodingKeys: String, CodingKey {
+                case targetProgramID = "target_program_id"
+                case targetParticipantID = "target_participant_id"
+                case reason
+            }
+        }
+
+        let data = try await client.execute(
+            try rpcRequest(
+                name: "admin_enroll_participant",
+                body: Body(
+                    targetProgramID: programID,
+                    targetParticipantID: participantID,
+                    reason: reason
+                )
+            )
+        )
+        do {
+            return try SupabaseJSON.decoder
+                .decode(SupabaseEnrollmentDTO.self, from: data)
+                .domain()
+        } catch {
+            throw DomainError.unknown
+        }
+    }
+}
+
 nonisolated struct SupabasePreparedSubmission:
     Equatable,
     Sendable

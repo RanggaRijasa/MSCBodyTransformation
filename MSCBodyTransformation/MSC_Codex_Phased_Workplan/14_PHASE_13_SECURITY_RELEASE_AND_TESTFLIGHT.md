@@ -2,6 +2,7 @@
 
 > Status: external release gate. Review memakai commerce program per cohort;
 > checklist seat credit dan invite dari baseline lama tidak berlaku.
+> Amendment 4 Agustus 2026 memasukkan Guest dan lifecycle Coach access.
 
 ## Tujuan
 
@@ -22,6 +23,13 @@ Mengeraskan aplikasi dan backend untuk TestFlight dan App Store submission.
 - [ ] Audit records for privileged action.
 - [ ] Rate limiting or abuse controls where needed.
 - [ ] Logs contain no weight, token, password, or private URL.
+- [ ] Guest/anon hanya dapat membaca public-safe projection.
+- [ ] Guest tidak membuat anonymous Auth account.
+- [ ] Member level/application metadata tidak dapat menaikkan role.
+- [ ] Applicant tidak dapat menulis payment verified, approval, role, QR,
+  atau entitlement.
+- [ ] Coach operation memerlukan approved role dan active entitlement.
+- [ ] Application approve/reject dan payment reconciliation teraudit.
 
 ## Privacy
 
@@ -40,6 +48,9 @@ Weight and evidence photos are sensitive.
 - [ ] No advertising use of health-related data.
 - [ ] Contest rules when leaderboard has prizes.
 - [ ] State that Apple is not contest sponsor where required.
+- [ ] Coach terms version, rejection/refund policy, expiry, dan manual renewal
+  dijelaskan.
+- [ ] Nomor HP applicant tidak muncul pada public/Guest surface.
 
 ## Accessibility final audit
 
@@ -83,7 +94,8 @@ Weight and evidence photos are sensitive.
 - [ ] Demo coach account.
 - [ ] Demo admin account.
 - [ ] Review sample QR.
-- [ ] Review explanation for seat-credit model.
+- [ ] Review explanation untuk program payment dan manual Coach access tiga
+  bulan.
 - [ ] Camera/photo explanation.
 - [ ] Wellness purpose explanation.
 - [ ] No placeholder screen or dead link.
@@ -91,6 +103,8 @@ Weight and evidence photos are sensitive.
 
 ## TestFlight matrix
 
+- [ ] Guest membuka seluruh tab publik tanpa personal-data leakage.
+- [ ] Guest `Gabung program` membuka Login dan resume destination benar.
 - [ ] Participant registration.
 - [ ] Google login.
 - [ ] Apple login.
@@ -101,8 +115,13 @@ Weight and evidence photos are sensitive.
 - [ ] Step completion.
 - [ ] Final weigh-in.
 - [ ] Leaderboard.
-- [ ] Coach purchase.
-- [ ] Coach invite.
+- [ ] Coach application Member ineligible.
+- [ ] Coach application SC+ memerlukan HOM STS dan ICT.
+- [ ] Coach purchase manual tiga bulan.
+- [ ] Coach tetap Participant saat menunggu Admin.
+- [ ] Admin approval/rejection dan reason.
+- [ ] Coach expiry, renewal, restore, refund/revocation.
+- [ ] Coach QR baru tersedia setelah activation authoritative.
 - [ ] Coach review.
 - [ ] Admin CMS.
 - [ ] Manual enrollment.
@@ -115,9 +134,14 @@ Weight and evidence photos are sensitive.
 - [ ] No critical security or accessibility blocker.
 - [ ] Reviewer can access all roles.
 - [ ] IAP review path documented.
+- [ ] Reviewer dapat membedakan fake Debug preview dari flow production.
 - [ ] TestFlight end-to-end passes.
 - [ ] App submission metadata ready.
 
 ## Progress log
 
-### Log
+### 4 Agustus 2026 — Guest dan Coach access release matrix
+
+- Menambahkan privacy Guest, escalation resistance, Coach application,
+  payment, Admin decision, expiry/renewal/refund, dan reviewer scenarios.
+- Menghapus referensi seat-credit/Coach invite yang tidak lagi berlaku.

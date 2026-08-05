@@ -119,6 +119,27 @@ async function enroll(token, programID, coachQR) {
   };
 }
 
+async function adminEnroll(token, programID, participantID, reason) {
+  const response = await request("/rest/v1/rpc/admin_enroll_participant", {
+    method: "POST",
+    token,
+    apiKey: anonKey,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      target_program_id: programID,
+      target_participant_id: participantID,
+      reason,
+    }),
+  });
+  const body = await responseJSON(response);
+  return {
+    ok: response.ok,
+    status: response.status,
+    body,
+    message: body.message,
+  };
+}
+
 const admin = await createUser("race-admin");
 const coachOne = await createUser("race-coach-one");
 const coachTwo = await createUser("race-coach-two");
@@ -127,6 +148,7 @@ const capacityParticipantOne = await createUser("race-capacity-one");
 const capacityParticipantTwo = await createUser("race-capacity-two");
 const coachRaceParticipant = await createUser("race-coach-mismatch");
 const wrongQRParticipant = await createUser("race-wrong-qr");
+const deadlineParticipant = await createUser("race-deadline");
 
 const coachOneQR = `coach-${randomUUID()}`;
 const coachTwoQR = `coach-${randomUUID()}`;
@@ -162,11 +184,13 @@ await insert("profiles", [
     capacityParticipantTwo,
     coachRaceParticipant,
     wrongQRParticipant,
+    deadlineParticipant,
   ].map((participant, index) => ({
     user_id: participant.id,
     role: "participant",
     display_name: `Peserta Race ${index + 1}`,
-    current_coach_id: null,
+    current_coach_id:
+      participant.id === deadlineParticipant.id ? coachOne.id : null,
     coach_qr_identifier: null,
     coach_is_approved: false,
   })),
@@ -176,6 +200,7 @@ const duplicateProgramID = randomUUID();
 const capacityProgramID = randomUUID();
 const coachRaceProgramOneID = randomUUID();
 const coachRaceProgramTwoID = randomUUID();
+const deadlineProgramID = randomUUID();
 
 const programFixture = (id, title, participantLimit) => ({
   id,
@@ -187,6 +212,7 @@ const programFixture = (id, title, participantLimit) => ({
   ends_on: "2026-08-31",
   timezone: "Asia/Makassar",
   participant_limit: participantLimit,
+  registration_closes_at: null,
   past_step_policy: "available",
   future_step_policy: "locked",
   wellness_disclaimer: "Program kebugaran non-diagnostik.",
@@ -202,13 +228,19 @@ await insert("programs", [
   programFixture(capacityProgramID, "Race Kapasitas", 1),
   programFixture(coachRaceProgramOneID, "Race Coach Satu", null),
   programFixture(coachRaceProgramTwoID, "Race Coach Dua", null),
+  {
+    ...programFixture(deadlineProgramID, "Race Deadline", null),
+    registration_closes_at: new Date(Date.now() - 60_000).toISOString(),
+  },
 ]);
 
+const adminToken = await signIn(admin);
 const duplicateToken = await signIn(duplicateParticipant);
 const capacityTokenOne = await signIn(capacityParticipantOne);
 const capacityTokenTwo = await signIn(capacityParticipantTwo);
 const coachRaceToken = await signIn(coachRaceParticipant);
 const wrongQRToken = await signIn(wrongQRParticipant);
+const deadlineToken = await signIn(deadlineParticipant);
 
 const duplicateResults = await Promise.all([
   enroll(duplicateToken, duplicateProgramID, coachOneQR),
@@ -296,4 +328,47 @@ assert.equal(
   "unknown Coach QR should fail without creating enrollment",
 );
 
-console.log("PASS enrollment race integration checks (10 assertions)");
+const closedEnrollment = await enroll(
+  deadlineToken,
+  deadlineProgramID,
+  coachOneQR,
+);
+assert.equal(
+  closedEnrollment.message,
+  "registration_closed",
+  "Participant enrollment should fail after the registration cutoff",
+);
+
+const adminDeadlineEnrollment = await adminEnroll(
+  adminToken,
+  deadlineProgramID,
+  deadlineParticipant.id,
+  "Verifikasi Admin untuk enrollment setelah batas waktu.",
+);
+assert.ok(
+  adminDeadlineEnrollment.ok,
+  "Admin should enroll after the cutoff through the protected RPC",
+);
+const deadlineRows = await selectRows(
+  "program_enrollments",
+  `program_id=eq.${deadlineProgramID}`
+    + `&participant_id=eq.${deadlineParticipant.id}`
+    + "&select=id",
+);
+assert.equal(
+  deadlineRows.length,
+  1,
+  "Admin cutoff override should persist exactly one enrollment",
+);
+const deadlineAudits = await selectRows(
+  "audit_events",
+  `subject_id=eq.${deadlineParticipant.id}`
+    + "&kind=eq.participant_enrolled&select=payload",
+);
+assert.equal(
+  deadlineAudits[0]?.payload?.registration_deadline_bypassed,
+  true,
+  "Admin cutoff override should be explicitly audited",
+);
+
+console.log("PASS enrollment race integration checks (14 assertions)");

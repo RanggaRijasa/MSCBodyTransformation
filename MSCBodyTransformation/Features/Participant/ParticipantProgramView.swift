@@ -34,7 +34,11 @@ struct ParticipantProgramView: View {
     private func programContent(_ program: Program) -> some View {
         if selectedEnrollment == nil,
            program.status == .active || program.status == .scheduled {
-            ParticipantProgramOfferView(program: program) {
+            ParticipantProgramOfferView(
+                program: program,
+                registrationAvailability:
+                    store.registrationAvailability(for: program)
+            ) {
                 openEnrollment(for: program)
             }
         } else {
@@ -49,7 +53,7 @@ struct ParticipantProgramView: View {
 
     private var selectedProgram: Program? {
         if let programID,
-           let program = store.snapshot?.programs.first(where: {
+           let program = store.programs.first(where: {
                $0.id == programID
            }) {
             return program
@@ -65,6 +69,17 @@ struct ParticipantProgramView: View {
     }
 
     private func openEnrollment(for program: Program) {
+        guard store.registrationAvailability(for: program) == .open else {
+            return
+        }
+        if store.isGuest {
+            store.requestAuthentication(
+                destination: .login,
+                reason: .joinProgram,
+                intent: .joinProgram(program.id)
+            )
+            return
+        }
         router.navigate(
             to: navigationContext.joinProgramRoute(programID: program.id),
             in: navigationContext.tab

@@ -13,6 +13,13 @@ servers:
         default: staging-project
 security:
   - bearerAuth: []
+x-phase-09-5-handoff:
+  status: local-ui-contract-only
+  notes:
+    - Guest is logged out and must not create an anonymous user.
+    - Self-registration creates Participant; Coach is a separate application.
+    - Member level, eligibility, payment, approval, role, and entitlement are separate authoritative states.
+    - Backend paths and schemas are added with Phase 10-12 migrations and RLS, not by the Phase 09.5 mock.
 paths:
   /programs:
     get:
@@ -79,7 +86,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnrollmentContext"
+                $ref: "#/components/schemas/Enrollment"
+        "409":
+          $ref: "#/components/responses/DomainError"
+  /admin/programs/{programId}/enrollments:
+    post:
+      operationId: adminEnrollParticipant
+      description: >
+        Admin-only operation. It may bypass an elapsed registration cutoff,
+        but still enforces program lifecycle, capacity, approved Coach, and
+        verified payment for a paid program.
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [participantId, reason]
+              properties:
+                participantId: { type: string, format: uuid }
+                reason: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Existing or newly-created audited enrollment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+        "403":
+          $ref: "#/components/responses/DomainError"
         "409":
           $ref: "#/components/responses/DomainError"
   /programs/{programId}/purchase/apple/verify:
@@ -346,6 +383,8 @@ components:
         - startsOn
         - endsOn
         - timezone
+        - participantLimit
+        - registrationClosesAt
         - scoring
         - commerce
         - days
@@ -369,6 +408,13 @@ components:
         startsOn: { type: string, format: date }
         endsOn: { type: string, format: date }
         timezone: { type: string }
+        participantLimit: { type: [integer, "null"], minimum: 1 }
+        registrationClosesAt:
+          type: [string, "null"]
+          format: date-time
+          description: >
+            Exact instant at which Participant self-enrollment closes.
+            Null means there is no additional registration cutoff.
         pastStepPolicy:
           type: string
           enum: [available, read_only, hidden]
@@ -621,6 +667,12 @@ components:
             - coach_mismatch
             - program_unavailable
             - program_full
+            - registration_closed
+            - reason_required
+            - participant_invalid
+            - coach_required
+            - coach_invalid
+            - payment_required
             - payment_pending
             - purchase_unverified
             - quiz_attempt_used

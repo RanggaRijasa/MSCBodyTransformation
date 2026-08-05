@@ -31,6 +31,16 @@ struct ParticipantTabRootView: View {
                 .padding(AppSpacing.medium)
             }
             .background(Color.appBackground)
+        case .guestLoaded:
+            tabContent
+                .safeAreaInset(edge: .top) {
+                    if showsOfflineBanner {
+                        OfflineBanner()
+                            .padding(.horizontal, AppSpacing.medium)
+                            .padding(.top, AppSpacing.xSmall)
+                            .background(Color.appBackground)
+                    }
+                }
         case .loaded:
             if store.entryStage != .complete {
                 ParticipantEntryFlowView(store: store)

@@ -477,7 +477,10 @@ private struct AdminPeopleView: View {
     }
 
     private var visiblePeople: [AdminPersonSummary] {
-        features.filteredPeople.filter {
+        if features.peopleScope == .pendingCoachApprovals {
+            return features.filteredPeople
+        }
+        return features.filteredPeople.filter {
             $0.user.role == selectedRole
         }
     }
@@ -551,25 +554,30 @@ private struct AdminPeopleView: View {
                 "admin.people.open.\(person.user.id)"
             )
 
-            if person.user.isCoachApprovalPending {
-                Button("Setujui Coach") {
-                    Task {
-                        do {
-                            try await features.approveCoach(
-                                userID: person.user.id
-                            )
-                        } catch let error as DomainError {
-                            actionError = error
-                        } catch {
-                            actionError = .unknown
-                        }
-                    }
+            if let application = person.coachApplication {
+                HStack(spacing: AppSpacing.small) {
+                    StatusBadge(
+                        title: application.status
+                            .adminStatusLocalizationKey,
+                        kind: application.status.adminStatusKind
+                    )
+                    Text(application.memberLevel.displayName)
+                    .font(AppTypography.label)
+                    .foregroundStyle(Color.appSecondaryText)
+                    Spacer(minLength: 0)
+                    Label(
+                        application.payment?.state == .verified
+                            ? "coach.payment.verified"
+                            : "coach.payment.not_verified",
+                        systemImage:
+                            application.payment?.state == .verified
+                            ? "checkmark.seal.fill"
+                            : "clock"
+                    )
+                    .font(AppTypography.label)
+                    .foregroundStyle(Color.appSecondaryText)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.brandPrimary)
-                .accessibilityIdentifier(
-                    "admin.people.approve.\(person.user.id)"
-                )
+                .accessibilityElement(children: .combine)
             }
 
             if let coach = person.coachProfile, coach.isApproved {
@@ -599,6 +607,13 @@ private struct AdminPeopleView: View {
     }
 
     private func personSubtitle(_ person: AdminPersonSummary) -> String {
+        if let application = person.coachApplication,
+           application.status == .pendingAdminApproval {
+            return String(
+                localized: "admin.coach_application.row.subtitle",
+                defaultValue: "Pengajuan Coach menunggu persetujuan"
+            )
+        }
         if let participant = person.participantProfile {
             return participant.city
         }
@@ -606,6 +621,46 @@ private struct AdminPeopleView: View {
             return coach.city
         }
         return person.user.email
+    }
+}
+
+private extension CoachApplicationStatus {
+    var adminStatusLocalizationKey: LocalizedStringKey {
+        switch self {
+        case .draft:
+            "coach.application.status.draft"
+        case .ineligible:
+            "coach.application.status.ineligible"
+        case .readyForPayment:
+            "coach.application.status.ready_for_payment"
+        case .paymentProcessing:
+            "coach.application.status.payment_processing"
+        case .paymentVerified:
+            "coach.application.status.payment_verified"
+        case .pendingAdminApproval:
+            "coach.application.status.pending_admin_approval"
+        case .approved:
+            "coach.application.status.approved"
+        case .rejected:
+            "coach.application.status.rejected"
+        case .expired:
+            "coach.application.status.expired"
+        }
+    }
+
+    var adminStatusKind: AppStatusKind {
+        switch self {
+        case .approved:
+            .success
+        case .rejected, .ineligible, .expired:
+            .error
+        case .pendingAdminApproval, .paymentProcessing:
+            .pending
+        case .paymentVerified:
+            .information
+        case .draft, .readyForPayment:
+            .neutral
+        }
     }
 }
 

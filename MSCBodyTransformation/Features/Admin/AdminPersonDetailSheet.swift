@@ -11,14 +11,21 @@ struct AdminPersonDetailSheet: View {
     @State private var selectedCoachID: UUID?
     @State private var enrollmentReason = ""
     @State private var coachTransferReason = ""
+    @State private var rejectionReason = ""
     @State private var error: DomainError?
     @State private var isSaving = false
+    @State private var showsApprovalConfirmation = false
 
     var body: some View {
         NavigationStack {
             Form {
                 identitySection
                 profileDataSection
+
+                if let application = person.coachApplication {
+                    coachApplicationSection(application)
+                    coachApplicationActions(application)
+                }
 
                 if let participant = person.participantProfile {
                     participantCoachSection(participant)
@@ -51,6 +58,21 @@ struct AdminPersonDetailSheet: View {
             } message: {
                 Text(error?.localizedAdminMessage ?? "")
             }
+            .confirmationDialog(
+                "admin.coach_application.approve.confirm.title",
+                isPresented: $showsApprovalConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("admin.coach_application.approve.action") {
+                    Task { await approveCoachApplication() }
+                }
+                .accessibilityIdentifier(
+                    "admin.coach-application.confirm-approve"
+                )
+                Button("action.cancel", role: .cancel) {}
+            } message: {
+                Text("admin.coach_application.approve.confirm.message")
+            }
             .task {
                 if selectedProgramID == nil {
                     selectedProgramID = availablePrograms.first?.id
@@ -61,6 +83,154 @@ struct AdminPersonDetailSheet: View {
                 }
             }
         }
+    }
+
+    private func coachApplicationSection(
+        _ application: CoachApplication
+    ) -> some View {
+        Section {
+            LabeledContent(
+                "auth.profile.field.member_level",
+                value: application.memberLevel.displayName
+            )
+            LabeledContent("coach.eligibility.requirement.level") {
+                requirementStatus(
+                    application.eligibility.isLevelEligible
+                )
+            }
+            LabeledContent("coach.eligibility.requirement.hom_sts") {
+                requirementStatus(application.hasCompletedHOMSTS)
+            }
+            LabeledContent("coach.eligibility.requirement.ict") {
+                requirementStatus(application.hasCompletedICT)
+            }
+            if let payment = application.payment {
+                LabeledContent(
+                    "coach.payment.price",
+                    value: Decimal(
+                        payment.amountMinorUnits
+                    ).formatted(
+                        .currency(code: "IDR")
+                            .precision(.fractionLength(0))
+                            .locale(ParticipantFormatting.locale)
+                    )
+                )
+                LabeledContent("coach.pending.payment") {
+                    requirementStatus(payment.state == .verified)
+                }
+                if let start = payment.accessStartsAt,
+                   let end = payment.accessEndsAt {
+                    LabeledContent("coach.payment.access_period") {
+                        VStack(alignment: .trailing) {
+                            Text(
+                                start,
+                                format: .dateTime
+                                    .day()
+                                    .month(.wide)
+                                    .year()
+                                    .locale(ParticipantFormatting.locale)
+                            )
+                            Text(
+                                end,
+                                format: .dateTime
+                                    .day()
+                                    .month(.wide)
+                                    .year()
+                                    .locale(ParticipantFormatting.locale)
+                            )
+                            .foregroundStyle(Color.appSecondaryText)
+                        }
+                    }
+                }
+            }
+            if let submittedAt = application.submittedAt {
+                LabeledContent("coach.application.submitted_at") {
+                    Text(
+                        submittedAt,
+                        format: .dateTime
+                            .day()
+                            .month(.wide)
+                            .year()
+                            .locale(ParticipantFormatting.locale)
+                    )
+                }
+            }
+            LabeledContent("coach.application.status.title") {
+                StatusBadge(
+                    title: applicationStatusTitle(application.status),
+                    kind: applicationStatusKind(application.status)
+                )
+            }
+        } header: {
+            Text("admin.coach_application.section")
+        } footer: {
+            Text("admin.coach_application.read_only_notice")
+        }
+        .accessibilityIdentifier("admin.coach-application.detail")
+    }
+
+    @ViewBuilder
+    private func coachApplicationActions(
+        _ application: CoachApplication
+    ) -> some View {
+        if application.status == .pendingAdminApproval {
+            Section {
+                Button("admin.coach_application.approve.action") {
+                    showsApprovalConfirmation = true
+                }
+                .disabled(!application.isReadyForAdminApproval || isSaving)
+                .accessibilityIdentifier(
+                    "admin.coach-application.approve"
+                )
+
+                TextField(
+                    "admin.coach_application.reject.reason",
+                    text: $rejectionReason,
+                    axis: .vertical
+                )
+                .accessibilityIdentifier(
+                    "admin.coach-application.reject-reason"
+                )
+
+                Button(
+                    "admin.coach_application.reject.action",
+                    role: .destructive
+                ) {
+                    Task { await rejectCoachApplication() }
+                }
+                .disabled(
+                    rejectionReason.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ).isEmpty || isSaving
+                )
+                .accessibilityIdentifier(
+                    "admin.coach-application.reject"
+                )
+            } header: {
+                Text("admin.coach_application.decision.section")
+            } footer: {
+                if !application.isReadyForAdminApproval {
+                    Text("admin.coach_application.approval_blocked")
+                } else {
+                    Text("admin.coach_application.decision.audit_notice")
+                }
+            }
+        }
+    }
+
+    private func requirementStatus(_ isSatisfied: Bool) -> some View {
+        Label(
+            isSatisfied
+                ? "coach.eligibility.satisfied"
+                : "coach.eligibility.not_satisfied",
+            systemImage:
+                isSatisfied
+                ? "checkmark.circle.fill"
+                : "xmark.circle.fill"
+        )
+        .foregroundStyle(
+            isSatisfied ? Color.appSuccess : Color.appDestructive
+        )
     }
 
     private func coachTransferSection(
@@ -280,6 +450,28 @@ struct AdminPersonDetailSheet: View {
                 }
             }
 
+            if let selectedProgram {
+                if let deadline = selectedProgram.registrationClosesAt {
+                    LabeledContent(
+                        "admin.people.manual_enrollment.deadline",
+                        value: ParticipantFormatting.dateAndTime(
+                            deadline,
+                            timeZoneIdentifier:
+                                selectedProgram.timeZoneIdentifier
+                        )
+                    )
+                } else {
+                    LabeledContent(
+                        "admin.people.manual_enrollment.deadline",
+                        value: String(
+                            localized:
+                                "admin.people.manual_enrollment.no_deadline",
+                            defaultValue: "Tidak dibatasi"
+                        )
+                    )
+                }
+            }
+
             TextField(
                 "Alasan enrollment",
                 text: $enrollmentReason,
@@ -295,7 +487,9 @@ struct AdminPersonDetailSheet: View {
         } header: {
             Text("Pendaftaran manual")
         } footer: {
-            Text("Alasan wajib diisi dan dicatat pada audit lokal.")
+            Text(
+                "admin.people.manual_enrollment.deadline_help"
+            )
         }
     }
 
@@ -341,7 +535,16 @@ struct AdminPersonDetailSheet: View {
         guard case .loaded(let programs) = features.programsState else {
             return []
         }
-        return programs.filter { $0.status != .archived }
+        return programs.filter {
+            $0.status == .scheduled || $0.status == .active
+        }
+    }
+
+    private var selectedProgram: AdminProgramDraft? {
+        guard let selectedProgramID else {
+            return nil
+        }
+        return availablePrograms.first { $0.id == selectedProgramID }
     }
 
     private var availableCoaches: [CoachProfile] {
@@ -421,6 +624,85 @@ struct AdminPersonDetailSheet: View {
             error = domainError
         } catch {
             self.error = .unknown
+        }
+    }
+
+    private func approveCoachApplication() async {
+        guard let application = person.coachApplication else {
+            return
+        }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            try await features.approveCoach(
+                applicationID: application.id
+            )
+            dismiss()
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
+    }
+
+    private func rejectCoachApplication() async {
+        guard let application = person.coachApplication else {
+            return
+        }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            try await features.rejectCoach(
+                applicationID: application.id,
+                reason: rejectionReason
+            )
+            dismiss()
+        } catch let domainError as DomainError {
+            error = domainError
+        } catch {
+            self.error = .unknown
+        }
+    }
+
+    private func applicationStatusTitle(
+        _ status: CoachApplicationStatus
+    ) -> LocalizedStringKey {
+        switch status {
+        case .draft:
+            "coach.application.status.draft"
+        case .ineligible:
+            "coach.application.status.ineligible"
+        case .readyForPayment:
+            "coach.application.status.ready_for_payment"
+        case .paymentProcessing:
+            "coach.application.status.payment_processing"
+        case .paymentVerified:
+            "coach.application.status.payment_verified"
+        case .pendingAdminApproval:
+            "coach.application.status.pending_admin_approval"
+        case .approved:
+            "coach.application.status.approved"
+        case .rejected:
+            "coach.application.status.rejected"
+        case .expired:
+            "coach.application.status.expired"
+        }
+    }
+
+    private func applicationStatusKind(
+        _ status: CoachApplicationStatus
+    ) -> AppStatusKind {
+        switch status {
+        case .approved:
+            .success
+        case .rejected, .ineligible, .expired:
+            .error
+        case .pendingAdminApproval, .paymentProcessing:
+            .pending
+        case .paymentVerified:
+            .information
+        case .draft, .readyForPayment:
+            .neutral
         }
     }
 }

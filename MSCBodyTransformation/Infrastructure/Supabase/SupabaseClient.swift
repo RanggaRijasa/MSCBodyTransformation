@@ -220,6 +220,19 @@ nonisolated enum SupabaseErrorMapper {
             )
         case "program_full":
             return .conflict(reason: "Kapasitas program sudah penuh.")
+        case "registration_closed":
+            return .conflict(
+                reason: "Pendaftaran program sudah ditutup."
+            )
+        case "payment_required":
+            return .conflict(
+                reason: "Pembayaran program belum terverifikasi."
+            )
+        case "coach_required", "coach_invalid":
+            return .validation(
+                field: "coach",
+                reason: "Peserta memerlukan Coach aktif yang disetujui."
+            )
         case "program_unavailable", "step_unavailable":
             return .conflict(
                 reason: "Program atau langkah belum tersedia."

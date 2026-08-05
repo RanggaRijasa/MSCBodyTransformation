@@ -16,7 +16,7 @@
     {"id":"00000000-0000-0000-0000-000000000102","email":"maya@demo.local","displayName":"Coach Maya","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-05-01T00:00:00Z"},
     {"id":"00000000-0000-0000-0000-000000000103","email":"niko@demo.local","displayName":"Coach Niko","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-05-01T00:00:00Z"},
     {"id":"00000000-0000-0000-0000-000000000104","email":"sinta@demo.local","displayName":"Coach Sinta","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-05-01T00:00:00Z"},
-    {"id":"00000000-0000-0000-0000-000000000105","email":"tio@demo.local","displayName":"Tio Pranata","role":"coach","hasCompletedOnboarding":true,"isCoachApprovalPending":true,"createdAt":"2026-07-20T00:00:00Z"},
+    {"id":"00000000-0000-0000-0000-000000000105","email":"tio@demo.local","displayName":"Tio Pranata","role":"participant","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-07-20T00:00:00Z"},
     {"id":"00000000-0000-0000-0000-000000000201","email":"admin@demo.local","displayName":"Admin MSC","role":"admin","hasCompletedOnboarding":true,"isCoachApprovalPending":false,"createdAt":"2026-01-01T00:00:00Z"}
   ],
   "participantProfiles": [
@@ -32,6 +32,7 @@
     {"id":"20000000-0000-0000-0000-000000000010","userID":"00000000-0000-0000-0000-000000000010","coachID":"30000000-0000-0000-0000-000000000103","displayName":"Joko Saputra","city":"Surabaya"},
     {"id":"20000000-0000-0000-0000-000000000011","userID":"00000000-0000-0000-0000-000000000011","coachID":"30000000-0000-0000-0000-000000000104","displayName":"Karina Wati","city":"Jakarta"},
     {"id":"20000000-0000-0000-0000-000000000012","userID":"00000000-0000-0000-0000-000000000012","coachID":"30000000-0000-0000-0000-000000000104","displayName":"Lukman Hakim","city":"Jakarta"},
-    {"id":"20000000-0000-0000-0000-000000000101","userID":"00000000-0000-0000-0000-000000000101","coachID":null,"displayName":"Coach Raka","city":"Denpasar","phoneNumber":null,"localPhotoReference":null}
+    {"id":"20000000-0000-0000-0000-000000000101","userID":"00000000-0000-0000-0000-000000000101","coachID":null,"displayName":"Coach Raka","city":"Denpasar","phoneNumber":null,"localPhotoReference":null},
+    {"id":"20000000-0000-0000-0000-000000000105","userID":"00000000-0000-0000-0000-000000000105","coachID":null,"displayName":"Tio Pranata","city":"Bandung","phoneNumber":"+6281200000105","localPhotoReference":null,"memberLevel":"millionaire_team"}
   ]
 }

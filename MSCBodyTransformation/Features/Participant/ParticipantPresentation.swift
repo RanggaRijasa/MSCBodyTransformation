@@ -152,6 +152,22 @@ nonisolated enum ParticipantFormatting {
         )
     }
 
+    static func dateAndTime(
+        _ value: Date,
+        timeZoneIdentifier: String
+    ) -> String {
+        let timeZone =
+            TimeZone(identifier: timeZoneIdentifier) ?? .current
+        return value.formatted(
+            Date.FormatStyle(
+                date: .long,
+                time: .shortened,
+                locale: locale,
+                timeZone: timeZone
+            )
+        )
+    }
+
     static func fieldReason(_ error: DomainError) -> String {
         switch error {
         case .validation(_, let reason), .conflict(let reason):

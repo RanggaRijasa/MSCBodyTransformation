@@ -1,6 +1,6 @@
 # Status Implementasi Program End-to-End
 
-Tanggal audit: 3 Agustus 2026
+Tanggal audit: 5 Agustus 2026
 
 ## Ringkasan
 
@@ -10,6 +10,41 @@ perangkat fisik, atau implementasi Android tetap menjadi external gate dan
 tidak diklaim selesai.
 
 ## Selesai di source iOS lokal
+
+### Batas pendaftaran program
+
+- Admin dapat mengaktifkan cutoff tanggal dan jam pada `Jadwal dan peserta`.
+- Cutoff bertahan pada draft, published mapping, duplikasi program, DTO
+  Supabase, dan kontrak platform-neutral.
+- Peserta tetap dapat melihat program yang ditutup, tetapi CTA join,
+  scanner QR, deep-link enrollment, dan local enrollment use case menolak
+  pendaftaran tepat pada atau setelah cutoff.
+- Detail Orang Admin tetap menyediakan pendaftaran manual dengan deadline
+  terlihat dan alasan audit wajib.
+- Migration lokal menegakkan cutoff memakai server clock setelah row program
+  dikunci. RPC Admin memverifikasi role Admin, lifecycle program, kapasitas,
+  Coach approved, dan entitlement program berbayar; hanya deadline yang
+  dikecualikan.
+
+### Phase 09.5 — Guest, Auth UI, dan Coach application
+
+- Guest menjadi default Debug demo dan memakai logged-out Participant shell
+  tanpa membuat `AppUser`, profil, atau anonymous Supabase user.
+- Seluruh tab Peserta dapat dijelajahi dengan public-safe snapshot; personal
+  state tidak diisi dari fixture.
+- Home Guest mempunyai CTA `Masuk`/`Daftar`; `Gabung program` melewati
+  centralized auth gate dan mempertahankan program ID tanpa menyimpan QR.
+- Login, Register, Forgot Password, Apple, Google, dan email/password
+  tersedia sebagai UI dengan deterministic fake outcomes.
+- Semua fake registration membuat Participant dan menuju onboarding yang
+  sama: nama, nomor HP, sembilan level, dan tujuan akun.
+- Eligibility, tiga price band, pembayaran manual tiga bulan, dan status
+  menunggu Admin berada di domain/repository lokal, bukan View.
+- Applicant tetap Participant setelah payment verified. Admin melihat
+  eligibility/payment read-only; approval/rejection idempoten dan teraudit.
+- Fixture lama yang memberi role Coach sebelum approval sudah diremediasi.
+- Tidak ada Supabase Auth, OAuth callback, StoreKit transaction, secret, atau
+  migration backend baru dalam Phase 09.5.
 
 - Model program typed untuk scoring, commerce, content, questions, answer
   keys, submissions, quiz, payment, entitlement, dan store product.
@@ -63,11 +98,23 @@ enrollment, submission/answer, quiz, weigh-in, score, commerce, entitlement,
 winner, poster, audit, storage, dan RLS dasar. Tidak ada tabel invite,
 wallet, atau seat credit.
 
+Migration deadline pada 5 Agustus 2026 lulus fresh reset, error-level lint,
+security advisor, seluruh 89 pgTAP assertions, serta 14 assertion race test
+melalui Auth/Data API lokal.
+
+Simulator Debug build/run lulus tanpa warning. Empat focused Swift suite
+terkait lulus dengan 65 tests, validator deadline tambahan lulus, dan
+perjalanan UI Admin create → setting deadline → preview → publish lulus pada
+locale perangkat `en_US` tanpa localization key terlihat.
+
 ## External gate yang belum dapat diselesaikan di workspace
 
 | Gate | Yang diperlukan |
 |---|---|
-| Supabase migration/RLS E2E | Supabase CLI, Docker atau project staging, URL, anon key, dan service-side deployment |
+| Auth/profile production | Phase 10: Supabase Auth lokal, session/Keychain, profile bootstrap, callback, identity linking |
+| Coach application backend | Phase 11: migration, RLS, public Guest reads, atomic approve/reject |
+| Coach access payment | Phase 12: StoreKit product, server verification, entitlement, expiry/renewal/refund policy |
+| Hosted Supabase deployment | Review migration lalu deploy ke hosted `main` hanya pada release gate; local reset/RLS/race sudah lulus |
 | Server operations | Edge Functions/RPC production, secrets, server scoring, race/retry tests |
 | Store catalog provisioning | App Store Connect key, Google service account, app/product records |
 | StoreKit verification | StoreKit configuration/sandbox, backend Apple verification, server notifications |
@@ -167,3 +214,19 @@ Penyalinan isi antarhari pada 3 Agustus 2026 juga diverifikasi:
 
 Full UI release matrix, perangkat fisik, Supabase staging, dan store sandbox
 tetap termasuk external gate; hasil mock lokal tidak menggantikannya.
+
+Verifikasi Phase 09.5 pada 4 Agustus 2026:
+
+- Simulator Debug build/run Guest Home pada iPhone 17: lulus tanpa warning.
+- Full Swift Testing: 157 tests, 0 failure.
+- Swift Testing Phase 09.5: 13 tests, 0 failure.
+- Focused Guest/Auth/Coach application UI: 5 tests, 0 failure, dengan device
+  locale `en_US` dan copy aplikasi tetap Bahasa Indonesia.
+- Admin Coach approval + existing manual enrollment regression: 1 test,
+  0 failure.
+- Participant, Coach, dan Admin CMS critical UI journeys: masing-masing
+  1 test, 0 failure.
+- iPad mini Register build/run pada locale `en_US`: lulus dan dynamic outcome
+  menampilkan `Berhasil`, bukan localization key.
+- Local fake flow berjalan tanpa Colima; backend production tetap external
+  gate.

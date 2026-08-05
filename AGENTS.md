@@ -95,6 +95,9 @@ When generating or editing code:
   `-AppleLanguages (en) -AppleLocale en_US`. Verify that no localization key
   such as `feature.section.label` is visible. Add or update a focused UI test
   for dynamic localized strings when practical.
+- Before completing localization or UI-copy changes, run
+  `scripts/check_localization_catalog.sh`. A machine-style key without a
+  non-empty Indonesian catalog value is a failing check.
 - A visible localization key is a release-blocking UI defect. Fix the catalog
   entry and the runtime fallback; do not hide it with layout changes or
   screenshot-only workarounds.
@@ -410,6 +413,32 @@ Until the assigned authentication phase:
 - Do not add live OAuth callback handling.
 - Do not add provider SDKs.
 - Do not add client secrets.
+
+Guest and Coach application rules:
+
+- Guest is a logged-out access state, not a fourth `UserRole`, not an
+  authenticated Participant, and not an anonymous Supabase Auth user.
+- Guest may browse the public Participant shell, but every personal mutation
+  must pass through the centralized authentication gate.
+- Never hydrate Guest screens with fixture or cached profile, enrollment,
+  weight, submission, private-media, or current-Coach data.
+- Login is the default authentication destination. Register and Forgot
+  Password are separate destinations that return to Login.
+- All self-registration methods create a Participant account first. Choosing
+  Coach means applying; the client must never self-assign Coach or Admin.
+- Member level is profile/application data, not an authorization claim.
+- Coach application requires SC or higher plus explicit HOM STS and ICT
+  attestations.
+- Coach pricing is centralized: SC/SB Rp100.000, Supervisor/World Team
+  Rp150.000, and TAB/GET/Millionaire/President’s Team Rp200.000 for a manual
+  three-month period. `Member` cannot apply.
+- A verified payment is not Coach approval. The applicant remains Participant
+  until Admin review and an authoritative operation activate Coach access.
+- Approval/rejection must be idempotent and audited. Rejection requires a
+  reason; approval requires complete eligibility and verified payment.
+- Phase 09.5 uses deterministic local fake auth and purchase adapters. Never
+  present their outcomes as real Supabase Auth, OAuth, StoreKit, payment, or
+  server verification.
 
 ## Participant Enrollment Rules
 

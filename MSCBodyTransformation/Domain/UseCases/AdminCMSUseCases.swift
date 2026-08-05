@@ -76,6 +76,23 @@ nonisolated struct AdminProgramDraftValidator: Sendable {
                 )
             )
         }
+        if let registrationClosesAt = draft.registrationClosesAt,
+           let timeZone = TimeZone(identifier: draft.timeZoneIdentifier) {
+            var deadlineCalendar = Calendar(identifier: .gregorian)
+            deadlineCalendar.timeZone = timeZone
+            let deadlineDay = deadlineCalendar.startOfDay(
+                for: registrationClosesAt
+            )
+            let endDay = deadlineCalendar.startOfDay(for: draft.endDate)
+            if deadlineDay > endDay {
+                issues.append(
+                    issue(
+                        .registrationDeadline,
+                        "Batas pendaftaran tidak boleh setelah program selesai."
+                    )
+                )
+            }
+        }
         if draft.days.isEmpty {
             issues.append(
                 issue(.days, "Tambahkan setidaknya satu hari program.")
@@ -703,7 +720,7 @@ nonisolated struct ManualAdminEnrollmentUseCase: Sendable {
     let clock: any AppClock
 
     func callAsFunction(
-        programID: UUID,
+        program: Program,
         participantID: UUID,
         coachID: UUID?,
         reason: String,
@@ -718,17 +735,44 @@ nonisolated struct ManualAdminEnrollmentUseCase: Sendable {
                 reason: "Alasan enrollment manual wajib diisi."
             )
         }
+        guard program.status == .scheduled || program.status == .active else {
+            throw DomainError.conflict(
+                reason: "Program belum tersedia untuk pendaftaran."
+            )
+        }
+        guard coachID != nil else {
+            throw DomainError.validation(
+                field: "coach",
+                reason: "Peserta harus memiliki Coach aktif."
+            )
+        }
+        guard !program.effectiveCommerceConfiguration.requiresPayment else {
+            throw DomainError.conflict(
+                reason: "Pembayaran program harus diverifikasi server."
+            )
+        }
         if let existing = try await enrollments.enrollment(
-            programID: programID,
+            programID: program.id,
             participantID: participantID
         ) {
             return existing
+        }
+        if let participantLimit = program.participantLimit {
+            let enrolledCount = try await enrollments.allEnrollments().count {
+                $0.programID == program.id
+                    && ($0.status == .active || $0.status == .completed)
+            }
+            guard enrolledCount < participantLimit else {
+                throw DomainError.conflict(
+                    reason: "Kapasitas program sudah penuh."
+                )
+            }
         }
         let now = clock.now()
         let enrollment = try await enrollments.createEnrollment(
             ProgramEnrollment(
                 id: identifierGenerator.makeIdentifier(),
-                programID: programID,
+                programID: program.id,
                 participantID: participantID,
                 coachID: coachID,
                 status: .active,

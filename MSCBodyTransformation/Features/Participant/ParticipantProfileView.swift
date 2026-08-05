@@ -9,7 +9,9 @@ struct ParticipantProfileView: View {
     @State private var presentedSheet: ParticipantProfileSheet?
 
     var body: some View {
-        if let snapshot = store.snapshot {
+        if store.isGuest {
+            guestProfile
+        } else if let snapshot = store.snapshot {
             Form {
                 identitySection(snapshot)
                 profileDataSection(snapshot)
@@ -37,6 +39,50 @@ struct ParticipantProfileView: View {
         } else {
             LoadingStateView()
         }
+    }
+
+    private var guestProfile: some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: AppSpacing.medium) {
+                    Label(
+                        "guest.profile.title",
+                        systemImage: "person.crop.circle.badge.plus"
+                    )
+                    .font(AppTypography.sectionTitle)
+                    Text("guest.profile.message")
+                        .font(AppTypography.body)
+                        .foregroundStyle(Color.appSecondaryText)
+
+                    Button("auth.action.login") {
+                        store.requestAuthentication(
+                            destination: .login,
+                            reason: .accountSettings
+                        )
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.brandPrimary)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .accessibilityIdentifier("guest.profile.login")
+
+                    Button("auth.action.register") {
+                        store.requestAuthentication(
+                            destination: .register,
+                            reason: .accountSettings
+                        )
+                    }
+                    .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .accessibilityIdentifier("guest.profile.register")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, AppSpacing.small)
+            }
+            legalSection
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackground)
+        .accessibilityIdentifier("participant.guest.profile")
     }
 
     private func identitySection(
