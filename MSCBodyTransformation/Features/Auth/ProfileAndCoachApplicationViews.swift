@@ -236,9 +236,11 @@ struct ParticipantCoachQRRegistrationView: View {
         }
         .sheet(isPresented: $showsScanner) {
             LocalQRScannerSheet { identifier in
-                state.selectScannedParticipantCoach(
-                    identifier: identifier
-                )
+                Task {
+                    await state.selectScannedParticipantCoach(
+                        identifier: identifier
+                    )
+                }
             }
         }
     }

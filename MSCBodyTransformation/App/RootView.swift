@@ -37,23 +37,41 @@ struct RootView: View {
     }
 
     var body: some View {
+        if appEnvironment.configuration.mode != .localDemo {
+            externalSessionRoot
+        } else {
 #if DEBUG
-        Group {
-            if let activeDemo {
-                RoleAppShellView(
-                    demoRole: activeDemo.role,
-                    scenario: activeDemo.scenario
-                )
-            } else {
-                debugLanding
+            Group {
+                if let activeDemo {
+                    RoleAppShellView(
+                        demoRole: activeDemo.role,
+                        scenario: activeDemo.scenario
+                    )
+                } else {
+                    debugLanding
+                }
             }
-        }
 #else
-        RoleAppShellView(
-            demoRole: .guest,
-            scenario: .guestHome
-        )
+            configurationFailure
 #endif
+        }
+    }
+
+    @ViewBuilder
+    private var externalSessionRoot: some View {
+        if let sessionRepository = appEnvironment.repositories?.session {
+            SessionManagedRootView(repository: sessionRepository)
+        } else {
+            configurationFailure
+        }
+    }
+
+    private var configurationFailure: some View {
+        ErrorStateView(
+            error: appEnvironment.bootstrapError ?? .unknown
+        )
+        .padding(AppSpacing.medium)
+        .background(Color.appBackground.ignoresSafeArea())
     }
 
 #if DEBUG
@@ -288,6 +306,228 @@ struct RootView: View {
         )
     }
 #endif
+}
+
+@MainActor
+private struct SessionManagedRootView: View {
+    @State private var store: SessionStore
+    @Environment(\.appEnvironment) private var appEnvironment
+
+    init(repository: any SessionRepository) {
+        _store = State(initialValue: SessionStore(repository: repository))
+    }
+
+    var body: some View {
+        Group {
+            switch store.route {
+            case .bootstrapping:
+                LoadingStateView()
+                    .padding(AppSpacing.medium)
+            case .loggedOut:
+                RoleAppShellView(demoRole: .guest, scenario: .guestHome)
+            case .authenticated(let role):
+                RoleAppShellView(
+                    role: role,
+                    scenario: .defaultScenario(for: DemoRole(role: role))
+                )
+            case .awaitingEmailVerification:
+                EmailVerificationPendingView(store: store)
+            case .passwordRecovery:
+                PasswordRecoveryCompletionView(store: store)
+            case .profileProvisioning:
+                sessionMessage(
+                    title: "auth.profile_provisioning.title",
+                    message: "auth.profile_provisioning.message",
+                    systemImage: "person.crop.circle.badge.clock"
+                )
+            case .provisionalOnboarding:
+                ProvisionalOnboardingHost(
+                    environment: appEnvironment
+                )
+            case .provisionalCleanupPending:
+                sessionMessage(
+                    title: "auth.cleanup.title",
+                    message: "auth.cleanup.message",
+                    systemImage: "clock.arrow.circlepath"
+                )
+            case .expired:
+                sessionMessage(
+                    title: "error.session_expired.title",
+                    message: "error.session_expired.message",
+                    systemImage: "person.crop.circle.badge.xmark"
+                )
+            case .recoverableError:
+                ErrorStateView(error: .unknown) {
+                    Task { await store.retry() }
+                }
+                .padding(AppSpacing.medium)
+            }
+        }
+        .background(Color.appBackground.ignoresSafeArea())
+        .task { await store.bootstrap() }
+        .task { await store.observeSessionChanges() }
+        .onOpenURL { url in
+            Task { await store.handleAuthenticationCallback(url) }
+        }
+    }
+
+    private func sessionMessage(
+        title: LocalizedStringKey,
+        message: LocalizedStringKey,
+        systemImage: String
+    ) -> some View {
+        EmptyStateView(
+            title: title,
+            message: message,
+            systemImage: systemImage
+        )
+        .padding(AppSpacing.medium)
+    }
+}
+
+@MainActor
+private struct ProvisionalOnboardingHost: View {
+    private let environment: AppEnvironment
+    @State private var participantStore: ParticipantJourneyStore
+
+    init(environment: AppEnvironment) {
+        self.environment = environment
+        _participantStore = State(
+            initialValue: ParticipantJourneyStore(
+                environment: environment,
+                allowsGuestAccess: true
+            )
+        )
+    }
+
+    var body: some View {
+        AuthenticationFlowView(
+            environment: environment,
+            store: participantStore,
+            presentation: AuthenticationPresentation(
+                destination: .profileOnboarding
+            ),
+            scenario: .guestHome
+        )
+        .task { await participantStore.load() }
+    }
+}
+
+@MainActor
+private struct EmailVerificationPendingView: View {
+    let store: SessionStore
+    @State private var isSending = false
+    @State private var feedback: String?
+
+    var body: some View {
+        VStack(spacing: AppSpacing.large) {
+            EmptyStateView(
+                title: "auth.verification.title",
+                message: "auth.verification.message",
+                systemImage: "envelope.badge"
+            )
+            if let feedback {
+                Text(feedback)
+                    .font(AppTypography.secondary)
+                    .foregroundStyle(Color.appSecondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            Button("auth.verification.resend") {
+                Task { await resend() }
+            }
+            .buttonStyle(PrimaryActionButtonStyle())
+            .disabled(isSending)
+            Button("action.cancel", role: .cancel) {
+                Task { await store.signOut() }
+            }
+            .frame(minHeight: 44)
+        }
+        .padding(AppSpacing.medium)
+    }
+
+    private func resend() async {
+        isSending = true
+        defer { isSending = false }
+        do {
+            try await store.resendVerification()
+            feedback = String(
+                localized: "auth.verification.resent",
+                defaultValue: "Email verifikasi telah dikirim ulang."
+            )
+        } catch {
+            feedback = String(
+                localized: "auth.verification.resend_error",
+                defaultValue: "Email belum dapat dikirim ulang. Coba lagi nanti."
+            )
+        }
+    }
+}
+
+@MainActor
+private struct PasswordRecoveryCompletionView: View {
+    let store: SessionStore
+    @State private var password = ""
+    @State private var confirmation = ""
+    @State private var isSubmitting = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    SecureField("auth.password_reset.new_password", text: $password)
+                    SecureField(
+                        "auth.password_reset.confirm_password",
+                        text: $confirmation
+                    )
+                } header: {
+                    Text("auth.password_reset.title")
+                } footer: {
+                    Text("auth.password_reset.requirement")
+                }
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(Color.appDestructive)
+                }
+                Button("auth.password_reset.save") {
+                    Task { await updatePassword() }
+                }
+                .disabled(
+                    password.count < 8
+                        || password != confirmation
+                        || isSubmitting
+                )
+            }
+            .navigationTitle(Text("auth.password_reset.title"))
+        }
+    }
+
+    private func updatePassword() async {
+        isSubmitting = true
+        defer { isSubmitting = false }
+        do {
+            try await store.updatePassword(password)
+            errorMessage = nil
+        } catch {
+            errorMessage = String(
+                localized: "auth.password_reset.error",
+                defaultValue: "Password belum dapat diperbarui. Coba lagi."
+            )
+        }
+    }
+}
+
+private extension DemoRole {
+    init(role: UserRole) {
+        switch role {
+        case .participant:
+            self = .participant
+        case .coach:
+            self = .coach
+        case .admin:
+            self = .admin
+        }
+    }
 }
 
 #if DEBUG

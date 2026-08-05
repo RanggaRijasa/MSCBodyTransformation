@@ -46,6 +46,44 @@ tidak diklaim selesai.
 - Tidak ada Supabase Auth, OAuth callback, StoreKit transaction, secret, atau
   migration backend baru dalam Phase 09.5.
 
+### Phase 10 — fondasi Auth lokal
+
+- Migration lokal membuat tepat satu profile provisional dengan role literal
+  Participant untuk setiap identity Auth dan mengabaikan metadata role/status.
+- Nama, nomor HP, level member, tujuan akun, finalisasi QR Coach, handoff
+  applicant, pembatalan provisional, dan expiry cleanup melalui RPC/helper
+  dengan privilege minimum.
+- App membedakan local demo, Debug Supabase lokal, dan hosted production;
+  kombinasi build/endpoint invalid gagal tertutup.
+- Session disimpan di Keychain device-only dan dimiliki satu actor yang
+  mengoordinasikan refresh rotation, restore, expiry, logout, dan auth-state
+  stream.
+- Root route berasal dari session, protected profile, serta onboarding status;
+  role tidak pernah diambil dari provider metadata.
+- Email signup/recovery memakai PKCE one-time code; callback typed memvalidasi
+  URL, kind, environment, TTL, dan state OAuth. Verification, reset password,
+  provisional resume, serta typed error copy tersedia dalam Bahasa Indonesia.
+- Pending program intent disimpan aman dengan TTL/nonce/environment untuk
+  dipulihkan setelah auth, lalu direvalidasi terhadap status, cutoff server,
+  dan kapasitas; raw Coach QR hanya berada di secure registration draft dan
+  server validation boundary.
+- Google browser OAuth (`ASWebAuthenticationSession`) dan native Sign in with
+  Apple adapter tersedia di source tanpa third-party package atau secret.
+- Custom callback scheme dan Sign in with Apple capability terpasang pada
+  target Xcode; provider credential serta konfigurasi hosted belum tersedia.
+- Penghapusan akun langsung tersedia setelah reauthentication melalui Edge
+  Function server-side. Storage privat dan data program dibersihkan, session
+  lokal dihapus, sedangkan transaksi/audit dipertahankan tanpa identitas.
+- Email/password tetap tersembunyi sampai SMTP/domain production siap.
+- Stack restart, lint, advisors, 139 pgTAP assertions, 22 Auth lifecycle
+  checks, simulator build/run, 173 Swift tests, 7 UI tests, dan localization
+  check lulus. Seluruh rantai migration termasuk immediate deletion juga
+  lulus fresh reset lokal.
+- Status yang benar: **fondasi lokal dan kebijakan immediate deletion selesai;
+  Google/Apple, hosted deployment/retention review, dan perangkat fisik tetap
+  gate aktif. Hanya SMTP/domain dan email/password production yang berstatus
+  SKIPPED SAAT INI**.
+
 - Model program typed untuk scoring, commerce, content, questions, answer
   keys, submissions, quiz, payment, entitlement, dan store product.
 - Migrasi fixture dari requirement/evidence lama ke typed question/answer.
@@ -91,6 +129,7 @@ tidak diklaim selesai.
 - `supabase/config.toml`
 - `supabase/seed.sql`
 - `supabase/migrations/20260802000000_program_end_to_end.sql`
+- `supabase/migrations/20260805044617_phase10_auth_profile_and_session_foundation.sql`
 - `PROGRAM_END_TO_END_CONTRACT_MATRIX.md`
 
 Schema mencakup profile/current Coach, program/content/question/answer key,
@@ -98,32 +137,38 @@ enrollment, submission/answer, quiz, weigh-in, score, commerce, entitlement,
 winner, poster, audit, storage, dan RLS dasar. Tidak ada tabel invite,
 wallet, atau seat credit.
 
-Migration deadline pada 5 Agustus 2026 lulus fresh reset, error-level lint,
-security advisor, seluruh 89 pgTAP assertions, serta 14 assertion race test
-melalui Auth/Data API lokal.
+Seluruh migration Phase 09 dan Phase 10, termasuk immediate account deletion,
+lulus fresh reset lokal pada 5 Agustus 2026. Lint dan advisors lulus tanpa
+issue, 139 pgTAP assertions lulus, dan Auth lifecycle lulus 22 checks.
 
 Simulator Debug build/run lulus tanpa warning. Empat focused Swift suite
 terkait lulus dengan 65 tests, validator deadline tambahan lulus, dan
 perjalanan UI Admin create → setting deadline → preview → publish lulus pada
 locale perangkat `en_US` tanpa localization key terlihat.
 
-## External gate yang belum dapat diselesaikan di workspace
+## External gate
 
-| Gate | Yang diperlukan |
-|---|---|
-| Auth/profile production | Phase 10: Supabase Auth lokal, session/Keychain, profile bootstrap, callback, identity linking |
-| Coach application backend | Phase 11: migration, RLS, public Guest reads, atomic approve/reject |
-| Coach access payment | Phase 12: StoreKit product, server verification, entitlement, expiry/renewal/refund policy |
-| Hosted Supabase deployment | Review migration lalu deploy ke hosted `main` hanya pada release gate; local reset/RLS/race sudah lulus |
-| Server operations | Edge Functions/RPC production, secrets, server scoring, race/retry tests |
-| Store catalog provisioning | App Store Connect key, Google service account, app/product records |
-| StoreKit verification | StoreKit configuration/sandbox, backend Apple verification, server notifications |
-| Google Play Billing | Android project, Play Console test track, purchase-token verification |
-| Cross-platform entitlement | iOS + Android build yang tersambung ke staging backend yang sama |
-| Physical media | iPhone/iPad fisik untuk kamera, permission, memory, background/relaunch |
-| Release/security | OAuth production, retention/account deletion, advisors, TestFlight/review |
+Keputusan produk 5 Agustus 2026 mempertahankan Google OAuth, Sign in with
+Apple, hosted deployment, dan pengujian perangkat fisik sebagai gate aktif.
+Hanya SMTP/domain dan email/password production yang di-skip.
 
-External gate tidak boleh ditandai selesai berdasarkan mock atau OpenAPI saja.
+| Gate | Status | Yang diperlukan |
+|---|---|---|
+| Google/Apple Auth production | AKTIF | Provider credential, hosted callback, dan perangkat fisik |
+| SMTP/domain dan email/password production | SKIPPED SAAT INI | Diaktifkan kembali hanya bila keputusan produk berubah |
+| Coach application backend | BELUM SELESAI | Phase 11 migration, RLS, public Guest reads, atomic approve/reject |
+| Coach access payment | BELUM SELESAI | Phase 12 StoreKit verification, entitlement, expiry/renewal/refund |
+| Hosted Supabase deployment | AKTIF | Review migration dan persetujuan eksplisit sebelum menyentuh hosted `main` |
+| Server operations | BELUM SELESAI | Deploy Edge Functions/RPC production, secrets, race/retry tests |
+| Store catalog provisioning | BELUM SELESAI | App Store Connect key, Google service account, app/product records |
+| StoreKit verification | BELUM SELESAI | StoreKit configuration/sandbox, Apple verification, server notifications |
+| Google Play Billing | BELUM SELESAI | Android project, Play Console test track, purchase-token verification |
+| Cross-platform entitlement | BELUM SELESAI | iOS dan Android pada backend production/staging yang disetujui |
+| Physical media/Auth | AKTIF | iPhone/iPad fisik untuk Auth, kamera, permission, memory, background/relaunch |
+| Release/security | BELUM SELESAI | OAuth, retention/deletion, advisors, TestFlight/review |
+
+Rincian input user dan urutan eksekusi tersedia di workplan Phase 10 bagian
+“External gate dan manual configuration”.
 
 ## Verifikasi lokal
 

@@ -167,7 +167,17 @@ values
     '91000000-0000-0000-0000-000000000003',
     null,
     false
-  );
+  )
+on conflict (user_id) do update set
+  role = excluded.role,
+  display_name = excluded.display_name,
+  current_coach_id = excluded.current_coach_id,
+  coach_qr_identifier = excluded.coach_qr_identifier,
+  coach_is_approved = excluded.coach_is_approved,
+  onboarding_status = 'active',
+  provisional_expires_at = null,
+  finalized_at = now(),
+  updated_at = now();
 
 insert into public.programs (
   id,

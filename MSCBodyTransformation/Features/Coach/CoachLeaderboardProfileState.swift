@@ -84,6 +84,10 @@ final class CoachProfileState {
     private let environment: AppEnvironment
     private let service: CoachDataService
 
+    var isLocalDemo: Bool {
+        environment.configuration.mode == .localDemo
+    }
+
     var state: CoachFeatureLoadState<CoachProfileSnapshot> = .idle
     var displayName = ""
     var biography = ""
@@ -188,7 +192,12 @@ final class CoachProfileState {
     }
 
     func logoutLocalDemo() async {
-        await environment.repositories?.session.setDebugScenario(.loggedOut)
+        if isLocalDemo {
+            await environment.repositories?.session
+                .setDebugScenario(.loggedOut)
+        } else {
+            try? await environment.repositories?.session.signOut()
+        }
         isLoggedOut = true
     }
 

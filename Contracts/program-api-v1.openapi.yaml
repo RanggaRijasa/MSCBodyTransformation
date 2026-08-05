@@ -21,6 +21,22 @@ x-phase-09-5-handoff:
     - Member level, eligibility, payment, approval, role, and entitlement are separate authoritative states.
     - Backend paths and schemas are added with Phase 10-12 migrations and RLS, not by the Phase 09.5 mock.
 paths:
+  /delete-account:
+    post:
+      operationId: deleteCurrentAccount
+      description: >
+        Permanently deletes the recently reauthenticated Participant or
+        relationship-free Coach account. Private Storage objects are removed
+        first; financial and audit records are retained without the account
+        identity. Admin self-deletion and Coach deletion with assigned
+        participants are rejected.
+      responses:
+        "204":
+          description: Account data and Auth identity were deleted.
+        "401":
+          $ref: "#/components/responses/DomainError"
+        "409":
+          $ref: "#/components/responses/DomainError"
   /programs:
     get:
       operationId: listPublicPrograms
@@ -676,5 +692,10 @@ components:
             - payment_pending
             - purchase_unverified
             - quiz_attempt_used
+            - recent_reauthentication_required
+            - admin_account_deletion_not_allowed
+            - account_relationships_require_transfer
+            - private_media_cleanup_failed
+            - account_deletion_failed
         message: { type: string }
         field: { type: [string, "null"] }

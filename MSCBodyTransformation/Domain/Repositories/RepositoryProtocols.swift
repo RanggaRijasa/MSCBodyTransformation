@@ -2,23 +2,59 @@ import Foundation
 
 nonisolated protocol SessionRepository: Sendable {
     func loadCurrentSession() async throws -> AppSession
+    func register(
+        request: AuthenticationRegistrationRequest
+    ) async throws -> AppSession
+    func signIn(credential: EmailCredential) async throws -> AppSession
+    func signOut() async throws
+    func restoreSession() async throws -> AppSession
+    func refreshSession() async throws -> AppSession
+    func requestPasswordReset(email: String) async throws
+    func resendEmailVerification(email: String) async throws
+    func updatePassword(_ password: String) async throws
+    func handleAuthenticationCallback(_ url: URL) async throws -> AppSession
+    func acceptExternalSession(
+        _ material: AuthSessionMaterial
+    ) async throws -> AppSession
+    func reauthenticate(credential: EmailCredential) async throws
+    func reauthenticate(
+        externalSession material: AuthSessionMaterial
+    ) async throws
+    func clearLocalSessionAfterAccountDeletion() async
+    func authenticationStateUpdates() async -> AsyncStream<AuthenticationStateUpdate>
+    func validAccessToken() async throws -> String
     func switchDebugRole(to role: UserRole) async throws -> AppSession
     func setDebugScenario(_ scenario: DebugSessionScenario) async
 }
 
+nonisolated protocol ExternalAuthenticationProviding: Sendable {
+    func authenticate(
+        provider: AuthenticationProvider
+    ) async throws -> AuthSessionMaterial
+}
+
 nonisolated protocol AuthenticationRepository: Sendable {
-    func signInForDemo(
+    func signIn(
         provider: AuthenticationProvider,
-        email: String?
+        email: String?,
+        password: String?
     ) async throws -> AppSession
-    func registerForDemo(
+    func register(
         provider: AuthenticationProvider,
-        email: String?
+        email: String?,
+        password: String?
     ) async throws -> AppSession
-    func finalizeRegistrationForDemo(
-        _ completion: DemoRegistrationCompletion
-    ) async throws -> DemoRegistrationResult
-    func requestPasswordResetForDemo(email: String) async throws
+    func finalizeRegistration(
+        _ completion: RegistrationCompletion
+    ) async throws -> RegistrationResult
+    func requestPasswordReset(email: String) async throws
+    func savePendingEnrollmentIntent(programID: UUID) async throws
+    func pendingEnrollmentIntent() async throws -> PendingEnrollmentIntent?
+    func clearPendingEnrollmentIntent() async throws
+    func cancelProvisionalRegistration() async throws
+    func deleteAccount(
+        reauthentication: AccountReauthentication
+    ) async throws
     func completeParticipantOnboarding(
         userID: UUID,
         displayName: String,

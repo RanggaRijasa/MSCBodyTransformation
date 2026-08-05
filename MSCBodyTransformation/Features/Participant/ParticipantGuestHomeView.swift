@@ -63,7 +63,7 @@ struct ParticipantGuestHomeView: View {
 
     private var loginButton: some View {
         Button("auth.action.login") {
-            store.requestAuthentication(destination: .login)
+            Task { await store.requestAuthentication(destination: .login) }
         }
         .buttonStyle(PrimaryActionButtonStyle())
         .accessibilityIdentifier("guest.home.login")
@@ -134,10 +134,12 @@ struct ParticipantGuestHomeView: View {
                     .font(AppTypography.secondary)
                     .foregroundStyle(Color.appSecondaryText)
                 Button("auth.action.login") {
-                    store.requestAuthentication(
-                        destination: .login,
-                        reason: .personalActivity
-                    )
+                    Task {
+                        await store.requestAuthentication(
+                            destination: .login,
+                            reason: .personalActivity
+                        )
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.brandPrimary)

@@ -207,7 +207,7 @@ nonisolated enum AccountPurpose:
     case coachApplicant = "coach_applicant"
 }
 
-nonisolated struct DemoRegistrationCompletion: Sendable {
+nonisolated struct RegistrationCompletion: Sendable {
     let provider: AuthenticationProvider
     let email: String?
     let displayName: String
@@ -219,9 +219,11 @@ nonisolated struct DemoRegistrationCompletion: Sendable {
     let hasCompletedICT: Bool
     let coachPayment: CoachPaymentPreview?
     let termsVersion: String
+    var credential: EmailCredential? = nil
+    var participantCoachQROpaqueValue: String? = nil
 }
 
-nonisolated struct DemoRegistrationResult: Sendable {
+nonisolated struct RegistrationResult: Sendable {
     let session: AppSession
     let coachApplication: CoachApplication?
 }

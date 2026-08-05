@@ -73,11 +73,13 @@ struct ParticipantProgramView: View {
             return
         }
         if store.isGuest {
-            store.requestAuthentication(
-                destination: .login,
-                reason: .joinProgram,
-                intent: .joinProgram(program.id)
-            )
+            Task {
+                await store.requestAuthentication(
+                    destination: .login,
+                    reason: .joinProgram,
+                    intent: .joinProgram(program.id)
+                )
+            }
             return
         }
         router.navigate(

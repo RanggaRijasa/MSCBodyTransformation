@@ -10,6 +10,7 @@ struct MSCBodyTransformationTests {
 
         #expect(configuration.mode == .localDemo)
         #expect(configuration.localeIdentifier == "id-ID")
+        #expect(!configuration.isEmailPasswordAuthenticationVisible)
     }
 
     @Test("Clock tetap mengembalikan tanggal deterministik")

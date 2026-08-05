@@ -18,6 +18,7 @@ actor InMemoryAppRepository:
     AuditRepository,
     ParticipantDemoRepository
 {
+    private var phase10PendingEnrollmentIntent: PendingEnrollmentIntent?
     private var users: [AppUser]
     private var participantProfiles: [ParticipantProfile]
     private var coachProfiles: [CoachProfile]
@@ -94,22 +95,152 @@ actor InMemoryAppRepository:
         sessionScenario = scenario
     }
 
-    func signInForDemo(
+    func register(
+        request: AuthenticationRegistrationRequest
+    ) async throws -> AppSession {
+        try await register(
+            provider: .email,
+            email: request.credential.email,
+            password: request.credential.password
+        )
+    }
+
+    func signIn(credential: EmailCredential) async throws -> AppSession {
+        try await signIn(
+            provider: .email,
+            email: credential.email,
+            password: credential.password
+        )
+    }
+
+    func signOut() async throws {
+        sessionScenario = .loggedOut
+    }
+
+    func restoreSession() async throws -> AppSession {
+        try await loadCurrentSession()
+    }
+
+    func refreshSession() async throws -> AppSession {
+        try await loadCurrentSession()
+    }
+
+    func requestPasswordReset(email: String) async throws {
+        let trimmedEmail = email.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard trimmedEmail.contains("@") else {
+            throw DomainError.validation(
+                field: "email",
+                reason: "Masukkan alamat email yang valid."
+            )
+        }
+    }
+
+    func savePendingEnrollmentIntent(programID: UUID) async throws {
+        phase10PendingEnrollmentIntent = PendingEnrollmentIntent(
+            programID: programID,
+            createdAt: Date(),
+            nonce: UUID(),
+            environment: "local_demo"
+        )
+    }
+
+    func pendingEnrollmentIntent() async throws -> PendingEnrollmentIntent? {
+        phase10PendingEnrollmentIntent
+    }
+
+    func clearPendingEnrollmentIntent() async throws {
+        phase10PendingEnrollmentIntent = nil
+    }
+
+    func deleteAccount(
+        reauthentication: AccountReauthentication
+    ) async throws {
+        _ = reauthentication
+        throw AuthenticationError.providerUnavailable
+    }
+
+    func cancelProvisionalRegistration() async throws {
+        sessionScenario = .loggedOut
+        phase10PendingEnrollmentIntent = nil
+    }
+
+    func resendEmailVerification(email: String) async throws {
+        try await requestPasswordReset(email: email)
+    }
+
+    func updatePassword(_ password: String) async throws {
+        guard password.count >= 8 else {
+            throw AuthenticationError.weakPassword
+        }
+    }
+
+    func handleAuthenticationCallback(_ url: URL) async throws -> AppSession {
+        _ = url
+        throw AuthenticationError.callbackMismatch
+    }
+
+    func acceptExternalSession(
+        _ material: AuthSessionMaterial
+    ) async throws -> AppSession {
+        _ = material
+        throw AuthenticationError.providerUnavailable
+    }
+
+    func reauthenticate(credential: EmailCredential) async throws {
+        _ = credential
+        throw AuthenticationError.providerUnavailable
+    }
+
+    func reauthenticate(
+        externalSession material: AuthSessionMaterial
+    ) async throws {
+        _ = material
+        throw AuthenticationError.providerUnavailable
+    }
+
+    func clearLocalSessionAfterAccountDeletion() async {
+        sessionScenario = .loggedOut
+        phase10PendingEnrollmentIntent = nil
+    }
+
+    func authenticationStateUpdates() async -> AsyncStream<AuthenticationStateUpdate> {
+        let currentSession = try? await loadCurrentSession()
+        return AsyncStream { continuation in
+            if let currentSession {
+                continuation.yield(.sessionChanged(currentSession))
+            } else {
+                continuation.yield(.expired)
+            }
+            continuation.finish()
+        }
+    }
+
+    func validAccessToken() async throws -> String {
+        throw AuthenticationError.providerUnavailable
+    }
+
+    func signIn(
         provider: AuthenticationProvider,
-        email: String?
+        email: String?,
+        password: String?
     ) async throws -> AppSession {
         _ = provider
         _ = email
+        _ = password
         let user = try userForSession(role: .participant)
         sessionScenario = .user(user.id)
         return AppSession(user: user, state: .active)
     }
 
-    func registerForDemo(
+    func register(
         provider: AuthenticationProvider,
-        email: String?
+        email: String?,
+        password: String?
     ) async throws -> AppSession {
         _ = provider
+        _ = password
         let userID = UUID(
             uuid: (
                 0, 0, 0, 0,
@@ -171,9 +302,9 @@ actor InMemoryAppRepository:
         return AppSession(user: newUser, state: .active)
     }
 
-    func finalizeRegistrationForDemo(
-        _ completion: DemoRegistrationCompletion
-    ) async throws -> DemoRegistrationResult {
+    func finalizeRegistration(
+        _ completion: RegistrationCompletion
+    ) async throws -> RegistrationResult {
         let trimmedName = completion.displayName.trimmingCharacters(
             in: .whitespacesAndNewlines
         )
@@ -330,22 +461,10 @@ actor InMemoryAppRepository:
             coachApplicationsStorage.append(completedApplication)
         }
         sessionScenario = .user(userID)
-        return DemoRegistrationResult(
+        return RegistrationResult(
             session: AppSession(user: newUser, state: .active),
             coachApplication: completedApplication
         )
-    }
-
-    func requestPasswordResetForDemo(email: String) async throws {
-        let trimmedEmail = email.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-        guard trimmedEmail.contains("@") else {
-            throw DomainError.validation(
-                field: "email",
-                reason: "Masukkan alamat email yang valid."
-            )
-        }
     }
 
     func completeParticipantOnboarding(

@@ -30,6 +30,7 @@ final class AuthenticationFlowState {
 
     private var registrationProvider: AuthenticationProvider?
     private var registrationEmail: String?
+    private var registrationPassword: String?
 
     init(
         environment: AppEnvironment,
@@ -70,7 +71,29 @@ final class AuthenticationFlowState {
         selectedParticipantCoach != nil && !isSubmitting
     }
 
+    var isEmailPasswordAuthenticationVisible: Bool {
+        environment.configuration.isEmailPasswordAuthenticationVisible
+    }
+
+    var isLocalDemo: Bool {
+        environment.configuration.mode == .localDemo
+    }
+
     func prepareDemoStateIfNeeded() async {
+        if environment.configuration.mode != .localDemo,
+           registrationProvider == nil,
+           let session = try? await environment.repositories?.session
+               .restoreSession(),
+           session.onboardingStatus == .provisional
+                || session.onboardingStatus == .coachHandoffPending {
+            registrationProvider = .email
+            if let name = session.user?.displayName,
+               name != "Peserta baru" {
+                displayName = name
+            }
+            destination = .profileOnboarding
+            return
+        }
         switch scenario {
         case .authProfileOnboarding:
             prepareRegistrationDraft(
@@ -163,7 +186,11 @@ final class AuthenticationFlowState {
             )
             return
         }
-        beginRegistration(provider: .email, email: email)
+        beginRegistration(
+            provider: .email,
+            email: email,
+            password: password
+        )
     }
 
     func authenticateWithProvider(
@@ -173,7 +200,31 @@ final class AuthenticationFlowState {
         guard !isSubmitting else { return }
         guard validateProviderOutcome() else { return }
         if isRegistration {
-            beginRegistration(provider: provider, email: nil)
+            if environment.configuration.mode == .localDemo {
+                beginRegistration(
+                    provider: provider,
+                    email: nil,
+                    password: nil
+                )
+                return
+            }
+            guard let repositories = environment.repositories else {
+                errorMessage = genericErrorMessage
+                return
+            }
+            isSubmitting = true
+            defer { isSubmitting = false }
+            do {
+                _ = try await repositories.authentication.register(
+                    provider: provider,
+                    email: nil,
+                    password: nil
+                )
+                registrationProvider = provider
+                errorMessage = nil
+            } catch {
+                errorMessage = mappedMessage(for: error)
+            }
         } else {
             await signIn(provider: provider, email: nil)
         }
@@ -213,7 +264,7 @@ final class AuthenticationFlowState {
         }
         do {
             try await repositories.authentication
-                .requestPasswordResetForDemo(email: email)
+                .requestPasswordReset(email: email)
             errorMessage = nil
             recoveryWasRequested = true
         } catch {
@@ -241,11 +292,26 @@ final class AuthenticationFlowState {
         }
     }
 
-    func selectScannedParticipantCoach(identifier: String) {
+    func selectScannedParticipantCoach(identifier: String) async {
         let normalized = identifier
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .uppercased()
-        guard let coach = store.publicCoaches.first(where: {
+        let coaches: [CoachProfile]
+        if store.publicCoaches.isEmpty {
+            do {
+                guard let repositories = environment.repositories else {
+                    throw AuthenticationError.providerUnavailable
+                }
+                coaches = try await repositories.coachDirectory.publicCoaches()
+            } catch {
+                selectedParticipantCoach = nil
+                errorMessage = mappedMessage(for: error)
+                return
+            }
+        } else {
+            coaches = store.publicCoaches
+        }
+        guard let coach = coaches.first(where: {
             $0.enrollmentIdentifier.uppercased() == normalized
                 && $0.isApproved
                 && $0.isPublic
@@ -357,7 +423,20 @@ final class AuthenticationFlowState {
         await store.completeAuthenticationFlow()
     }
 
-    func cancel() {
+    func cancel() async {
+        if environment.configuration.mode != .localDemo,
+           let repositories = environment.repositories,
+           let session = try? await repositories.session.restoreSession(),
+           session.onboardingStatus == .provisional
+                || session.onboardingStatus == .coachHandoffPending {
+            do {
+                try await repositories.authentication
+                    .cancelProvisionalRegistration()
+            } catch {
+                errorMessage = mappedMessage(for: error)
+                return
+            }
+        }
         clearTransientRegistration()
         store.cancelAuthentication()
     }
@@ -386,9 +465,10 @@ final class AuthenticationFlowState {
         isSubmitting = true
         defer { isSubmitting = false }
         do {
-            _ = try await repositories.authentication.signInForDemo(
+            _ = try await repositories.authentication.signIn(
                 provider: provider,
-                email: email
+                email: email,
+                password: provider == .email ? password : nil
             )
             clearCredentials()
             errorMessage = nil
@@ -400,12 +480,14 @@ final class AuthenticationFlowState {
 
     private func beginRegistration(
         provider: AuthenticationProvider,
-        email: String?
+        email: String?,
+        password: String?
     ) {
         registrationProvider = provider
         registrationEmail = email?.trimmingCharacters(
             in: .whitespacesAndNewlines
         )
+        registrationPassword = password
         clearCredentials()
         errorMessage = nil
         destination = .profileOnboarding
@@ -421,7 +503,7 @@ final class AuthenticationFlowState {
             return
         }
         guard validateProfile() else { return }
-        let completion = DemoRegistrationCompletion(
+        var completion = RegistrationCompletion(
             provider: registrationProvider,
             email: registrationEmail,
             displayName: displayName.trimmingCharacters(
@@ -436,9 +518,17 @@ final class AuthenticationFlowState {
             coachPayment: coachPayment,
             termsVersion: "coach-terms-v1"
         )
+        if let registrationEmail, let registrationPassword {
+            completion.credential = try? EmailCredential(
+                email: registrationEmail,
+                password: registrationPassword
+            )
+        }
+        completion.participantCoachQROpaqueValue =
+            selectedParticipantCoach?.enrollmentIdentifier
         do {
             let result = try await repositories.authentication
-                .finalizeRegistrationForDemo(completion)
+                .finalizeRegistration(completion)
             application = result.coachApplication
             await store.load()
             errorMessage = nil
@@ -556,6 +646,7 @@ final class AuthenticationFlowState {
         clearCredentials()
         registrationProvider = nil
         registrationEmail = nil
+        registrationPassword = nil
         displayName = ""
         phoneNumber = ""
         selectedParticipantCoach = nil
@@ -572,6 +663,57 @@ final class AuthenticationFlowState {
     }
 
     private func mappedMessage(for error: Error) -> String {
+        if let error = error as? AuthenticationError {
+            switch error {
+            case .validation, .weakPassword:
+                return String(
+                    localized: "auth.error.validation",
+                    defaultValue: "Periksa data yang dimasukkan, lalu coba lagi."
+                )
+            case .invalidCredential:
+                return String(
+                    localized: "auth.error.invalid_credential",
+                    defaultValue: "Email atau password tidak sesuai."
+                )
+            case .verificationRequired:
+                return String(
+                    localized: "auth.error.verification_required",
+                    defaultValue: "Verifikasi email sebelum masuk."
+                )
+            case .cancelled:
+                return String(
+                    localized: "auth.provider.cancelled",
+                    defaultValue: "Proses masuk dibatalkan."
+                )
+            case .rateLimited:
+                return String(
+                    localized: "auth.recovery.rate_limited",
+                    defaultValue: "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi."
+                )
+            case .offline:
+                return String(
+                    localized: "auth.error.offline",
+                    defaultValue: "Tidak ada koneksi. Periksa jaringan lalu coba lagi."
+                )
+            case .timeout:
+                return String(
+                    localized: "auth.error.timeout",
+                    defaultValue: "Koneksi terlalu lama. Coba lagi."
+                )
+            case .profileProvisioning, .roleLoad:
+                return String(
+                    localized: "auth.error.profile",
+                    defaultValue: "Profil belum dapat dimuat. Coba lagi."
+                )
+            case .providerUnavailable:
+                return String(
+                    localized: "auth.provider.error",
+                    defaultValue: "Penyedia akun belum dapat digunakan. Coba lagi."
+                )
+            default:
+                return genericErrorMessage
+            }
+        }
         if let domainError = error as? DomainError {
             switch domainError {
             case .validation(_, let reason):

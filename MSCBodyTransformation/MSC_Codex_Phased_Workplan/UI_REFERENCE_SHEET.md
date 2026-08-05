@@ -711,7 +711,12 @@ UI dianggap selesai bila:
 
 - Login adalah halaman default.
 - Login pertama menampilkan heading serta tiga pilihan: Apple, Google, dan
-  email. Jangan fokuskan input atau membuka keyboard pada halaman ini.
+  email ketika email/password diaktifkan. Untuk sementara pilihan email,
+  form email, dan Forgot Password disembunyikan. Domain pengirim dan SMTP
+  production berstatus **SKIPPED SAAT INI**. Jangan menghapus implementasinya;
+  aktifkan kembali melalui configuration flag hanya setelah external gate
+  tersebut dibuka kembali dan lulus.
+  Jangan fokuskan input atau membuka keyboard pada halaman ini.
 - Heading utama auth memakai hierarchy judul layar `.largeTitle.bold`, tetap
   mengikuti Dynamic Type, dan membungkus ke baris berikutnya tanpa
   diperkecil. Header memakai leading edge penuh yang sama agar Login dan
@@ -720,7 +725,7 @@ UI dianggap selesai bila:
   Password, dan primary action `Masuk`.
 - Register memakai hierarchy provider-first yang sama. Pilihan email baru
   membuka form email, password, konfirmasi password, dan primary action
-  `Daftar`.
+  `Daftar` ketika feature tersebut diaktifkan.
 - CTA `Belum punya akun? Daftar sekarang` dan `Sudah punya akun? Masuk`
   dipisahkan menjadi teks penjelas dan tombol link yang jelas, bukan satu card
   besar.

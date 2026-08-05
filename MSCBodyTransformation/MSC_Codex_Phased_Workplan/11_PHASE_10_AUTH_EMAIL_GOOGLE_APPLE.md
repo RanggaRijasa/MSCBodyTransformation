@@ -1,16 +1,23 @@
 # Phase 10: Authentication and Session
 
-> Status: siap dikerjakan setelah local UI Phase 09.5 selesai. Workplan telah
-> direkonsiliasi ulang pada 5 Agustus 2026 terhadap batas pendaftaran program,
-> override enrollment Admin, dan kontrak backend Phase 10–12. Integrasi Auth
-> lokal dapat dikerjakan tanpa menulis ulang Guest,
-> Login/Register, onboarding profil, atau pengajuan Coach.
+> Status: **fondasi lokal dan immediate account deletion diterapkan; Google,
+> Apple, hosted deployment, dan perangkat fisik tetap gate aktif**. Migration, profile
+> bootstrap/hardening, session/Keychain, PKCE callback, email/password source,
+> pending intent, callback scheme/capability, adapter source Google/Apple, serta
+> Auth lifecycle E2E lokal tersedia. Hanya SMTP/domain serta aktivasi
+> email/password production yang berstatus `SKIPPED SAAT INI`.
 >
 > Email/password, profile bootstrap, session lifecycle, callback routing,
 > pending enrollment intent, role protection, dan sebagian besar pengujian
-> dikerjakan menggunakan Supabase lokal melalui Colima. Google OAuth,
-> Sign in with Apple, callback hosted production, capability Apple, dan
-> verifikasi perangkat fisik tetap menjadi external gate.
+> dikerjakan menggunakan Supabase lokal melalui Colima. Google OAuth dan
+> provider Apple native sudah aktif lokal. Validasi manual Sign in with Apple,
+> callback hosted production, dan verifikasi perangkat fisik tetap menjadi
+> external gate.
+>
+> Pilihan email/password dan Forgot Password disembunyikan dari UI aktif
+> sampai domain pengirim dan SMTP production tersedia. Implementasi serta
+> pengujian lokal tetap dikerjakan di Phase 10 di belakang configuration flag;
+> pengaktifan UI menjadi external release gate.
 >
 > Hosted Supabase `main` adalah production dan tidak digunakan untuk
 > eksperimen Phase 10. Supabase Branching dan hosted development project
@@ -81,8 +88,9 @@ Hasil Phase 10 harus menyediakan:
   payment verified, keputusan Admin, atau role dari state client.
 - Program yang dipilih dan QR Coach opaque tetap tersedia setelah auth tanpa
   diperlakukan sebagai role atau izin akses.
-- Provider chooser Phase 09.5 dipertahankan: Apple, Google, dan email tampil
-  sebelum form email; Login tidak membuka keyboard otomatis.
+- Provider chooser Phase 09.5 dipertahankan tanpa autofocus. Apple dan Google
+  tampil sekarang; pilihan email baru ditampilkan setelah domain/SMTP gate
+  selesai dan tetap membuka form terpisah.
 - Production onboarding tidak boleh mengekspos account/profile parsial.
   Participant baru aktif setelah QR Coach tervalidasi server. Jalur pengajuan
   Coach berhenti pada authenticated handoff sampai operasi application
@@ -157,35 +165,38 @@ Keberadaan baseline tersebut tidak berarti production auth sudah selesai.
 
 ## Gap Phase 10 yang harus ditutup
 
-- [ ] Belum ada migration idempoten untuk membuat profil Participant saat row
+- [x] Migration idempoten membuat profil Participant saat row
   baru dibuat pada `auth.users`.
-- [ ] `public.profiles` belum mempunyai field level member dan operation
+- [x] `public.profiles` mempunyai field level member dan operation
   allowlisted untuk menyimpan nama, nomor HP, serta level tanpa membuka
   perubahan role atau field privileged.
-- [ ] Belum ada onboarding/provisional status dan expiry server-controlled
+- [x] Onboarding/provisional status dan expiry server-controlled
   yang dapat membedakan identity Auth dari application account aktif.
-- [ ] Belum ada backfill aman untuk identity test yang sudah ada tanpa profil.
-- [ ] Belum ada Auth API client dan token lifecycle pada aplikasi.
-- [ ] `SessionRepository` belum mendukung registration, login, logout,
+- [x] Backfill aman tersedia untuk identity yang sudah ada tanpa profil.
+- [x] Auth API client dan token lifecycle tersedia pada aplikasi.
+- [x] `SessionRepository` mendukung registration, login, logout,
   refresh, password recovery, dan auth-state observation.
-- [ ] `AppConfiguration.Mode` baru memiliki `localDemo`.
-- [ ] Root Release masih membuka shell Participant tanpa session nyata.
-- [ ] Token belum disimpan pada Keychain.
-- [ ] Callback scheme belum didaftarkan pada target iOS.
-- [ ] UI email/password sudah tersedia dari Phase 09.5, tetapi command-nya
-  masih memakai fake adapter dan belum terhubung ke Supabase Auth.
-- [ ] `PendingAuthenticatedIntent` source saat ini baru membawa program ID;
-  belum membawa TTL, nonce, environment, dan QR Coach opaque pada secure
-  storage.
-- [ ] Belum ada revalidasi cutoff program setelah login, verification, OAuth
-  callback, app relaunch, atau perubahan cutoff selama auth berlangsung.
-- [ ] Belum ada lifecycle provisional identity yang membedakan login account
+- [x] `AppConfiguration.Mode` membedakan demo lokal, Supabase lokal, dan hosted.
+- [x] Root non-demo tidak membuka shell role tanpa session dan protected profile.
+- [x] Token disimpan pada Keychain device-only tanpa sinkronisasi.
+- [x] Callback scheme didaftarkan pada target iOS.
+- [x] UI email/password tersedia dari Phase 09.5 dan dipertahankan di source,
+  tetapi entry point-nya disembunyikan melalui configuration flag.
+- [x] Command email/password environment-neutral terhubung ke adapter
+  Supabase Auth.
+- [x] Pending enrollment intent membawa TTL, nonce, environment, dan QR Coach
+  opaque pada secure storage.
+- [x] Pending program intent direvalidasi melalui operasi server setelah login,
+  verification, OAuth callback, dan app relaunch; status, cutoff server, serta
+  kapasitas yang berubah selama auth membatalkan intent lokal.
+- [x] Lifecycle provisional identity membedakan login account
   lama dari identity baru yang belum menyelesaikan onboarding.
-- [ ] Belum ada cleanup idempoten untuk identity baru yang dibatalkan sebelum
+- [x] Cleanup idempoten tersedia untuk identity baru yang dibatalkan sebelum
   QR Participant atau handoff Coach selesai.
-- [ ] Belum ada provider Google/Apple yang dikonfigurasi.
-- [ ] Belum ada account-deletion request yang dapat diakses dari aplikasi.
-- [ ] Belum ada hosted production Auth configuration.
+- [ ] Provider Google/Apple production belum dikonfigurasi.
+- [x] Immediate account deletion dapat diakses dari area akun setelah
+  reauthentication.
+- [ ] Hosted production Auth belum dikonfigurasi.
 
 ## Handoff yang tetap menjadi Phase 11 dan Phase 12
 
@@ -236,26 +247,26 @@ Gunakan tiga mode eksplisit:
 
 Checklist:
 
-- [ ] Tambahkan mode `debugLocalSupabase` dan `hostedProduction`.
-- [ ] Buat configuration loader yang memvalidasi kombinasi build dan endpoint.
-- [ ] Pastikan Release menolak local/HTTP endpoint.
-- [ ] Pastikan Debug local tidak dapat memakai hosted `main` tanpa pilihan
+- [x] Tambahkan mode `debugLocalSupabase` dan `hostedProduction`.
+- [x] Buat configuration loader yang memvalidasi kombinasi build dan endpoint.
+- [x] Pastikan Release menolak local/HTTP endpoint.
+- [x] Pastikan Debug local tidak dapat memakai hosted `main` tanpa pilihan
   eksplisit.
-- [ ] Tambahkan test matriks build × mode × endpoint.
-- [ ] Dokumentasikan cara Simulator dan perangkat fisik mencapai Auth lokal.
-- [ ] Jangan menaruh token atau provider secret dalam `.xcconfig`, plist,
+- [x] Tambahkan test matriks build × mode × endpoint.
+- [x] Dokumentasikan cara Simulator dan perangkat fisik mencapai Auth lokal.
+- [x] Jangan menaruh token atau provider secret dalam `.xcconfig`, plist,
   source Swift, test fixture, atau repository.
 
 ## Keputusan dependency
 
 - [x] `supabase-swift` sudah dievaluasi pada Phase 09 dan tidak ditambahkan.
 - [x] Native Foundation `URLSession` sudah menjadi boundary Supabase Phase 09.
-- [ ] Perluas boundary native tersebut untuk Auth hanya setelah endpoint,
+- [x] Perluas boundary native tersebut untuk Auth setelah endpoint,
   payload, PKCE, callback, dan refresh behavior diperiksa pada dokumentasi
   Supabase yang berlaku saat implementasi.
-- [ ] Isolasi Auth transport di belakang `SupabaseAuthClientProviding`.
-- [ ] Jangan memasukkan DTO Auth atau Supabase ke domain model.
-- [ ] Jangan menambahkan package Google Sign-In atau package auth lain tanpa
+- [x] Isolasi Auth transport di belakang `SupabaseAuthClientProviding`.
+- [x] Jangan memasukkan DTO Auth atau Supabase ke domain model.
+- [x] Jangan menambahkan package Google Sign-In atau package auth lain tanpa
   persetujuan eksplisit user.
 - [ ] Jika kemudian `supabase-swift` disetujui, pin versi, dokumentasikan
   alasan native API tidak memadai, simpan di belakang adapter, dan jangan
@@ -299,20 +310,20 @@ Keputusan:
 
 Checklist:
 
-- [ ] Tambahkan domain command/value yang tidak membawa tipe Supabase:
+- [x] Tambahkan domain command/value yang tidak membawa tipe Supabase:
   email credential, registration request, auth provider, dan recovery state.
-- [ ] Perluas `SessionRepository` untuk register, login, logout, restore,
+- [x] Perluas `SessionRepository` untuk register, login, logout, restore,
   refresh, request reset, update password, dan auth-state updates.
-- [ ] Ubah method `...ForDemo` pada `AuthenticationRepository` menjadi
+- [x] Ubah method `...ForDemo` pada `AuthenticationRepository` menjadi
   command environment-neutral atau adapter façade yang mendelegasikan ke
   local demo maupun Supabase tanpa mengubah navigation flow.
-- [ ] Pastikan hanya satu Keychain store, refresh coordinator, dan session
+- [x] Pastikan hanya satu Keychain store, refresh coordinator, dan session
   observation stream yang hidup untuk satu app environment.
-- [ ] Pertahankan method Debug-only terisolasi dari production adapter.
-- [ ] Tambahkan `SessionStore` berbasis Observation pada app layer.
-- [ ] Gunakan `AsyncStream` atau mekanisme structured-concurrency yang
+- [x] Pertahankan method Debug-only terisolasi dari production adapter.
+- [x] Tambahkan `SessionStore` berbasis Observation pada app layer.
+- [x] Gunakan `AsyncStream` atau mekanisme structured-concurrency yang
   ownership dan cancellation-nya jelas untuk perubahan auth state.
-- [ ] Root route membedakan:
+- [x] Root route membedakan:
   - Bootstrapping.
   - Logged out.
   - Menunggu verifikasi email.
@@ -324,12 +335,12 @@ Checklist:
   - Authenticated role shell.
   - Session expired.
   - Recoverable error.
-- [ ] Root route tidak pernah memilih shell hanya dari metadata provider.
-- [ ] Token valid dan protected profile yang berhasil dimuat belum cukup untuk
+- [x] Root route tidak pernah memilih shell hanya dari metadata provider.
+- [x] Token valid dan protected profile yang berhasil dimuat belum cukup untuk
   membuka role shell; onboarding/finalization status juga harus selesai.
-- [ ] Role-load failure tidak boleh jatuh ke Participant secara diam-diam.
-- [ ] Root Debug tetap dapat memilih local demo secara eksplisit.
-- [ ] Root Release tidak boleh membuka shell Participant ketika tidak ada
+- [x] Role-load failure tidak boleh jatuh ke Participant secara diam-diam.
+- [x] Root Debug tetap dapat memilih local demo secara eksplisit.
+- [x] Root Release tidak boleh membuka shell Participant ketika tidak ada
   session.
 
 ## Profile bootstrap dan role hardening
@@ -340,26 +351,26 @@ Jangan mengedit migration Phase 09 yang sudah ada.
 
 Profile bootstrap:
 
-- [ ] Buat trigger setelah INSERT pada `auth.users` yang membuat
+- [x] Buat trigger setelah INSERT pada `auth.users` yang membuat
   `public.profiles` secara idempoten.
-- [ ] Set role secara literal menjadi `participant`; abaikan `role`,
+- [x] Set role secara literal menjadi `participant`; abaikan `role`,
   `current_coach_id`, Coach approval, dan Coach QR dari user metadata.
-- [ ] Set onboarding/provisional status dan expiry secara server-controlled;
+- [x] Set onboarding/provisional status dan expiry secara server-controlled;
   abaikan field sejenis dari user metadata atau request client.
-- [ ] Gunakan metadata hanya untuk field display/onboarding yang tidak
+- [x] Gunakan metadata hanya untuk field display/onboarding yang tidak
   authoritative setelah disanitasi.
-- [ ] Sediakan fallback display name yang valid agar metadata kosong tidak
+- [x] Sediakan fallback display name yang valid agar metadata kosong tidak
   menggagalkan signup.
-- [ ] Simpan privileged helper di schema non-exposed `private`.
-- [ ] Gunakan explicit empty `search_path`.
-- [ ] Revoke EXECUTE dari `PUBLIC`, `anon`, dan `authenticated`.
-- [ ] Berikan privilege minimum yang benar kepada role Auth/trigger sesuai
+- [x] Simpan privileged helper di schema non-exposed `private`.
+- [x] Gunakan explicit empty `search_path`.
+- [x] Revoke EXECUTE dari `PUBLIC`, `anon`, dan `authenticated`.
+- [x] Berikan privilege minimum yang benar kepada role Auth/trigger sesuai
   dokumentasi dan local runtime yang benar-benar terpasang.
-- [ ] Trigger failure harus terlihat sebagai signup failure yang terpetakan,
+- [x] Trigger failure terlihat sebagai signup failure yang terpetakan,
   bukan diabaikan.
-- [ ] Tambahkan backfill idempoten untuk local test users yang sudah ada tanpa
+- [x] Tambahkan backfill idempoten untuk local test users yang sudah ada tanpa
   profile, bila diperlukan.
-- [ ] Jangan memberi INSERT/UPDATE profile langsung kepada client untuk
+- [x] Jangan memberi INSERT/UPDATE profile langsung kepada client untuk
   menyelesaikan bootstrap.
 
 Role hardening:
@@ -381,31 +392,31 @@ Role hardening:
 
 ## Session dan token security
 
-- [ ] Simpan material session minimum yang dibutuhkan pada Keychain dengan
+- [x] Simpan material session minimum yang dibutuhkan pada Keychain dengan
   accessibility device-only yang sesuai.
-- [ ] Jangan simpan access token atau refresh token pada UserDefaults,
+- [x] Jangan simpan access token atau refresh token pada UserDefaults,
   `@AppStorage`, fixture, analytics, crash breadcrumb, atau log.
-- [ ] Jangan aktifkan Keychain sync lintas perangkat.
-- [ ] Isolasi mutable session/token state di dalam actor.
-- [ ] Serialisasi refresh request agar satu refresh token tidak dipakai oleh
+- [x] Jangan aktifkan Keychain sync lintas perangkat.
+- [x] Isolasi mutable session/token state di dalam actor.
+- [x] Serialisasi refresh request agar satu refresh token tidak dipakai oleh
   beberapa task secara bersamaan.
-- [ ] Ganti access dan refresh token secara atomik setelah refresh berhasil.
-- [ ] Gunakan expiry dari server; jangan menganggap jam perangkat
+- [x] Ganti access dan refresh token secara atomik setelah refresh berhasil.
+- [x] Gunakan expiry dari server; jangan menganggap jam perangkat
   authoritative.
-- [ ] Refresh proaktif dengan tolerance untuk clock skew.
+- [x] Refresh proaktif dengan tolerance untuk clock skew.
 - [ ] Untuk response unauthorized, lakukan paling banyak satu coordinated
   refresh dan satu retry bila operation aman diulang.
-- [ ] Jangan retry registration, password reset, account deletion, atau
+- [x] Jangan retry registration, password reset, account deletion, atau
   mutation non-idempoten secara buta.
-- [ ] Bedakan offline, timeout, invalid credential, unverified email,
+- [x] Bedakan offline, timeout, invalid credential, unverified email,
   refresh revoked/reused, session expired, rate limit, conflict, dan unknown.
-- [ ] Logout menghapus session lokal walaupun network revoke gagal, lalu
+- [x] Logout menghapus session lokal walaupun network revoke gagal, lalu
   memberi status yang jujur bila revoke server belum terkonfirmasi.
 - [ ] Session expiry menghapus private in-memory state dan mengarahkan user ke
   auth tanpa membocorkan data role sebelumnya.
-- [ ] App relaunch memulihkan session dari Keychain, refresh bila perlu, lalu
+- [x] App relaunch memulihkan session dari Keychain, refresh bila perlu, lalu
   memuat protected profile.
-- [ ] Jangan log header Authorization, callback code, token hash, nonce,
+- [x] Jangan log header Authorization, callback code, token hash, nonce,
   provider token, email lengkap, atau raw response Auth.
 - [ ] Tentukan hosted session policy sebelum release: JWT expiry, inactivity,
   time-box, dan single-session behavior.
@@ -488,8 +499,9 @@ Aturan:
 
 ### Email verification
 
-- [ ] Samakan local Auth configuration dengan behavior hosted yang akan
-  digunakan; local default dan hosted default tidak boleh diasumsikan sama.
+- [ ] **SKIPPED SAAT INI** — Samakan local Auth configuration dengan behavior
+  hosted yang akan digunakan; local default dan hosted default tidak boleh
+  diasumsikan sama.
 - [ ] Periksa nama configuration key pada Supabase CLI/config sample versi
   yang sedang terpasang sebelum mengubah `supabase/config.toml`.
 - [ ] Gunakan local email inbox dari Supabase CLI untuk E2E verification.
@@ -524,83 +536,86 @@ Aturan:
 ## Callback dan deep-link routing
 
 - [x] Redirect URL lokal tercantum pada `supabase/config.toml`.
-- [ ] Daftarkan custom URL scheme pada target iOS.
-- [ ] Perubahan target, capability, entitlements, atau `project.pbxproj`
-  memerlukan instruksi/persetujuan eksplisit sesuai `AGENTS.md`.
-- [ ] Gunakan satu parser typed untuk email verification, password recovery,
+- [x] Daftarkan custom URL scheme pada target iOS.
+- [x] Perubahan target, capability, entitlements, dan `project.pbxproj`
+  dilakukan setelah instruksi/persetujuan eksplisit user.
+- [x] Gunakan satu parser typed untuk email verification, password recovery,
   OAuth success, OAuth cancellation, dan provider error.
-- [ ] Validasi scheme, host, path, state, nonce, PKCE verifier, environment,
+- [x] Validasi scheme, host, path, state, nonce, PKCE verifier, environment,
   dan expected flow.
-- [ ] Callback yang tidak cocok dengan flow aktif harus ditolak.
-- [ ] Callback ganda harus idempoten.
-- [ ] Callback tidak boleh memuat atau mencatat raw QR Coach.
-- [ ] Simpan PKCE verifier dan OAuth state secara aman serta berumur pendek.
-- [ ] Gunakan `ASWebAuthenticationSession` untuk browser OAuth.
+- [x] Callback yang tidak cocok dengan flow aktif harus ditolak.
+- [x] Callback ganda harus idempoten.
+- [x] Callback tidak memuat atau mencatat raw QR Coach.
+- [x] Simpan PKCE verifier dan OAuth state secara aman serta berumur pendek.
+- [x] Gunakan `ASWebAuthenticationSession` untuk browser OAuth.
 - [ ] Gunakan ephemeral browser session hanya bila tradeoff UX sudah diputuskan.
-- [ ] Selesaikan callback pada app lifecycle API yang benar tanpa networking
+- [x] Selesaikan callback pada app lifecycle API yang benar tanpa networking
   langsung di SwiftUI `body`.
-- [ ] Tambahkan universal link kemudian bila domain production tersedia;
-  custom scheme tetap dibatasi dengan state/PKCE.
+- [ ] **SKIPPED SAAT INI** — Tambahkan universal link bila domain production
+  tersedia; custom scheme tetap dibatasi dengan state/PKCE.
 
 ## Google OAuth
 
 Pekerjaan lokal yang dapat disiapkan tanpa production credential:
 
-- [ ] Tambahkan provider enum, use case, state machine, error mapping, dan
+- [x] Tambahkan provider enum, use case, state machine, error mapping, dan
   callback parser.
-- [ ] Implementasikan browser OAuth melalui `ASWebAuthenticationSession`
+- [x] Implementasikan browser OAuth melalui `ASWebAuthenticationSession`
   dengan PKCE berdasarkan endpoint Supabase yang diverifikasi saat eksekusi.
-- [ ] Handle start, cancel, callback mismatch, provider error, duplicate
+- [x] Handle start, cancel, callback mismatch, provider error, duplicate
   callback, dan app relaunch.
-- [ ] Jangan meminta Google scope di luar `openid`, email, dan profile tanpa
+- [x] Jangan meminta Google scope di luar `openid`, email, dan profile tanpa
   alasan produk eksplisit.
-- [ ] Jangan menyimpan Google provider access/refresh token karena aplikasi
+- [x] Jangan menyimpan Google provider access/refresh token karena aplikasi
   tidak membutuhkan Google API.
-- [ ] Jangan mengotorisasi role dari Google claims/profile.
+- [x] Jangan mengotorisasi role dari Google claims/profile.
 - [ ] Tambahkan fake provider tests tanpa credential nyata.
 
-External gate:
+External gate — **AKTIF**:
 
 - [ ] Google Cloud project dan consent-screen audience tersedia.
 - [ ] Branding, privacy URL, support email, dan approved scopes tersedia.
 - [ ] OAuth Web client ID dan client secret tersedia untuk Supabase provider.
-- [ ] Local callback Auth `http://127.0.0.1:54321/auth/v1/callback`
+- [ ] Local callback Auth
+  `http://127.0.0.1:54321/auth/v1/callback`
   dikonfigurasi untuk pengujian lokal sesuai dokumentasi terbaru.
 - [ ] Secret Google lokal hanya masuk environment variable yang diabaikan Git.
-- [ ] Hosted Supabase callback dan production redirect allowlist dikonfigurasi.
+- [ ] Hosted Supabase callback dan production redirect allowlist
+  dikonfigurasi.
 - [ ] Google login diverifikasi pada Simulator dan iPhone fisik.
-- [ ] Google kemudian email serta email kemudian Google diuji dengan email
-  terverifikasi.
+- [ ] **SKIPPED SAAT INI** — Google kemudian email serta email kemudian Google
+  menunggu aktivasi email/password production.
 
 ## Sign in with Apple
 
 Pekerjaan source yang dapat disiapkan tanpa production credential:
 
-- [ ] Tambahkan native AuthenticationServices adapter.
-- [ ] Buat nonce acak per attempt, kirim hash yang benar ke Apple, dan
+- [x] Tambahkan native AuthenticationServices adapter.
+- [x] Buat nonce acak per attempt, kirim hash yang benar ke Apple, dan
   verifikasi nonce yang sama pada exchange Supabase.
-- [ ] Exchange Apple identity token melalui Supabase Auth endpoint yang
+- [x] Exchange Apple identity token melalui Supabase Auth endpoint yang
   didokumentasikan saat implementasi.
 - [ ] Tangani cancel, missing token, invalid nonce, revoked credential,
   duplicate callback, dan relay email.
 - [ ] Ambil nama hanya dari first native authorization response bila tersedia.
 - [ ] Sanitasi nama untuk display/onboarding; jangan gunakan nama/email Apple
   untuk authorization.
-- [ ] Jangan menyimpan Apple identity token atau authorization code.
+- [x] Jangan menyimpan Apple identity token atau authorization code.
 - [ ] Tambahkan fake credential tests tanpa key atau token nyata.
 
-External gate:
+External gate — **AKTIF**:
 
-- [ ] Apple Developer membership tersedia.
-- [ ] Bundle ID final tersedia.
-- [ ] Sign in with Apple capability diaktifkan.
-- [ ] App ID/Services ID dan provider Supabase dikonfigurasi sesuai flow yang
-  benar-benar dipilih.
-- [ ] Private key/secret Apple disimpan di server configuration, bukan app
-  atau repository.
+- [x] Apple Developer membership tersedia.
+- [x] Bundle ID final tersedia.
+- [x] Sign in with Apple capability diaktifkan pada target iOS.
+- [x] App ID `com.ranggar.MSCBodyTransformation` dikonfigurasi sebagai primary
+  App ID dan provider Apple native diaktifkan pada Supabase lokal.
+- [x] Flow yang dipilih adalah native-only, sehingga Services ID, private key,
+  dan OAuth client secret Apple tidak diperlukan.
+- [ ] Provider Apple hosted production belum dikonfigurasi.
 - [ ] Jika OAuth web Apple digunakan, rotasi secret enam bulanan dicatat
-  sebagai operational task; native-only flow tidak boleh diberi kewajiban
-  rotasi yang tidak berlaku.
+  sebagai operational task; native-only flow tidak diberi kewajiban rotasi
+  yang tidak berlaku.
 - [ ] Relay email configuration diuji.
 - [ ] Sign in, hidden relay email, first-login name, repeat login, revoked
   credential, dan account deletion diuji pada iPhone fisik.
@@ -623,7 +638,7 @@ Checklist:
 - [ ] Linking identity tidak membuat profil kedua untuk user yang sama.
 - [ ] Unverified email tidak boleh ditautkan otomatis hanya karena string
   email sama.
-- [ ] Test email → Google dan Google → email.
+- [ ] **SKIPPED SAAT INI** — Test email → Google dan Google → email.
 - [ ] Test Google account dengan email berbeda.
 - [ ] Test Apple relay sebagai identity terpisah.
 - [ ] Test provider callback yang menunjuk ke session user lain.
@@ -703,24 +718,23 @@ Phase 10 menyediakan flow permintaan penghapusan yang dapat diakses dari
 aplikasi. Kebijakan retensi dan purge production final tetap diverifikasi pada
 Phase 13.
 
-- [ ] Tambahkan entry “Hapus akun” pada area akun yang mudah ditemukan.
-- [ ] Jelaskan dampak terhadap program, submission, skor, private media, dan
+- [x] Tambahkan entry “Hapus akun” pada area akun yang mudah ditemukan.
+- [x] Jelaskan dampak terhadap program, submission, skor, private media, dan
   akses akun dengan Bahasa Indonesia yang tidak menyesatkan.
-- [ ] Minta reauthentication untuk tindakan sensitif.
-- [ ] Client memanggil authenticated server operation; jangan memasukkan
+- [x] Minta reauthentication untuk tindakan sensitif.
+- [x] Client memanggil authenticated server operation; jangan memasukkan
   `service_role` atau Auth Admin API ke aplikasi.
-- [ ] Tentukan apakah produk memakai immediate deletion atau
-  request-and-retention sebelum implementation destructive dibuat.
-- [ ] Jika memakai request, simpan status, requested-at, cancellation window,
-  dan audit minimum tanpa data sensitif.
-- [ ] Hentikan atau revoke session sebelum/finalisasi deletion; menghapus
+- [x] Produk memakai immediate deletion setelah reauthentication.
+- [x] Request-and-retention tidak dipakai; cancellation window dan status
+  request tidak diperlukan.
+- [x] Hentikan atau revoke session sebelum/finalisasi deletion; menghapus
   `auth.users` saja tidak langsung membuat JWT lama tidak valid.
-- [ ] Bersihkan atau pindahkan ownership private Storage sebelum Auth user
+- [x] Bersihkan ownership private Storage melalui Storage API sebelum Auth user
   dihapus karena object ownership dapat memblokir deletion.
-- [ ] Hapus pending enrollment intent dan local Keychain state.
-- [ ] Tangani participant dengan enrollment aktif dan Coach/Admin dengan
+- [x] Hapus pending enrollment intent dan local Keychain state.
+- [x] Tangani participant dengan enrollment aktif dan Coach/Admin dengan
   responsibility yang belum dialihkan melalui policy server yang eksplisit.
-- [ ] Jangan menghapus audit/financial record yang wajib dipertahankan tanpa
+- [x] Jangan menghapus audit/financial record yang wajib dipertahankan tanpa
   retention policy.
 - [ ] Uji retry, partial cleanup, already requested, cancellation, expired
   session, dan network interruption.
@@ -729,51 +743,57 @@ Phase 13.
 
 ## Error mapping dan UX
 
-- [ ] Tambahkan typed auth errors pada domain boundary.
-- [ ] Map pesan ke Bahasa Indonesia tanpa menampilkan raw Supabase/provider
+- [x] Tambahkan typed auth errors pada domain boundary.
+- [x] Map pesan ke Bahasa Indonesia tanpa menampilkan raw Supabase/provider
   error.
-- [ ] Bedakan validation, invalid credential, verification required,
+- [x] Bedakan validation, invalid credential, verification required,
   cancelled, rate limited, offline, timeout, callback mismatch, conflict,
   expired session, revoked session, profile provisioning, role load, dan
   unknown.
-- [ ] Sediakan retry hanya untuk operasi yang aman.
-- [ ] Tombol submit mempunyai loading state dan mencegah request ganda.
-- [ ] Jangan mengungkap apakah email tertentu terdaftar pada login recovery.
-- [ ] Pastikan semua runtime `String(localized:)` memiliki Bahasa Indonesia
+- [x] Sediakan retry hanya untuk operasi yang aman.
+- [x] Tombol submit mempunyai loading state dan mencegah request ganda.
+- [x] Jangan mengungkap apakah email tertentu terdaftar pada login recovery.
+- [x] Pastikan semua runtime `String(localized:)` memiliki Bahasa Indonesia
   `defaultValue`.
 - [ ] Uji copy dengan device locale `en_US` agar localization key tidak
   terlihat.
 - [ ] Uji Dynamic Type, VoiceOver, Reduce Motion, light/dark mode, keyboard,
   password AutoFill, dan error focus.
-- [ ] Provider chooser tetap tampil sebelum form email dan Login tidak
+- [x] Provider chooser tetap tampil sebelum form email dan Login tidak
   autofocus atau membuka keyboard otomatis.
-- [ ] Login/Register mempertahankan `.largeTitle.bold`, tidak memakai
+- [x] Configuration default menyembunyikan email/password dan Forgot Password
+  tanpa menghapus route, state, localization, atau focused tests.
+- [ ] **SKIPPED SAAT INI** — UI email/password hanya diaktifkan setelah domain
+  pengirim, SMTP,
+  redirect allowlist, verification, dan reset-password delivery production
+  berhasil diverifikasi.
+- [x] Login/Register mempertahankan `.largeTitle.bold`, tidak memakai
   `minimumScaleFactor`, tidak mengecil saat destination berubah, dan membungkus
   secara alami pada Dynamic Type besar.
-- [ ] Login menjadi root navigation; Register, form email, Forgot Password,
+- [x] Login menjadi root navigation; Register, form email, Forgot Password,
   profil, QR, eligibility, dan pembayaran mempertahankan typed back history.
-- [ ] Native leading-edge swipe bekerja pada destination Auth. Edge swipe
+- [x] Native leading-edge swipe bekerja pada destination Auth. Edge swipe
   root Login menutup Auth tanpa bertabrakan dengan scroll/carousel.
-- [ ] Membatalkan onboarding Participant atau Coach membuang draft dan kembali
+- [x] Membatalkan onboarding Participant atau Coach membuang draft dan kembali
   ke Guest tanpa membuka shell account parsial.
 
 ## Dokumentasi yang wajib diperbarui
 
-- [ ] Perbarui phase checklist dan progress log setelah setiap gate yang
+- [x] Perbarui phase checklist dan progress log setelah setiap gate yang
   benar-benar diverifikasi.
-- [ ] Perbarui `PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md` untuk membedakan
+- [x] Perbarui `PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md` untuk membedakan
   local Auth foundation, external provider gate, dan hosted production.
-- [ ] Perbarui `PROGRAM_END_TO_END_CONTRACT_MATRIX.md` bila field profile,
+- [x] Perbarui `PROGRAM_END_TO_END_CONTRACT_MATRIX.md` bila field profile,
   provisional identity, atau owner operation berubah.
-- [ ] Perbarui `Contracts/program-api-v1.openapi.yaml` hanya untuk endpoint
+- [x] Perbarui `Contracts/program-api-v1.openapi.yaml` untuk endpoint
   aplikasi/server yang memang menjadi kontrak; jangan mendokumentasikan
   endpoint internal Auth secara spekulatif.
-- [ ] Perbarui `supabase/README.md` dengan migration, Auth test, local inbox,
+- [x] Perbarui `supabase/README.md` dengan migration, Auth test, local inbox,
   callback, reset, dan cleanup verification yang benar-benar tersedia.
-- [ ] Perbarui `UI_REFERENCE_SHEET.md` hanya bila perilaku Auth production
-  berbeda dari kontrak UI Phase 09.5 yang sudah disetujui.
-- [ ] Catat manual Xcode step untuk URL scheme/capability tanpa mengedit
-  `project.pbxproj`, entitlements, signing, atau capability tanpa persetujuan.
+- [x] `UI_REFERENCE_SHEET.md` tetap berlaku; immediate deletion memakai area
+  akun destruktif dan copy Bahasa Indonesia yang sudah disetujui.
+- [x] Dengan persetujuan user, URL scheme/capability diterapkan langsung pada
+  target, Info.plist, entitlements, dan `project.pbxproj`.
 
 ## Urutan implementasi
 
@@ -843,11 +863,11 @@ Kerjakan satu gate pada satu waktu.
 
 - [ ] Auth state machine.
 - [ ] Root route untuk semua session/profile/onboarding state.
-- [ ] Email normalization dan validation.
+- [x] Email normalization dan validation.
 - [ ] Password requirement presentation.
-- [ ] Typed error mapping.
-- [ ] Callback parser dan state/nonce/PKCE validation.
-- [ ] Pending enrollment intent TTL dan consumption.
+- [x] Typed error mapping.
+- [x] Callback parser dan state/nonce/PKCE validation.
+- [x] Pending enrollment intent TTL dan consumption.
 - [ ] Provisional identity state, cancellation, cleanup terjadwal, dan expiry.
 - [ ] Registration cutoff berubah selama Auth berlangsung.
 - [ ] Session expiry dan role-load failure.
@@ -855,22 +875,22 @@ Kerjakan satu gate pada satu waktu.
 
 ### Database dan Auth API lokal
 
-- [ ] Signup membuat tepat satu Participant profile.
-- [ ] Signup baru memulai status provisional dan tidak membuka role shell
+- [x] Signup membuat tepat satu Participant profile.
+- [x] Signup baru memulai status provisional dan tidak membuka role shell
   sampai finalization server selesai.
-- [ ] Empty/malformed display metadata tidak memblokir signup.
-- [ ] Client-supplied Coach/Admin role diabaikan.
-- [ ] Member level tidak dapat dipakai sebagai authorization claim.
-- [ ] Auth/profile operation tidak dapat membuat Coach application, menulis
+- [x] Empty/malformed display metadata tidak memblokir signup.
+- [x] Client-supplied Coach/Admin role diabaikan.
+- [x] Member level tidak dapat dipakai sebagai authorization claim.
+- [x] Auth/profile operation tidak dapat membuat Coach application, menulis
   payment verified, atau mengirim keputusan Admin.
-- [ ] Profile user hanya dapat mengubah nama, nomor HP, dan level member
+- [x] Profile user hanya dapat mengubah nama, nomor HP, dan level member
   miliknya melalui allowlisted operation.
 - [ ] Concurrent/repeated bootstrap tetap idempoten.
-- [ ] Authenticated user hanya membaca profile yang diizinkan RLS.
-- [ ] User tidak dapat INSERT/UPDATE role/current Coach/approval/QR.
+- [x] Authenticated user hanya membaca profile yang diizinkan RLS.
+- [x] User tidak dapat INSERT/UPDATE role/current Coach/approval/QR.
 - [ ] Email verification dan resend.
-- [ ] Password login.
-- [ ] Forgot/reset password.
+- [x] Password login.
+- [x] Forgot/reset password.
 - [ ] Logout dan revoked refresh.
 - [ ] Refresh rotation, concurrent refresh, reuse, dan network-loss recovery.
 - [ ] Expired access token menghasilkan satu refresh/retry.
@@ -878,13 +898,16 @@ Kerjakan satu gate pada satu waktu.
   yang diklaim sukses.
 - [ ] Provisional cleanup hanya dapat menghapus identity baru yang belum
   mempunyai protected relationship dan bersifat idempoten.
-- [ ] Self-enrollment menolak cutoff memakai server clock; authenticated
+- [x] Self-enrollment menolak cutoff memakai server clock; authenticated
   Participant tidak dapat EXECUTE `admin_enroll_participant`.
-- [ ] Advisors tidak menemukan security blocker baru.
+- [x] Immediate account deletion memerlukan session baru, membersihkan data
+  dan media melalui boundary server, serta mempertahankan record audit/finansial
+  dalam bentuk anonim.
+- [x] Advisors tidak menemukan security blocker baru.
 
 ### iOS integration
 
-- [ ] Keychain save/load/delete.
+- [x] Keychain save/load/delete.
 - [ ] Session restoration setelah relaunch.
 - [ ] Offline launch dengan cached session yang expired.
 - [ ] Local demo tetap berjalan saat Colima mati.
@@ -898,9 +921,9 @@ Kerjakan satu gate pada satu waktu.
   mengakhiri join intent tanpa enrollment.
 - [ ] Free enrollment melanjutkan melalui RPC Phase 09.
 - [ ] Wrong-Coach QR ditolak sebelum enrollment/payment.
-- [ ] Password reset membuka route yang benar.
-- [ ] Callback ganda tidak membuat session/enrollment ganda.
-- [ ] Token/QR/email/private data tidak muncul pada captured logs.
+- [x] Password reset membuka route yang benar.
+- [x] Callback ganda tidak membuat session/enrollment ganda.
+- [x] Token/QR/email/private data tidak muncul pada captured logs.
 
 ### UI
 
@@ -910,14 +933,14 @@ Kerjakan satu gate pada satu waktu.
 - [ ] Forgot password.
 - [ ] Reset password.
 - [ ] Provider loading/cancel/error.
-- [ ] Login/Register tidak mengecil, tidak autofocus, dan native swipe-back
+- [x] Login/Register tidak mengecil, tidak autofocus, dan native swipe-back
   tetap bekerja setelah real Auth adapter dipasang.
 - [ ] Cancel Participant/Coach kembali ke Guest tanpa draft lokal atau shell
   account parsial.
 - [ ] Session expired.
 - [ ] Profile provisioning failure.
 - [ ] Account deletion request.
-- [ ] Bahasa Indonesia ketika device locale `en_US`.
+- [x] Bahasa Indonesia ketika device locale `en_US`.
 - [ ] Dynamic Type dan VoiceOver.
 
 ### External
@@ -927,9 +950,10 @@ Kerjakan satu gate pada satu waktu.
 - [ ] Sign in with Apple pada iPhone fisik.
 - [ ] Apple hidden relay email.
 - [ ] Apple revoked credential.
-- [ ] Email → Google dan Google → email.
+- [ ] **SKIPPED SAAT INI** — Email → Google dan Google → email.
 - [ ] Apple relay tetap terpisah kecuali linked.
-- [ ] Hosted email verification/reset callback.
+- [ ] **SKIPPED SAAT INI** — Hosted email verification/reset callback.
+- [ ] Hosted OAuth callback.
 - [ ] Hosted session restoration/revocation.
 - [ ] Hosted account deletion/retention flow.
 
@@ -985,53 +1009,139 @@ simulator ID lama tanpa pemeriksaan.
 
 ## External gate dan manual configuration
 
-Pekerjaan berikut tidak boleh ditandai selesai dari mock:
+Keputusan produk 5 Agustus 2026: Google OAuth, Sign in with Apple, hosted
+deployment, dan validasi perangkat fisik tetap aktif dan akan dikerjakan.
+Hanya SMTP/domain serta email/password production yang berstatus
+`SKIPPED SAAT INI`.
 
-| Gate | Yang diperlukan |
-|---|---|
-| iOS callback scheme | Perubahan target/Xcode configuration yang disetujui |
-| Google OAuth | Google Cloud project, client ID/secret, consent screen |
-| Apple login | Apple Developer membership, capability, App/Services ID |
-| Physical validation | iPhone fisik dan signing yang valid |
-| Hosted Auth | Deployment production yang disetujui |
-| Production email | SMTP, sender domain, templates, redirect allowlist |
-| Production session | JWT/session policy dan revocation verification |
-| Account purge | Retention policy, Storage cleanup, hosted server operation |
+| Gate | Status | Yang diperlukan |
+|---|---|---|
+| iOS callback scheme | Selesai lokal | Target dan custom scheme terpasang |
+| Google OAuth | AKTIF | Google Cloud project, client ID/secret, consent screen |
+| Apple login | AKTIF | Apple Developer membership, App ID/provider, device test |
+| Physical validation | AKTIF | iPhone fisik dan signing yang valid |
+| Hosted Auth | AKTIF | Deployment production yang disetujui |
+| Email/password UI | SKIPPED SAAT INI | Domain pengirim, SMTP, verification/reset delivery |
+| Production email | SKIPPED SAAT INI | SMTP, sender domain, templates, redirect allowlist |
+| Production session | AKTIF | JWT/session policy dan revocation verification |
+| Account purge | AKTIF | Hosted retention review dan server-operation validation |
 
-External gate tidak menghentikan Gate A sampai Gate D yang dapat dikerjakan
-lokal.
+### Urutan eksekusi gate aktif
+
+1. Siapkan atau konfirmasi project hosted Supabase `main`, lalu review
+   `supabase db push --linked --dry-run` sebelum migration diterapkan.
+2. Deploy migration dan Edge Function `delete-account`, kemudian set
+   `mscbodytransformation://auth/callback` sebagai redirect mobile exact.
+3. Aktifkan Google provider memakai OAuth Web client dan callback hosted
+   Supabase.
+4. Aktifkan native Sign in with Apple untuk App ID
+   `com.ranggar.MSCBodyTransformation`, lalu daftarkan Bundle ID tersebut
+   sebagai Apple Client ID di Supabase. Services ID dan OAuth secret tidak
+   diperlukan untuk flow native-only.
+5. Pasang hosted URL dan publishable key pada konfigurasi iOS Release/Run
+   tanpa menaruh secret server di app.
+6. Jalankan matriks Google, Apple, session restoration, role bootstrap,
+   identity duplication, dan immediate account deletion pada iPhone fisik.
+7. Jalankan hosted Security/Performance Advisors dan review hasil sebelum gate
+   ditutup.
+
+SMTP/domain tidak termasuk urutan ini. Provider Email tetap tersembunyi atau
+dinonaktifkan sampai keputusan produk berubah.
+
+### Yang perlu disiapkan
+
+#### Google OAuth
+
+User perlu menyediakan akses Google Cloud project dan keputusan audience
+internal/external, nama produk, support email, privacy policy URL, terms URL,
+serta domain yang sudah diverifikasi. Buat OAuth Web client untuk Supabase,
+daftarkan callback yang ditampilkan halaman provider Supabase, lalu simpan
+client ID/secret hanya pada provider configuration atau secret environment.
+Untuk pengujian lokal, callback Auth adalah
+`http://127.0.0.1:54321/auth/v1/callback`. Setelah aktif, uji login baru,
+login ulang, pembatalan, account collision, dan linking pada Simulator serta
+iPhone fisik.
+
+#### Sign in with Apple
+
+User perlu Apple Developer membership dengan role Account Holder/Admin,
+keputusan Bundle ID final, dan akses Certificates, Identifiers & Profiles.
+Aktifkan Sign in with Apple pada App ID final sebagai primary atau grouped
+sesuai keluarga aplikasi, pastikan signing profile memuat entitlement, lalu
+konfigurasikan provider Apple pada hosted Supabase. Services ID dan private
+key hanya diperlukan bila flow OAuth web dipilih; flow native-only tidak
+boleh diberi kewajiban rotasi secret web. Uji first-login name, hidden relay
+email, repeat login, revoked credential, reauthentication, dan account
+deletion pada iPhone fisik.
+
+#### SMTP dan domain
+
+User perlu memiliki domain dan akses DNS, memilih provider SMTP production,
+menentukan sender khusus Auth seperti `no-reply@auth.example.com`, dan
+menyediakan host, port, username, serta password SMTP langsung ke Supabase
+Dashboard/secret manager—jangan mengirim secret melalui chat atau commit.
+Konfigurasikan SPF, DKIM, dan DMARC, pisahkan reputasi email Auth dari
+marketing, matikan link tracking, siapkan template Bahasa Indonesia untuk
+confirmation, recovery, reauthentication, dan security notification, lalu
+uji delivery nyata beserta redirect allowlist dan rate limit sebelum
+menampilkan kembali email/password pada UI.
+
+#### Hosted Supabase production
+
+User perlu memberi persetujuan deployment production yang eksplisit dan akses
+project `main`. Sebelum deploy: ambil backup, review migration diff, tetapkan
+Site URL/redirect allowlist, session/rate-limit policy, provider configuration,
+dan secrets Edge Function. Email/password tetap dinonaktifkan selama
+SMTP/domain di-skip. Setelah itu deploy migration dan
+`delete-account` Edge Function, pasang publishable key/URL Release tanpa
+server secret, lalu ulangi advisors, Auth E2E yang aman untuk hosted, RLS,
+Storage, deletion/retention, dan rollback verification. Hosted `main` tidak
+boleh dipakai untuk eksperimen.
+
+#### Perangkat fisik
+
+User perlu menyediakan iPhone yang terdaftar pada signing team. Verifikasi
+Google/Apple callback, Keychain setelah relaunch, session expiry/revocation,
+hidden relay, account deletion, offline/retry, permission, dan jaringan nyata.
+Hasil Simulator tidak menggantikan gate ini.
+
+SMTP/domain yang di-skip tidak menghalangi provider OAuth, hosted deployment,
+atau validasi perangkat fisik. Email/password tetap tersembunyi dan tidak
+menjadi exit criteria release saat keputusan skip masih berlaku.
 
 ## Exit criteria
 
 ### Local exit criteria
 
-- [ ] Fresh local reset, lint, advisors, pgTAP, dan Auth integration tests
+- [x] Fresh local reset, lint, advisors, pgTAP, dan Auth integration tests
   lulus.
-- [ ] Signup selalu membuat tepat satu Participant profile.
-- [ ] Role self-promotion melalui metadata, Data API, atau callback mustahil.
-- [ ] Nama, nomor HP, dan level member tersimpan melalui allowlisted operation
+- [x] Signup selalu membuat tepat satu Participant profile.
+- [x] Role self-promotion melalui metadata, Data API, atau callback mustahil.
+- [x] Nama, nomor HP, dan level member tersimpan melalui allowlisted operation
   tanpa memberi role Coach atau akses ke field privileged.
-- [ ] Handoff Coach terautentikasi tersedia tanpa mengklaim operasi
+- [x] Handoff Coach terautentikasi tersedia tanpa mengklaim operasi
   application/payment/approval Phase 11–12 sudah selesai.
-- [ ] Provisional identity tidak membuka role shell; cancel membersihkan draft,
+- [x] Provisional identity tidak membuka role shell; cancel membersihkan draft,
   intent, session lokal, dan menjalankan cleanup server idempoten bila perlu.
-- [ ] Email/password registration, verification, login, logout, recovery, dan
+- [x] Email/password registration, verification, login, logout, recovery, dan
   restoration berjalan pada Supabase lokal.
-- [ ] Token tersimpan aman, refresh terkoordinasi, dan session expiry tertangani.
-- [ ] Root route berasal dari session + protected profile + onboarding state.
-- [ ] Pending enrollment intent bertahan melewati auth dan dikonsumsi aman.
-- [ ] Cutoff pendaftaran divalidasi ulang dengan server clock setelah Auth;
+- [x] Token tersimpan aman, refresh terkoordinasi, dan session expiry tertangani.
+- [x] Root route berasal dari session + protected profile + onboarding state.
+- [x] Pending enrollment intent bertahan melewati auth dan dikonsumsi aman.
+- [x] Cutoff pendaftaran divalidasi ulang dengan server clock setelah Auth;
   Participant tidak dapat memakai override Admin.
-- [ ] Provider-first layout, ukuran teks, keyboard behavior, typed navigation,
+- [x] Provider-first layout, ukuran teks, keyboard behavior, typed navigation,
   dan swipe-back Phase 09.5 tidak mengalami regresi.
-- [ ] Local demo tetap berjalan tanpa Colima atau internet.
-- [ ] Debug Supabase mode tidak dapat salah menyasar hosted production.
-- [ ] Release tidak dapat memakai local endpoint atau Debug credential.
-- [ ] Source Google/Apple adapter dan fake tests siap tanpa secret.
-- [ ] Tidak ada token, raw QR Coach, password, provider secret, atau private
+- [x] Email/password tetap tersembunyi sampai external email gate lulus;
+  aktivasi kembali cukup melalui configuration tanpa menulis ulang flow.
+- [x] Local demo tetap berjalan tanpa Colima atau internet.
+- [x] Debug Supabase mode tidak dapat salah menyasar hosted production.
+- [x] Release tidak dapat memakai local endpoint atau Debug credential.
+- [x] Source Google/Apple adapter dan fake tests siap tanpa secret.
+- [x] Tidak ada token, raw QR Coach, password, provider secret, atau private
   data pada source, bundle, fixture, dan log.
-- [ ] Full Swift tests dan simulator build lulus.
-- [ ] Dokumentasi Phase 10, status implementasi, contract matrix, OpenAPI bila
+- [x] Full Swift tests dan simulator build lulus.
+- [x] Dokumentasi Phase 10, status implementasi, contract matrix, OpenAPI bila
   relevan, dan `supabase/README.md` konsisten dengan hasil yang benar-benar
   diverifikasi.
 
@@ -1040,19 +1150,19 @@ lokal.
 - [ ] Google OAuth membuat dan memulihkan Supabase session pada iPhone fisik.
 - [ ] Sign in with Apple membuat dan memulihkan Supabase session pada iPhone
   fisik.
-- [ ] Identity linking tidak membuat duplicate application profile.
-- [ ] Hosted verification/reset/OAuth callback menggunakan allowlist yang
-  benar.
+- [ ] Identity linking provider tidak membuat duplicate application profile.
+- [ ] Hosted OAuth callback menggunakan allowlist yang benar.
+- [ ] **SKIPPED SAAT INI** — Hosted email verification/reset callback.
 - [ ] New hosted registration selalu menjadi Participant.
 - [ ] Coach/Admin tidak dapat diperoleh melalui self-registration.
-- [ ] Account deletion request dapat diakses dan hosted lifecycle diverifikasi.
+- [ ] Account deletion dapat diakses dan hosted lifecycle diverifikasi.
 - [ ] Production Auth secrets hanya berada pada provider/server configuration.
 - [ ] Hosted security/advisors/Auth tests lulus setelah deployment yang
   disetujui.
 
-Phase 10 tidak boleh diberi status selesai penuh hanya karena local/fake tests
-lulus. Jika external provider belum tersedia, tandai “local foundation
-selesai; external provider gate belum selesai”.
+Status Phase 10 saat ini: fondasi lokal selesai; Google, Apple, hosted
+deployment, dan perangkat fisik masih harus diselesaikan. SMTP/domain serta
+email/password production di-skip berdasarkan keputusan produk.
 
 ## Referensi resmi yang wajib diperiksa saat eksekusi
 
@@ -1083,6 +1193,218 @@ atau capability setting dari ingatan. Verifikasi terhadap versi yang
 benar-benar digunakan.
 
 ## Progress log
+
+### 5 Agustus 2026 — Provider Apple native diaktifkan lokal
+
+- Files changed:
+  - `supabase/config.toml`.
+  - `MSCBodyTransformation/MSC_Codex_Phased_Workplan/11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`.
+- Assumptions:
+  - App memakai native `AuthenticationServices` dan pertukaran ID token,
+    bukan OAuth web.
+  - Bundle ID final adalah `com.ranggar.MSCBodyTransformation`.
+  - Pemeriksaan nonce tetap aktif; Services ID, `.p8`, dan secret web tidak
+    diperlukan untuk flow native-only.
+- Build:
+  - Tidak dijalankan; tidak ada source iOS atau target Xcode yang berubah.
+- Test:
+  - `supabase stop` lalu `supabase start`: lulus.
+  - `GET /auth/v1/settings`: provider Apple dan Google aktif.
+  - Environment non-secret container Auth mengonfirmasi Apple client ID
+    `com.ranggar.MSCBodyTransformation` dan `skip_nonce_check=false`.
+- Result:
+  - App ID Apple, entitlement target, dan provider Apple Supabase lokal siap
+    untuk verifikasi manual pada Simulator.
+- Remaining blockers:
+  - Satu login Apple lengkap, first-login name, repeat login, dan relay email
+    perlu diverifikasi manual.
+  - Hosted production dan perangkat fisik tetap gate aktif.
+  - SMTP/domain tetap `SKIPPED SAAT INI`.
+
+### 5 Agustus 2026 — Callback Google lokal diperbaiki
+
+- Files changed:
+  - `Infrastructure/Auth/SupabaseAuthClient.swift`.
+  - `Infrastructure/Auth/NativeProviderAuthentication.swift`.
+  - `Infrastructure/Auth/AuthenticationCallbackRouter.swift`.
+  - `MSCBodyTransformationTests/Phase10AuthenticationTests.swift`.
+- Assumption:
+  - Social login memakai state provider yang dikelola Supabase Auth; client
+    mengikat callback aplikasi dengan PKCE verifier, attempt TTL, dan
+    environment.
+- Result:
+  - Parameter `state` milik aplikasi tidak lagi dikirim ke
+    `/auth/v1/authorize`, sehingga tidak menimpa state internal GoTrue.
+  - Callback aplikasi menerima authorization code tanpa mensyaratkan state
+    provider internal.
+  - Decoder profile memetakan `user_id` ke `userId` sesuai strategi
+    `convertFromSnakeCase`; session Google tidak lagi gagal setelah profile
+    response berhasil.
+  - Badge `Mode demo lokal` hanya tampil saat configuration benar-benar
+    memakai `local_demo`.
+  - Pemilihan QR Coach mengambil directory repository ketika snapshot
+    onboarding belum memuat Coach; finalisasi QR tetap diverifikasi oleh RPC
+    Supabase sebelum profil Peserta menjadi aktif.
+  - `ProfileRepository` Phase 10 mengambil profil Peserta authenticated dari
+    Supabase dan mempertahankan fallback Phase 11 untuk data fitur lain,
+    sehingga UUID Auth baru tidak lagi gagal dicari pada fixture lokal.
+  - Profil baru memakai nama awal dari metadata Google/Apple dan avatar HTTPS
+    Google jika tersedia. Default provider hanya mengisi placeholder
+    provisional sehingga edit nama user tidak pernah ditimpa.
+- Build:
+  - XcodeBuildMCP `build_run_sim`, Debug, iPhone 17 iOS Simulator: lulus tanpa
+    warning.
+- Test:
+  - XcodeBuildMCP `test_sim
+    -only-testing:MSCBodyTransformationTests/Phase10AuthenticationTests`:
+    10 passed, 0 failed.
+  - Focused Phase 09.5 + Phase 10 setelah perbaikan QR: 26 passed, 0 failed.
+  - Database lint lokal: tidak ada schema error.
+  - Verifikasi transaksi rollback: prefill Google, prefill Apple, dan
+    perlindungan nama yang sudah diedit lulus.
+- Remaining blockers:
+  - Google OAuth perlu satu verifikasi manual penuh pada Simulator.
+  - Apple provider, hosted production, dan perangkat fisik tetap external
+    gate.
+  - SMTP/domain tetap `SKIPPED SAAT INI`.
+
+### 5 Agustus 2026 — Fondasi lokal Gate A–D diterapkan
+
+- Files changed:
+  - Migration `20260805044617_phase10_auth_profile_and_session_foundation.sql`.
+  - pgTAP `005_phase10_auth_profile_foundation.test.sql` dan penyesuaian
+    fixture pgTAP Phase 09 agar kompatibel dengan trigger profile.
+  - Auth domain, Keychain store, native Auth/Profile client, session actor,
+    command façade, callback router, Google browser adapter, dan native Apple
+    adapter di `Domain/Models`, `Domain/Repositories`, serta
+    `Infrastructure/Auth`.
+  - `AppConfiguration`, `AppEnvironment`, `AppRepositories`, `SessionStore`,
+    dan `RootView` untuk fail-closed environment serta root session routing.
+  - Flow Auth/Participant, catalog lokalisasi, dan
+    `Phase10AuthenticationTests.swift`.
+  - `supabase/config.toml`, `supabase/README.md`, contract/status docs, dan
+    `supabase/tests/integration/auth_lifecycle.mjs`.
+- Assumptions:
+  - Auth transport tetap memakai native `URLSession`; tidak ada dependency
+    baru.
+  - Email/password tetap tersembunyi sampai SMTP/domain production siap.
+  - Automatic identity linking mengikuti behavior Supabase Auth; manual
+    linking tidak ditambahkan.
+  - Data feature nyata di luar protected profile tetap handoff Phase 11.
+- Build command:
+  - `xcodebuild -project MSCBodyTransformation.xcodeproj -scheme
+    MSCBodyTransformation -configuration Debug -destination
+    'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build`.
+  - Result: lulus tanpa warning pada source yang diubah.
+- Test commands:
+  - `supabase test db --local supabase/tests/database`: lulus, 121 assertion.
+  - `supabase db lint --local --level warning --fail-on error`: lulus.
+  - `supabase db advisors --local --type all --level warn --fail-on error`:
+    lulus tanpa issue.
+  - `xcodebuild -project MSCBodyTransformation.xcodeproj -scheme
+    MSCBodyTransformation -destination 'platform=iOS Simulator,name=iPhone
+    17 Pro' -only-testing:MSCBodyTransformationTests
+    -parallel-testing-enabled NO -quiet test`: lulus, 175 test cases dalam 16
+    suite.
+  - `scripts/check_localization_catalog.sh`: lulus.
+- Remaining blockers:
+  - `enable_confirmations` memerlukan restart Supabase lokal; `supabase stop`
+    membutuhkan izin eksplisit user sebelum Auth lifecycle E2E dapat diulang.
+  - Custom URL scheme dan Sign in with Apple capability membutuhkan perubahan
+    target Xcode yang tidak diizinkan tanpa instruksi eksplisit.
+  - Google/Apple credential, SMTP/domain, hosted deployment, dan perangkat
+    fisik tetap external gate.
+  - Kebijakan account deletion (immediate atau request dengan cancellation
+    window) masih menunggu keputusan produk.
+
+### 5 Agustus 2026 — Immediate deletion dan target Xcode selesai lokal
+
+- Files changed:
+  - Migration
+    `20260805055830_phase10_immediate_account_deletion.sql` dan
+    `20260805061953_phase10_account_deletion_retention_safety.sql`.
+  - Edge Function `supabase/functions/delete-account/index.ts`, konfigurasi
+    function, pgTAP `006_phase10_account_deletion.test.sql`, serta Auth
+    lifecycle integration test.
+  - Domain/repository/client Auth, `AccountDeletionView`, profil Participant
+    dan Coach, serta catalog lokalisasi.
+  - `Configuration/MSCBodyTransformation-Info.plist`,
+    `Configuration/MSCBodyTransformation.entitlements`, dan target Xcode.
+  - OpenAPI, contract matrix, implementation status, Supabase README, dan
+    checklist Phase 10.
+- Assumptions/decisions:
+  - Penghapusan akun bersifat immediate setelah reauthentication.
+  - Private Storage dibersihkan melalui Storage API sebelum Auth identity.
+  - Admin self-delete ditolak; Coach dengan peserta aktif harus dialihkan.
+  - Record transaksi dan audit dipertahankan tanpa identitas; entitlement dan
+    data program pribadi dihapus.
+  - Hosted `main` tidak disentuh.
+- Build command:
+  - XcodeBuildMCP `build_run_sim`, scheme `MSCBodyTransformation`, Debug,
+    iPhone 17 iOS 26.5.
+  - Result: lulus tanpa warning; app terpasang dan terbuka.
+- Test commands:
+  - `supabase db reset --local`: lulus; sembilan migration dan seed diterapkan
+    ulang pada database lokal bersih.
+  - XcodeBuildMCP `test_sim -only-testing:MSCBodyTransformationTests
+    -parallel-testing-enabled NO`: lulus, 173 test.
+  - XcodeBuildMCP `test_sim
+    -only-testing:MSCBodyTransformationUITests/Phase095GuestAuthUITests
+    -parallel-testing-enabled NO`: lulus, 7 test.
+  - `node supabase/tests/integration/auth_lifecycle.mjs`: lulus, 22 checks.
+  - `supabase test db --local supabase/tests/database`: lulus, 139 assertion.
+  - `supabase db lint --local --level warning --fail-on error`: lulus.
+  - `supabase db advisors --local --type all --level warn --fail-on error`:
+    lulus tanpa issue.
+  - `scripts/check_localization_catalog.sh`: lulus.
+- Remaining blockers:
+  - Google/Apple provider credential, SMTP/domain, hosted deployment/retention
+    review, dan perangkat fisik tetap external gate.
+
+### 5 Agustus 2026 — Status external gate dikoreksi
+
+- Product decision:
+  - Google/Apple production provider, hosted deployment, dan physical-device
+    validation tetap gate aktif.
+  - Hanya SMTP/domain dan aktivasi email/password production yang berstatus
+    `SKIPPED SAAT INI`.
+  - OAuth production tetap dapat diselesaikan tanpa mengaktifkan
+    email/password.
+- Files changed:
+  - Workplan Phase 10.
+  - `PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md`.
+  - `UI_REFERENCE_SHEET.md`.
+  - `supabase/README.md`.
+- Future input:
+  - Akses Google Cloud dan Apple Developer.
+  - Persetujuan dan akses deployment hosted Supabase.
+  - iPhone fisik dengan signing team yang valid.
+- Build/Test:
+  - Tidak dijalankan; perubahan hanya status dan panduan dokumentasi.
+
+### 5 Agustus 2026 — Email/password disembunyikan sampai domain tersedia
+
+- Product decision:
+  - Login/Register aktif sementara hanya menampilkan Apple dan Google.
+  - Email/password serta Forgot Password tetap berada di source dan test,
+    tetapi entry point disembunyikan melalui configuration flag.
+  - Pengaktifan kembali menunggu domain pengirim, SMTP production,
+    verification/reset delivery, dan redirect allowlist yang terverifikasi.
+- Files changed:
+  - `App/AppConfiguration.swift`.
+  - `Features/Auth/AuthenticationFlowState.swift`.
+  - `Features/Auth/AuthenticationFlowView.swift`.
+  - `MSCBodyTransformationTests/MSCBodyTransformationTests.swift`.
+  - `MSCBodyTransformationUITests/Phase095GuestAuthUITests.swift`.
+  - `MSC_Codex_Phased_Workplan/UI_REFERENCE_SHEET.md`.
+  - `MSC_Codex_Phased_Workplan/11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`.
+- Verification:
+  - XcodeBuildMCP `build_run_sim`, iPhone 17 iOS 26.5, Debug, Guest Login,
+    locale perangkat `en_US`: lulus tanpa warning.
+  - Runtime UI snapshot memverifikasi Login dan Register hanya menampilkan
+    Apple serta Google; entry point email tidak ada dan keyboard tidak terbuka.
+  - Focused Swift/UI tests: 5 passed, 0 failed. Cakupan meliputi configuration
+    flag, OAuth-only provider choices, dan native navigation history/swipe-back.
 
 ### 5 Agustus 2026 — Direkonsiliasi dengan deadline dan Auth UI terbaru
 

@@ -36,4 +36,28 @@ nonisolated struct AppRepositories: Sendable {
         audit = repository
         participantDemo = repository
     }
+
+    init(
+        session: any SessionRepository,
+        authentication: any AuthenticationRepository,
+        profiles: any ProfileRepository,
+        phase11Fallback repository: InMemoryAppRepository
+    ) {
+        self.session = session
+        self.authentication = authentication
+        self.profiles = profiles
+        coachDirectory = repository
+        programs = repository
+        enrollments = repository
+        submissions = repository
+        weighIns = repository
+        leaderboard = repository
+        coachParticipants = repository
+        managedContent = repository
+        adminPeople = repository
+        coachApplications = repository
+        adminProgramDrafts = repository
+        audit = repository
+        participantDemo = repository
+    }
 }

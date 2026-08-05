@@ -21,6 +21,32 @@ enabled = true
 site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["mscbodytransformation://auth/callback"]
 
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+
+[auth.external.google]
+enabled = true
+client_id = "89401254040-ngo82lo3igaebu9qmjcdjph1jhjd42ku.apps.googleusercontent.com"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
+skip_nonce_check = false
+
+[auth.external.apple]
+enabled = true
+client_id = "com.ranggar.MSCBodyTransformation"
+secret = ""
+skip_nonce_check = false
+
 [storage]
 enabled = true
 file_size_limit = "20MiB"
+
+[functions.delete-account]
+enabled = true
+verify_jwt = true
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/delete-account/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/delete-account/*.html" ]

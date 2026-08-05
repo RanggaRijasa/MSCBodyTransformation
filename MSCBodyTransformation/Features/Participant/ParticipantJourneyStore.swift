@@ -78,6 +78,7 @@ final class ParticipantJourneyStore {
     private let shouldStartWithoutEnrollment: Bool
     private let allowsGuestAccess: Bool
     private var didPrepareInitialScenario = false
+    private var didRestorePendingEnrollmentIntent = false
 
     var state: ParticipantJourneyLoadState = .idle
     var entryStage: ParticipantEntryStage = .complete
@@ -137,6 +138,10 @@ final class ParticipantJourneyStore {
             return true
         }
         return false
+    }
+
+    var isLocalDemo: Bool {
+        environment.configuration.mode == .localDemo
     }
 
     var programs: [Program] {
@@ -388,6 +393,12 @@ final class ParticipantJourneyStore {
             if selectedDayNumber == nil {
                 selectedDayNumber = defaultDayNumber()
             }
+            if !didRestorePendingEnrollmentIntent,
+               let intent = try await repositories.authentication
+                   .pendingEnrollmentIntent() {
+                didRestorePendingEnrollmentIntent = true
+                completedAuthenticatedIntent = .joinProgram(intent.programID)
+            }
         } catch is CancellationError {
             return
         } catch let error as DomainError {
@@ -422,9 +433,13 @@ final class ParticipantJourneyStore {
         destination: AuthenticationDestination = .login,
         reason: AuthGateReason? = nil,
         intent: PendingAuthenticatedIntent? = nil
-    ) {
+    ) async {
         if let intent {
             pendingAuthenticatedIntent = intent
+            if case .joinProgram(let programID) = intent {
+                try? await environment.repositories?.authentication
+                    .savePendingEnrollmentIntent(programID: programID)
+            }
         }
         guard authenticationPresentation == nil else {
             return
@@ -437,9 +452,9 @@ final class ParticipantJourneyStore {
 
     func updateAuthenticationDestination(
         _ destination: AuthenticationDestination
-    ) {
+    ) async {
         guard var presentation = authenticationPresentation else {
-            requestAuthentication(destination: destination)
+            await requestAuthentication(destination: destination)
             return
         }
         presentation.destination = destination
@@ -954,7 +969,12 @@ final class ParticipantJourneyStore {
     }
 
     func logoutLocalDemo() async {
-        await environment.repositories?.session.setDebugScenario(.loggedOut)
+        if isLocalDemo {
+            await environment.repositories?.session
+                .setDebugScenario(.loggedOut)
+        } else {
+            try? await environment.repositories?.session.signOut()
+        }
         if allowsGuestAccess {
             entryStage = .complete
             await load()

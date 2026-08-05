@@ -125,7 +125,7 @@ struct AuthenticationFlowView: View {
 
     private var closeButton: some View {
         Button("action.close") {
-            state.cancel()
+            Task { await state.cancel() }
         }
         .accessibilityIdentifier("auth.close")
     }
@@ -151,7 +151,7 @@ struct AuthenticationFlowView: View {
                   movedFarEnough else {
                 return
             }
-            state.cancel()
+            Task { await state.cancel() }
         }
     }
 
@@ -249,16 +249,18 @@ private struct AuthenticationProviderChoiceView: View {
                 )
 
 #if DEBUG
-                Label(
-                    "auth.demo.compact_notice",
-                    systemImage: "hammer.fill"
-                )
-                .font(AppTypography.label)
-                .foregroundStyle(Color.appInfo)
+                if state.isLocalDemo {
+                    Label(
+                        "auth.demo.compact_notice",
+                        systemImage: "hammer.fill"
+                    )
+                    .font(AppTypography.label)
+                    .foregroundStyle(Color.appInfo)
+                }
 #endif
 
                 VStack(spacing: AppSpacing.small) {
-                    FakeSignInWithAppleButton {
+                    AuthenticationAppleButton {
                         Task {
                             await state.authenticateWithProvider(
                                 .apple,
@@ -286,31 +288,33 @@ private struct AuthenticationProviderChoiceView: View {
                             : "auth.login.google"
                     )
 
-                    Button {
-                        if isRegistration {
-                            state.openEmailRegistration()
-                        } else {
-                            state.openEmailLogin()
+                    if state.isEmailPasswordAuthenticationVisible {
+                        Button {
+                            if isRegistration {
+                                state.openEmailRegistration()
+                            } else {
+                                state.openEmailLogin()
+                            }
+                        } label: {
+                            Label(
+                                isRegistration
+                                    ? "auth.provider.email.register"
+                                    : "auth.provider.email.login",
+                                systemImage: "envelope"
+                            )
                         }
-                    } label: {
-                        Label(
+                        .buttonStyle(
+                            SecondaryActionButtonStyle(
+                                foregroundColor: .appPrimaryText
+                            )
+                        )
+                        .frame(maxWidth: 360)
+                        .accessibilityIdentifier(
                             isRegistration
-                                ? "auth.provider.email.register"
-                                : "auth.provider.email.login",
-                            systemImage: "envelope"
+                                ? "auth.register.email-option"
+                                : "auth.login.email-option"
                         )
                     }
-                    .buttonStyle(
-                        SecondaryActionButtonStyle(
-                            foregroundColor: .appPrimaryText
-                        )
-                    )
-                    .frame(maxWidth: 360)
-                    .accessibilityIdentifier(
-                        isRegistration
-                            ? "auth.register.email-option"
-                            : "auth.login.email-option"
-                    )
                 }
                 .frame(maxWidth: .infinity)
 
@@ -704,7 +708,7 @@ private struct PasswordInputRow: View {
     }
 }
 
-private struct FakeSignInWithAppleButton: View {
+struct AuthenticationAppleButton: View {
     let action: () -> Void
 
     var body: some View {
@@ -742,7 +746,7 @@ private struct FakeSignInWithAppleButton: View {
     }
 }
 
-private struct OfficialGoogleSignInButton: View {
+struct OfficialGoogleSignInButton: View {
     let action: () -> Void
 
     var body: some View {

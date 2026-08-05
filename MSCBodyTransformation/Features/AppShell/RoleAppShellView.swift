@@ -194,7 +194,7 @@ struct RoleAppShellView: View {
             coachFeatures = nil
             adminFeatures = nil
             await prepareParticipantStoreIfNeeded()
-            prepareGuestScenarioIfNeeded()
+            await prepareGuestScenarioIfNeeded()
             return
         }
 
@@ -306,7 +306,7 @@ struct RoleAppShellView: View {
         )
     }
 
-    private func prepareGuestScenarioIfNeeded() {
+    private func prepareGuestScenarioIfNeeded() async {
         guard let participantStore else {
             return
         }
@@ -330,7 +330,7 @@ struct RoleAppShellView: View {
             nil
         }
         if let destination {
-            participantStore.requestAuthentication(
+            await participantStore.requestAuthentication(
                 destination: destination
             )
         }

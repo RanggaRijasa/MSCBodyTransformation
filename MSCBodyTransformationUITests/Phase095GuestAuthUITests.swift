@@ -6,7 +6,7 @@ final class Phase095GuestAuthUITests: XCTestCase {
     }
 
     @MainActor
-    func testGuestHomeOpensProviderFirstLoginRegisterAndForgotPassword() {
+    func testGuestHomeShowsOAuthOnlyLoginAndRegister() {
         let app = launchGuest(scenario: "guest_home")
 
         XCTAssertTrue(
@@ -22,10 +22,9 @@ final class Phase095GuestAuthUITests: XCTestCase {
         XCTAssertTrue(
             element("auth.login", in: app).waitForExistence(timeout: 5)
         )
-        XCTAssertTrue(
-            element("auth.login.email-option", in: app)
-                .waitForExistence(timeout: 5)
-        )
+        XCTAssertTrue(element("auth.login.apple", in: app).exists)
+        XCTAssertTrue(element("auth.login.google", in: app).exists)
+        XCTAssertFalse(element("auth.login.email-option", in: app).exists)
         XCTAssertFalse(element("auth.login.email", in: app).exists)
         XCTAssertEqual(app.keyboards.count, 0)
 
@@ -38,10 +37,9 @@ final class Phase095GuestAuthUITests: XCTestCase {
         XCTAssertTrue(
             element("auth.register", in: app).waitForExistence(timeout: 5)
         )
-        XCTAssertTrue(
-            element("auth.register.email-option", in: app)
-                .waitForExistence(timeout: 5)
-        )
+        XCTAssertTrue(element("auth.register.apple", in: app).exists)
+        XCTAssertTrue(element("auth.register.google", in: app).exists)
+        XCTAssertFalse(element("auth.register.email-option", in: app).exists)
         XCTAssertFalse(element("auth.register.email", in: app).exists)
 
         let openLogin = element("auth.register.open-login", in: app)
@@ -50,27 +48,11 @@ final class Phase095GuestAuthUITests: XCTestCase {
         }
         XCTAssertTrue(openLogin.waitForExistence(timeout: 5))
         openLogin.tap()
-
-        let emailOption = element("auth.login.email-option", in: app)
-        XCTAssertTrue(emailOption.waitForExistence(timeout: 5))
-        emailOption.tap()
         XCTAssertTrue(
-            element("auth.login.email", in: app).waitForExistence(timeout: 5)
+            element("auth.login", in: app).waitForExistence(timeout: 5)
         )
+        XCTAssertFalse(element("auth.login.email-option", in: app).exists)
         XCTAssertEqual(app.keyboards.count, 0)
-        XCTAssertTrue(
-            element("auth.login.forgot", in: app)
-                .waitForExistence(timeout: 5)
-        )
-
-        app.terminate()
-        let forgotPassword = launchGuest(
-            scenario: "auth_forgot_password"
-        )
-        XCTAssertTrue(
-            element("auth.forgot", in: forgotPassword)
-                .waitForExistence(timeout: 8)
-        )
     }
 
     @MainActor
@@ -145,14 +127,11 @@ final class Phase095GuestAuthUITests: XCTestCase {
         )
 
         element("auth.login.open-register", in: app).tap()
-        let emailOption = element(
-            "auth.register.email-option",
-            in: app
-        )
-        XCTAssertTrue(emailOption.waitForExistence(timeout: 5))
-        emailOption.tap()
+        let appleRegistration = element("auth.register.apple", in: app)
+        XCTAssertTrue(appleRegistration.waitForExistence(timeout: 5))
+        appleRegistration.tap()
         XCTAssertTrue(
-            element("auth.register.email", in: app)
+            element("auth.profile", in: app)
                 .waitForExistence(timeout: 5)
         )
 
