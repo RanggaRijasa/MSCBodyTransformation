@@ -939,7 +939,7 @@ Kerjakan satu gate pada satu waktu.
   account parsial.
 - [ ] Session expired.
 - [ ] Profile provisioning failure.
-- [ ] Account deletion request.
+- [x] Account deletion request.
 - [x] Bahasa Indonesia ketika device locale `en_US`.
 - [ ] Dynamic Type dan VoiceOver.
 
@@ -1193,6 +1193,56 @@ atau capability setting dari ingatan. Verifikasi terhadap versi yang
 benar-benar digunakan.
 
 ## Progress log
+
+### 5 Agustus 2026 — Redesign penghapusan akun berbasis identity
+
+- Files changed:
+  - `Domain/Models/PeopleModels.swift` dan repository Auth untuk membawa
+    provider yang benar-benar terhubung serta memisahkan reauthentication
+    dari operasi penghapusan.
+  - `Infrastructure/Auth/SupabaseAuthClient.swift`,
+    `SupabaseSessionRepository.swift`, dan
+    `SupabaseAuthenticationRepository.swift`.
+  - `Features/Auth/AccountDeletionView.swift`, tombol Google bersama, profil
+    Participant/Coach, serta root preview Debug untuk UI test deterministik.
+  - Catalog lokalisasi, `Phase10AuthenticationTests.swift`, dan
+    `Phase095GuestAuthUITests.swift`.
+- Assumptions/decisions:
+  - Daftar metode berasal dari `user.identities`; `app_metadata.providers`
+    hanya fallback ketika identity tidak tersedia.
+  - Layar tidak menebak provider dari domain email dan tidak menawarkan
+    metode yang tidak terhubung.
+  - Reauthentication selesai terlebih dahulu. Dialog destructive terakhir
+    baru memanggil server operation penghapusan.
+  - Hook `-AccountDeletionPreview` hanya dikompilasi pada Debug untuk
+    pemeriksaan UI; Release tidak berubah.
+- Build:
+  - XcodeBuildMCP `build_run_sim`, Debug, iPhone 17 iOS 26.5, dengan locale
+    perangkat `en_US` dan flow penghapusan Debug: lulus tanpa warning.
+- Test:
+  - `scripts/check_localization_catalog.sh`: lulus.
+  - XcodeBuildMCP `test_sim
+    -only-testing:MSCBodyTransformationTests/Phase10AuthenticationTests`:
+    13 passed, 0 failed.
+  - XcodeBuildMCP `test_sim
+    -only-testing:MSCBodyTransformationUITests/Phase095GuestAuthUITests/
+    testAccountDeletionShowsOnlyConnectedGoogleProvider`: 1 passed, 0 failed.
+  - XcodeBuildMCP `test_sim
+    -only-testing:MSCBodyTransformationUITests/Phase095GuestAuthUITests/
+    testAccountDeletionAppleButtonFillsContainerWidth`: 1 passed, 0 failed.
+- Result:
+  - Snapshot runtime locale `en_US` tetap menampilkan seluruh copy Bahasa
+    Indonesia, hanya tombol Google untuk identity Google, tanpa Apple atau
+    field password.
+  - Tombol verifikasi Google dan Apple memakai lebar kontainer pada layar
+    penghapusan, sementara batas lebar tombol Login/Register tetap
+    dipertahankan.
+- Remaining blockers:
+  - Uji manual destructive dengan akun test Google dan Apple lokal masih
+    diperlukan untuk mengonfirmasi reauthentication, dialog final, cleanup
+    server, dan kembali ke Guest.
+  - Hosted production dan perangkat fisik tetap external gate.
+  - SMTP/domain tetap `SKIPPED SAAT INI`.
 
 ### 5 Agustus 2026 — Provider Apple native diaktifkan lokal
 

@@ -12,6 +12,7 @@ struct RootView: View {
     @State private var selectedScenario: AppDemoScenario
     @State private var sessionSwitchState = DemoSessionSwitchState.switching
     @State private var activeDemo: DemoShellLaunch?
+    private let accountDeletionPreviewProvider: AuthenticationProvider?
 #endif
 
     init(
@@ -23,6 +24,13 @@ struct RootView: View {
         let launchConfiguration = DebugLaunchConfiguration(
             arguments: launchArguments
         )
+        if launchArguments.contains("-AccountDeletionApplePreview") {
+            accountDeletionPreviewProvider = .apple
+        } else if launchArguments.contains("-AccountDeletionPreview") {
+            accountDeletionPreviewProvider = .google
+        } else {
+            accountDeletionPreviewProvider = nil
+        }
         _selectedRole = State(initialValue: launchConfiguration.role)
         _selectedScenario = State(initialValue: launchConfiguration.scenario)
         _activeDemo = State(
@@ -37,6 +45,23 @@ struct RootView: View {
     }
 
     var body: some View {
+#if DEBUG
+        if let accountDeletionPreviewProvider {
+            AccountDeletionView(
+                user: accountDeletionPreviewUser(
+                    provider: accountDeletionPreviewProvider
+                )
+            )
+        } else {
+            standardRoot
+        }
+#else
+        standardRoot
+#endif
+    }
+
+    @ViewBuilder
+    private var standardRoot: some View {
         if appEnvironment.configuration.mode != .localDemo {
             externalSessionRoot
         } else {
@@ -56,6 +81,25 @@ struct RootView: View {
 #endif
         }
     }
+
+#if DEBUG
+    private func accountDeletionPreviewUser(
+        provider: AuthenticationProvider
+    ) -> AppUser {
+        AppUser(
+            id: UUID(uuidString: "90000000-0000-0000-0000-000000000001")!,
+            email: provider == .apple
+                ? "contoh@privaterelay.appleid.com"
+                : "peserta@example.com",
+            displayName: "Peserta",
+            role: .participant,
+            hasCompletedOnboarding: true,
+            isCoachApprovalPending: false,
+            authenticationProviders: [provider],
+            createdAt: Date(timeIntervalSince1970: 0)
+        )
+    }
+#endif
 
     @ViewBuilder
     private var externalSessionRoot: some View {

@@ -6,6 +6,54 @@ import Testing
 struct Phase10AuthenticationTests {
     private let now = Date(timeIntervalSince1970: 1_785_909_600)
 
+    @Test("Provider autentikasi mengikuti identity Supabase yang terhubung")
+    func connectedProvidersPreferSupabaseIdentities() {
+        let providers = SupabaseAuthUser.connectedProviders(
+            identityProviderValues: [
+                "google",
+                "apple",
+                "provider-tidak-dikenal",
+                "google"
+            ],
+            appMetadataProviderValues: ["email"]
+        )
+
+        #expect(providers == [.apple, .google])
+    }
+
+    @Test("Metadata provider dipakai saat daftar identity belum tersedia")
+    func connectedProvidersUseMetadataFallback() {
+        let providers = SupabaseAuthUser.connectedProviders(
+            identityProviderValues: [],
+            appMetadataProviderValues: ["google", "google"]
+        )
+
+        #expect(providers == [.google])
+    }
+
+    @Test("Fixture pengguna lama tetap dapat dibaca tanpa daftar provider")
+    func appUserDecodesWithoutAuthenticationProviders() throws {
+        let userID = UUID()
+        let payload = """
+        {
+          "id": "\(userID.uuidString)",
+          "email": "peserta@example.com",
+          "displayName": "Peserta",
+          "role": "participant",
+          "hasCompletedOnboarding": true,
+          "isCoachApprovalPending": false,
+          "createdAt": 0
+        }
+        """
+
+        let user = try JSONDecoder().decode(
+            AppUser.self,
+            from: Data(payload.utf8)
+        )
+
+        #expect(user.authenticationProviders == nil)
+    }
+
     @Test("Email dinormalisasi tanpa mengubah password")
     func emailCredentialNormalizesOnlyEmail() throws {
         let credential = try EmailCredential(

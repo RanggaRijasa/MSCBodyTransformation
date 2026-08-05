@@ -154,10 +154,14 @@ actor InMemoryAppRepository:
         phase10PendingEnrollmentIntent = nil
     }
 
-    func deleteAccount(
-        reauthentication: AccountReauthentication
+    func reauthenticateForAccountDeletion(
+        _ reauthentication: AccountReauthentication
     ) async throws {
         _ = reauthentication
+        throw AuthenticationError.providerUnavailable
+    }
+
+    func deleteAccountAfterReauthentication() async throws {
         throw AuthenticationError.providerUnavailable
     }
 

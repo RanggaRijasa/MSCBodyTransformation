@@ -709,7 +709,16 @@ private struct PasswordInputRow: View {
 }
 
 struct AuthenticationAppleButton: View {
+    let maximumWidth: CGFloat
     let action: () -> Void
+
+    init(
+        maximumWidth: CGFloat = 360,
+        action: @escaping () -> Void
+    ) {
+        self.maximumWidth = maximumWidth
+        self.action = action
+    }
 
     var body: some View {
         ZStack {
@@ -736,7 +745,11 @@ struct AuthenticationAppleButton: View {
                 )
             )
         }
-        .frame(maxWidth: 360, minHeight: 50, maxHeight: 50)
+        .frame(
+            maxWidth: maximumWidth,
+            minHeight: 50,
+            maxHeight: 50
+        )
         .clipShape(
             RoundedRectangle(
                 cornerRadius: AppRadius.medium,
@@ -747,7 +760,22 @@ struct AuthenticationAppleButton: View {
 }
 
 struct OfficialGoogleSignInButton: View {
+    let title: String
+    let maximumWidth: CGFloat
     let action: () -> Void
+
+    init(
+        title: String = String(
+            localized: "auth.provider.google.continue",
+            defaultValue: "Lanjutkan dengan Google"
+        ),
+        maximumWidth: CGFloat = 360,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.maximumWidth = maximumWidth
+        self.action = action
+    }
 
     var body: some View {
         Button(action: action) {
@@ -757,12 +785,7 @@ struct OfficialGoogleSignInButton: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .accessibilityHidden(true)
-                Text(
-                    String(
-                        localized: "auth.provider.google.continue",
-                        defaultValue: "Lanjutkan dengan Google"
-                    )
-                )
+                Text(title)
                 .font(.system(.body, design: .default).weight(.medium))
             }
             .foregroundStyle(Color.appPrimaryText)
@@ -783,15 +806,8 @@ struct OfficialGoogleSignInButton: View {
             }
         }
         .buttonStyle(.plain)
-        .frame(maxWidth: 360)
-        .accessibilityLabel(
-            Text(
-                String(
-                    localized: "auth.provider.google.continue",
-                    defaultValue: "Lanjutkan dengan Google"
-                )
-            )
-        )
+        .frame(maxWidth: maximumWidth)
+        .accessibilityLabel(Text(title))
     }
 }
 

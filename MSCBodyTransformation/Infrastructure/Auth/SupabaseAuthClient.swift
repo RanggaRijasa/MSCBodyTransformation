@@ -5,6 +5,20 @@ nonisolated struct SupabaseAuthUser: Equatable, Sendable {
     let email: String
     let createdAt: Date
     let isEmailConfirmed: Bool
+    let authenticationProviders: [AuthenticationProvider]
+
+    static func connectedProviders(
+        identityProviderValues: [String],
+        appMetadataProviderValues: [String]
+    ) -> [AuthenticationProvider] {
+        let sourceValues = identityProviderValues.isEmpty
+            ? appMetadataProviderValues
+            : identityProviderValues
+        let uniqueValues = Set(sourceValues)
+        return AuthenticationProvider.allCases.filter {
+            uniqueValues.contains($0.rawValue)
+        }
+    }
 }
 
 nonisolated struct SupabaseAuthResult: Equatable, Sendable {
@@ -434,17 +448,35 @@ nonisolated private struct UserDTO: Decodable {
     let createdAt: Date
     let emailConfirmedAt: Date?
     let confirmedAt: Date?
+    let identities: [IdentityDTO]?
+    let appMetadata: AppMetadataDTO?
 
     var domainValue: SupabaseAuthUser {
         get throws {
-            SupabaseAuthUser(
+            let metadataProviders = (appMetadata?.providers ?? [])
+                + [appMetadata?.provider].compactMap { $0 }
+            return SupabaseAuthUser(
                 id: id,
                 email: email ?? "",
                 createdAt: createdAt,
-                isEmailConfirmed: emailConfirmedAt != nil || confirmedAt != nil
+                isEmailConfirmed: emailConfirmedAt != nil || confirmedAt != nil,
+                authenticationProviders: SupabaseAuthUser.connectedProviders(
+                    identityProviderValues:
+                        identities?.map(\.provider) ?? [],
+                    appMetadataProviderValues: metadataProviders
+                )
             )
         }
     }
+}
+
+nonisolated private struct IdentityDTO: Decodable {
+    let provider: String
+}
+
+nonisolated private struct AppMetadataDTO: Decodable {
+    let provider: String?
+    let providers: [String]?
 }
 
 nonisolated private struct AuthErrorDTO: Decodable {

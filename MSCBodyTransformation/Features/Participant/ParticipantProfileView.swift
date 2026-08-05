@@ -21,7 +21,7 @@ struct ParticipantProfileView: View {
 #if DEBUG
                 ParticipantDebugToolsView(store: store)
 #endif
-                accountSection(email: snapshot.user.email)
+                accountSection(user: snapshot.user)
             }
             .scrollContentBackground(.hidden)
             .background(Color.appBackground)
@@ -34,8 +34,8 @@ struct ParticipantProfileView: View {
                         profile: profile,
                         email: email
                     )
-                case .delete(let email):
-                    AccountDeletionView(email: email)
+                case .delete(let user):
+                    AccountDeletionView(user: user)
                 }
             }
         } else {
@@ -253,7 +253,7 @@ struct ParticipantProfileView: View {
         }
     }
 
-    private func accountSection(email: String) -> some View {
+    private func accountSection(user: AppUser) -> some View {
         Section {
             Button(
                 store.isLocalDemo
@@ -276,7 +276,7 @@ struct ParticipantProfileView: View {
                     ),
                     role: .destructive
                 ) {
-                    presentedSheet = .delete(email)
+                    presentedSheet = .delete(user)
                 }
                 .accessibilityIdentifier(
                     "participant.account-deletion.open"
@@ -303,7 +303,7 @@ struct ParticipantProfileView: View {
 
 private enum ParticipantProfileSheet: Identifiable {
     case edit(ParticipantProfile, String)
-    case delete(String)
+    case delete(AppUser)
 
     var id: String {
         switch self {

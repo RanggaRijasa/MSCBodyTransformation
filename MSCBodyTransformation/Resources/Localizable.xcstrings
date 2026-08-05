@@ -264,7 +264,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tindakan ini tidak dapat dibatalkan. Autentikasi ulang akan dilakukan sebelum akun dihapus."
+            "value" : "Akun dan data pribadi akan dihapus sekarang. Tindakan ini tidak dapat dibatalkan."
           }
         }
       }
@@ -280,6 +280,7 @@
       }
     },
     "account_deletion.consequences" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -289,7 +290,48 @@
         }
       }
     },
+    "account_deletion.data.access" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses akun dan sesi aktif"
+          }
+        }
+      }
+    },
+    "account_deletion.data.participation" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keikutsertaan, kiriman, dan skor"
+          }
+        }
+      }
+    },
+    "account_deletion.data.profile_media" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil dan media pribadi"
+          }
+        }
+      }
+    },
+    "account_deletion.data.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data yang akan dihapus"
+          }
+        }
+      }
+    },
     "account_deletion.email.action" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -359,7 +401,68 @@
         }
       }
     },
+    "account_deletion.identity.apple" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terhubung dengan Apple"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.email" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terhubung dengan email"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.google" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terhubung dengan Google"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfirmasi identitas"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.unavailable.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup layar ini, masuk ulang, lalu coba hapus akun kembali."
+          }
+        }
+      }
+    },
+    "account_deletion.identity.unavailable.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metode masuk belum tersedia"
+          }
+        }
+      }
+    },
     "account_deletion.immediate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -370,6 +473,7 @@
       }
     },
     "account_deletion.irreversible" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -379,7 +483,28 @@
         }
       }
     },
+    "account_deletion.permanent.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun dan data pribadi akan dihapus. Tindakan ini tidak dapat dibatalkan."
+          }
+        }
+      }
+    },
+    "account_deletion.permanent.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penghapusan permanen"
+          }
+        }
+      }
+    },
     "account_deletion.personal_data" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -400,6 +525,7 @@
       }
     },
     "account_deletion.reauthenticate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -410,6 +536,7 @@
       }
     },
     "account_deletion.reauthenticate.help" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -425,6 +552,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hapus akun"
+          }
+        }
+      }
+    },
+    "account_deletion.verify.email" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifikasi dengan password"
+          }
+        }
+      }
+    },
+    "account_deletion.verify.google" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifikasi dengan Google"
+          }
+        }
+      }
+    },
+    "account_deletion.verify.help" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setelah verifikasi berhasil, kamu akan diminta konfirmasi terakhir sebelum akun dihapus."
+          }
+        }
+      }
+    },
+    "account_deletion.verify.progress" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memverifikasi akun…"
           }
         }
       }

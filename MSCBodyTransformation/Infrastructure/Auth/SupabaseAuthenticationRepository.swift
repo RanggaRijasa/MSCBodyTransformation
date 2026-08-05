@@ -205,8 +205,8 @@ actor SupabaseAuthenticationRepository: AuthenticationRepository {
         }
     }
 
-    func deleteAccount(
-        reauthentication: AccountReauthentication
+    func reauthenticateForAccountDeletion(
+        _ reauthentication: AccountReauthentication
     ) async throws {
         switch reauthentication {
         case .email(let email, let password):
@@ -227,7 +227,9 @@ actor SupabaseAuthenticationRepository: AuthenticationRepository {
                 externalSession: material
             )
         }
+    }
 
+    func deleteAccountAfterReauthentication() async throws {
         let accessToken = try await sessionRepository.validAccessToken()
         try await accountDeletionClient.deleteAccount(
             accessToken: accessToken

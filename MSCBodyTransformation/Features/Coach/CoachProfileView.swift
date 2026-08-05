@@ -48,8 +48,8 @@ struct CoachProfileView: View {
                         state: state,
                         snapshot: snapshot
                     )
-                case .delete(let email):
-                    AccountDeletionView(email: email)
+                case .delete(let user):
+                    AccountDeletionView(user: user)
                 }
             }
             .alert(
@@ -77,7 +77,7 @@ struct CoachProfileView: View {
             qrSection
             settingsSection(bindableState: bindableState)
             legalSection
-            accountSection(email: snapshot.user.email)
+            accountSection(user: snapshot.user)
         }
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
@@ -304,7 +304,7 @@ struct CoachProfileView: View {
         }
     }
 
-    private func accountSection(email: String) -> some View {
+    private func accountSection(user: AppUser) -> some View {
         Section {
             Button(
                 state.isLocalDemo
@@ -327,7 +327,7 @@ struct CoachProfileView: View {
                     ),
                     role: .destructive
                 ) {
-                    presentedSheet = .delete(email)
+                    presentedSheet = .delete(user)
                 }
                 .accessibilityIdentifier(
                     "coach.account-deletion.open"
@@ -381,7 +381,7 @@ struct CoachProfileView: View {
 
 private enum CoachProfileSheet: Identifiable {
     case edit(CoachProfileSnapshot)
-    case delete(String)
+    case delete(AppUser)
 
     var id: String {
         switch self {

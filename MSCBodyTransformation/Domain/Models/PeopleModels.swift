@@ -13,6 +13,7 @@ nonisolated struct AppUser: Codable, Equatable, Identifiable, Sendable {
     var role: UserRole
     var hasCompletedOnboarding: Bool
     var isCoachApprovalPending: Bool
+    var authenticationProviders: [AuthenticationProvider]? = nil
     let createdAt: Date
 }
 

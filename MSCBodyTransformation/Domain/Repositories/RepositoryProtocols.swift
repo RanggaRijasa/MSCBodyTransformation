@@ -52,9 +52,10 @@ nonisolated protocol AuthenticationRepository: Sendable {
     func pendingEnrollmentIntent() async throws -> PendingEnrollmentIntent?
     func clearPendingEnrollmentIntent() async throws
     func cancelProvisionalRegistration() async throws
-    func deleteAccount(
-        reauthentication: AccountReauthentication
+    func reauthenticateForAccountDeletion(
+        _ reauthentication: AccountReauthentication
     ) async throws
+    func deleteAccountAfterReauthentication() async throws
     func completeParticipantOnboarding(
         userID: UUID,
         displayName: String,

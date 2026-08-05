@@ -305,6 +305,74 @@ final class Phase095GuestAuthUITests: XCTestCase {
     }
 
     @MainActor
+    func testAccountDeletionShowsOnlyConnectedGoogleProvider() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+            "-AccountDeletionPreview"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            app.staticTexts["Penghapusan permanen"]
+                .waitForExistence(timeout: 5)
+        )
+        XCTAssertTrue(
+            app.buttons["account-deletion.google"].exists
+        )
+        XCTAssertTrue(
+            app.staticTexts["Terhubung dengan Google"].exists
+        )
+        let verificationButton = app.buttons[
+            "account-deletion.google"
+        ]
+        XCTAssertGreaterThan(
+            verificationButton.frame.width,
+            360
+        )
+        XCTAssertFalse(
+            app.buttons["account-deletion.apple"].exists
+        )
+        XCTAssertFalse(
+            app.secureTextFields["account-deletion.password"].exists
+        )
+        XCTAssertFalse(
+            app.staticTexts["account_deletion.identity.title"].exists
+        )
+    }
+
+    @MainActor
+    func testAccountDeletionAppleButtonFillsContainerWidth() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+            "-AccountDeletionApplePreview"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            app.staticTexts["Terhubung dengan Apple"]
+                .waitForExistence(timeout: 5)
+        )
+        let verificationButton = app.buttons[
+            "account-deletion.apple"
+        ]
+        XCTAssertTrue(verificationButton.exists)
+        XCTAssertGreaterThan(
+            verificationButton.frame.width,
+            360
+        )
+        XCTAssertFalse(
+            app.buttons["account-deletion.google"].exists
+        )
+        XCTAssertFalse(
+            app.secureTextFields["account-deletion.password"].exists
+        )
+    }
+
+    @MainActor
     private func launchGuest(
         scenario: String,
         extraArguments: [String] = []

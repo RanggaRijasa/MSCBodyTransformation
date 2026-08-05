@@ -64,6 +64,8 @@ actor SupabaseSessionRepository:
                 role: .participant,
                 hasCompletedOnboarding: false,
                 isCoachApprovalPending: false,
+                authenticationProviders:
+                    result.user.authenticationProviders,
                 createdAt: result.user.createdAt
             )
             let session = AppSession(
@@ -350,6 +352,7 @@ actor SupabaseSessionRepository:
             hasCompletedOnboarding: hasCompletedOnboarding,
             isCoachApprovalPending:
                 profile.onboardingStatus == .coachHandoffPending,
+            authenticationProviders: authUser.authenticationProviders,
             createdAt: authUser.createdAt
         )
         return AppSession(
