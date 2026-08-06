@@ -100,6 +100,18 @@ async function insert(table, rows) {
   await expectSuccess(response, `insert ${table} fixtures`);
 }
 
+async function upsertProfiles(rows) {
+  const response = await request("/rest/v1/profiles?on_conflict=user_id", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(rows),
+  });
+  await expectSuccess(response, "upsert bootstrapped profile fixtures");
+}
+
 async function update(table, query, values) {
   const response = await request(`/rest/v1/${table}?${query}`, {
     method: "PATCH",
@@ -122,7 +134,7 @@ const unrelatedCoach = await createUser("unrelated-coach");
 const participant = await createUser("participant");
 const unrelatedParticipant = await createUser("unrelated-participant");
 
-await insert("profiles", [
+await upsertProfiles([
   {
     user_id: admin.id,
     role: "admin",

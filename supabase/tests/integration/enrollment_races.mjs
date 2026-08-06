@@ -93,6 +93,18 @@ async function insert(table, rows) {
   await expectSuccess(response, `insert ${table} fixtures`);
 }
 
+async function upsertProfiles(rows) {
+  const response = await request("/rest/v1/profiles?on_conflict=user_id", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(rows),
+  });
+  await expectSuccess(response, "upsert bootstrapped profile fixtures");
+}
+
 async function selectRows(table, query) {
   const response = await request(`/rest/v1/${table}?${query}`);
   await expectSuccess(response, `select ${table}`);
@@ -153,7 +165,7 @@ const deadlineParticipant = await createUser("race-deadline");
 const coachOneQR = `coach-${randomUUID()}`;
 const coachTwoQR = `coach-${randomUUID()}`;
 
-await insert("profiles", [
+await upsertProfiles([
   {
     user_id: admin.id,
     role: "admin",

@@ -40,15 +40,201 @@ paths:
   /programs:
     get:
       operationId: listPublicPrograms
+      x-phase11-status: implemented-local
+      security:
+        - publishableKey: []
       responses:
         "200":
-          description: Public programs visible to the authenticated account.
+          description: >
+            Published-lifecycle programs visible to a logged-out Guest.
+            Creator identity and quiz answer keys are never included.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/Program"
+  /coaches:
+    get:
+      operationId: listPublicCoaches
+      x-phase11-status: implemented-local
+      security:
+        - publishableKey: []
+      responses:
+        "200":
+          description: >
+            Approved, explicitly public Coaches without contact information,
+            Auth identity, or enrollment QR identifier.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicCoach"
+  /programs/{programId}/leaderboard:
+    get:
+      operationId: listPublicLeaderboard
+      x-phase11-status: implemented-local
+      security:
+        - publishableKey: []
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      responses:
+        "200":
+          description: >
+            Public score totals. Body weight, enrollment identifiers, and
+            score component breakdown are omitted.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicLeaderboardEntry"
+  /programs/{programId}/winners:
+    get:
+      operationId: listPublicWinners
+      x-phase11-status: implemented-local
+      security:
+        - publishableKey: []
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+      responses:
+        "200":
+          description: Public rows from an immutable locked winner snapshot.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 5
+                items:
+                  $ref: "#/components/schemas/PublicWinner"
+  /winner-posters:
+    get:
+      operationId: listPublicWinnerPosters
+      x-phase11-status: implemented-local
+      security:
+        - publishableKey: []
+      responses:
+        "200":
+          description: Published winner posters only.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicWinnerPoster"
+  /me/profile:
+    get:
+      operationId: getCurrentProfile
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: >
+            Current authenticated account and onboarding state. The caller is
+            always filtered by the JWT subject in addition to RLS.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticatedProfile"
+        "401":
+          $ref: "#/components/responses/DomainError"
+  /me/enrollments:
+    get:
+      operationId: listCurrentParticipantEnrollments
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: Enrollments owned by the authenticated Participant.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Enrollment"
+  /me/assigned-coach:
+    get:
+      operationId: getCurrentAssignedCoach
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: >
+            Narrow assigned-Coach projection. Phone number and raw Coach QR
+            identifier are never returned.
+          content:
+            application/json:
+              schema:
+                type: [object, "null"]
+                oneOf:
+                  - $ref: "#/components/schemas/AssignedCoach"
+  /me/program-day-access:
+    get:
+      operationId: listCurrentProgramDayAccess
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: Server-resolved access state for the caller enrollments.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProgramDayAccess"
+  /me/dashboard-summary:
+    get:
+      operationId: getCurrentDashboardSummary
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: Role-specific counts derived from rows visible to caller.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticatedDashboardSummary"
+  /me/enrollments/{enrollmentId}/submissions:
+    get:
+      operationId: listCurrentParticipantSubmissions
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+      responses:
+        "200":
+          description: Own submission history, answers, and quiz results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StepSubmission"
+  /me/enrollments/{enrollmentId}/weigh-ins:
+    get:
+      operationId: listCurrentParticipantWeighIns
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+      responses:
+        "200":
+          description: Own private weigh-in history.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WeighIn"
+  /me/enrollments/{enrollmentId}/score:
+    get:
+      operationId: getCurrentParticipantScore
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/EnrollmentId"
+      responses:
+        "200":
+          description: Own authoritative score breakdown for one enrollment.
+          content:
+            application/json:
+              schema:
+                type: [object, "null"]
+                oneOf:
+                  - $ref: "#/components/schemas/PrivateScore"
   /programs/{programId}/duplicate:
     post:
       operationId: duplicateProgram
@@ -357,6 +543,13 @@ paths:
           description: Published poster tied to one winner snapshot.
 components:
   securitySchemes:
+    publishableKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: >
+        Public application credential. It does not create an Auth identity
+        and requests execute as the Postgres anon role.
     bearerAuth:
       type: http
       scheme: bearer
@@ -390,6 +583,200 @@ components:
           schema:
             $ref: "#/components/schemas/DomainError"
   schemas:
+    AuthenticatedProfile:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - publicProfileId
+        - role
+        - displayName
+        - city
+        - onboardingStatus
+        - accountPurpose
+      properties:
+        userId: { type: string, format: uuid }
+        publicProfileId:
+          type: string
+          format: uuid
+          description: Stable identifier used on public projections.
+        role: { type: string, enum: [participant, coach, admin] }
+        displayName: { type: string }
+        city: { type: string }
+        phoneNumber: { type: [string, "null"] }
+        currentCoachId: { type: [string, "null"], format: uuid }
+        avatarUrl: { type: [string, "null"], format: uri }
+        memberLevel:
+          type: [string, "null"]
+          enum:
+            - null
+            - member
+            - sc
+            - sb
+            - supervisor
+            - world_team
+            - tab_team
+            - get_team
+            - millionaire_team
+            - presidents_team
+        onboardingStatus:
+          type: string
+          enum:
+            - provisional
+            - coach_handoff_pending
+            - active
+            - cleanup_pending
+        accountPurpose:
+          type: string
+          enum: [participant, coach_applicant]
+    AssignedCoach:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - publicProfileId
+        - displayName
+        - city
+        - isPublic
+        - isApproved
+      properties:
+        userId: { type: string, format: uuid }
+        publicProfileId: { type: string, format: uuid }
+        displayName: { type: string }
+        city: { type: string }
+        avatarUrl: { type: [string, "null"], format: uri }
+        isPublic: { type: boolean }
+        isApproved: { type: boolean }
+    ProgramDayAccess:
+      type: object
+      additionalProperties: false
+      required:
+        - enrollmentId
+        - programId
+        - programDayId
+        - dayNumber
+        - access
+        - isCurrentDay
+      properties:
+        enrollmentId: { type: string, format: uuid }
+        programId: { type: string, format: uuid }
+        programDayId: { type: string, format: uuid }
+        dayNumber: { type: integer, minimum: 1 }
+        access:
+          type: string
+          enum: [hidden, locked, read_only, available]
+        isCurrentDay: { type: boolean }
+    AuthenticatedDashboardSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - role
+        - activeEnrollmentCount
+        - completedEnrollmentCount
+        - pendingSubmissionCount
+        - assignedParticipantCount
+      properties:
+        role: { type: string, enum: [participant, coach, admin] }
+        activeEnrollmentCount: { type: integer, minimum: 0 }
+        completedEnrollmentCount: { type: integer, minimum: 0 }
+        pendingSubmissionCount: { type: integer, minimum: 0 }
+        assignedParticipantCount: { type: integer, minimum: 0 }
+    PrivateScore:
+      type: object
+      additionalProperties: false
+      required:
+        - enrollmentId
+        - activityPoints
+        - quizPoints
+        - weightPoints
+        - adjustmentPoints
+        - progressPercentage
+      properties:
+        enrollmentId: { type: string, format: uuid }
+        activityPoints: { type: integer }
+        quizPoints: { type: integer }
+        weightPoints: { type: integer }
+        adjustmentPoints: { type: integer }
+        progressPercentage:
+          { type: integer, minimum: 0, maximum: 100 }
+        rank: { type: [integer, "null"], minimum: 1 }
+    PublicCoach:
+      type: object
+      additionalProperties: false
+      required: [id, displayName, biography, city]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Public profile identifier, never an Auth user ID.
+        displayName: { type: string }
+        biography: { type: string }
+        city: { type: string }
+        photoUrl: { type: [string, "null"], format: uri }
+    PublicLeaderboardEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - programId
+        - participantId
+        - participantDisplayName
+        - rank
+        - progressPercentage
+        - totalPoints
+      properties:
+        id: { type: string, format: uuid }
+        programId: { type: string, format: uuid }
+        participantId:
+          type: string
+          format: uuid
+          description: Public profile identifier, never an Auth user ID.
+        participantDisplayName: { type: string }
+        rank: { type: integer, minimum: 1 }
+        progressPercentage:
+          { type: integer, minimum: 0, maximum: 100 }
+        totalPoints: { type: integer }
+    PublicWinner:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - programId
+        - participantId
+        - rank
+        - participantDisplayName
+        - totalPoints
+        - lockedAt
+      properties:
+        id: { type: string, format: uuid }
+        programId: { type: string, format: uuid }
+        participantId:
+          type: string
+          format: uuid
+          description: Public profile identifier, never an Auth user ID.
+        rank: { type: integer, minimum: 1, maximum: 5 }
+        participantDisplayName: { type: string }
+        totalPoints: { type: integer }
+        lockedAt: { type: string, format: date-time }
+    PublicWinnerPoster:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - programId
+        - winnerSnapshotId
+        - title
+        - alternativeText
+        - mediaUrl
+        - publishedAt
+      properties:
+        id: { type: string, format: uuid }
+        programId: { type: string, format: uuid }
+        winnerSnapshotId: { type: string, format: uuid }
+        title: { type: string }
+        alternativeText: { type: string }
+        mediaUrl: { type: string, format: uri }
+        publishedAt: { type: string, format: date-time }
     Program:
       type: object
       required:
@@ -595,7 +982,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         enrollmentId: { type: string, format: uuid }
-        stepId: { type: string, format: uuid }
+        stepId: { type: [string, "null"], format: uuid }
         kind:
           type: string
           enum: [initial, daily, final]

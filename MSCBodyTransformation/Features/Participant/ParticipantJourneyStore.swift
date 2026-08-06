@@ -40,6 +40,7 @@ nonisolated struct GuestBrowsingSnapshot: Equatable, Sendable {
 nonisolated struct ParticipantJourneySnapshot: Equatable, Sendable {
     let user: AppUser
     let profile: ParticipantProfile
+    let publicProfileID: UUID?
     let programs: [Program]
     let enrollments: [ProgramEnrollment]
     let enrollmentContexts: [ProgramEnrollmentContext]
@@ -52,6 +53,46 @@ nonisolated struct ParticipantJourneySnapshot: Equatable, Sendable {
     let featuredWinnerPosters: [ManagedContent]
     let coaches: [CoachProfile]
     let managedContent: [ManagedContent]
+    let dayAccessStates: [AuthenticatedProgramDayAccessState]
+    let dashboardSummary: AuthenticatedDashboardSummary?
+
+    init(
+        user: AppUser,
+        profile: ParticipantProfile,
+        publicProfileID: UUID? = nil,
+        programs: [Program],
+        enrollments: [ProgramEnrollment],
+        enrollmentContexts: [ProgramEnrollmentContext],
+        activeProgram: Program?,
+        activeEnrollment: ProgramEnrollment?,
+        submissions: [StepSubmission],
+        weighIns: [WeighIn],
+        leaderboard: [LeaderboardEntry],
+        winners: [ProgramWinner],
+        featuredWinnerPosters: [ManagedContent],
+        coaches: [CoachProfile],
+        managedContent: [ManagedContent],
+        dayAccessStates: [AuthenticatedProgramDayAccessState] = [],
+        dashboardSummary: AuthenticatedDashboardSummary? = nil
+    ) {
+        self.user = user
+        self.profile = profile
+        self.publicProfileID = publicProfileID
+        self.programs = programs
+        self.enrollments = enrollments
+        self.enrollmentContexts = enrollmentContexts
+        self.activeProgram = activeProgram
+        self.activeEnrollment = activeEnrollment
+        self.submissions = submissions
+        self.weighIns = weighIns
+        self.leaderboard = leaderboard
+        self.winners = winners
+        self.featuredWinnerPosters = featuredWinnerPosters
+        self.coaches = coaches
+        self.managedContent = managedContent
+        self.dayAccessStates = dayAccessStates
+        self.dashboardSummary = dashboardSummary
+    }
 }
 
 nonisolated enum ParticipantLeaderboardLoadState: Equatable, Sendable {
@@ -374,6 +415,33 @@ final class ParticipantJourneyStore {
                 throw DomainError.permissionDenied
             }
             accessState = .authenticated(session)
+            if let authenticatedReads =
+                repositories.authenticatedParticipantReads {
+                let readSnapshot = try await authenticatedReads.snapshot(
+                    user: user
+                )
+                let profile = try readSnapshot.account.participantProfile(
+                    userID: user.id
+                )
+                try await loadAuthenticatedSnapshot(
+                    repositories: repositories,
+                    user: user,
+                    profile: profile,
+                    readSnapshot: readSnapshot
+                )
+                if selectedDayNumber == nil {
+                    selectedDayNumber = defaultDayNumber()
+                }
+                if !didRestorePendingEnrollmentIntent,
+                   let intent = try await repositories.authentication
+                       .pendingEnrollmentIntent() {
+                    didRestorePendingEnrollmentIntent = true
+                    completedAuthenticatedIntent = .joinProgram(
+                        intent.programID
+                    )
+                }
+                return
+            }
             let profile = try await repositories.profiles.participantProfile(
                 userID: user.id
             )
@@ -663,6 +731,13 @@ final class ParticipantJourneyStore {
         guard let program = currentProgram else {
             return .hidden
         }
+        if let enrollmentID = currentEnrollment?.id,
+           let serverAccess = snapshot?.dayAccessStates.first(where: {
+               $0.enrollmentID == enrollmentID
+                   && $0.programDayID == day.id
+           }) {
+            return serverAccess.access
+        }
         return ProgramDayAccessCalculator().access(
             for: day,
             in: program,
@@ -932,14 +1007,44 @@ final class ParticipantJourneyStore {
         selectedLeaderboardProgramID = program.id
         leaderboardState = .loading
         do {
-            async let entriesTask = repositories.leaderboard.leaderboard(
-                programID: program.id
-            )
-            async let winnersTask = repositories.leaderboard.winners(
-                programID: program.id
-            )
-            let entries = try await entriesTask
-            let winners = try await winnersTask
+            let entries: [LeaderboardEntry]
+            let winners: [ProgramWinner]
+            if isGuest {
+                async let entriesTask =
+                    repositories.publicLeaderboard.leaderboard(
+                        programID: program.id
+                    )
+                async let winnersTask =
+                    repositories.publicLeaderboard.winners(
+                        programID: program.id
+                    )
+                entries = try await entriesTask
+                winners = try await winnersTask
+            } else if repositories.authenticatedParticipantReads != nil {
+                async let entriesTask =
+                    repositories.publicLeaderboard.leaderboard(
+                        programID: program.id
+                    )
+                async let winnersTask =
+                    repositories.publicLeaderboard.winners(
+                        programID: program.id
+                    )
+                entries = markingCurrentParticipant(
+                    in: try await entriesTask,
+                    publicProfileID: snapshot?.publicProfileID
+                )
+                winners = try await winnersTask
+            } else {
+                async let entriesTask =
+                    repositories.leaderboard.leaderboard(
+                        programID: program.id
+                    )
+                async let winnersTask = repositories.leaderboard.winners(
+                    programID: program.id
+                )
+                entries = try await entriesTask
+                winners = try await winnersTask
+            }
             guard !Task.isCancelled else {
                 return
             }
@@ -986,10 +1091,11 @@ final class ParticipantJourneyStore {
     private func loadGuestSnapshot(
         repositories: AppRepositories
     ) async throws {
-        async let programsTask = repositories.programs.programs()
-        async let coachesTask = repositories.coachDirectory.publicCoaches()
+        async let programsTask = repositories.publicPrograms.programs()
+        async let coachesTask =
+            repositories.publicCoachDirectory.publicCoaches()
         async let managedContentTask =
-            repositories.managedContent.managedContent()
+            repositories.publicManagedContent.managedContent()
         let allPrograms = try await programsTask
         let programValues = allPrograms.filter {
             $0.status == .active
@@ -1025,6 +1131,114 @@ final class ParticipantJourneyStore {
         selectedDayNumber = nil
         selectedLeaderboardProgramID = nil
         leaderboardState = .idle
+    }
+
+    private func loadAuthenticatedSnapshot(
+        repositories: AppRepositories,
+        user: AppUser,
+        profile: ParticipantProfile,
+        readSnapshot: AuthenticatedParticipantReadSnapshot
+    ) async throws {
+        async let publicCoachesTask =
+            repositories.publicCoachDirectory.publicCoaches()
+        async let managedContentTask =
+            repositories.publicManagedContent.managedContent()
+
+        let programs = readSnapshot.programs
+        let enrollments = readSnapshot.enrollments
+        let eligibleEnrollments = enrollments.filter { enrollment in
+            enrollment.status == .active
+                && programs.contains {
+                    $0.id == enrollment.programID
+                        && ($0.status == .active || $0.status == .scheduled)
+                }
+        }
+        let activeEnrollment =
+            eligibleEnrollments.first {
+                $0.programID == focusedProgramID
+            } ?? eligibleEnrollments.first
+        let activeProgram = activeEnrollment.flatMap { enrollment in
+            programs.first { $0.id == enrollment.programID }
+        }
+        if focusedProgramID == nil {
+            focusedProgramID = activeProgram?.id
+        }
+
+        let activeContext = activeEnrollment.flatMap { enrollment in
+            readSnapshot.enrollmentContexts.first {
+                $0.enrollment.id == enrollment.id
+            }
+        }
+        let submissions = activeContext?.submissions ?? []
+        let weighIns = activeContext?.weighIns ?? []
+
+        let leaderboard: [LeaderboardEntry]
+        let winners: [ProgramWinner]
+        if let activeProgram {
+            async let leaderboardTask =
+                repositories.publicLeaderboard.leaderboard(
+                    programID: activeProgram.id
+                )
+            async let winnersTask = repositories.publicLeaderboard.winners(
+                programID: activeProgram.id
+            )
+            leaderboard = markingCurrentParticipant(
+                in: try await leaderboardTask,
+                publicProfileID: readSnapshot.account.publicProfileID
+            )
+            winners = try await winnersTask
+        } else {
+            leaderboard = []
+            winners = []
+        }
+
+        let managedContent = try await managedContentTask
+        let featuredWinnerPosters = managedContent
+            .filter {
+                $0.kind == .winnerBanner
+                    && ManagedContentValidator().isVisible(
+                        $0,
+                        at: environment.clock.now()
+                    )
+                    && $0.localMediaReference?.isEmpty == false
+            }
+            .sorted {
+                if $0.sortOrder == $1.sortOrder {
+                    return $0.updatedAt > $1.updatedAt
+                }
+                return $0.sortOrder < $1.sortOrder
+            }
+
+        var coaches = try await publicCoachesTask
+        if let assignedCoach = readSnapshot.assignedCoach {
+            coaches.removeAll {
+                $0.id == assignedCoach.publicProfileID
+                    || $0.userID == assignedCoach.profile.userID
+            }
+            coaches.insert(assignedCoach.profile, at: 0)
+        }
+
+        let nextSnapshot = ParticipantJourneySnapshot(
+            user: user,
+            profile: profile,
+            publicProfileID: readSnapshot.account.publicProfileID,
+            programs: programs,
+            enrollments: enrollments,
+            enrollmentContexts: readSnapshot.enrollmentContexts,
+            activeProgram: activeProgram,
+            activeEnrollment: activeEnrollment,
+            submissions: submissions,
+            weighIns: weighIns,
+            leaderboard: leaderboard,
+            winners: winners,
+            featuredWinnerPosters: featuredWinnerPosters,
+            coaches: coaches,
+            managedContent: managedContent,
+            dayAccessStates: readSnapshot.dayAccessStates,
+            dashboardSummary: readSnapshot.dashboardSummary
+        )
+        state = .loaded(nextSnapshot)
+        updateLeaderboardSelectionAfterJourneyLoad(snapshot: nextSnapshot)
     }
 
     private func loadSnapshot(
@@ -1157,9 +1371,26 @@ final class ParticipantJourneyStore {
 
     private func reloadSnapshot() async throws {
         guard let repositories = environment.repositories,
-              let userID = snapshot?.user.id else {
+              let currentSnapshot = snapshot else {
             throw DomainError.unknown
         }
+        if let authenticatedReads =
+            repositories.authenticatedParticipantReads {
+            let readSnapshot = try await authenticatedReads.snapshot(
+                user: currentSnapshot.user
+            )
+            let profile = try readSnapshot.account.participantProfile(
+                userID: currentSnapshot.user.id
+            )
+            try await loadAuthenticatedSnapshot(
+                repositories: repositories,
+                user: currentSnapshot.user,
+                profile: profile,
+                readSnapshot: readSnapshot
+            )
+            return
+        }
+        let userID = currentSnapshot.user.id
         let user = try await repositories.profiles.user(id: userID)
         let profile = try await repositories.profiles.participantProfile(
             userID: userID
@@ -1169,6 +1400,24 @@ final class ParticipantJourneyStore {
             user: user,
             profile: profile
         )
+    }
+
+    private func markingCurrentParticipant(
+        in entries: [LeaderboardEntry],
+        publicProfileID: UUID?
+    ) -> [LeaderboardEntry] {
+        entries.map { entry in
+            LeaderboardEntry(
+                id: entry.id,
+                programID: entry.programID,
+                participantID: entry.participantID,
+                participantDisplayName: entry.participantDisplayName,
+                rank: entry.rank,
+                progressPercentage: entry.progressPercentage,
+                score: entry.score,
+                isCurrentUser: entry.participantID == publicProfileID
+            )
+        }
     }
 
     private func defaultDayNumber() -> Int? {

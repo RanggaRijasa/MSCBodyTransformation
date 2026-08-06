@@ -76,6 +76,20 @@ async function insert(table, rows) {
   );
 }
 
+async function upsertProfiles(rows) {
+  await expectSuccess(
+    await request("/rest/v1/profiles?on_conflict=user_id", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(rows),
+    }),
+    "upsert bootstrapped profiles",
+  );
+}
+
 function shellExport(name, value) {
   if (value.includes("'")) {
     throw new Error(`Unsafe shell value for ${name}`);
@@ -98,7 +112,7 @@ const localDate = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 }).format(new Date());
 
-await insert("profiles", [
+await upsertProfiles([
   {
     user_id: admin.id,
     role: "admin",

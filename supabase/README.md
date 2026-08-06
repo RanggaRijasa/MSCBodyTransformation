@@ -36,6 +36,17 @@ This directory is the reproducible backend contract for the program flow.
   recently created Auth session, prepare private-media cleanup, remove or
   anonymize account-owned data, preserve redacted financial/audit history,
   and make profile references safe for hard deletion.
+- `migrations/20260806053130_phase11_public_guest_reads.sql` exposes fixed
+  public projections for program catalog, approved Coaches, leaderboard
+  totals, locked winners, and published posters. Guest requests use the
+  publishable key as `anon`; private base tables remain ungranted.
+- `migrations/20260806062936_phase11_authenticated_reads.sql` adds narrow
+  current-user projections for assigned Coach, program-day access, and
+  role-specific dashboard counts.
+- `migrations/20260806064919_phase11_authenticated_score_privacy.sql`
+  restricts direct score breakdown rows to the owning Participant, assigned
+  Coach, or Admin; public leaderboard totals continue through the safe
+  projection.
 - `functions/delete-account/index.ts` owns the server-only Storage cleanup and
   Auth Admin hard-delete boundary. The iOS client never receives the service
   credential.
@@ -78,6 +89,8 @@ set -a
 eval "$(supabase status -o env)"
 set +a
 node supabase/tests/integration/auth_lifecycle.mjs
+node supabase/tests/integration/public_guest_reads.mjs
+node supabase/tests/integration/authenticated_reads.mjs
 ```
 
 The script rejects non-loopback URLs, verifies PKCE email confirmation,

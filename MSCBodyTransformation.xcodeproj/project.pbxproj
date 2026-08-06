@@ -406,7 +406,7 @@
 				DEVELOPMENT_TEAM = TLC6Y5XJMM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Configuration/MSCBodyTransformation-Info.plist;
+				INFOPLIST_FILE = "Configuration/MSCBodyTransformation-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -435,7 +435,7 @@
 				DEVELOPMENT_TEAM = TLC6Y5XJMM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Configuration/MSCBodyTransformation-Info.plist;
+				INFOPLIST_FILE = "Configuration/MSCBodyTransformation-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

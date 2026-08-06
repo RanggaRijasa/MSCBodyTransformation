@@ -64,33 +64,72 @@ nonisolated protocol AuthenticationRepository: Sendable {
     ) async throws -> AppSession
 }
 
-nonisolated protocol ProfileRepository: Sendable {
+nonisolated protocol ProfileRepository:
+    ProfileReadRepository,
+    ProfileCommandRepository
+{}
+
+nonisolated protocol ProfileReadRepository: Sendable {
     func user(id: UUID) async throws -> AppUser
     func participantProfile(userID: UUID) async throws -> ParticipantProfile
+    func coachProfile(userID: UUID) async throws -> CoachProfile
+}
+
+nonisolated protocol ProfileCommandRepository: Sendable {
     func save(participantProfile: ParticipantProfile) async throws
         -> ParticipantProfile
-    func coachProfile(userID: UUID) async throws -> CoachProfile
     func save(coachProfile: CoachProfile) async throws -> CoachProfile
+}
+
+nonisolated protocol AuthenticatedParticipantReadRepository: Sendable {
+    func snapshot(
+        user: AppUser
+    ) async throws -> AuthenticatedParticipantReadSnapshot
 }
 
 nonisolated protocol CoachDirectoryRepository: Sendable {
     func publicCoaches() async throws -> [CoachProfile]
 }
 
-nonisolated protocol ProgramRepository: Sendable {
+nonisolated protocol PublicCoachDirectoryRepository: Sendable {
+    func publicCoaches() async throws -> [CoachProfile]
+}
+
+nonisolated protocol ProgramRepository:
+    ProgramReadRepository,
+    ProgramCommandRepository
+{}
+
+nonisolated protocol ProgramReadRepository: Sendable {
     func programs() async throws -> [Program]
     func program(id: UUID) async throws -> Program
     func activeProgram() async throws -> Program?
+}
+
+nonisolated protocol ProgramCommandRepository: Sendable {
     func save(program: Program) async throws -> Program
 }
 
-nonisolated protocol EnrollmentRepository: Sendable {
+nonisolated protocol PublicProgramRepository: Sendable {
+    func programs() async throws -> [Program]
+    func program(id: UUID) async throws -> Program
+}
+
+nonisolated protocol EnrollmentRepository:
+    EnrollmentReadRepository,
+    EnrollmentCommandRepository
+{}
+
+nonisolated protocol EnrollmentReadRepository: Sendable {
     func allEnrollments() async throws -> [ProgramEnrollment]
     func enrollments(participantID: UUID) async throws -> [ProgramEnrollment]
     func enrollment(
         programID: UUID,
         participantID: UUID
     ) async throws -> ProgramEnrollment?
+}
+
+nonisolated protocol EnrollmentCommandRepository: Sendable {
     func createEnrollment(
         _ enrollment: ProgramEnrollment
     ) async throws -> ProgramEnrollment
@@ -100,7 +139,12 @@ nonisolated protocol EnrollmentRepository: Sendable {
     ) async throws -> [ProgramEnrollment]
 }
 
-nonisolated protocol SubmissionRepository: Sendable {
+nonisolated protocol SubmissionRepository:
+    SubmissionReadRepository,
+    SubmissionCommandRepository
+{}
+
+nonisolated protocol SubmissionReadRepository: Sendable {
     func pendingReviewCount() async throws -> Int
     func submissions(enrollmentID: UUID) async throws -> [StepSubmission]
     func submissionHistory(
@@ -112,6 +156,9 @@ nonisolated protocol SubmissionRepository: Sendable {
         stepID: UUID
     ) async throws -> [QuizAttemptResult]
     func reviewQueue(coachID: UUID) async throws -> [StepSubmission]
+}
+
+nonisolated protocol SubmissionCommandRepository: Sendable {
     func completeStep(
         submission: StepSubmission
     ) async throws -> StepSubmission
@@ -136,8 +183,16 @@ nonisolated protocol SubmissionRepository: Sendable {
     ) async throws -> QuizAttemptResult
 }
 
-nonisolated protocol WeighInRepository: Sendable {
+nonisolated protocol WeighInRepository:
+    WeighInReadRepository,
+    WeighInCommandRepository
+{}
+
+nonisolated protocol WeighInReadRepository: Sendable {
     func weighIns(enrollmentID: UUID) async throws -> [WeighIn]
+}
+
+nonisolated protocol WeighInCommandRepository: Sendable {
     func save(weighIn: WeighIn) async throws -> WeighIn
     func correctWeighIn(
         enrollmentID: UUID,
@@ -148,9 +203,19 @@ nonisolated protocol WeighInRepository: Sendable {
     ) async throws -> WeighIn
 }
 
-nonisolated protocol LeaderboardRepository: Sendable {
+nonisolated protocol LeaderboardRepository:
+    LeaderboardReadRepository,
+    LeaderboardCommandRepository
+{
+    func resetLockedWinnersForDebug(programID: UUID) async
+}
+
+nonisolated protocol LeaderboardReadRepository: Sendable {
     func leaderboard(programID: UUID) async throws -> [LeaderboardEntry]
     func winners(programID: UUID) async throws -> [ProgramWinner]
+}
+
+nonisolated protocol LeaderboardCommandRepository: Sendable {
     func applyScoreAdjustment(
         entryID: UUID,
         points: Int
@@ -159,7 +224,11 @@ nonisolated protocol LeaderboardRepository: Sendable {
         programID: UUID,
         lockedAt: Date
     ) async throws -> [ProgramWinner]
-    func resetLockedWinnersForDebug(programID: UUID) async
+}
+
+nonisolated protocol PublicLeaderboardRepository: Sendable {
+    func leaderboard(programID: UUID) async throws -> [LeaderboardEntry]
+    func winners(programID: UUID) async throws -> [ProgramWinner]
 }
 
 nonisolated protocol CoachParticipantRepository: Sendable {
@@ -175,6 +244,10 @@ nonisolated protocol CoachParticipantRepository: Sendable {
 nonisolated protocol ManagedContentRepository: Sendable {
     func managedContent() async throws -> [ManagedContent]
     func save(content: ManagedContent) async throws -> ManagedContent
+}
+
+nonisolated protocol PublicManagedContentRepository: Sendable {
+    func managedContent() async throws -> [ManagedContent]
 }
 
 nonisolated protocol AdminPeopleRepository: Sendable {

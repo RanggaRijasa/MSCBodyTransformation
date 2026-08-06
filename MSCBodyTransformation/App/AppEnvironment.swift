@@ -150,6 +150,16 @@ nonisolated struct AppEnvironment: Sendable {
                 profileClient: profileClient,
                 fallback: phase11Fallback
             )
+        let publicClient = URLSessionSupabaseClient(
+            configuration: runtimeConfiguration,
+            authorization: .publicAnon
+        )
+        let authenticatedClient = URLSessionSupabaseClient(
+            configuration: runtimeConfiguration,
+            accessTokenProvider: SessionSupabaseAccessTokenProvider(
+                sessionRepository: sessionRepository
+            )
+        )
         return Self(
             configuration: configuration,
             clock: clock,
@@ -158,6 +168,24 @@ nonisolated struct AppEnvironment: Sendable {
                 session: sessionRepository,
                 authentication: authenticationRepository,
                 profiles: participantProfileRepository,
+                authenticatedParticipantReads:
+                    SupabaseAuthenticatedParticipantReadRepository(
+                        client: authenticatedClient
+                    ),
+                publicCoachDirectory:
+                    SupabasePublicCoachDirectoryRepository(
+                        client: publicClient
+                    ),
+                publicPrograms: SupabasePublicProgramRepository(
+                    client: publicClient
+                ),
+                publicLeaderboard: SupabasePublicLeaderboardRepository(
+                    client: publicClient
+                ),
+                publicManagedContent:
+                    SupabasePublicManagedContentRepository(
+                        client: publicClient
+                    ),
                 phase11Fallback: phase11Fallback
             ),
             bootstrapError: nil

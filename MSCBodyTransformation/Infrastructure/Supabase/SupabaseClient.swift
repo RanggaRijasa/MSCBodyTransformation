@@ -85,6 +85,21 @@ nonisolated struct FixedSupabaseAccessTokenProvider:
     }
 }
 
+nonisolated struct SessionSupabaseAccessTokenProvider:
+    SupabaseAccessTokenProviding,
+    Sendable
+{
+    private let sessionRepository: any SessionRepository
+
+    init(sessionRepository: any SessionRepository) {
+        self.sessionRepository = sessionRepository
+    }
+
+    func accessToken() async throws -> String {
+        try await sessionRepository.validAccessToken()
+    }
+}
+
 nonisolated enum SupabaseHTTPMethod: String, Sendable {
     case get = "GET"
     case post = "POST"
@@ -105,9 +120,14 @@ nonisolated protocol SupabaseClientProviding: Sendable {
     func execute(_ request: SupabaseRequest) async throws -> Data
 }
 
+nonisolated enum SupabaseClientAuthorization: Sendable {
+    case publicAnon
+    case authenticated(any SupabaseAccessTokenProviding)
+}
+
 actor URLSessionSupabaseClient: SupabaseClientProviding {
     private let configuration: SupabaseRuntimeConfiguration
-    private let accessTokenProvider: any SupabaseAccessTokenProviding
+    private let authorization: SupabaseClientAuthorization
     private let session: URLSession
 
     init(
@@ -116,27 +136,42 @@ actor URLSessionSupabaseClient: SupabaseClientProviding {
         session: URLSession = .shared
     ) {
         self.configuration = configuration
-        self.accessTokenProvider = accessTokenProvider
+        authorization = .authenticated(accessTokenProvider)
+        self.session = session
+    }
+
+    init(
+        configuration: SupabaseRuntimeConfiguration,
+        authorization: SupabaseClientAuthorization,
+        session: URLSession = .shared
+    ) {
+        self.configuration = configuration
+        self.authorization = authorization
         self.session = session
     }
 
     func execute(_ request: SupabaseRequest) async throws -> Data {
-        let token = try await accessTokenProvider.accessToken()
         let url = try makeURL(request)
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.httpBody = request.body
         urlRequest.timeoutInterval = 30
+        for (name, value) in request.headers {
+            urlRequest.setValue(value, forHTTPHeaderField: name)
+        }
         urlRequest.setValue(
             configuration.publishableKey,
             forHTTPHeaderField: "apikey"
         )
-        urlRequest.setValue(
-            "Bearer \(token)",
-            forHTTPHeaderField: "Authorization"
-        )
-        for (name, value) in request.headers {
-            urlRequest.setValue(value, forHTTPHeaderField: name)
+        switch authorization {
+        case .publicAnon:
+            urlRequest.setValue(nil, forHTTPHeaderField: "Authorization")
+        case .authenticated(let accessTokenProvider):
+            let token = try await accessTokenProvider.accessToken()
+            urlRequest.setValue(
+                "Bearer \(token)",
+                forHTTPHeaderField: "Authorization"
+            )
         }
 
         do {
