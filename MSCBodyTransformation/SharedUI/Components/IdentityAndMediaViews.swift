@@ -91,19 +91,22 @@ struct UserAvatar: View {
 
     var body: some View {
         Group {
-            if let image {
+            if let remoteImageURL {
+                AsyncImage(url: remoteImageURL) { phase in
+                    if let image = phase.image {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        fallbackImage
+                    }
+                }
+            } else if let image {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
             } else {
-                Image(systemName: "person.crop.circle.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(Color.appSecondaryText)
-                    .padding(size * 0.12)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.appSecondaryBackground)
+                fallbackImage
             }
         }
         .frame(width: size, height: size)
@@ -123,6 +126,26 @@ struct UserAvatar: View {
             return UIImage(contentsOfFile: imageName)
         }
         return UIImage(named: imageName)
+    }
+
+    private var remoteImageURL: URL? {
+        guard let imageName,
+              let url = URL(string: imageName),
+              url.scheme?.lowercased() == "https" else {
+            return nil
+        }
+        return url
+    }
+
+    private var fallbackImage: some View {
+        Image(systemName: "person.crop.circle.fill")
+            .resizable()
+            .scaledToFit()
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(Color.appSecondaryText)
+            .padding(size * 0.12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appSecondaryBackground)
     }
 
 }

@@ -229,6 +229,383 @@
         }
       }
     },
+    "account_deletion.action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus akun"
+          }
+        }
+      }
+    },
+    "account_deletion.coach_transfer" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun Coach dengan peserta aktif harus dialihkan oleh Admin terlebih dahulu."
+          }
+        }
+      }
+    },
+    "account_deletion.confirmation.action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus akun sekarang"
+          }
+        }
+      }
+    },
+    "account_deletion.confirmation.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun dan data pribadi akan dihapus sekarang. Tindakan ini tidak dapat dibatalkan."
+          }
+        }
+      }
+    },
+    "account_deletion.confirmation.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus akun secara permanen?"
+          }
+        }
+      }
+    },
+    "account_deletion.consequences" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dampak penghapusan"
+          }
+        }
+      }
+    },
+    "account_deletion.data.access" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses akun dan sesi aktif"
+          }
+        }
+      }
+    },
+    "account_deletion.data.participation" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keikutsertaan, kiriman, dan skor"
+          }
+        }
+      }
+    },
+    "account_deletion.data.profile_media" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil dan media pribadi"
+          }
+        }
+      }
+    },
+    "account_deletion.data.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data yang akan dihapus"
+          }
+        }
+      }
+    },
+    "account_deletion.email.action" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autentikasi ulang dan hapus"
+          }
+        }
+      }
+    },
+    "account_deletion.error.configuration" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Layanan akun belum tersedia. Coba lagi nanti."
+          }
+        }
+      }
+    },
+    "account_deletion.error.credential" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autentikasi ulang gagal. Periksa metode masukmu."
+          }
+        }
+      }
+    },
+    "account_deletion.error.generic" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun belum dapat dihapus. Coba lagi."
+          }
+        }
+      }
+    },
+    "account_deletion.error.not_allowed" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun ini tidak dapat dihapus dari aplikasi."
+          }
+        }
+      }
+    },
+    "account_deletion.error.reauthentication" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autentikasi ulang sudah kedaluwarsa. Coba lagi."
+          }
+        }
+      }
+    },
+    "account_deletion.error.transfer" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hubungan program harus dialihkan oleh Admin sebelum akun dapat dihapus."
+          }
+        }
+      }
+    },
+    "account_deletion.identity.apple" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terhubung dengan Apple"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.email" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terhubung dengan email"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.google" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terhubung dengan Google"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfirmasi identitas"
+          }
+        }
+      }
+    },
+    "account_deletion.identity.unavailable.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup layar ini, masuk ulang, lalu coba hapus akun kembali."
+          }
+        }
+      }
+    },
+    "account_deletion.identity.unavailable.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metode masuk belum tersedia"
+          }
+        }
+      }
+    },
+    "account_deletion.immediate" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses akun akan dicabut segera setelah autentikasi ulang berhasil."
+          }
+        }
+      }
+    },
+    "account_deletion.irreversible" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penghapusan permanen dan tidak dapat dibatalkan."
+          }
+        }
+      }
+    },
+    "account_deletion.permanent.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun dan data pribadi akan dihapus. Tindakan ini tidak dapat dibatalkan."
+          }
+        }
+      }
+    },
+    "account_deletion.permanent.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penghapusan permanen"
+          }
+        }
+      }
+    },
+    "account_deletion.personal_data" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil, keikutsertaan program, kiriman, skor, dan media pribadi akan dihapus."
+          }
+        }
+      }
+    },
+    "account_deletion.progress" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menghapus akun…"
+          }
+        }
+      }
+    },
+    "account_deletion.reauthenticate" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autentikasi ulang"
+          }
+        }
+      }
+    },
+    "account_deletion.reauthenticate.help" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan metode masuk yang terhubung ke akun ini."
+          }
+        }
+      }
+    },
+    "account_deletion.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus akun"
+          }
+        }
+      }
+    },
+    "account_deletion.verify.email" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifikasi dengan password"
+          }
+        }
+      }
+    },
+    "account_deletion.verify.google" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifikasi dengan Google"
+          }
+        }
+      }
+    },
+    "account_deletion.verify.help" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setelah verifikasi berhasil, kamu akan diminta konfirmasi terakhir sebelum akun dihapus."
+          }
+        }
+      }
+    },
+    "account_deletion.verify.progress" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memverifikasi akun…"
+          }
+        }
+      }
+    },
+    "account_deletion.winner_snapshot" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catatan pemenang yang sudah dikunci tetap tersimpan tanpa identitas akun."
+          }
+        }
+      }
+    },
     "action.back" : {
       "localizations" : {
         "id" : {
@@ -525,6 +902,36 @@
         }
       }
     },
+    "admin.people.manual_enrollment.deadline" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batas pendaftaran"
+          }
+        }
+      }
+    },
+    "admin.people.manual_enrollment.deadline_help" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin dapat mendaftarkan setelah batas waktu. Kapasitas, Coach, status program, dan pembayaran tetap wajib memenuhi aturan server. Alasan dicatat dalam audit."
+          }
+        }
+      }
+    },
+    "admin.people.manual_enrollment.no_deadline" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak dibatasi"
+          }
+        }
+      }
+    },
     "admin.program.cover.choose" : {
       "localizations" : {
         "id" : {
@@ -581,6 +988,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pratinjau program"
+          }
+        }
+      }
+    },
+    "admin.program.registration_deadline.help" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setelah waktu ini Peserta tidak dapat mendaftar sendiri. Admin tetap dapat mendaftarkan secara manual."
+          }
+        }
+      }
+    },
+    "admin.program.registration_deadline.picker" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutup pendaftaran"
+          }
+        }
+      }
+    },
+    "admin.program.registration_deadline.toggle" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batasi waktu pendaftaran"
           }
         }
       }
@@ -653,9 +1090,6 @@
       "comment" : "A label for the reason for transferring a coach.",
       "isCommentAutoGenerated" : true
     },
-    "Alasan wajib diisi dan dicatat pada audit lokal." : {
-
-    },
     "alert.route.unavailable.message" : {
       "localizations" : {
         "id" : {
@@ -682,66 +1116,6 @@
     "Angka" : {
       "comment" : "A label for a number question.",
       "isCommentAutoGenerated" : true
-    },
-    "admin.people.manual_enrollment.deadline" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Batas pendaftaran"
-          }
-        }
-      }
-    },
-    "admin.people.manual_enrollment.deadline_help" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Admin dapat mendaftarkan setelah batas waktu. Kapasitas, Coach, status program, dan pembayaran tetap wajib memenuhi aturan server. Alasan dicatat dalam audit."
-          }
-        }
-      }
-    },
-    "admin.people.manual_enrollment.no_deadline" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tidak dibatasi"
-          }
-        }
-      }
-    },
-    "admin.program.registration_deadline.help" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Setelah waktu ini Peserta tidak dapat mendaftar sendiri. Admin tetap dapat mendaftarkan secara manual."
-          }
-        }
-      }
-    },
-    "admin.program.registration_deadline.picker" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutup pendaftaran"
-          }
-        }
-      }
-    },
-    "admin.program.registration_deadline.toggle" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Batasi waktu pendaftaran"
-          }
-        }
-      }
     },
     "app.subtitle" : {
       "extractionState" : "stale",
@@ -796,6 +1170,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Daftar"
+          }
+        }
+      }
+    },
+    "auth.cleanup.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembersihan akun sementara akan dicoba lagi saat koneksi tersedia."
+          }
+        }
+      }
+    },
+    "auth.cleanup.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembersihan akun tertunda"
           }
         }
       }
@@ -899,6 +1293,16 @@
         }
       }
     },
+    "auth.error.invalid_credential" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email atau password tidak sesuai."
+          }
+        }
+      }
+    },
     "auth.error.login_fields" : {
       "comment" : "Error message displayed when the email or password fields are invalid when logging in.",
       "extractionState" : "extracted_with_value",
@@ -977,6 +1381,16 @@
         }
       }
     },
+    "auth.error.profile" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil belum dapat dimuat. Coba lagi."
+          }
+        }
+      }
+    },
     "auth.error.register_fields" : {
       "comment" : "Error message displayed when the user submits a registration form with invalid email or mismatched passwords.",
       "extractionState" : "extracted_with_value",
@@ -986,6 +1400,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Gunakan email valid dan password minimal 8 karakter yang sama."
+          }
+        }
+      }
+    },
+    "auth.error.timeout" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koneksi terlalu lama. Coba lagi."
+          }
+        }
+      }
+    },
+    "auth.error.validation" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periksa data yang dimasukkan, lalu coba lagi."
+          }
+        }
+      }
+    },
+    "auth.error.verification_required" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifikasi email sebelum masuk."
           }
         }
       }
@@ -1302,6 +1746,77 @@
         }
       }
     },
+    "auth.password_reset.confirm_password" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ulangi password baru"
+          }
+        }
+      }
+    },
+    "auth.password_reset.error" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password belum dapat diperbarui. Coba lagi."
+          }
+        }
+      }
+    },
+    "auth.password_reset.message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buat password baru untuk melanjutkan."
+          }
+        }
+      }
+    },
+    "auth.password_reset.new_password" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password baru"
+          }
+        }
+      }
+    },
+    "auth.password_reset.requirement" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan minimal 8 karakter dan masukkan password yang sama."
+          }
+        }
+      }
+    },
+    "auth.password_reset.save" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan password baru"
+          }
+        }
+      }
+    },
+    "auth.password_reset.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atur ulang password"
+          }
+        }
+      }
+    },
     "auth.password.hidden" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1340,6 +1855,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Password terlihat"
+          }
+        }
+      }
+    },
+    "auth.profile_provisioning.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil belum dapat disiapkan. Coba lagi."
+          }
+        }
+      }
+    },
+    "auth.profile_provisioning.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menyiapkan profil"
           }
         }
       }
@@ -1606,6 +2141,28 @@
         }
       }
     },
+    "auth.provisional.message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lengkapi data pendaftaran sebelum membuka akun."
+          }
+        }
+      }
+    },
+    "auth.provisional.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendaftaran belum selesai"
+          }
+        }
+      }
+    },
     "auth.recovery.debug_outcome" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1749,6 +2306,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pilihan masuk"
+          }
+        }
+      }
+    },
+    "auth.verification.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka tautan yang dikirim ke email untuk melanjutkan."
+          }
+        }
+      }
+    },
+    "auth.verification.resend" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirim ulang email"
+          }
+        }
+      }
+    },
+    "auth.verification.resend_error" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email belum dapat dikirim ulang. Coba lagi nanti."
+          }
+        }
+      }
+    },
+    "auth.verification.resent" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email verifikasi telah dikirim ulang."
+          }
+        }
+      }
+    },
+    "auth.verification.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifikasi email"
           }
         }
       }
@@ -7011,6 +7618,7 @@
       }
     },
     "participant.delete_account.info" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -7739,16 +8347,6 @@
         }
       }
     },
-    "participant.join.registration_closed.message" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Batas pendaftaran program telah lewat. Hubungi Admin bila memerlukan bantuan."
-          }
-        }
-      }
-    },
     "participant.join.program_required.message" : {
       "localizations" : {
         "id" : {
@@ -7765,6 +8363,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pilih program terlebih dahulu"
+          }
+        }
+      }
+    },
+    "participant.join.registration_closed.message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batas pendaftaran program telah lewat. Hubungi Admin bila memerlukan bantuan."
           }
         }
       }
@@ -8121,6 +8729,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keluar dari demo lokal"
+          }
+        }
+      }
+    },
+    "participant.logout.account" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keluar dari akun"
+          }
+        }
+      }
+    },
+    "participant.logout.account_notice" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi dan data privat pada perangkat ini akan dibersihkan."
           }
         }
       }
@@ -8812,36 +9440,6 @@
         }
       }
     },
-    "participant.program.registration.admin_help" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Admin tetap dapat membantu pendaftaran manual bila seluruh persyaratan program terpenuhi."
-          }
-        }
-      }
-    },
-    "participant.program.registration.closed" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pendaftaran ditutup"
-          }
-        }
-      }
-    },
-    "participant.program.registration.open_until" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pendaftaran sampai %@"
-          }
-        }
-      }
-    },
     "participant.program.offer.about" : {
       "localizations" : {
         "id" : {
@@ -8908,6 +9506,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Belum mendaftar"
+          }
+        }
+      }
+    },
+    "participant.program.registration.admin_help" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin tetap dapat membantu pendaftaran manual bila seluruh persyaratan program terpenuhi."
+          }
+        }
+      }
+    },
+    "participant.program.registration.closed" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendaftaran ditutup"
+          }
+        }
+      }
+    },
+    "participant.program.registration.open_until" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendaftaran sampai %@"
           }
         }
       }

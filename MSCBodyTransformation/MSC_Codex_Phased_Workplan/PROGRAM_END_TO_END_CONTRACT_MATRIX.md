@@ -37,7 +37,11 @@ dengan matriks ini.
 | Area | Owner authoritative | Guest | Participant/applicant | Admin | Backend phase |
 |---|---|---|---|---|---|
 | Guest access | Session state | Public read tanpa user row | — | — | Public-safe view/grant tanpa anonymous signup |
-| Profile | User input + protected persistence | Tidak membaca | Menulis nama, nomor HP, level sendiri | Membaca sesuai kebutuhan | Phase 10 profile bootstrap/RLS |
+| Auth identity | `auth.users.id` + provider identity | Tidak membuat identity | Login/registrasi; tidak memilih role | Tidak memakai metadata client untuk role | Phase 10 Auth lifecycle |
+| Session | Auth service + Keychain device-only cache | Logged out | Restore/refresh/logout melalui `SessionRepository` | Boundary yang sama | Phase 10; hosted policy Phase 13 |
+| Profile | `profiles.user_id`, role, display name, phone, member level, purpose, onboarding status/expiry | Tidak membaca | Menulis field allowlisted miliknya | Membaca sesuai kebutuhan | Phase 10 profile bootstrap/RLS |
+| Penghapusan akun | Edge Function + Auth Admin server-side | — | Reauthentication lalu immediate deletion; media privat dan data program dihapus | Admin self-delete ditolak; relationship Coach harus dialihkan | Phase 10 lokal; hosted retention review Phase 13 |
+| Pending enrollment | Secure local intent + server revalidation | Memilih program sebelum login | TTL/nonce/environment; QR opaque bukan authorization | — | Phase 10 persistence; Phase 11 enrollment adapter |
 | Member level | Profile/application snapshot | Tidak membaca | Memilih; tidak memberi capability | Membaca | Phase 10/11 validation |
 | Eligibility | Domain/server rule | — | Attest HOM STS dan ICT | Membaca hasil | Server menghitung ulang |
 | Coach application | Application aggregate | — | Membuat satu active application | Approve/reject | Phase 11 atomic operation |

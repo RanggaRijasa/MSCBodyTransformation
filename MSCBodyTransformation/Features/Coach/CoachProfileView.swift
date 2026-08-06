@@ -48,6 +48,8 @@ struct CoachProfileView: View {
                         state: state,
                         snapshot: snapshot
                     )
+                case .delete(let user):
+                    AccountDeletionView(user: user)
                 }
             }
             .alert(
@@ -75,7 +77,7 @@ struct CoachProfileView: View {
             qrSection
             settingsSection(bindableState: bindableState)
             legalSection
-            accountSection
+            accountSection(user: snapshot.user)
         }
         .scrollContentBackground(.hidden)
         .background(Color.appBackground)
@@ -299,25 +301,44 @@ struct CoachProfileView: View {
             }
             .accessibilityIdentifier("coach.profile.legal.terms")
 
-            Label(
-                "participant.delete_account.info",
-                systemImage: "person.crop.circle.badge.minus"
-            )
-            .foregroundStyle(Color.appSecondaryText)
         }
     }
 
-    private var accountSection: some View {
+    private func accountSection(user: AppUser) -> some View {
         Section {
-            Button("participant.logout", role: .destructive) {
+            Button(
+                state.isLocalDemo
+                    ? "participant.logout"
+                    : "participant.logout.account",
+                role: .destructive
+            ) {
                 Task {
                     await state.logoutLocalDemo()
                     router.resetAllPaths()
                 }
             }
             .accessibilityIdentifier("coach.logout")
+
+            if !state.isLocalDemo {
+                Button(
+                    String(
+                        localized: "account_deletion.action",
+                        defaultValue: "Hapus akun"
+                    ),
+                    role: .destructive
+                ) {
+                    presentedSheet = .delete(user)
+                }
+                .accessibilityIdentifier(
+                    "coach.account-deletion.open"
+                )
+            }
         } footer: {
-            Text("participant.logout.local_notice")
+            Text(
+                state.isLocalDemo
+                    ? "participant.logout.local_notice"
+                    : "participant.logout.account_notice"
+            )
         }
     }
 
@@ -360,8 +381,16 @@ struct CoachProfileView: View {
 
 private enum CoachProfileSheet: Identifiable {
     case edit(CoachProfileSnapshot)
+    case delete(AppUser)
 
-    var id: String { "edit" }
+    var id: String {
+        switch self {
+        case .edit:
+            "edit"
+        case .delete:
+            "delete"
+        }
+    }
 }
 
 private struct CoachLegalPlaceholderView: View {

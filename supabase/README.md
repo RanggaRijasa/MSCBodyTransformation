@@ -26,6 +26,19 @@ This directory is the reproducible backend contract for the program flow.
   optional exact registration cutoff, blocks Participant self-enrollment at
   the server boundary, and adds an audited Admin enrollment RPC that bypasses
   only the cutoff.
+- `migrations/20260805044617_phase10_auth_profile_and_session_foundation.sql`
+  bootstraps one provisional Participant profile per Auth identity, adds
+  member-level/account-purpose/onboarding state, exposes allowlisted profile
+  and finalization RPCs, revalidates pending program status/cutoff/capacity,
+  and schedules provisional-identity cleanup.
+- `migrations/20260805055830_phase10_immediate_account_deletion.sql` and
+  `20260805061953_phase10_account_deletion_retention_safety.sql` require a
+  recently created Auth session, prepare private-media cleanup, remove or
+  anonymize account-owned data, preserve redacted financial/audit history,
+  and make profile references safe for hard deletion.
+- `functions/delete-account/index.ts` owns the server-only Storage cleanup and
+  Auth Admin hard-delete boundary. The iOS client never receives the service
+  credential.
 - `tests/database` contains transactional pgTAP grants, RLS, and private-media
   tests.
 - `tests/integration` contains local Auth/Storage API and concurrent enrollment
@@ -47,12 +60,69 @@ supabase db advisors --local --type all --level warn --fail-on error
 supabase test db --local supabase/tests/database
 ```
 
+Phase 10 uses confirmed-email behavior locally. After changing
+`[auth.email].enable_confirmations`, restart the local stack explicitly so the
+Auth container receives the configuration:
+
+```sh
+supabase stop
+supabase start
+supabase db reset --local
+```
+
+Then load local-only status values into the current shell without writing
+them to files and run the Auth lifecycle test:
+
+```sh
+set -a
+eval "$(supabase status -o env)"
+set +a
+node supabase/tests/integration/auth_lifecycle.mjs
+```
+
+The script rejects non-loopback URLs, verifies PKCE email confirmation,
+protected profile updates, role hardening, refresh rotation, password
+recovery, login/logout, recent reauthentication, immediate account deletion,
+and removes its temporary identities. An interrupted run cleans up only
+identities using the dedicated `phase10-…@test.invalid` pattern. It does not
+print a password, token, email address, or Coach QR.
+
 Supabase CLI `2.111.0`, Docker CLI, and Colima are installed on the current
 development machine. The local PostgreSQL 17 stack, fresh reset, lint,
-advisors, 89 pgTAP assertions, 16 Storage API assertions, 14 enrollment race
+advisors, 115 pgTAP assertions, 16 Storage API assertions, 14 enrollment race
 assertions, and 15 submission/review/quiz race assertions passed on 4 August
-2026. The registration deadline migration and expanded assertions were
-verified again on 5 August 2026.
+2026. Phase 10 lint, advisors, 139 pgTAP assertions, and 22 Auth lifecycle
+checks were verified on 5 August 2026 after the explicitly authorized local
+stack restart. The complete migration chain, including both account-deletion
+migrations, then passed an explicitly authorized fresh local reset.
+
+Local confirmation and password-recovery messages are inspected at the
+Mailpit URL reported by `supabase status`. The application callback is
+`mscbodytransformation://auth/callback`; the scheme and Sign in with Apple
+capability are registered in the Xcode target. The native-only Apple provider
+is enabled locally with `com.ranggar.MSCBodyTransformation` as its client ID
+and nonce validation enabled; it does not use a Services ID or web client
+secret. Manual Apple sign-in, hosted callback/deployment, and physical-device
+validation remain active production gates. Only custom SMTP/sender-domain
+setup is **SKIPPED FOR NOW**;
+email/password entry points must remain hidden until delivery and redirect
+behavior are verified.
+
+The iOS Simulator can reach the local stack through `127.0.0.1`. A physical
+iPhone must use a reachable private Mac address supplied only through Debug
+environment configuration, with Colima/Supabase ports reachable on that
+network. Never commit a temporary LAN address or place it in Release
+configuration. Under the approved local-only environment strategy, remote QA
+is not available while the Mac and local stack are offline.
+
+Immediate account deletion is served by
+`supabase/functions/delete-account/index.ts`. The client must reauthenticate
+first. The server removes owned Storage objects through the Storage API,
+redacts and removes application data, preserves anonymized financial/audit
+records, and hard-deletes the Auth identity through the server-only Admin API.
+Admin self-deletion is denied, and a Coach with assigned participants must be
+transferred by Admin first. The service-role credential never belongs in the
+app or client configuration.
 
 The iOS Phase 09 boundary uses native Foundation `URLSession` instead of
 adding a package dependency. `supabase-swift` `2.54.1` was checked against its
@@ -90,7 +160,9 @@ Phase 09.5 is intentionally local UI/mock and adds no database migration:
 
 Required backend work remains:
 
-1. Phase 10 adds Auth/profile bootstrap and RLS-safe session persistence.
+1. Phase 10 local Auth/profile bootstrap and RLS-safe session persistence are
+   implemented, including immediate local account deletion; provider/hosted
+   validation remains gated.
 2. Phase 11 adds public-safe Guest reads, Coach application tables/policies,
    and atomic audited approve/reject operations.
 3. Phase 12 adds StoreKit verification, unique transactions, manual

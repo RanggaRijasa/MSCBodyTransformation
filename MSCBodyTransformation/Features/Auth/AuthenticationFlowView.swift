@@ -125,7 +125,7 @@ struct AuthenticationFlowView: View {
 
     private var closeButton: some View {
         Button("action.close") {
-            state.cancel()
+            Task { await state.cancel() }
         }
         .accessibilityIdentifier("auth.close")
     }
@@ -151,7 +151,7 @@ struct AuthenticationFlowView: View {
                   movedFarEnough else {
                 return
             }
-            state.cancel()
+            Task { await state.cancel() }
         }
     }
 
@@ -249,16 +249,18 @@ private struct AuthenticationProviderChoiceView: View {
                 )
 
 #if DEBUG
-                Label(
-                    "auth.demo.compact_notice",
-                    systemImage: "hammer.fill"
-                )
-                .font(AppTypography.label)
-                .foregroundStyle(Color.appInfo)
+                if state.isLocalDemo {
+                    Label(
+                        "auth.demo.compact_notice",
+                        systemImage: "hammer.fill"
+                    )
+                    .font(AppTypography.label)
+                    .foregroundStyle(Color.appInfo)
+                }
 #endif
 
                 VStack(spacing: AppSpacing.small) {
-                    FakeSignInWithAppleButton {
+                    AuthenticationAppleButton {
                         Task {
                             await state.authenticateWithProvider(
                                 .apple,
@@ -286,31 +288,33 @@ private struct AuthenticationProviderChoiceView: View {
                             : "auth.login.google"
                     )
 
-                    Button {
-                        if isRegistration {
-                            state.openEmailRegistration()
-                        } else {
-                            state.openEmailLogin()
+                    if state.isEmailPasswordAuthenticationVisible {
+                        Button {
+                            if isRegistration {
+                                state.openEmailRegistration()
+                            } else {
+                                state.openEmailLogin()
+                            }
+                        } label: {
+                            Label(
+                                isRegistration
+                                    ? "auth.provider.email.register"
+                                    : "auth.provider.email.login",
+                                systemImage: "envelope"
+                            )
                         }
-                    } label: {
-                        Label(
+                        .buttonStyle(
+                            SecondaryActionButtonStyle(
+                                foregroundColor: .appPrimaryText
+                            )
+                        )
+                        .frame(maxWidth: 360)
+                        .accessibilityIdentifier(
                             isRegistration
-                                ? "auth.provider.email.register"
-                                : "auth.provider.email.login",
-                            systemImage: "envelope"
+                                ? "auth.register.email-option"
+                                : "auth.login.email-option"
                         )
                     }
-                    .buttonStyle(
-                        SecondaryActionButtonStyle(
-                            foregroundColor: .appPrimaryText
-                        )
-                    )
-                    .frame(maxWidth: 360)
-                    .accessibilityIdentifier(
-                        isRegistration
-                            ? "auth.register.email-option"
-                            : "auth.login.email-option"
-                    )
                 }
                 .frame(maxWidth: .infinity)
 
@@ -704,8 +708,17 @@ private struct PasswordInputRow: View {
     }
 }
 
-private struct FakeSignInWithAppleButton: View {
+struct AuthenticationAppleButton: View {
+    let maximumWidth: CGFloat
     let action: () -> Void
+
+    init(
+        maximumWidth: CGFloat = 360,
+        action: @escaping () -> Void
+    ) {
+        self.maximumWidth = maximumWidth
+        self.action = action
+    }
 
     var body: some View {
         ZStack {
@@ -732,7 +745,11 @@ private struct FakeSignInWithAppleButton: View {
                 )
             )
         }
-        .frame(maxWidth: 360, minHeight: 50, maxHeight: 50)
+        .frame(
+            maxWidth: maximumWidth,
+            minHeight: 50,
+            maxHeight: 50
+        )
         .clipShape(
             RoundedRectangle(
                 cornerRadius: AppRadius.medium,
@@ -742,8 +759,23 @@ private struct FakeSignInWithAppleButton: View {
     }
 }
 
-private struct OfficialGoogleSignInButton: View {
+struct OfficialGoogleSignInButton: View {
+    let title: String
+    let maximumWidth: CGFloat
     let action: () -> Void
+
+    init(
+        title: String = String(
+            localized: "auth.provider.google.continue",
+            defaultValue: "Lanjutkan dengan Google"
+        ),
+        maximumWidth: CGFloat = 360,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.maximumWidth = maximumWidth
+        self.action = action
+    }
 
     var body: some View {
         Button(action: action) {
@@ -753,12 +785,7 @@ private struct OfficialGoogleSignInButton: View {
                     .scaledToFit()
                     .frame(width: 20, height: 20)
                     .accessibilityHidden(true)
-                Text(
-                    String(
-                        localized: "auth.provider.google.continue",
-                        defaultValue: "Lanjutkan dengan Google"
-                    )
-                )
+                Text(title)
                 .font(.system(.body, design: .default).weight(.medium))
             }
             .foregroundStyle(Color.appPrimaryText)
@@ -779,15 +806,8 @@ private struct OfficialGoogleSignInButton: View {
             }
         }
         .buttonStyle(.plain)
-        .frame(maxWidth: 360)
-        .accessibilityLabel(
-            Text(
-                String(
-                    localized: "auth.provider.google.continue",
-                    defaultValue: "Lanjutkan dengan Google"
-                )
-            )
-        )
+        .frame(maxWidth: maximumWidth)
+        .accessibilityLabel(Text(title))
     }
 }
 

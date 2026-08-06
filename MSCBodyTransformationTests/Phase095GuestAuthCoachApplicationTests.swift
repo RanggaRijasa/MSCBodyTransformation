@@ -143,9 +143,10 @@ struct Phase095GuestAuthCoachApplicationTests {
     @Test("Registrasi fake selalu membuat Participant yang perlu onboarding")
     func fakeRegistrationDefaultsToParticipant() async throws {
         let repository = try makeRepository()
-        let session = try await repository.registerForDemo(
+        let session = try await repository.register(
             provider: .google,
-            email: nil
+            email: nil,
+            password: nil
         )
 
         #expect(session.role == .participant)
@@ -208,9 +209,10 @@ struct Phase095GuestAuthCoachApplicationTests {
     @Test("Admin tidak dapat menyetujui application tanpa pembayaran")
     func approvalRequiresVerifiedPayment() async throws {
         let repository = try makeRepository()
-        let registration = try await repository.registerForDemo(
+        let registration = try await repository.register(
             provider: .email,
-            email: "baru@demo.local"
+            email: "baru@demo.local",
+            password: nil
         )
         let userID = try #require(registration.user?.id)
         _ = try await repository.completeParticipantOnboarding(
@@ -295,9 +297,10 @@ struct Phase095GuestAuthCoachApplicationTests {
     @Test("Satu user hanya mendapat satu active Coach application")
     func duplicateActiveApplicationReturnsExistingRecord() async throws {
         let repository = try makeRepository()
-        let registration = try await repository.registerForDemo(
+        let registration = try await repository.register(
             provider: .email,
-            email: "baru@demo.local"
+            email: "baru@demo.local",
+            password: nil
         )
         let userID = try #require(registration.user?.id)
         _ = try await repository.completeParticipantOnboarding(
@@ -526,7 +529,7 @@ struct Phase095GuestAuthCoachApplicationTests {
         let repository = try makeRepository()
         let countBefore = try await repository
             .usersForAdministration().count
-        let completion = DemoRegistrationCompletion(
+        let completion = RegistrationCompletion(
             provider: .google,
             email: nil,
             displayName: "Nadia Pratama",
@@ -541,7 +544,7 @@ struct Phase095GuestAuthCoachApplicationTests {
         )
 
         await #expect(throws: DomainError.self) {
-            try await repository.finalizeRegistrationForDemo(completion)
+            try await repository.finalizeRegistration(completion)
         }
         #expect(
             try await repository.usersForAdministration().count
@@ -551,8 +554,8 @@ struct Phase095GuestAuthCoachApplicationTests {
         let coachID = try #require(
             try await repository.publicCoaches().first?.id
         )
-        let completed = try await repository.finalizeRegistrationForDemo(
-            DemoRegistrationCompletion(
+        let completed = try await repository.finalizeRegistration(
+            RegistrationCompletion(
                 provider: completion.provider,
                 email: completion.email,
                 displayName: completion.displayName,
@@ -590,7 +593,7 @@ struct Phase095GuestAuthCoachApplicationTests {
         let preview = try #require(
             CoachPricingService().paymentPreview(for: .sc)
         )
-        let completion = DemoRegistrationCompletion(
+        let completion = RegistrationCompletion(
             provider: .apple,
             email: nil,
             displayName: "Nadia Pratama",
@@ -605,7 +608,7 @@ struct Phase095GuestAuthCoachApplicationTests {
         )
 
         await #expect(throws: DomainError.self) {
-            try await repository.finalizeRegistrationForDemo(completion)
+            try await repository.finalizeRegistration(completion)
         }
         #expect(
             try await repository.usersForAdministration().count
@@ -617,8 +620,8 @@ struct Phase095GuestAuthCoachApplicationTests {
                 now: Date(timeIntervalSince1970: 1_785_456_000)
             )
         ).purchase(preview: preview, outcome: .success)
-        let result = try await repository.finalizeRegistrationForDemo(
-            DemoRegistrationCompletion(
+        let result = try await repository.finalizeRegistration(
+            RegistrationCompletion(
                 provider: completion.provider,
                 email: completion.email,
                 displayName: completion.displayName,
@@ -695,7 +698,7 @@ struct Phase095GuestAuthCoachApplicationTests {
         state.phoneNumber = "+6281200000999"
         state.completeProfile()
         #expect(state.destination == .participantCoachQR)
-        state.cancel()
+        await state.cancel()
 
         #expect(store.isGuest)
         #expect(

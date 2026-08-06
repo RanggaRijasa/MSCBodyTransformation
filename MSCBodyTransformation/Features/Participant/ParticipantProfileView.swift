@@ -21,7 +21,7 @@ struct ParticipantProfileView: View {
 #if DEBUG
                 ParticipantDebugToolsView(store: store)
 #endif
-                accountSection
+                accountSection(user: snapshot.user)
             }
             .scrollContentBackground(.hidden)
             .background(Color.appBackground)
@@ -34,6 +34,8 @@ struct ParticipantProfileView: View {
                         profile: profile,
                         email: email
                     )
+                case .delete(let user):
+                    AccountDeletionView(user: user)
                 }
             }
         } else {
@@ -55,10 +57,12 @@ struct ParticipantProfileView: View {
                         .foregroundStyle(Color.appSecondaryText)
 
                     Button("auth.action.login") {
-                        store.requestAuthentication(
-                            destination: .login,
-                            reason: .accountSettings
-                        )
+                        Task {
+                            await store.requestAuthentication(
+                                destination: .login,
+                                reason: .accountSettings
+                            )
+                        }
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.brandPrimary)
@@ -66,10 +70,12 @@ struct ParticipantProfileView: View {
                     .accessibilityIdentifier("guest.profile.login")
 
                     Button("auth.action.register") {
-                        store.requestAuthentication(
-                            destination: .register,
-                            reason: .accountSettings
-                        )
+                        Task {
+                            await store.requestAuthentication(
+                                destination: .register,
+                                reason: .accountSettings
+                            )
+                        }
                     }
                     .buttonStyle(.bordered)
                     .frame(maxWidth: .infinity, minHeight: 50)
@@ -244,25 +250,44 @@ struct ParticipantProfileView: View {
             }
             .accessibilityIdentifier("participant.profile.legal.terms")
 
-            Label(
-                "participant.delete_account.info",
-                systemImage: "person.crop.circle.badge.minus"
-            )
-            .foregroundStyle(Color.appSecondaryText)
         }
     }
 
-    private var accountSection: some View {
+    private func accountSection(user: AppUser) -> some View {
         Section {
-            Button("participant.logout", role: .destructive) {
+            Button(
+                store.isLocalDemo
+                    ? "participant.logout"
+                    : "participant.logout.account",
+                role: .destructive
+            ) {
                 Task {
                     await store.logoutLocalDemo()
                     router.resetAllPaths()
                 }
             }
             .accessibilityIdentifier("participant.logout")
+
+            if !store.isLocalDemo {
+                Button(
+                    String(
+                        localized: "account_deletion.action",
+                        defaultValue: "Hapus akun"
+                    ),
+                    role: .destructive
+                ) {
+                    presentedSheet = .delete(user)
+                }
+                .accessibilityIdentifier(
+                    "participant.account-deletion.open"
+                )
+            }
         } footer: {
-            Text("participant.logout.local_notice")
+            Text(
+                store.isLocalDemo
+                    ? "participant.logout.local_notice"
+                    : "participant.logout.account_notice"
+            )
         }
     }
 
@@ -278,11 +303,14 @@ struct ParticipantProfileView: View {
 
 private enum ParticipantProfileSheet: Identifiable {
     case edit(ParticipantProfile, String)
+    case delete(AppUser)
 
     var id: String {
         switch self {
         case .edit:
             "edit"
+        case .delete:
+            "delete"
         }
     }
 }
