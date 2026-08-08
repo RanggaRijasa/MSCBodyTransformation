@@ -220,7 +220,7 @@ insert into public.coach_applications (
   'c1000000-0000-0000-0000-000000000002',
   'c1000000-0000-0000-0000-000000000002',
   'Coach Publik', '+6281200000011', 'sc', true, true, 'test-v1',
-  'approved', 'public-coach-fixture', now(), now(),
+  'active', 'public-coach-fixture', now(), now(),
   'c1000000-0000-0000-0000-000000000001'
 );
 insert into public.coach_payment_records (

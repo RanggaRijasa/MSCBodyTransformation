@@ -79,10 +79,10 @@ tidak diklaim selesai.
   checks, simulator build/run, 173 Swift tests, 7 UI tests, dan localization
   check lulus. Seluruh rantai migration termasuk immediate deletion juga
   lulus fresh reset lokal.
-- Status yang benar: **fondasi lokal dan kebijakan immediate deletion selesai;
-  Google/Apple, hosted deployment/retention review, dan perangkat fisik tetap
-  gate aktif. Hanya SMTP/domain dan email/password production yang berstatus
-  SKIPPED SAAT INI**.
+- Status yang benar: **fondasi lokal, immediate deletion, dan Google/Apple
+  OAuth lokal selesai; hosted provider configuration/deployment, retention
+  review, dan perangkat fisik tetap gate aktif. Hanya SMTP/domain dan
+  email/password production yang berstatus SKIPPED SAAT INI**.
 
 ### Phase 11 — real data dan server operations lokal
 
@@ -98,6 +98,32 @@ tidak diklaim selesai.
 - Fresh reset 16 migration, 285 pgTAP assertions, seluruh integration suite,
   184 Swift tests, simulator build, dan empat journey UI kritis lulus.
 - Hosted `main` tidak disentuh.
+
+### Phase 12 — StoreKit dan commerce authoritative lokal
+
+- Program berbayar memakai non-consumable unik per cohort; Participant maupun
+  Coach dapat mengikuti program melalui alur QR/current Coach yang sama.
+- Akses fitur Coach memakai non-renewing subscription tiga bulan terpisah.
+  Pengajuan awal harus diterima Admin sebelum pembayaran; renewal manual tidak
+  meminta approval ulang selama acceptance belum dicabut.
+- iOS meminta opaque purchase intent server, memuat harga melalui
+  `Product.displayPrice`, memakai `appAccountToken`, dan baru menyelesaikan
+  transaksi setelah fulfillment server durable atau idempoten berhasil.
+- StoreKit coordinator app-level menangani pending, unfinished recovery,
+  explicit restore, transaction updates, logout/account switch, dan history
+  read-only tanpa membuat entitlement dari state client.
+- Backend menegakkan product/environment/ownership, reservation 30 menit,
+  cutoff/capacity, replay protection, atomic enrollment/score/entitlement,
+  expiry/renewal, refund/revocation, dan account-deletion retention.
+- Apple JWS diverifikasi di Edge Function memakai official pinned
+  `@apple/app-store-server-library` `3.1.0`. Notification V2 memakai public
+  signed-payload endpoint dengan durable unique inbox dan idempotent ordering.
+- Fresh reset 17 migration, 348 pgTAP assertions, 151 integration
+  checks/assertions, 190 Swift/StoreKitTest tests, tiga UI journeys,
+  Debug/Release builds, localization, lint, advisors, dan schema diff lulus.
+- `Products.storekit` hanya Debug/test dan dikecualikan dari Release. Hosted
+  `main`, App Store Connect, sandbox/TestFlight, public Apple webhook, dan
+  perangkat fisik belum disentuh dan tetap Phase 13.
 
 - Model program typed untuk scoring, commerce, content, questions, answer
   keys, submissions, quiz, payment, entitlement, dan store product.
@@ -148,7 +174,10 @@ tidak diklaim selesai.
 - `supabase/migrations/20260808040841_phase11_server_operations_completion.sql`
 - `supabase/migrations/20260808040935_phase11_participant_operations.sql`
 - `supabase/migrations/20260808040939_phase11_coach_admin_operations.sql`
+- `supabase/migrations/20260808084038_phase12_authoritative_commerce.sql`
 - `supabase/functions/cleanup-orphan-question-photos/index.ts`
+- `supabase/functions/commerce/index.ts`
+- `supabase/functions/commerce-apple-notifications/index.ts`
 - `PROGRAM_END_TO_END_CONTRACT_MATRIX.md`
 
 Schema mencakup profile/current Coach, program/content/question/answer key,
@@ -176,13 +205,13 @@ Hanya SMTP/domain dan email/password production yang di-skip.
 | Google/Apple Auth production | AKTIF | Provider credential, hosted callback, dan perangkat fisik |
 | SMTP/domain dan email/password production | SKIPPED SAAT INI | Diaktifkan kembali hanya bila keputusan produk berubah |
 | Coach application backend | SELESAI LOKAL | Phase 11 migration, RLS, public Guest reads, atomic approve/reject; deployment hosted tetap Phase 13 |
-| Coach access payment | BELUM SELESAI | Phase 12 StoreKit verification, entitlement, expiry/renewal/refund |
+| Coach access payment | SELESAI LOKAL | Phase 12 StoreKit/JWS, entitlement, expiry/renewal/refund; sandbox/hosted tetap Phase 13 |
 | Hosted Supabase deployment | AKTIF | Review migration dan persetujuan eksplisit sebelum menyentuh hosted `main` |
 | Server operations | SELESAI LOKAL | RPC/Edge Function dan race/retry tests lulus lokal; deployment/secrets production tetap Phase 13 |
-| Store catalog provisioning | BELUM SELESAI | App Store Connect key, Google service account, app/product records |
-| StoreKit verification | BELUM SELESAI | StoreKit configuration/sandbox, Apple verification, server notifications |
+| Store catalog provisioning | EXTERNAL PHASE 13 | App Store Connect key, appAppleId, root certificates, dan app/product records |
+| StoreKit verification | SELESAI LOKAL | Xcode StoreKit/JWS/Notification fixture lulus; sandbox/TestFlight/webhook publik tetap Phase 13 |
 | Google Play Billing | BELUM SELESAI | Android project, Play Console test track, purchase-token verification |
-| Cross-platform entitlement | BELUM SELESAI | iOS dan Android pada backend production/staging yang disetujui |
+| Cross-platform entitlement | KONTRAK SELESAI LOKAL | Provider-neutral ledger/OpenAPI selesai; Android Play Billing tetap Phase 14 |
 | Physical media/Auth | AKTIF | iPhone/iPad fisik untuk Auth, kamera, permission, memory, background/relaunch |
 | Release/security | BELUM SELESAI | OAuth, retention/deletion, advisors, TestFlight/review |
 

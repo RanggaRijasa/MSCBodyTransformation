@@ -186,8 +186,8 @@ insert into public.coach_applications (
   submitted_at, decided_at, decided_by
 )
 values
-  ('9a000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Coach Vertical Slice', '+628200000002', 'sc', true, true, 'test-v1', 'approved', 'vertical-coach-one', now(), now(), '91000000-0000-0000-0000-000000000001'),
-  ('9a000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'Coach Tidak Terkait', '+628200000003', 'sc', true, true, 'test-v1', 'approved', 'vertical-coach-two', now(), now(), '91000000-0000-0000-0000-000000000001');
+  ('9a000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Coach Vertical Slice', '+628200000002', 'sc', true, true, 'test-v1', 'active', 'vertical-coach-one', now(), now(), '91000000-0000-0000-0000-000000000001'),
+  ('9a000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'Coach Tidak Terkait', '+628200000003', 'sc', true, true, 'test-v1', 'active', 'vertical-coach-two', now(), now(), '91000000-0000-0000-0000-000000000001');
 
 insert into public.coach_payment_records (
   id, application_id, state, price_band, amount_minor_units,

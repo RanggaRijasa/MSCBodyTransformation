@@ -410,6 +410,13 @@ private struct SessionManagedRootView: View {
         .background(Color.appBackground.ignoresSafeArea())
         .task { await store.bootstrap() }
         .task { await store.observeSessionChanges() }
+        .task(id: store.session?.user?.id) {
+            if let accountID = store.session?.user?.id {
+                await appEnvironment.commerce?.start(accountID: accountID)
+            } else {
+                appEnvironment.commerce?.stop()
+            }
+        }
         .onOpenURL { url in
             Task { await store.handleAuthenticationCallback(url) }
         }

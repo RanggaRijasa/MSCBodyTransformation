@@ -263,6 +263,36 @@ nonisolated enum SupabaseErrorMapper {
             return .conflict(
                 reason: "Pembayaran program belum terverifikasi."
             )
+        case "payment_not_required":
+            return .conflict(
+                reason: "Program ini tidak memerlukan pembayaran Apple."
+            )
+        case "product_not_ready":
+            return .conflict(
+                reason: "Produk belum siap di App Store. Coba lagi nanti."
+            )
+        case "coach_approval_required":
+            return .conflict(
+                reason: "Pengajuan Coach harus diterima Admin sebelum pembayaran."
+            )
+        case "already_enrolled":
+            return .conflict(reason: "Akun sudah terdaftar pada program ini.")
+        case "purchase_intent_expired", "reservation_conflict":
+            return .conflict(
+                reason: "Reservasi pembelian sudah berakhir. Mulai kembali dari halaman program."
+            )
+        case "transaction_mismatch", "transaction_replayed":
+            return .conflict(
+                reason: "Transaksi Apple tidak cocok dengan pembelian ini."
+            )
+        case "rate_limited":
+            return .conflict(
+                reason: "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi."
+            )
+        case "purchase_unverified", "fulfillment_failed":
+            return .conflict(
+                reason: "Pembelian belum dapat diverifikasi. Gunakan Pulihkan pembelian untuk mencoba lagi."
+            )
         case "pending_reviews_exist":
             return .conflict(
                 reason: "Selesaikan seluruh pemeriksaan tertunda terlebih dahulu."

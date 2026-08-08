@@ -71,7 +71,8 @@ final class AdminFeatureContainer {
             return people
         case .pendingCoachApprovals:
             return people.filter {
-                $0.coachApplication?.status == .pendingAdminApproval
+                $0.coachApplication?.status == .submitted
+                    || $0.coachApplication?.status == .pendingAdminApproval
             }
         }
     }
@@ -188,7 +189,8 @@ final class AdminFeatureContainer {
                         }.map(\.participantID)
                     ).count,
                     pendingCoachApprovals: coachApplicationValues.filter {
-                        $0.status == .pendingAdminApproval
+                        $0.status == .submitted
+                            || $0.status == .pendingAdminApproval
                     }.count,
                     pendingReviews: values.7,
                     auditEvents: Array(values.8.prefix(6))

@@ -35,9 +35,14 @@ global.
 - Timbang awal/harian/akhir sebagai konten program; scoring `Decimal` memakai
   selisih awal-akhir.
 - Review Coach, transfer Coach Admin, koreksi timbang, winner lock, dan poster.
-- Adapter StoreKit 2 diisolasi dari domain.
+- StoreKit 2 program/akses Coach memakai purchase intent server,
+  `appAccountToken`, verifikasi JWS server-side, durable transaction ledger,
+  dan finish ordering setelah fulfillment berhasil.
 - Schema/RLS Supabase dan kontrak OpenAPI lintas platform tersedia sebagai
   artefak integrasi.
+- Phase 12 selesai lokal: program berbayar, akses Coach tiga bulan, renewal,
+  refund/revocation reconciliation, history/restore, serta Notification V2
+  inbox sudah server-authoritative. Hosted/App Store tetap Phase 13.
 
 Status rinci dan external gate dicatat di
 `MSCBodyTransformation/MSC_Codex_Phased_Workplan/PROGRAM_END_TO_END_IMPLEMENTATION_STATUS.md`.
@@ -93,8 +98,11 @@ PhotosPicker atau kamera native.
 - `Contracts/program-api-v1.openapi.yaml` adalah kontrak iOS/Android.
 - Kredensial App Store Connect dan Google Play harus berada di backend.
 - Harga aktual harus berasal dari StoreKit/Play Billing, bukan nilai client.
-- Live Supabase, StoreKit sandbox, Google Play, OAuth, dan Android belum dapat
+- Google dan Apple OAuth sudah diverifikasi terhadap Supabase lokal. Hosted
+  Supabase, StoreKit sandbox/TestFlight, Google Play, dan Android belum dapat
   diklaim terverifikasi tanpa project/credential serta environment eksternal.
+- `Products.storekit` hanya untuk Debug/test dan dikecualikan dari Release.
+  Hosted `main` tidak pernah dipakai untuk eksperimen lokal.
 
 ## Dokumentasi sumber kebenaran
 

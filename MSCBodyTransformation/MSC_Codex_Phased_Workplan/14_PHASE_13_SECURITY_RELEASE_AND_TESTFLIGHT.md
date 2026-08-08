@@ -3,10 +3,78 @@
 > Status: external release gate. Review memakai commerce program per cohort;
 > checklist seat credit dan invite dari baseline lama tidak berlaku.
 > Amendment 4 Agustus 2026 memasukkan Guest dan lifecycle Coach access.
+> Phase 12 local gate lulus 8 Agustus 2026; hosted `main` dan App Store
+> Connect belum disentuh.
 
 ## Tujuan
 
 Mengeraskan aplikasi dan backend untuk TestFlight dan App Store submission.
+
+## Input manual yang harus disiapkan pengguna
+
+Jangan menaruh nilai rahasia di chat, source, Xcode scheme, `.env` committed,
+fixture, screenshot, atau log. Nilai rahasia dimasukkan langsung sebagai
+hosted Supabase Edge Function secrets ketika deployment Phase 13 disetujui.
+
+### App Store Connect
+
+- [ ] Pastikan app memakai final bundle ID
+  `com.ranggar.MSCBodyTransformation` dan catat numeric `appAppleId`.
+- [ ] Buat satu **non-consumable** unik untuk setiap cohort program berbayar.
+  Product ID production tidak boleh memakai prefix local; contoh pola:
+  `com.ranggar.msc.program.<cohort-stabil>`.
+- [ ] Buat tiga **non-renewing subscription** akses Coach tiga bulan:
+  entry Rp100.000, growth Rp150.000, leadership Rp200.000. Product ID harus
+  stabil dan berbeda dari `local.msc.coach.*`.
+- [ ] Lengkapi nama/deskripsi Bahasa Indonesia, harga, availability, review
+  screenshot, tax category, dan status submission setiap produk.
+- [ ] Buat In-App Purchase key dan simpan aman: Issuer ID, Key ID, serta file
+  private `.p8`. Private key hanya untuk backend.
+- [ ] Siapkan Sandbox Apple Account dan akses App Store Connect yang dapat
+  mengirim Request a Test Notification.
+
+### Hosted Supabase
+
+- [ ] Catat project ref hosted `main`, hosted URL, publishable key, dan
+  service-role key. Hanya URL + publishable key boleh masuk konfigurasi
+  Release app; service-role tetap server-only.
+- [ ] Siapkan Edge secrets: `COMMERCE_APPLE_ENVIRONMENT=production`,
+  `APPLE_APP_ID`, `APPLE_ROOT_CERTIFICATES_BASE64`, dan credential App Store
+  Server API/IAP key yang akan dipakai reconciliation server. Nama secret
+  final harus direkonsiliasi dengan source sebelum deployment.
+- [ ] Siapkan public Notification V2 URL:
+  `https://<PROJECT_REF>.supabase.co/functions/v1/commerce-apple-notifications`.
+- [ ] Siapkan production product mapping per program/cohort dan tiga price
+  band Coach; desired price Admin bukan pengganti harga App Store.
+- [ ] Konfirmasi hosted Google/Apple Auth provider tetap aktif. SMTP/domain dan
+  email/password production tetap **SKIPPED**.
+
+### Perangkat dan distribusi
+
+- [ ] Sediakan iPhone fisik yang memenuhi minimum iOS 17, Apple ID sandbox,
+  signing team/certificate, dan TestFlight internal tester.
+- [ ] Siapkan QR Coach aktif untuk enrollment Participant dan reviewer; tidak
+  ada invite code atau fallback kode manual.
+
+## Urutan deployment yang membutuhkan persetujuan eksplisit
+
+1. Review migration, Edge Function, `config.toml`, OpenAPI, dan product mapping
+   diff; pastikan target adalah hosted `main`.
+2. Minta persetujuan production eksplisit sebelum `supabase db push`, function
+   deploy, secret set, atau perubahan hosted apa pun.
+3. Deploy migration lalu Edge Functions; set secret langsung pada hosted
+   backend tanpa mencetak nilainya.
+4. Jalankan hosted lint/advisors/grants/RLS smoke dan verifikasi Release hanya
+   berisi hosted URL + publishable key.
+5. Masukkan Notification V2 URL di App Store Connect dan jalankan TEST
+   notification sampai durable inbox berstatus processed.
+6. Jalankan sandbox purchase/restore/pending/relaunch/refund/revocation untuk
+   program dan Coach, termasuk renewal sebelum/sesudah expiry.
+7. Jalankan matriks iPhone fisik, TestFlight, privacy, accessibility, dan
+   reviewer accounts sebelum App Store submission.
+
+Tidak satu pun langkah hosted di atas diotorisasi hanya karena Phase 12 lokal
+selesai. Setiap mutation production tetap memerlukan persetujuan eksplisit.
 
 ## Security audit
 
@@ -109,7 +177,7 @@ Weight and evidence photos are sensitive.
 - [ ] Google login.
 - [ ] Apple login.
 - [ ] Email reset.
-- [ ] Invite scan.
+- [ ] QR Coach scan dan enrollment tanpa fallback kode manual.
 - [ ] Initial weigh-in.
 - [ ] Evidence upload.
 - [ ] Step completion.
@@ -139,6 +207,17 @@ Weight and evidence photos are sensitive.
 - [ ] App submission metadata ready.
 
 ## Progress log
+
+### 8 Agustus 2026 — Exact handoff dari Phase 12
+
+- Menerima migration commerce, authenticated verify/restore/history Edge
+  Function, public Notification V2 handler, StoreKit coordinator, serta
+  provider-neutral OpenAPI yang sudah lulus local gate.
+- Mencatat App Store Connect products, appAppleId/IAP key/root certificates,
+  hosted deployment/secrets, webhook publik, sandbox, TestFlight, dan iPhone
+  fisik sebagai external input. Tidak ada nilai secret yang direkam.
+- SMTP/domain dan email/password production tetap skipped; Google/Apple Auth
+  tetap diperlukan pada hosted Release.
 
 ### 4 Agustus 2026 — Guest dan Coach access release matrix
 

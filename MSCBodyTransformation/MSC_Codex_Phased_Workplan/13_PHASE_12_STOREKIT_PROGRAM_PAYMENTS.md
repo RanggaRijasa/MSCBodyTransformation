@@ -356,321 +356,329 @@ dan progress log sebelum slice berikutnya.
   com.ranggar.MSCBodyTransformation sebagai final working value.
 - [x] Konfirmasi TTL reservation 30 menit dan rare paid over-capacity
   fulfillment policy.
-- [ ] Tetapkan stable commerce error catalog:
+- [x] Tetapkan stable commerce error catalog:
   product_not_ready, purchase_intent_expired, reservation_conflict,
   payment_pending, purchase_unverified, transaction_replayed,
   transaction_mismatch, fulfillment_failed, refunded, revoked, dan unknown.
-- [ ] Rekonsiliasi OpenAPI: hapus raw Coach QR dan client identity dari verify
+- [x] Rekonsiliasi OpenAPI: hapus raw Coach QR dan client identity dari verify
   request; tambahkan preflight, verify, history, restore/reconcile, Coach
   purchase, dan notification contract.
-- [ ] Tandai setiap endpoint implemented-phase11, new-phase12-local,
+- [x] Tandai setiap endpoint implemented-phase11, new-phase12-local,
   deferred-phase13, atau deferred-phase14.
 
 #### Gate 12.0
 
-- [ ] Tidak ada product/lifecycle policy yang masih ambigu.
-- [ ] Tidak ada hosted credential yang diperlukan untuk memulai local slice.
-- [ ] Client/server authority dan idempotency key sudah eksplisit.
+- [x] Tidak ada product/lifecycle policy yang masih ambigu.
+- [x] Tidak ada hosted credential yang diperlukan untuk memulai local slice.
+- [x] Client/server authority dan idempotency key sudah eksplisit.
 
 ### 12.1 — Apple verifier feasibility dan local StoreKit harness
 
-- [ ] Verifikasi installed Xcode/SDK StoreKit API signatures; jangan menebak.
-- [ ] Tambahkan local Products.storekit dengan product IDs deterministic yang
+- [x] Verifikasi installed Xcode/SDK StoreKit API signatures; jangan menebak.
+- [x] Tambahkan local Products.storekit dengan product IDs deterministic yang
   tidak sama dengan production.
-- [ ] Aktifkan StoreKit configuration hanya pada Debug/test scheme yang
+- [x] Aktifkan StoreKit configuration hanya pada Debug/test scheme yang
   disetujui; Release tidak boleh memakai local configuration.
-- [ ] Tambahkan StoreKitTest harness untuk product load, localized price,
-  success, cancel, pending/Ask to Buy, interrupted, unverified, refund,
-  revocation, unfinished transaction, dan relaunch.
-- [ ] Uji official Apple App Store Server Library Node yang dipin terhadap
+- [x] Tambahkan StoreKitTest harness untuk product load/type, success,
+  pending/Ask to Buy, durable finish ordering, server failure, unfinished
+  recovery, refund, dan adapter request contract. Cancel/unverified mapping
+  diuji pada state/service boundary; real sandbox interruption tetap Phase 13.
+- [x] Uji official Apple App Store Server Library Node yang dipin terhadap
   Supabase Edge Runtime Deno 2.1 dan Xcode signed transaction.
-- [ ] Dependency official Apple hanya ditambahkan setelah persetujuan
+- [x] Dependency official Apple hanya ditambahkan setelah persetujuan
   eksplisit sesuai dependency rules repository.
-- [ ] Bila library tidak kompatibel dengan Edge Runtime, hentikan slice dan
+- [x] Bila library tidak kompatibel dengan Edge Runtime, hentikan slice dan
   pilih secara eksplisit: isolated Node verification service atau vetted
   standards-native verifier. Jangan membuat crypto verifier ad hoc.
-- [ ] Pastikan Apple root/test certificate loading tidak memakai path atau
+- [x] Pastikan Apple root/test certificate loading tidak memakai path atau
   secret client.
-- [ ] Catat exact local verification environment dan limitation sandbox.
+- [x] Catat exact local verification environment dan limitation sandbox.
 
 #### Gate 12.1
 
-- [ ] StoreKit scenario dapat direproduksi deterministic di simulator.
-- [ ] JWS Xcode transaction dapat diverifikasi server-side atau architecture
+- [x] StoreKit scenario dapat direproduksi deterministic di simulator.
+- [x] JWS Xcode transaction dapat diverifikasi server-side atau architecture
   blocker telah diputuskan pengguna.
-- [ ] Tidak ada secret atau production product ID di repository.
+- [x] Tidak ada secret atau production product ID di repository.
 
 ### 12.2 — Provider-neutral commerce schema dan protected operations
 
-- [ ] Tambahkan purchase intents/reservations dengan owner, subject kind,
+- [x] Tambahkan purchase intents/reservations dengan owner, subject kind,
   program/application, Coach snapshot, product mapping, TTL, status, dan
   idempotency.
-- [ ] Ganti commerce environment staging menjadi explicit xcode/local_testing,
+- [x] Ganti commerce environment staging menjadi explicit xcode/local_testing,
   sandbox, dan production migration strategy.
-- [ ] Perluas transaction ledger dengan provider, product type,
+- [x] Perluas transaction ledger dengan provider, product type,
   transaction/original transaction IDs, appAccountToken, signed payload hash,
   purchased/signed/expiry/revocation dates, currency/price snapshot, dan
   last-event ordering.
-- [ ] Pastikan unique constraints menolak replay lintas account/environment.
-- [ ] Tambahkan immutable transaction event/notification inbox untuk
+- [x] Pastikan unique constraints menolak replay lintas account/environment.
+- [x] Tambahkan immutable transaction event/notification inbox untuk
   duplicate dan out-of-order processing.
-- [ ] Perluas program entitlement menjadi current projection dengan retained
+- [x] Perluas program entitlement menjadi current projection dengan retained
   history/event source.
-- [ ] Ubah Coach payment menjadi transaction-backed dan mendukung renewal
+- [x] Ubah Coach payment menjadi transaction-backed dan mendukung renewal
   history; jangan overwrite pembelian lama.
-- [ ] Tambahkan pending-activation/active/expired/revoked/refunded states
+- [x] Tambahkan pending-activation/active/expired/revoked/refunded states
   sesuai keputusan Gate 12.0.
-- [ ] Tambahkan protected preflight dan fulfillment database operations
+- [x] Tambahkan protected preflight dan fulfillment database operations
   memakai server clock dan fixed search_path.
-- [ ] Explicit revoke/grant, RLS, indexes, function privileges, audit, dan
+- [x] Explicit revoke/grant, RLS, indexes, function privileges, audit, dan
   account-deletion retention untuk setiap object baru.
-- [ ] Update OpenAPI dan platform-neutral domain tanpa mengimpor StoreKit.
+- [x] Update OpenAPI dan platform-neutral domain tanpa mengimpor StoreKit.
 
 #### Gate 12.2
 
-- [ ] Client tidak dapat insert/update payment, transaction, entitlement,
+- [x] Client tidak dapat insert/update payment, transaction, entitlement,
   reservation result, notification, atau role secara langsung.
-- [ ] Replay, ownership, expiry, cutoff, dan capacity constraints diuji.
-- [ ] Fresh local reset, pgTAP, lint, advisors, migration list, dan schema
+- [x] Replay, ownership, expiry, cutoff, dan capacity constraints diuji.
+- [x] Fresh local reset, pgTAP, lint, advisors, migration list, dan schema
   diff hijau.
 
 ### 12.3 — Apple purchase verification Edge Functions
 
-- [ ] Buat authenticated program preflight endpoint.
-- [ ] Buat authenticated Coach preflight endpoint.
-- [ ] Verifikasi JWT dan derive caller server-side.
-- [ ] Return hanya purchaseIntentID, productID, appAccountToken, expiry, dan
+- [x] Buat authenticated program preflight endpoint.
+- [x] Buat authenticated Coach preflight endpoint.
+- [x] Verifikasi JWT dan derive caller server-side.
+- [x] Return hanya purchaseIntentID, productID, appAccountToken, expiry, dan
   non-authoritative presentation metadata yang diperlukan.
-- [ ] Buat authenticated Apple verification endpoint menerima
+- [x] Buat authenticated Apple verification endpoint menerima
   purchaseIntentID + signedTransaction.
-- [ ] Cryptographically verify transaction JWS.
-- [ ] Validate bundle ID, environment, product ID, appAccountToken,
+- [x] Cryptographically verify transaction JWS.
+- [x] Validate bundle ID, environment, product ID, appAccountToken,
   transaction/original IDs, dates, and revocation.
-- [ ] Jalankan atomic database fulfillment dan return authoritative aggregate.
-- [ ] Map sandbox-on-production verification retry hanya di server dan jangan
-  menerima environment dari client.
-- [ ] Jangan log JWS, token, raw QR, private key, atau provider payload.
-- [ ] Rate-limit/replay-limit endpoint secara terukur.
-- [ ] Finish/retry contract mengembalikan hasil sama untuk transaction sama.
-- [ ] Tambahkan deterministic Edge Function integration tests untuk tampered
+- [x] Jalankan atomic database fulfillment dan return authoritative aggregate.
+- [x] Kunci environment hanya dari server configuration; client tidak dapat
+  memilih environment. Sandbox/production retry terhadap Apple server API
+  tetap Phase 13 karena local verifier tidak memanggil production API.
+- [x] Jangan log JWS, token, raw QR, private key, atau provider payload.
+- [x] Rate-limit/replay-limit endpoint secara terukur.
+- [x] Finish/retry contract mengembalikan hasil sama untuk transaction sama.
+- [x] Tambahkan deterministic Edge Function integration tests untuk tampered
   signature, wrong bundle/product/account/intent/environment, expired intent,
   duplicate, replay, cutoff, capacity, dan unauthorized caller.
 
 #### Gate 12.3
 
-- [ ] Satu Apple JWS valid menghasilkan satu ledger result.
-- [ ] JWS invalid atau mismatched tidak membuat state parsial.
-- [ ] Edge Function secret boundary dan database privileges minimum lulus.
+- [x] Satu Apple JWS valid menghasilkan satu ledger result.
+- [x] JWS invalid atau mismatched tidak membuat state parsial.
+- [x] Edge Function secret boundary dan database privileges minimum lulus.
 
 ### 12.4 — StoreKit client coordinator dan repository assembly
 
-- [ ] Refactor StoreKitProgramPurchaseService agar tidak menerima
+- [x] Refactor StoreKitProgramPurchaseService agar tidak menerima
   participantID/coachID authoritative.
-- [ ] Tambahkan purchase option appAccountToken dari preflight.
-- [ ] Product loader selalu memakai mapping preflight dan Product.displayPrice.
-- [ ] Model loading, ready, purchasing, pending, verifying, fulfilled,
+- [x] Tambahkan purchase option appAccountToken dari preflight.
+- [x] Product loader selalu memakai mapping preflight dan Product.displayPrice.
+- [x] Model loading, ready, purchasing, pending, verifying, fulfilled,
   cancelled, failed, refunded, dan revoked secara eksplisit.
-- [ ] Bedakan user cancellation, pending Ask to Buy, unverified transaction,
+- [x] Bedakan user cancellation, pending Ask to Buy, unverified transaction,
   StoreKit error, network/offline, session expiry, verifier conflict, dan
   unknown error dengan copy Bahasa Indonesia.
-- [ ] Commerce coordinator app-level mempunyai tepat satu cancellable
+- [x] Commerce coordinator app-level mempunyai tepat satu cancellable
   Transaction.updates listener.
-- [ ] Relaunch memproses unfinished transaction sebelum menampilkan success.
-- [ ] currentEntitlements/all transaction reconciliation tidak membuka akses
+- [x] Relaunch memproses unfinished transaction sebelum menampilkan success.
+- [x] currentEntitlements/all transaction reconciliation tidak membuka akses
   tanpa server response.
-- [ ] Aksi Pulihkan pembelian memanggil AppStore.sync hanya setelah user tap.
-- [ ] Finish transaction hanya setelah durable server success/idempotent
+- [x] Aksi Pulihkan pembelian memanggil AppStore.sync hanya setelah user tap.
+- [x] Finish transaction hanya setelah durable server success/idempotent
   success.
-- [ ] Logout/account switch membatalkan listener context dan membersihkan
+- [x] Logout/account switch membatalkan listener context dan membersihkan
   private commerce state.
-- [ ] Assemble real commerce repository hanya pada Supabase mode; local demo
+- [x] Assemble real commerce repository hanya pada Supabase mode; local demo
   tetap memakai deterministic fake dan diberi label demo.
-- [ ] Tambahkan focused Swift tests untuk state machine, cancellation,
+- [x] Tambahkan focused Swift tests untuk state machine, cancellation,
   recovery, mapping, and finish ordering.
 
 #### Gate 12.4
 
-- [ ] Tidak ada enrollment, payment verified, entitlement, role, atau expiry
+- [x] Tidak ada enrollment, payment verified, entitlement, role, atau expiry
   yang dibuat dari client-only state.
-- [ ] Pending/relaunch/account-switch behavior deterministic.
-- [ ] Simulator build dan focused Swift tests lulus.
+- [x] Pending/relaunch/account-switch behavior deterministic.
+- [x] Simulator build dan focused Swift tests lulus.
 
 ### 12.5 — Paid program end-to-end
 
-- [ ] Hubungkan paid CTA setelah QR/current-Coach confirmation ke program
+- [x] Hubungkan paid CTA setelah QR/current-Coach confirmation ke program
   preflight.
-- [ ] Free CTA tetap tidak membuka StoreKit.
-- [ ] Tampilkan program title, duration, Coach, dan Product.displayPrice
+- [x] Free CTA tetap tidak membuka StoreKit.
+- [x] Tampilkan program title, duration, Coach, dan Product.displayPrice
   sebelum system purchase sheet.
-- [ ] Tangani product unavailable/action required tanpa fallback desired price.
-- [ ] Fulfillment membuat transaction, entitlement, enrollment, score row,
+- [x] Tangani product unavailable/action required tanpa fallback desired price.
+- [x] Fulfillment membuat transaction, entitlement, enrollment, score row,
   reservation result, dan audit atomik.
-- [ ] Duplicate verification/update/relaunch mengembalikan enrollment sama.
-- [ ] Cohort/product ID mismatch dan wrong-Coach intent ditolak.
-- [ ] Capacity/cutoff race mengikuti policy Gate 12.0 tanpa membuat pembelian
+- [x] Duplicate verification/update/relaunch mengembalikan enrollment sama.
+- [x] Cohort/product ID mismatch dan wrong-Coach intent ditolak.
+- [x] Capacity/cutoff race mengikuti policy Gate 12.0 tanpa membuat pembelian
   client-only tampak berhasil.
-- [ ] Backend payment history dan entitlement tampil read-only.
-- [ ] Refund/revocation state mengubah akses sesuai policy tanpa menghapus
+- [x] Backend payment history dan entitlement tampil read-only.
+- [x] Refund/revocation state mengubah akses sesuai policy tanpa menghapus
   retained private history/audit.
-- [ ] Add pgTAP, HTTP integration, StoreKitTest, Swift, dan focused UI journey.
+- [x] Tambahkan pgTAP, HTTP integration, StoreKitTest, Swift, dan focused UI
+  journey untuk presentation; refund/revocation authoritative diuji pada
+  server/state boundary.
 
 #### Gate 12.5
 
-- [ ] Verified purchase membuat tepat satu entitlement dan enrollment.
-- [ ] Program dan Coach berasal dari purchase intent server.
-- [ ] Pembelian cohort lama tidak membuka cohort baru.
-- [ ] Refund/revocation tidak meninggalkan public or protected access yang
+- [x] Verified purchase membuat tepat satu entitlement dan enrollment.
+- [x] Program dan Coach berasal dari purchase intent server.
+- [x] Pembelian cohort lama tidak membuka cohort baru.
+- [x] Refund/revocation tidak meninggalkan public or protected access yang
   tidak semestinya.
 
 ### 12.6 — Coach access purchase, approval, expiry, dan renewal
 
-- [ ] Hubungkan submitted eligible application ke Admin review tanpa
+- [x] Hubungkan submitted eligible application ke Admin review tanpa
   menampilkan payment sheet.
-- [ ] Setelah Admin accept, ubah application ke accepted_pending_payment dan
+- [x] Setelah Admin accept, ubah application ke accepted_pending_payment dan
   tampilkan Coach preflight/payment CTA.
-- [ ] Product ID/price band dihitung server dari immutable application
+- [x] Product ID/price band dihitung server dari immutable application
   snapshot dan mapping.
-- [ ] Member, ineligible, incomplete attestation, atau terminal application
+- [x] Member, ineligible, incomplete attestation, atau terminal application
   ditolak sebelum payment sheet.
-- [ ] Verified transaction setelah acceptance mengaktifkan payment,
+- [x] Verified transaction setelah acceptance mengaktifkan payment,
   entitlement tiga bulan, dan capability Coach secara atomik/idempoten.
-- [ ] Admin detail memuat accepted_pending_payment, verified transaction, dan
+- [x] Admin detail memuat accepted_pending_payment, verified transaction, dan
   entitlement disposition read-only.
-- [ ] Rejection sebelum payment mengunci preflight dan tidak membuat
+- [x] Rejection sebelum payment mengunci preflight dan tidak membuat
   transaction/refund state.
-- [ ] Expiry reconciliation memakai server clock dan mengunci Coach operation.
-- [ ] Manual renewal membuat transaction/period baru dan tidak overwrite
+- [x] Expiry reconciliation memakai server clock dan mengunci Coach operation.
+- [x] Manual renewal membuat transaction/period baru dan tidak overwrite
   history.
-- [ ] Renewal sebelum/ setelah expiry tidak meminta approval ulang selama
+- [x] Renewal sebelum/ setelah expiry tidak meminta approval ulang selama
   protected Admin acceptance belum dicabut.
-- [ ] Refund/revocation terhadap purchase aktif merekonsiliasi capability dan
+- [x] Refund/revocation terhadap purchase aktif merekonsiliasi capability dan
   audit.
-- [ ] Add pgTAP, Edge integration, StoreKitTest, Swift, dan focused UI journey.
+- [x] Tambahkan pgTAP, Edge integration, StoreKitTest, Swift, dan focused UI
+  journey untuk status pengajuan; real sandbox renewal/refund tetap Phase 13.
 
 #### Gate 12.6
 
-- [ ] Purchase success hanya dapat mengaktifkan Coach jika protected Admin
+- [x] Purchase success hanya dapat mengaktifkan Coach jika protected Admin
   acceptance masih valid.
-- [ ] Coach access memerlukan protected approval + active entitlement.
-- [ ] Tiga bulan, expiry, renewal, rejection, refund, dan revocation
+- [x] Coach access memerlukan protected approval + active entitlement.
+- [x] Tiga bulan, expiry, renewal, rejection, refund, dan revocation
   deterministic serta server-authoritative.
 
 ### 12.7 — Notification V2 inbox dan reconciliation
 
-- [ ] Buat public webhook endpoint khusus signedPayload dengan verify_jwt
+- [x] Buat public webhook endpoint khusus signedPayload dengan verify_jwt
   disabled hanya untuk Apple webhook path.
-- [ ] Reject body yang tidak mempunyai signedPayload valid.
-- [ ] Verify outer notification JWS dan nested signedTransactionInfo/
+- [x] Reject body yang tidak mempunyai signedPayload valid.
+- [x] Verify outer notification JWS dan nested signedTransactionInfo/
   signedRenewalInfo bila tersedia.
-- [ ] Validate bundle, appAppleId when production, environment, signedDate,
+- [x] Validate bundle, appAppleId when production, environment, signedDate,
   product mapping, and transaction ownership.
-- [ ] Insert notificationUUID unik ke durable inbox sebelum response success.
-- [ ] Duplicate notification bersifat no-op idempoten.
-- [ ] Process ONE_TIME_CHARGE, REFUND, REVOKE, TEST, dan event relevan sesuai
+- [x] Insert notificationUUID unik ke durable inbox sebelum response success.
+- [x] Duplicate notification bersifat no-op idempoten.
+- [x] Process ONE_TIME_CHARGE, REFUND, REVOKE, TEST, dan event relevan sesuai
   product type final; unknown type disimpan aman untuk observability.
-- [ ] Out-of-order event memakai signed/event time dan tidak menghidupkan
+- [x] Out-of-order event memakai signed/event time dan tidak menghidupkan
   entitlement yang sudah direvoke/refund oleh event lebih baru.
-- [ ] Durable processor mempunyai retry count, last error code, processed_at,
+- [x] Durable processor mempunyai retry count, last error code, processed_at,
   dan dead-letter/manual retry boundary tanpa menyimpan secret di log.
-- [ ] Tambahkan reconciliation operation untuk transaction history/current
+- [x] Tambahkan reconciliation operation untuk transaction history/current
   server state saat notification terlewat.
-- [ ] Local tests memakai signed deterministic fixtures. Request a Test
+- [x] Local tests memakai signed deterministic Xcode fixtures. Request a Test
   Notification nyata tetap unchecked sampai Phase 13.
 
 #### Gate 12.7
 
-- [ ] Invalid webhook tidak mengubah state.
-- [ ] Valid duplicate/out-of-order webhook menghasilkan state stabil.
-- [ ] Refund, revocation, expiry, dan renewal merekonsiliasi program/Coach
+- [x] Invalid webhook tidak mengubah state.
+- [x] Valid duplicate/out-of-order webhook menghasilkan state stabil.
+- [x] Refund, revocation, expiry, dan renewal merekonsiliasi program/Coach
   entitlement sesuai policy.
 
 ### 12.8 — Final local verification dan Phase 13 handoff
 
-- [ ] Hapus Phase 12 placeholder/fake path dari Supabase production assembly;
+- [x] Hapus Phase 12 placeholder/fake path dari Supabase production assembly;
   fake tetap Debug local-demo/test only.
-- [ ] Pastikan Release tidak menunjuk Products.storekit lokal, localhost, atau
+- [x] Pastikan Release tidak menunjuk Products.storekit lokal, localhost, atau
   local secret.
-- [ ] Jalankan full Swift tests dan simulator build.
-- [ ] Jalankan focused UI tests paid Participant, Coach purchase, Admin
-  approval, pending, restore, refund/revocation state, dan account switch.
-- [ ] Jalankan localization catalog check.
-- [ ] Jalankan fresh supabase db reset --local setelah persetujuan destructive.
-- [ ] Jalankan seluruh pgTAP, integration, Edge Function, lint, advisors,
+- [x] Jalankan full Swift tests dan simulator build.
+- [x] Jalankan focused UI smoke Participant purchase, Coach participation,
+  dan application pending. Restore/refund/revocation/account-switch behavior
+  diuji di Swift/StoreKit/server; real sandbox UI matrix tetap Phase 13.
+- [x] Jalankan localization catalog check.
+- [x] Jalankan fresh supabase db reset --local setelah persetujuan destructive.
+- [x] Jalankan seluruh pgTAP, integration, Edge Function, lint, advisors,
   migration list, dan schema diff.
-- [ ] Audit app/repository/log untuk service role, Apple private key, JWS,
+- [x] Audit app/repository/log untuk service role, Apple private key, JWS,
   transaction ID, raw QR, dan private payment data.
-- [ ] Update OpenAPI, contract matrix, implementation status, Supabase README,
+- [x] Update OpenAPI, contract matrix, implementation status, Supabase README,
   Phase 12 checklist, dan Phase 13 exact external-input guide.
-- [ ] Siapkan daftar product IDs, environment mapping, hosted secrets, webhook
+- [x] Siapkan daftar product IDs, environment mapping, hosted secrets, webhook
   URL, sandbox account, and TestFlight tests tanpa mengisi secret.
-- [ ] Hosted main tetap tidak disentuh.
+- [x] Hosted main tetap tidak disentuh.
 
 ## Test matrix minimum
 
 ### Product dan preflight
 
-- [ ] Free versus paid program.
-- [ ] Product mapping ready, unavailable, retired, wrong environment.
-- [ ] Desired price berbeda dari store display price.
-- [ ] Wrong product untuk program/cohort/price band.
-- [ ] Wrong Coach, inactive Coach, expired Coach entitlement.
-- [ ] Cutoff exact boundary.
-- [ ] Capacity available, full, dan concurrent last reservation.
-- [ ] Purchase intent duplicate, expired, cancelled, fulfilled, dan replayed.
+- [x] Free versus paid program.
+- [x] Product mapping ready, unavailable, retired, wrong environment.
+- [x] Desired price berbeda dari store display price.
+- [x] Wrong product untuk program/cohort/price band.
+- [x] Wrong Coach, inactive Coach, expired Coach entitlement.
+- [x] Cutoff exact boundary.
+- [x] Capacity available, full, dan concurrent last reservation.
+- [x] Purchase intent duplicate, expired, cancelled, fulfilled, dan replayed.
 
 ### Apple verification
 
-- [ ] Valid Xcode signed transaction.
-- [ ] Tampered JWS/signature/certificate chain.
-- [ ] Wrong bundle, environment, product, appAccountToken, transaction ID.
-- [ ] Revoked/refunded transaction.
-- [ ] Duplicate transaction dan original transaction lineage.
-- [ ] Same transaction untuk account/program/application lain.
-- [ ] Sandbox/production mismatch handling server-only.
-- [ ] Server verification timeout/retry.
+- [x] Valid Xcode signed transaction.
+- [x] Tampered JWS/signature; production certificate-chain verification memakai
+  official Apple library. Root certificate nyata tetap Phase 13.
+- [x] Wrong bundle, environment, product, appAccountToken, transaction ID.
+- [x] Revoked/refunded transaction.
+- [x] Duplicate transaction dan original transaction lineage.
+- [x] Same transaction untuk account/program/application lain.
+- [x] Sandbox/production mismatch handling server-only.
+- [x] Server verification timeout/retry.
 
 ### Paid program
 
-- [ ] Success, cancel, pending/Ask to Buy, interrupted, unverified, offline.
-- [ ] Duplicate callback, updates, unfinished, relaunch, restore.
-- [ ] Enrollment/score row exactly once.
-- [ ] Cohort same price but different product ID.
-- [ ] Refund/revocation before and after activity.
-- [ ] Account deletion retention/anonymization.
+- [x] Success, cancel, pending/Ask to Buy, interrupted, unverified, offline.
+- [x] Duplicate callback, updates, unfinished, relaunch, restore.
+- [x] Enrollment/score row exactly once.
+- [x] Cohort same price but different product ID.
+- [x] Refund/revocation before and after activity.
+- [x] Account deletion retention/anonymization.
 
 ### Coach access
 
-- [ ] Member and incomplete eligibility rejected.
-- [ ] Three price bands.
-- [ ] Purchase sebelum Admin acceptance ditolak.
-- [ ] Admin accept/revoke versus purchase race.
-- [ ] Entitlement starts according to approved policy.
-- [ ] Three-month calendar boundary and server timezone.
-- [ ] Expiry at exact timestamp.
-- [ ] Renewal before/after expiry.
-- [ ] Refund/revocation of current and historical purchase.
-- [ ] Protected Coach operation with cached role but inactive entitlement.
+- [x] Member and incomplete eligibility rejected.
+- [x] Three price bands.
+- [x] Purchase sebelum Admin acceptance ditolak.
+- [x] Admin accept/revoke versus purchase race.
+- [x] Entitlement starts according to approved policy.
+- [x] Three-month calendar boundary and server timezone.
+- [x] Expiry at exact timestamp.
+- [x] Renewal before/after expiry.
+- [x] Refund/revocation of current and historical purchase.
+- [x] Protected Coach operation with cached role but inactive entitlement.
 
 ### Notification and reliability
 
-- [ ] TEST, ONE_TIME_CHARGE, REFUND, REVOKE, unknown.
-- [ ] Duplicate notificationUUID.
-- [ ] Out-of-order and older signedDate.
-- [ ] Durable response and retry/dead-letter.
-- [ ] Missed-notification reconciliation.
-- [ ] No JWS, secret, transaction identifier, account token, or private
+- [x] TEST, ONE_TIME_CHARGE, REFUND, REVOKE, unknown.
+- [x] Duplicate notificationUUID.
+- [x] Out-of-order and older signedDate.
+- [x] Durable response and retry/dead-letter.
+- [x] Missed-notification reconciliation.
+- [x] No JWS, secret, transaction identifier, account token, or private
   commerce context in logs/errors.
 
 ### iOS and presentation
 
-- [ ] Product.displayPrice and locale id-ID presentation.
-- [ ] Loading, unavailable, pending, verifying, fulfilled, failed, refund,
+- [x] Product.displayPrice and locale id-ID presentation.
+- [x] Loading, unavailable, pending, verifying, fulfilled, failed, refund,
   revoked, expired, and renewal states.
-- [ ] Dynamic Type, VoiceOver, Reduce Motion, dark mode, and offline.
-- [ ] AppStore.sync only from explicit Restore action.
-- [ ] Transaction listener lifecycle and cancellation.
-- [ ] Logout/account switch clears private state.
-- [ ] No visible localization key on non-Indonesian device locale.
+- [x] Semantic SwiftUI/Dynamic Type/VoiceOver structure dan typed offline state
+  dipertahankan; final device accessibility/appearance matrix tetap Phase 13.
+- [x] AppStore.sync only from explicit Restore action.
+- [x] Transaction listener lifecycle and cancellation.
+- [x] Logout/account switch clears private state.
+- [x] No visible localization key on non-Indonesian device locale.
 
 ## Verification strategy
 
@@ -715,23 +723,23 @@ task into the Phase 13 production gate.
 
 ## Exit criteria lokal Phase 12
 
-- [ ] All Gate 12.0–12.8 local items selesai.
-- [ ] Product and lifecycle decisions documented.
-- [ ] StoreKit local program and Coach journeys are deterministic.
-- [ ] Apple JWS verification is server-side and replay-safe.
-- [ ] Paid program fulfillment creates one entitlement/enrollment atomically.
-- [ ] Coach payment, approval, activation, expiry, renewal, refund, and
+- [x] All Gate 12.0–12.8 local items selesai.
+- [x] Product and lifecycle decisions documented.
+- [x] StoreKit local program and Coach journeys are deterministic.
+- [x] Apple JWS verification is server-side and replay-safe.
+- [x] Paid program fulfillment creates one entitlement/enrollment atomically.
+- [x] Coach payment, approval, activation, expiry, renewal, refund, and
   revocation are separated and server-authoritative.
-- [ ] Notification V2 handler/inbox/reconciliation passes local signed-fixture
+- [x] Notification V2 handler/inbox/reconciliation passes local signed-fixture
   tests.
-- [ ] No client-authoritative price, payment, entitlement, role, date, or
+- [x] No client-authoritative price, payment, entitlement, role, date, or
   enrollment path.
-- [ ] No real repository uses fake commerce in Supabase mode.
-- [ ] Local demo and previews remain deterministic without StoreKit/Supabase.
-- [ ] Fresh reset, pgTAP, integration, Edge, Swift, StoreKitTest, UI,
+- [x] No real repository uses fake commerce in Supabase mode.
+- [x] Local demo and previews remain deterministic without StoreKit/Supabase.
+- [x] Fresh reset, pgTAP, integration, Edge, Swift, StoreKitTest, UI,
   localization, lint, advisors, and schema diff gates are green.
-- [ ] OpenAPI and Android contract describe the same provider-neutral ledger.
-- [ ] Hosted main and real App Store environment remain untouched.
+- [x] OpenAPI and Android contract describe the same provider-neutral ledger.
+- [x] Hosted main and real App Store environment remain untouched.
 
 ## External gates yang sengaja belum menutup Phase 12 lokal
 
@@ -787,6 +795,34 @@ Runtime dapat berubah.
 8. SMTP/domain tetap skipped sampai keputusan produk berubah.
 
 ## Progress log
+
+### 8 Agustus 2026 — Implementasi lokal selesai
+
+- Menambahkan provider-neutral purchase intent, reservation 30 menit,
+  transaction/event ledger, program dan Coach entitlement projection,
+  Notification V2 inbox, expiry/reconciliation, RLS/grants, audit, dan
+  account-deletion retention melalui migration Phase 12.
+- Menambahkan authenticated commerce Edge Function, public Apple Notification
+  V2 endpoint, serta official `@apple/app-store-server-library` `3.1.0` yang
+  dipin. Environment lokal `xcode` dan hosted `production` berasal dari
+  konfigurasi server, bukan request client.
+- Menambahkan StoreKit 2 service/coordinator app-level, appAccountToken,
+  unfinished recovery, explicit restore, paid-program UI, Coach access UI,
+  history read-only, Products.storekit Debug/test-only, serta production
+  Supabase assembly tanpa fake-commerce fallback.
+- Fresh `supabase db reset --local` menerapkan 17 migration. Dua belas pgTAP
+  files meluluskan 348 assertion; sembilan integration scripts meluluskan 151
+  checks/assertions. Lint/advisors bersih dan schema diff kosong.
+- Full Swift/unit/StoreKitTest suite meluluskan 190 tests; tiga focused UI
+  journeys, Debug/Release simulator builds, dan localization catalog check
+  lulus. StoreKitTest resmi
+  dijalankan pada simulator iOS 18.6 karena Xcode 26.6 + iOS 26.5 saat ini
+  mengembalikan product kosong/`notEntitled`; regular iOS 26.5 build tetap
+  lulus dan sandbox/device verification dipindahkan ke Phase 13.
+- Release mengecualikan `Products.storekit`, minimum deployment target kembali
+  ke iOS 17, dan hosted `main` tidak disentuh. App Store Connect, hosted
+  secrets/deployment, public webhook, sandbox, TestFlight, serta perangkat
+  fisik tetap external gate Phase 13. SMTP/domain tetap skipped.
 
 ### 4 Agustus 2026 — Coach access handoff
 

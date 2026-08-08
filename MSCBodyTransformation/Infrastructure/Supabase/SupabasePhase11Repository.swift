@@ -165,7 +165,10 @@ actor SupabasePhase11Repository:
 
     func usersAwaitingCoachApproval() async throws -> [AppUser] {
         let applications = try await coachApplicationsForAdministration()
-            .filter { $0.status == .pendingAdminApproval }
+            .filter {
+                $0.status == .submitted
+                    || $0.status == .pendingAdminApproval
+            }
         let identifiers = Set(applications.map(\.userID))
         return try await usersForAdministration().filter {
             identifiers.contains($0.id)

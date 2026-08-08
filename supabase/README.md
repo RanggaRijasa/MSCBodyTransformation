@@ -47,6 +47,21 @@ This directory is the reproducible backend contract for the program flow.
   restricts direct score breakdown rows to the owning Participant, assigned
   Coach, or Admin; public leaderboard totals continue through the safe
   projection.
+- `migrations/20260808084038_phase12_authoritative_commerce.sql` adds
+  provider-neutral product mappings, 30-minute purchase reservations,
+  purchase intents, replay-safe transaction/event ledgers, program and Coach
+  entitlements, renewal/expiry/refund reconciliation, durable Apple
+  notification inbox, RLS/grants, and account-deletion retention.
+- `functions/commerce/index.ts` serves authenticated program/Coach preflight,
+  pending, Apple verification, restore, and history routes. Caller identity,
+  product, Coach, price band, capacity, and clock are derived server-side.
+- `functions/commerce-apple-notifications/index.ts` is the public Apple
+  Notification V2 receiver. It verifies the outer signed payload (and nested
+  transaction when present), records a unique notification UUID before
+  success, and reconciles events idempotently.
+- `functions/_shared/apple_verifier.ts` uses pinned official
+  `@apple/app-store-server-library` `3.1.0`; production root certificates and
+  appAppleId are read only from Edge Function secrets.
 - `functions/delete-account/index.ts` owns the server-only Storage cleanup and
   Auth Admin hard-delete boundary. The iOS client never receives the service
   credential.
@@ -160,7 +175,7 @@ Environment policy:
 - Release clients must never contain local endpoints or sensitive server
   credentials.
 
-## Phase 11 local completion and Phase 12 handoff
+## Phase 12 local completion and Phase 13 handoff
 
 Phase 09.5 remains the deterministic local UI/mock baseline:
 
@@ -181,19 +196,37 @@ Current backend status:
    Participant activity/media/quiz/weigh-in/scoring, Coach monitoring/review,
    Admin CMS/correction/closure, immutable winners, poster publication, and
    orphan-media cleanup all use authoritative server operations.
-3. Phase 12 remains responsible for StoreKit verification, unique transactions, manual
-   three-month entitlement, expiry/renewal/revocation, and refund policy.
+3. Phase 12 is complete locally: StoreKit purchase intents, official Apple JWS
+   verification, unique transactions, manual three-month Coach entitlement,
+   expiry/renewal/refund/revocation, restore/history, and Notification V2
+   reconciliation are implemented and tested against local Supabase.
+4. Hosted production remains Phase 13. No migration, function, secret, or
+   product mapping from Phase 12 has been deployed to hosted `main`.
 
 Do not add `anon` grants to private profiles, applications, payments,
 entitlements, weights, submissions, or private media. Explicit Data API
 grants remain mandatory because automatic table exposure is disabled.
 
+Local completion evidence on 8 August 2026:
+
+- Fresh reset applied 17 migrations.
+- Twelve pgTAP files passed 348 assertions.
+- Nine Auth/read/Storage/race/commerce integration scripts passed 151
+  checks/assertions, including 29 Phase 12 commerce/webhook assertions.
+- Database lint and advisors returned no issue; `public,private` schema diff
+  was empty.
+- Hosted `main` was not touched.
+
 Before production deployment:
 
-1. Complete Phase 12 server-side StoreKit and Play Billing verification.
-2. Repeat fresh reset, lint, advisors, pgTAP, Storage API, and all relevant
-   race tests.
-3. Review the exact migration diff before applying it to hosted `main`.
-4. Put App Store Connect and Google Play credentials in server secrets only.
-5. Verify hosted-only callbacks and production configuration through an
-   explicit release gate. Never use hosted `main` for development experiments.
+1. Create the App Store Connect products and gather the Phase 13 server-only
+   inputs (appAppleId, In-App Purchase key metadata/private key, and Apple
+   root certificates).
+2. Review the exact migration/function/config diff and request explicit
+   production approval before applying anything to hosted `main`.
+3. Configure hosted Edge secrets and `COMMERCE_APPLE_ENVIRONMENT=production`;
+   never place a private key, service-role credential, root certificate, or
+   JWS in either mobile app.
+4. Provision the public Notification V2 URL and run Apple TEST notification,
+   sandbox, TestFlight, refund/revocation, and physical-device matrices.
+5. Google Play remains Phase 14 with the same provider-neutral ledger.

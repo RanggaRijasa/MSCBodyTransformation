@@ -170,8 +170,8 @@ insert into public.coach_applications (
   submitted_at, decided_at, decided_by
 )
 values
-  ('da000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000002', 'Coach Auth A', '+6281200000999', 'sc', true, true, 'test-v1', 'approved', 'auth-read-coach-a', now(), now(), 'd1000000-0000-0000-0000-000000000001'),
-  ('da000000-0000-0000-0000-000000000003', 'd1000000-0000-0000-0000-000000000003', 'd1000000-0000-0000-0000-000000000003', 'Coach Auth B', '+6281200000999', 'sc', true, true, 'test-v1', 'approved', 'auth-read-coach-b', now(), now(), 'd1000000-0000-0000-0000-000000000001');
+  ('da000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000002', 'Coach Auth A', '+6281200000999', 'sc', true, true, 'test-v1', 'active', 'auth-read-coach-a', now(), now(), 'd1000000-0000-0000-0000-000000000001'),
+  ('da000000-0000-0000-0000-000000000003', 'd1000000-0000-0000-0000-000000000003', 'd1000000-0000-0000-0000-000000000003', 'Coach Auth B', '+6281200000999', 'sc', true, true, 'test-v1', 'active', 'auth-read-coach-b', now(), now(), 'd1000000-0000-0000-0000-000000000001');
 
 insert into public.coach_payment_records (
   id, application_id, state, price_band, amount_minor_units,

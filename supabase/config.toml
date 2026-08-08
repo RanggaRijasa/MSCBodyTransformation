@@ -55,3 +55,13 @@ entrypoint = "./functions/delete-account/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/cleanup-orphan-question-photos/index.ts"
+
+[functions.commerce]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/commerce/index.ts"
+
+[functions.commerce-apple-notifications]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/commerce-apple-notifications/index.ts"

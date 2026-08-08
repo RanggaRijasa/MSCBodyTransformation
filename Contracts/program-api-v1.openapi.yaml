@@ -10,7 +10,9 @@ servers:
   - url: https://{project}.supabase.co/functions/v1
     variables:
       project:
-        default: staging-project
+        default: production-project
+  - url: http://127.0.0.1:54321/functions/v1
+    description: Supabase lokal untuk development dan pengujian.
 security:
   - bearerAuth: []
 x-phase-09-5-handoff:
@@ -24,6 +26,7 @@ paths:
   /delete-account:
     post:
       operationId: deleteCurrentAccount
+      x-implementation-status: implemented-phase10
       description: >
         Permanently deletes the recently reauthenticated Participant or
         relationship-free Coach account. Private Storage objects are removed
@@ -40,6 +43,7 @@ paths:
   /programs:
     get:
       operationId: listPublicPrograms
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       security:
         - publishableKey: []
@@ -57,6 +61,7 @@ paths:
   /coaches:
     get:
       operationId: listPublicCoaches
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       security:
         - publishableKey: []
@@ -74,6 +79,7 @@ paths:
   /programs/{programId}/leaderboard:
     get:
       operationId: listPublicLeaderboard
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       security:
         - publishableKey: []
@@ -93,6 +99,7 @@ paths:
   /programs/{programId}/winners:
     get:
       operationId: listPublicWinners
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       security:
         - publishableKey: []
@@ -111,6 +118,7 @@ paths:
   /winner-posters:
     get:
       operationId: listPublicWinnerPosters
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       security:
         - publishableKey: []
@@ -126,6 +134,7 @@ paths:
   /me/profile:
     get:
       operationId: getCurrentProfile
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -141,6 +150,7 @@ paths:
   /me/enrollments:
     get:
       operationId: listCurrentParticipantEnrollments
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -154,6 +164,7 @@ paths:
   /me/assigned-coach:
     get:
       operationId: getCurrentAssignedCoach
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -169,6 +180,7 @@ paths:
   /me/program-day-access:
     get:
       operationId: listCurrentProgramDayAccess
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -182,6 +194,7 @@ paths:
   /me/dashboard-summary:
     get:
       operationId: getCurrentDashboardSummary
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -193,6 +206,7 @@ paths:
   /me/enrollments/{enrollmentId}/submissions:
     get:
       operationId: listCurrentParticipantSubmissions
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/EnrollmentId"
@@ -208,6 +222,7 @@ paths:
   /me/enrollments/{enrollmentId}/weigh-ins:
     get:
       operationId: listCurrentParticipantWeighIns
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/EnrollmentId"
@@ -223,6 +238,7 @@ paths:
   /me/enrollments/{enrollmentId}/score:
     get:
       operationId: getCurrentParticipantScore
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/EnrollmentId"
@@ -238,6 +254,7 @@ paths:
   /programs/{programId}/duplicate:
     post:
       operationId: duplicateProgram
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/ProgramId"
       requestBody:
@@ -256,6 +273,7 @@ paths:
   /programs/{programId}/publish:
     post:
       operationId: publishProgram
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/ProgramId"
       responses:
@@ -270,6 +288,7 @@ paths:
   /programs/{programId}/enroll/free:
     post:
       operationId: enrollFreeProgram
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/ProgramId"
       requestBody:
@@ -294,6 +313,7 @@ paths:
   /admin/programs/{programId}/enrollments:
     post:
       operationId: adminEnrollParticipant
+      x-implementation-status: implemented-phase11
       description: >
         Admin-only operation. It may bypass an elapsed registration cutoff,
         but still enforces program lifecycle, capacity, approved Coach, and
@@ -324,6 +344,7 @@ paths:
   /me/coach-application:
     get:
       operationId: getCurrentCoachApplication
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -336,6 +357,7 @@ paths:
                   - type: "null"
     put:
       operationId: saveCurrentCoachApplicationDraft
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -355,6 +377,7 @@ paths:
   /me/coach-application/{applicationId}/submit:
     post:
       operationId: submitCurrentCoachApplication
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/ApplicationId"
@@ -369,6 +392,7 @@ paths:
   /admin/coach-applications:
     get:
       operationId: listCoachApplicationsForAdmin
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -382,6 +406,7 @@ paths:
   /admin/coach-applications/{applicationId}/decision:
     post:
       operationId: decideCoachApplication
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/ApplicationId"
@@ -409,6 +434,7 @@ paths:
   /coach/participants:
     get:
       operationId: listAssignedCoachParticipants
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -416,6 +442,7 @@ paths:
   /coach/submissions/pending:
     get:
       operationId: listAssignedPendingReviews
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       responses:
         "200":
@@ -423,6 +450,7 @@ paths:
   /admin/scores/{entryId}/adjust:
     post:
       operationId: adjustEnrollmentScore
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/EntryId"
@@ -444,6 +472,7 @@ paths:
   /programs/{programId}/complete:
     post:
       operationId: completeProgram
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local
       parameters:
         - $ref: "#/components/parameters/ProgramId"
@@ -464,6 +493,7 @@ paths:
   /admin/private-media/orphans/cleanup:
     post:
       operationId: cleanupOrphanQuestionPhotos
+      x-implementation-status: implemented-phase11
       x-phase11-status: implemented-local-edge-function
       requestBody:
         required: false
@@ -478,59 +508,163 @@ paths:
       responses:
         "200":
           description: Storage API cleanup count; deleted object names are not returned.
-  /programs/{programId}/purchase/apple/verify:
+  /commerce/programs/{programId}/preflight:
     post:
-      operationId: verifyAppleProgramPurchase
+      operationId: createProgramPurchaseIntent
+      x-implementation-status: new-phase12-local
       parameters:
         - $ref: "#/components/parameters/ProgramId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Opaque server-owned purchase intent and StoreKit inputs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseIntentPreflight"
+        "409":
+          $ref: "#/components/responses/DomainError"
+  /commerce/coach-access/preflight:
+    post:
+      operationId: createCoachAccessPurchaseIntent
+      x-implementation-status: new-phase12-local
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Coach product mapping after protected Admin acceptance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseIntentPreflight"
+  /commerce/intents/{purchaseIntentId}/pending:
+    post:
+      operationId: markPurchaseIntentPending
+      x-implementation-status: new-phase12-local
+      parameters:
+        - name: purchaseIntentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Reservation extended while the StoreKit sheet is active.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [purchaseIntentId, status, expiresAt]
+                properties:
+                  purchaseIntentId: { type: string, format: uuid }
+                  status: { type: string, enum: [purchase_pending] }
+                  expiresAt: { type: string, format: date-time }
+  /commerce/apple/verify:
+    post:
+      operationId: verifyApplePurchase
+      x-implementation-status: new-phase12-local
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplePurchaseVerificationRequest"
+      responses:
+        "200":
+          description: Durable idempotent server-authoritative fulfillment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceFulfillment"
+        "401":
+          $ref: "#/components/responses/DomainError"
+        "409":
+          $ref: "#/components/responses/DomainError"
+  /commerce/history:
+    get:
+      operationId: listMyCommerceHistory
+      x-implementation-status: new-phase12-local
+      responses:
+        "200":
+          description: Private read-only transaction and entitlement history.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [transactions]
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CommerceTransaction"
+  /commerce/apple/restore:
+    post:
+      operationId: reconcileApplePurchases
+      x-implementation-status: new-phase12-local
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppleRestoreRequest"
+      responses:
+        "200":
+          description: Server results for current or unfinished StoreKit transactions.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [fulfillments]
+                properties:
+                  fulfillments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CommerceFulfillment"
+  /commerce-apple-notifications:
+    post:
+      operationId: receiveAppleServerNotificationV2
+      x-implementation-status: new-phase12-local
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [coachQrPayload, signedTransaction]
+              additionalProperties: false
+              required: [signedPayload]
               properties:
-                coachQrPayload:
-                  type: string
-                signedTransaction:
-                  type: string
+                signedPayload: { type: string, minLength: 1, writeOnly: true }
       responses:
-        "200":
-          description: Cross-platform entitlement and active enrollment.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Entitlement"
-  /programs/{programId}/purchase/google/verify:
+        "202":
+          description: Verified notification was durably accepted or was a duplicate.
+  /commerce/google/verify:
     post:
-      operationId: verifyGoogleProgramPurchase
-      parameters:
-        - $ref: "#/components/parameters/ProgramId"
+      operationId: verifyGooglePurchase
+      x-implementation-status: deferred-phase14
+      description: >
+        Contract placeholder for Android. The purchase intent is server-owned;
+        no raw Coach QR, account ID, role, price, or entitlement is accepted.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [coachQrPayload, purchaseToken, productId]
+              additionalProperties: false
+              required: [purchaseIntentId, purchaseToken]
               properties:
-                coachQrPayload:
-                  type: string
-                purchaseToken:
-                  type: string
-                productId:
-                  type: string
+                purchaseIntentId: { type: string, format: uuid }
+                purchaseToken: { type: string, minLength: 1, writeOnly: true }
       responses:
-        "200":
-          description: Cross-platform entitlement and active enrollment.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Entitlement"
+        "501":
+          description: Deferred until Phase 14 Play Billing implementation.
   /enrollments/{enrollmentId}/steps/{stepId}/submit:
     post:
       operationId: submitStep
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/EnrollmentId"
         - $ref: "#/components/parameters/StepId"
@@ -551,6 +685,7 @@ paths:
   /submissions/{submissionId}/review:
     post:
       operationId: reviewSubmission
+      x-implementation-status: implemented-phase11
       parameters:
         - name: submissionId
           in: path
@@ -576,6 +711,7 @@ paths:
   /enrollments/{enrollmentId}/steps/{stepId}/weigh-in:
     put:
       operationId: submitWeighIn
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/EnrollmentId"
         - $ref: "#/components/parameters/StepId"
@@ -603,6 +739,7 @@ paths:
   /enrollments/{enrollmentId}/weigh-ins/{weighInId}:
     patch:
       operationId: correctWeighIn
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/EnrollmentId"
         - name: weighInId
@@ -632,6 +769,7 @@ paths:
   /enrollments/{enrollmentId}/steps/{stepId}/quiz/reopen:
     post:
       operationId: reopenQuizAttempt
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/EnrollmentId"
         - $ref: "#/components/parameters/StepId"
@@ -651,6 +789,7 @@ paths:
   /participants/{participantId}/coach:
     put:
       operationId: transferParticipantCoach
+      x-implementation-status: implemented-phase11
       parameters:
         - name: participantId
           in: path
@@ -672,6 +811,7 @@ paths:
   /programs/{programId}/winners/lock:
     post:
       operationId: lockProgramWinners
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/ProgramId"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -681,6 +821,7 @@ paths:
   /programs/{programId}/winner-posters:
     post:
       operationId: publishWinnerPoster
+      x-implementation-status: implemented-phase11
       parameters:
         - $ref: "#/components/parameters/ProgramId"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1283,6 +1424,122 @@ components:
             percentage: { type: integer }
             passed: { type: boolean }
             awardedPoints: { type: integer }
+    PurchaseIntentPreflight:
+      type: object
+      additionalProperties: false
+      required:
+        - purchaseIntentId
+        - subjectKind
+        - productId
+        - appAccountToken
+        - environment
+        - expiresAt
+        - status
+      properties:
+        purchaseIntentId: { type: string, format: uuid }
+        subjectKind:
+          $ref: "#/components/schemas/CommerceSubjectKind"
+        productId: { type: string }
+        appAccountToken: { type: string, format: uuid }
+        environment:
+          $ref: "#/components/schemas/CommerceEnvironment"
+        expiresAt: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [reserved, purchase_pending, fulfilled, cancelled, expired, failed]
+        presentation:
+          type: object
+          description: Non-authoritative display metadata; price comes from StoreKit.
+          additionalProperties: false
+          properties:
+            programTitle: { type: [string, "null"] }
+            coachDisplayName: { type: [string, "null"] }
+            durationMonths: { type: [integer, "null"], enum: [3, null] }
+    ApplePurchaseVerificationRequest:
+      type: object
+      additionalProperties: false
+      required: [purchaseIntentId, signedTransaction]
+      properties:
+        purchaseIntentId: { type: string, format: uuid }
+        signedTransaction: { type: string, minLength: 1, writeOnly: true }
+    AppleRestoreRequest:
+      type: object
+      additionalProperties: false
+      required: [transactions]
+      properties:
+        transactions:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required: [signedTransaction]
+            properties:
+              purchaseIntentId: { type: [string, "null"], format: uuid }
+              signedTransaction: { type: string, minLength: 1, writeOnly: true }
+    CommerceEnvironment:
+      type: string
+      enum: [xcode, local_testing, sandbox, production]
+    CommerceSubjectKind:
+      type: string
+      enum: [program, coach_access]
+    CommerceProductType:
+      type: string
+      enum: [non_consumable, non_renewing_subscription]
+    CommerceTransaction:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - subjectKind
+        - provider
+        - environment
+        - productId
+        - productType
+        - status
+      properties:
+        id: { type: string, format: uuid }
+        subjectKind:
+          $ref: "#/components/schemas/CommerceSubjectKind"
+        programId: { type: [string, "null"], format: uuid }
+        coachApplicationId: { type: [string, "null"], format: uuid }
+        provider: { type: string, enum: [app_store, play_store] }
+        environment:
+          $ref: "#/components/schemas/CommerceEnvironment"
+        productId: { type: string }
+        productType:
+          $ref: "#/components/schemas/CommerceProductType"
+        status:
+          type: string
+          enum: [pending, verified, refunded, revoked, expired]
+        purchasedAt: { type: [string, "null"], format: date-time }
+        expiresAt: { type: [string, "null"], format: date-time }
+        revocationAt: { type: [string, "null"], format: date-time }
+        currencyCode: { type: [string, "null"] }
+        priceMilliunits:
+          type: [integer, "null"]
+          minimum: 0
+          description: Store-reported price in thousandths of a currency unit.
+    CommerceFulfillment:
+      type: object
+      additionalProperties: false
+      required: [transactionId, subjectKind, status, idempotent]
+      properties:
+        transactionId: { type: string, format: uuid }
+        subjectKind:
+          $ref: "#/components/schemas/CommerceSubjectKind"
+        status:
+          type: string
+          enum: [verified, refunded, revoked, expired]
+        programId: { type: [string, "null"], format: uuid }
+        enrollmentId: { type: [string, "null"], format: uuid }
+        programEntitlementId: { type: [string, "null"], format: uuid }
+        coachApplicationId: { type: [string, "null"], format: uuid }
+        coachEntitlementId: { type: [string, "null"], format: uuid }
+        coachAccessStartsAt: { type: [string, "null"], format: date-time }
+        coachAccessEndsAt: { type: [string, "null"], format: date-time }
+        idempotent: { type: boolean }
     Entitlement:
       type: object
       required: [id, programId, participantId, status]
@@ -1293,7 +1550,8 @@ components:
         status: { type: string, enum: [active, revoked, refunded] }
     DomainError:
       type: object
-      required: [code, message]
+      additionalProperties: false
+      required: [code]
       properties:
         code:
           type: string
@@ -1314,6 +1572,25 @@ components:
             - payment_required
             - payment_pending
             - purchase_unverified
+            - product_not_ready
+            - purchase_intent_expired
+            - reservation_conflict
+            - transaction_replayed
+            - transaction_mismatch
+            - fulfillment_failed
+            - refunded
+            - revoked
+            - authentication_required
+            - rate_limited
+            - request_invalid
+            - idempotency_key_invalid
+            - already_enrolled
+            - payment_not_required
+            - coach_approval_required
+            - coach_eligibility_incomplete
+            - profile_incomplete
+            - commerce_operation_failed
+            - unknown
             - quiz_attempt_used
             - recent_reauthentication_required
             - admin_account_deletion_not_allowed

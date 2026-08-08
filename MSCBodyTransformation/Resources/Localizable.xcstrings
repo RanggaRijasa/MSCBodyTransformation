@@ -4,6 +4,456 @@
     "" : {
 
     },
+    "coach.application.status.accepted_payment" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diterima, menunggu pembayaran"
+          }
+        }
+      }
+    },
+    "coach.application.status.active" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktif"
+          }
+        }
+      }
+    },
+    "coach.application.status.processing" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dalam proses"
+          }
+        }
+      }
+    },
+    "coach.eligibility.review_before_payment" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin meninjau pengajuan terlebih dahulu. Pembayaran baru tersedia setelah pengajuan diterima."
+          }
+        }
+      }
+    },
+    "coach.eligibility.submit_application" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirim pengajuan Coach"
+          }
+        }
+      }
+    },
+    "coach.payment.after_approval_only" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembayaran Coach tersedia setelah pengajuan diterima Admin."
+          }
+        }
+      }
+    },
+    "coach.pending.application_submitted" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengajuan sudah dikirim"
+          }
+        }
+      }
+    },
+    "coach.pending.live_message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin perlu meninjau pengajuanmu. Jika diterima, pembayaran akses Coach akan tersedia di Profil."
+          }
+        }
+      }
+    },
+    "commerce.account.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian dan akses"
+          }
+        }
+      }
+    },
+    "commerce.coach.access_until" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses aktif sampai"
+          }
+        }
+      }
+    },
+    "commerce.coach.activate" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktifkan akses Coach"
+          }
+        }
+      }
+    },
+    "commerce.coach.activated" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach berhasil diaktifkan."
+          }
+        }
+      }
+    },
+    "commerce.coach.activated_refresh_needed" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach sudah aktif. Tutup lalu buka kembali aplikasi untuk memuat peran terbaru."
+          }
+        }
+      }
+    },
+    "commerce.coach.application_status" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status pengajuan"
+          }
+        }
+      }
+    },
+    "commerce.coach.footer" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perpanjangan dilakukan manual. Jika akses berakhir, fitur dan QR Coach dinonaktifkan sampai pembayaran berikutnya terverifikasi."
+          }
+        }
+      }
+    },
+    "commerce.coach.no_application" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum ada pengajuan Coach pada akun ini."
+          }
+        }
+      }
+    },
+    "commerce.coach.renew" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perpanjang akses Coach"
+          }
+        }
+      }
+    },
+    "commerce.coach.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach tiga bulan"
+          }
+        }
+      }
+    },
+    "commerce.coach.waiting_approval" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembayaran tersedia setelah pengajuan diterima Admin."
+          }
+        }
+      }
+    },
+    "commerce.error.approval" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses pembayaran belum diizinkan untuk akun ini."
+          }
+        }
+      }
+    },
+    "commerce.error.generic" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terjadi kendala. Coba lagi."
+          }
+        }
+      }
+    },
+    "commerce.error.offline" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada koneksi. Periksa internet lalu coba lagi."
+          }
+        }
+      }
+    },
+    "commerce.error.session" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi berakhir. Masuk kembali untuk melanjutkan."
+          }
+        }
+      }
+    },
+    "commerce.error.timeout" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permintaan terlalu lama. Coba lagi."
+          }
+        }
+      }
+    },
+    "commerce.history.empty" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum ada riwayat pembelian."
+          }
+        }
+      }
+    },
+    "commerce.history.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riwayat pembelian"
+          }
+        }
+      }
+    },
+    "commerce.pending" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian menunggu persetujuan Apple."
+          }
+        }
+      }
+    },
+    "commerce.price" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harga Apple"
+          }
+        }
+      }
+    },
+    "commerce.product_unavailable" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Produk App Store belum tersedia."
+          }
+        }
+      }
+    },
+    "commerce.purchase.action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beli dengan Apple"
+          }
+        }
+      }
+    },
+    "commerce.restore.action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan pembelian"
+          }
+        }
+      }
+    },
+    "commerce.restore.empty" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada pembelian aktif yang perlu dipulihkan."
+          }
+        }
+      }
+    },
+    "commerce.restore.footer" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan jika pembelian lama belum muncul. Apple mungkin meminta autentikasi App Store."
+          }
+        }
+      }
+    },
+    "commerce.restore.success" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian berhasil direkonsiliasi."
+          }
+        }
+      }
+    },
+    "commerce.subject.coach" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach"
+          }
+        }
+      }
+    },
+    "commerce.subject.program" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program"
+          }
+        }
+      }
+    },
+    "commerce.unavailable" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian belum tersedia pada konfigurasi aplikasi ini."
+          }
+        }
+      }
+    },
+    "participant.join.continue_to_payment" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutkan ke pembayaran"
+          }
+        }
+      }
+    },
+    "participant.join.free_action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikuti program gratis"
+          }
+        }
+      }
+    },
+    "participant.payment.apple_action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beli dengan Apple"
+          }
+        }
+      }
+    },
+    "participant.payment.apple_notice" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembayaran diproses oleh Apple. Akses diberikan setelah transaksi diverifikasi server."
+          }
+        }
+      }
+    },
+    "status.expired" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berakhir"
+          }
+        }
+      }
+    },
+    "status.refunded" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dikembalikan"
+          }
+        }
+      }
+    },
+    "status.revoked" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dicabut"
+          }
+        }
+      }
+    },
+    "status.verified" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terverifikasi"
+          }
+        }
+      }
+    },
     "%@ · %@ · %@" : {
       "comment" : "A label that shows the currently selected filter options.",
       "isCommentAutoGenerated" : true,

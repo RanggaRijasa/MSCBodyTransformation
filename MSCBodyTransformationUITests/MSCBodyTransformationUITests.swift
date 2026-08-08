@@ -1117,7 +1117,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Coach Raka"].exists)
         confirmCoach.tap()
 
-        let payment = app.buttons["participant.payment.demo"]
+        let payment = app.buttons["participant.payment.purchase"]
         XCTAssertTrue(payment.waitForExistence(timeout: 5))
         XCTAssertFalse(app.alerts["Konfirmasi Pembelian"].exists)
         payment.tap()
@@ -1702,7 +1702,7 @@ final class MSCBodyTransformationUITests: XCTestCase {
         XCTAssertTrue(confirmCoach.waitForExistence(timeout: 5))
         confirmCoach.tap()
 
-        let payment = app.buttons["participant.payment.demo"]
+        let payment = app.buttons["participant.payment.purchase"]
         XCTAssertTrue(payment.waitForExistence(timeout: 5))
         payment.tap()
 
