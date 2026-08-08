@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { activateCoachEntitlement } from "./phase11_fixture_helpers.mjs";
 
 const apiURL = requireEnvironment("API_URL");
 const anonKey = requireEnvironment("ANON_KEY");
@@ -207,6 +208,18 @@ await upsertProfiles([
     coach_is_approved: false,
   })),
 ]);
+await activateCoachEntitlement(
+  insert,
+  coachOne.id,
+  admin.id,
+  "Coach Race Satu",
+);
+await activateCoachEntitlement(
+  insert,
+  coachTwo.id,
+  admin.id,
+  "Coach Race Dua",
+);
 
 const duplicateProgramID = randomUUID();
 const capacityProgramID = randomUUID();

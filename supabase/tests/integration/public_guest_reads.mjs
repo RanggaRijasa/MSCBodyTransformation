@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { activateCoachEntitlement } from "./phase11_fixture_helpers.mjs";
 
 const apiURL = requireEnvironment("API_URL");
 const anonKey = requireEnvironment("ANON_KEY");
@@ -146,6 +147,7 @@ const fixture = {
 let admin;
 let coach;
 let participant;
+let coachEntitlementFixture;
 
 try {
   admin = await createUser("phase11-public-admin");
@@ -183,6 +185,12 @@ try {
     provisional_expires_at: null,
     finalized_at: new Date().toISOString(),
   });
+  coachEntitlementFixture = await activateCoachEntitlement(
+    insert,
+    coach.id,
+    admin.id,
+    "Coach Public Integration",
+  );
 
   await insert("programs", {
     id: fixture.programID,
@@ -383,6 +391,20 @@ try {
     await deleteRows("program_steps", `id=eq.${fixture.stepID}`);
     await deleteRows("program_days", `id=eq.${fixture.dayID}`);
     await deleteRows("programs", `id=eq.${fixture.programID}`);
+  }
+  if (coachEntitlementFixture) {
+    await deleteRows(
+      "coach_access_entitlements",
+      `application_id=eq.${coachEntitlementFixture.applicationID}`,
+    );
+    await deleteRows(
+      "coach_payment_records",
+      `id=eq.${coachEntitlementFixture.paymentID}`,
+    );
+    await deleteRows(
+      "coach_applications",
+      `id=eq.${coachEntitlementFixture.applicationID}`,
+    );
   }
 
   for (const user of [participant, coach, admin]) {

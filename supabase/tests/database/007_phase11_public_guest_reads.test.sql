@@ -210,6 +210,38 @@ set display_name = 'Peserta Publik',
     finalized_at = now()
 where user_id = 'c1000000-0000-0000-0000-000000000011';
 
+insert into public.coach_applications (
+  id, applicant_user_id, participant_profile_id, display_name_snapshot,
+  phone_number_snapshot, member_level_snapshot, has_completed_hom_sts,
+  has_completed_ict, terms_version, status, draft_idempotency_key,
+  submitted_at, decided_at, decided_by
+) values (
+  'c1100000-0000-0000-0000-000000000002',
+  'c1000000-0000-0000-0000-000000000002',
+  'c1000000-0000-0000-0000-000000000002',
+  'Coach Publik', '+6281200000011', 'sc', true, true, 'test-v1',
+  'approved', 'public-coach-fixture', now(), now(),
+  'c1000000-0000-0000-0000-000000000001'
+);
+insert into public.coach_payment_records (
+  id, application_id, state, price_band, amount_minor_units,
+  provider_reference, verified_at
+) values (
+  'c1200000-0000-0000-0000-000000000002',
+  'c1100000-0000-0000-0000-000000000002',
+  'verified', 'entry', 100000, 'public-coach-fixture-payment', now()
+);
+insert into public.coach_access_entitlements (
+  id, application_id, payment_record_id, coach_user_id, status,
+  starts_at, ends_at
+) values (
+  'c1300000-0000-0000-0000-000000000002',
+  'c1100000-0000-0000-0000-000000000002',
+  'c1200000-0000-0000-0000-000000000002',
+  'c1000000-0000-0000-0000-000000000002',
+  'active', now() - interval '1 day', now() + interval '30 days'
+);
+
 insert into public.programs (
   id,
   title,

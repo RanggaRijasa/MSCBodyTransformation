@@ -139,6 +139,16 @@ nonisolated protocol EnrollmentCommandRepository: Sendable {
     ) async throws -> [ProgramEnrollment]
 }
 
+/// Production-safe enrollment boundary. The raw Coach identifier remains an
+/// opaque QR payload and is resolved only by an authenticated server RPC.
+nonisolated protocol CoachQREnrollmentRepository: Sendable {
+    func resolveCoach(qrOpaqueValue: String) async throws -> CoachProfile
+    func enrollFreeProgram(
+        programID: UUID,
+        coachQROpaqueValue: String
+    ) async throws -> ProgramEnrollment
+}
+
 nonisolated protocol SubmissionRepository:
     SubmissionReadRepository,
     SubmissionCommandRepository
@@ -273,10 +283,6 @@ nonisolated protocol CoachApplicationRepository: Sendable {
     func saveCoachApplication(
         _ application: CoachApplication
     ) async throws -> CoachApplication
-    func recordCoachPayment(
-        applicationID: UUID,
-        result: FakeCoachPurchaseResult
-    ) async throws -> CoachApplication
     func submitCoachApplication(
         applicationID: UUID
     ) async throws -> CoachApplication
@@ -300,6 +306,28 @@ nonisolated protocol AdminProgramDraftRepository: Sendable {
         -> AdminProgramDraft
     func save(programDraft: AdminProgramDraft) async throws
         -> AdminProgramDraft
+}
+
+nonisolated protocol AuthoritativeAdminOperationsRepository: Sendable {
+    func adminEnrollParticipant(
+        programID: UUID,
+        participantID: UUID,
+        reason: String
+    ) async throws -> ProgramEnrollment
+    func adminTransferCoach(
+        participantID: UUID,
+        coachID: UUID,
+        reason: String
+    ) async throws -> ParticipantProfile
+    func adminAdjustScore(
+        entryID: UUID,
+        points: Int,
+        reason: String
+    ) async throws -> LeaderboardEntry
+    func completeAndLockWinners(
+        programID: UUID,
+        reason: String
+    ) async throws -> [ProgramWinner]
 }
 
 nonisolated protocol AuditRepository: Sendable {

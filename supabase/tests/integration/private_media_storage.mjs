@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { activateCoachEntitlement } from "./phase11_fixture_helpers.mjs";
 
 const apiURL = requireEnvironment("API_URL");
 const anonKey = requireEnvironment("ANON_KEY");
@@ -176,6 +177,18 @@ await upsertProfiles([
     coach_is_approved: false,
   },
 ]);
+await activateCoachEntitlement(
+  insert,
+  coach.id,
+  admin.id,
+  "Coach Integration",
+);
+await activateCoachEntitlement(
+  insert,
+  unrelatedCoach.id,
+  admin.id,
+  "Coach Tidak Terkait",
+);
 
 const programID = randomUUID();
 const dayID = randomUUID();

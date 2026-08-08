@@ -3,6 +3,10 @@
 Status: authoritative companion untuk
 `PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md`.
 
+Implementation status: seluruh contract non-commerce Phase 11 selesai dan
+terverifikasi terhadap Supabase lokal pada 8 Agustus 2026. Store verification
+dan entitlement lifecycle tetap Phase 12; hosted deployment tetap Phase 13.
+
 Dokumen ini menjelaskan pemilik setiap field, consumer runtime, batas privasi,
 dan jalur migrasi. Phase lama hanya menjadi catatan historis bila bertentangan
 dengan matriks ini.
@@ -41,19 +45,21 @@ dengan matriks ini.
 | Session | Auth service + Keychain device-only cache | Logged out | Restore/refresh/logout melalui `SessionRepository` | Boundary yang sama | Phase 10; hosted policy Phase 13 |
 | Profile | `profiles.user_id`, role, display name, phone, member level, purpose, onboarding status/expiry | Tidak membaca | Menulis field allowlisted miliknya | Membaca sesuai kebutuhan | Phase 10 profile bootstrap/RLS |
 | Penghapusan akun | Edge Function + Auth Admin server-side | — | Reauthentication lalu immediate deletion; media privat dan data program dihapus | Admin self-delete ditolak; relationship Coach harus dialihkan | Phase 10 lokal; hosted retention review Phase 13 |
-| Pending enrollment | Secure local intent + server revalidation | Memilih program sebelum login | TTL/nonce/environment; QR opaque bukan authorization | — | Phase 10 persistence; Phase 11 enrollment adapter |
+| Pending enrollment | Secure local intent + server revalidation | Memilih program sebelum login | TTL/nonce/environment; QR opaque bukan authorization | — | Phase 10 persistence; Phase 11 server adapter selesai lokal |
 | Member level | Profile/application snapshot | Tidak membaca | Memilih; tidak memberi capability | Membaca | Phase 10/11 validation |
 | Eligibility | Domain/server rule | — | Attest HOM STS dan ICT | Membaca hasil | Server menghitung ulang |
-| Coach application | Application aggregate | — | Membuat satu active application | Approve/reject | Phase 11 atomic operation |
+| Coach application | Application aggregate | — | Membuat satu active application | Approve/reject | Phase 11 atomic operation selesai lokal |
 | Price band | Server/store mapping | — | Membaca preview | Membaca | Phase 12 authoritative mapping |
 | Payment | Store verification | — | Tidak dapat menandai verified | Membaca | Phase 12 idempotent verification |
-| Approval | Protected server decision | — | Tidak dapat menulis | Konfirmasi/rejection reason | Phase 11 atomic dan audited |
+| Approval | Protected server decision | — | Tidak dapat menulis | Konfirmasi/rejection reason | Phase 11 atomic dan audited selesai lokal |
 | Role | Protected role table | Tidak ada | Tetap Participant selama pending | Tidak mengedit metadata client | Berubah hanya setelah approval valid |
 | Entitlement | Server clock/store state | Public only | Membaca miliknya | Membaca untuk review | Phase 12 expiry/renewal/revocation |
 
 Phase 09.5 mengimplementasikan presentation dan repository lokal untuk
-matriks ini. Kolom Backend belum production dan tidak boleh disimpulkan
-selesai dari fake payment atau local Admin approval.
+matriks ini. Phase 11 kemudian mengganti seluruh surface non-commerce pada
+mode Supabase dengan read model dan operasi server authoritative. Fake
+payment tetap tidak boleh dianggap verifikasi; boundary tersebut hanya dapat
+diselesaikan oleh Phase 12.
 
 ## Inventory migrasi source
 
@@ -109,6 +115,22 @@ Amendment 3 Agustus 2026 untuk cover gambar, future policy `available`, dan
 timbang harian lulus 134 unit/integration tests serta UI journey Admin dan
 Coach yang relevan. OpenAPI, migration draft, fixture, dan localization ikut
 divalidasi.
+
+## Phase 11 local completion 8 Agustus 2026
+
+- Public Guest, own Participant data, assigned Coach data, dan Admin reads
+  memakai explicit least-privilege grants/RLS atau fixed projection RPC.
+- Coach application/decision, free enrollment, submission/review, quiz,
+  weigh-in/correction, score adjustment, Admin CMS/closure, winner lock, dan
+  poster publication memakai operasi server idempoten dan teraudit.
+- Private media tetap non-public; owner, assigned Coach, dan Admin diuji
+  melalui Storage API. Orphan cleanup executable tidak menghapus reference
+  yang sudah durable.
+- Fresh local reset menerapkan 16 migration. Sebelas pgTAP files meluluskan
+  285 assertions; seluruh integration suite, 184 Swift tests, simulator build,
+  dan empat UI journey terfokus lulus.
+- Hosted `main` tidak disentuh. Contract commerce Phase 12 dan deployment
+  Phase 13 tetap belum dijalankan.
 
 ## Aturan stabilitas contract
 

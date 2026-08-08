@@ -44,7 +44,7 @@ struct ParticipantJoinProgramView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showsScanner) {
             LocalQRScannerSheet { identifier in
-                loadCoachPreview(identifier: identifier)
+                Task { await loadCoachPreview(identifier: identifier) }
             }
         }
         .accessibilityIdentifier("participant.join.flow")
@@ -320,9 +320,9 @@ struct ParticipantJoinProgramView: View {
         return store.snapshot?.programs.first { $0.id == programID }
     }
 
-    private func loadCoachPreview(identifier: String) {
+    private func loadCoachPreview(identifier: String) async {
         do {
-            selectedCoach = try store.coach(
+            selectedCoach = try await store.coach(
                 matchingEnrollmentIdentifier: identifier
             )
             fieldError = nil

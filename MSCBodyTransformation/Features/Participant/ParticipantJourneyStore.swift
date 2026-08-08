@@ -771,17 +771,20 @@ final class ParticipantJourneyStore {
         }
     }
 
-    func coach(matchingEnrollmentIdentifier input: String) throws
+    func coach(matchingEnrollmentIdentifier input: String) async throws
         -> CoachProfile
     {
-        let normalizedIdentifier = input
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let opaqueValue = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedIdentifier = opaqueValue
             .uppercased()
         guard !normalizedIdentifier.isEmpty else {
             throw DomainError.validation(
                 field: "coachIdentifier",
                 reason: "QR coach tidak valid."
             )
+        }
+        if let resolver = environment.repositories?.coachQREnrollment {
+            return try await resolver.resolveCoach(qrOpaqueValue: opaqueValue)
         }
         guard let coach = snapshot?.coaches.first(where: {
             $0.enrollmentIdentifier.uppercased() == normalizedIdentifier
@@ -870,11 +873,12 @@ final class ParticipantJourneyStore {
         _ = try await JoinProgramWithCoachUseCase(
             enrollments: repositories.enrollments,
             identifierGenerator: environment.identifierGenerator,
-            clock: environment.clock
+            clock: environment.clock,
+            coachQREnrollment: repositories.coachQREnrollment
         )(
             program: program,
             participantID: snapshot.profile.id,
-            coachID: coach.id
+            coach: coach
         )
         focusedProgramID = programID
         try await reloadSnapshot()

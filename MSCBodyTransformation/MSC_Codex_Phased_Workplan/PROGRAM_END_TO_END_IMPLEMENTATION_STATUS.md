@@ -1,6 +1,6 @@
 # Status Implementasi Program End-to-End
 
-Tanggal audit: 5 Agustus 2026
+Tanggal audit: 8 Agustus 2026
 
 ## Ringkasan
 
@@ -84,6 +84,21 @@ tidak diklaim selesai.
   gate aktif. Hanya SMTP/domain dan email/password production yang berstatus
   SKIPPED SAAT INI**.
 
+### Phase 11 — real data dan server operations lokal
+
+- Public Guest reads tidak membuat Auth identity dan tidak membuka PII.
+- Participant, Coach, dan Admin memakai typed Supabase repository pada mode
+  lokal; production assembly tidak mempunyai silent fixture fallback.
+- Coach application dan protected decision, QR/free enrollment, submission,
+  quiz, weigh-in, score, monitoring/review, Admin CMS/correction/closure,
+  immutable winners, poster publication, dan orphan cleanup authoritative di
+  server serta diuji untuk authorization/idempotency/race.
+- Payment verification dan entitlement lifecycle tetap tidak dapat dibuat
+  client; flow menampilkan handoff Phase 12.
+- Fresh reset 16 migration, 285 pgTAP assertions, seluruh integration suite,
+  184 Swift tests, simulator build, dan empat journey UI kritis lulus.
+- Hosted `main` tidak disentuh.
+
 - Model program typed untuk scoring, commerce, content, questions, answer
   keys, submissions, quiz, payment, entitlement, dan store product.
 - Migrasi fixture dari requirement/evidence lama ke typed question/answer.
@@ -130,6 +145,10 @@ tidak diklaim selesai.
 - `supabase/seed.sql`
 - `supabase/migrations/20260802000000_program_end_to_end.sql`
 - `supabase/migrations/20260805044617_phase10_auth_profile_and_session_foundation.sql`
+- `supabase/migrations/20260808040841_phase11_server_operations_completion.sql`
+- `supabase/migrations/20260808040935_phase11_participant_operations.sql`
+- `supabase/migrations/20260808040939_phase11_coach_admin_operations.sql`
+- `supabase/functions/cleanup-orphan-question-photos/index.ts`
 - `PROGRAM_END_TO_END_CONTRACT_MATRIX.md`
 
 Schema mencakup profile/current Coach, program/content/question/answer key,
@@ -156,10 +175,10 @@ Hanya SMTP/domain dan email/password production yang di-skip.
 |---|---|---|
 | Google/Apple Auth production | AKTIF | Provider credential, hosted callback, dan perangkat fisik |
 | SMTP/domain dan email/password production | SKIPPED SAAT INI | Diaktifkan kembali hanya bila keputusan produk berubah |
-| Coach application backend | BELUM SELESAI | Phase 11 migration, RLS, public Guest reads, atomic approve/reject |
+| Coach application backend | SELESAI LOKAL | Phase 11 migration, RLS, public Guest reads, atomic approve/reject; deployment hosted tetap Phase 13 |
 | Coach access payment | BELUM SELESAI | Phase 12 StoreKit verification, entitlement, expiry/renewal/refund |
 | Hosted Supabase deployment | AKTIF | Review migration dan persetujuan eksplisit sebelum menyentuh hosted `main` |
-| Server operations | BELUM SELESAI | Deploy Edge Functions/RPC production, secrets, race/retry tests |
+| Server operations | SELESAI LOKAL | RPC/Edge Function dan race/retry tests lulus lokal; deployment/secrets production tetap Phase 13 |
 | Store catalog provisioning | BELUM SELESAI | App Store Connect key, Google service account, app/product records |
 | StoreKit verification | BELUM SELESAI | StoreKit configuration/sandbox, Apple verification, server notifications |
 | Google Play Billing | BELUM SELESAI | Android project, Play Console test track, purchase-token verification |

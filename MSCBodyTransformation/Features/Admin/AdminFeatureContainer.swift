@@ -324,6 +324,16 @@ final class AdminFeatureContainer {
         reason: String
     ) async throws {
         let repositories = try repositories()
+        if let operations = repositories.authoritativeAdminOperations {
+            _ = try await operations.adminEnrollParticipant(
+                programID: programID,
+                participantID: participant.id,
+                reason: reason
+            )
+            lastMessage = "Peserta berhasil didaftarkan."
+            await load()
+            return
+        }
         let programDraft = try await repositories.adminProgramDrafts
             .programDraftForAdministration(id: programID)
         _ = try await ManualAdminEnrollmentUseCase(
@@ -368,10 +378,19 @@ final class AdminFeatureContainer {
                 $0.id == coachID
             }?.displayName
         } ?? "Belum ada Coach"
-        _ = try await repositories().adminPeople.transferActiveCoach(
-            participantID: participant.id,
-            coachID: coach.id
-        )
+        let repositories = try repositories()
+        if let operations = repositories.authoritativeAdminOperations {
+            _ = try await operations.adminTransferCoach(
+                participantID: participant.id,
+                coachID: coach.id,
+                reason: trimmedReason
+            )
+        } else {
+            _ = try await repositories.adminPeople.transferActiveCoach(
+                participantID: participant.id,
+                coachID: coach.id
+            )
+        }
         try await appendAudit(
             kind: .coachTransferred,
             subjectID: participant.id,
@@ -411,17 +430,26 @@ final class AdminFeatureContainer {
         reason: String
     ) async throws {
         let repositories = try repositories()
-        let entry = try await AdjustAdminScoreUseCase(
-            leaderboard: repositories.leaderboard,
-            audit: repositories.audit,
-            identifierGenerator: environment.identifierGenerator,
-            clock: environment.clock
-        )(
-            entryID: entryID,
-            points: points,
-            reason: reason,
-            adminID: try requireAdminID()
-        )
+        let entry: LeaderboardEntry
+        if let operations = repositories.authoritativeAdminOperations {
+            entry = try await operations.adminAdjustScore(
+                entryID: entryID,
+                points: points,
+                reason: reason
+            )
+        } else {
+            entry = try await AdjustAdminScoreUseCase(
+                leaderboard: repositories.leaderboard,
+                audit: repositories.audit,
+                identifierGenerator: environment.identifierGenerator,
+                clock: environment.clock
+            )(
+                entryID: entryID,
+                points: points,
+                reason: reason,
+                adminID: try requireAdminID()
+            )
+        }
         let locked = try await repositories.leaderboard.winners(
             programID: entry.programID
         )
@@ -435,19 +463,26 @@ final class AdminFeatureContainer {
     func lockWinners(programID: UUID) async throws {
         let repositories = try repositories()
         let program = try await repositories.programs.program(id: programID)
-        _ = try await LockAdminWinnersUseCase(
-            leaderboard: repositories.leaderboard,
-            enrollments: repositories.enrollments,
-            submissions: repositories.submissions,
-            weighIns: repositories.weighIns,
-            audit: repositories.audit,
-            identifierGenerator: environment.identifierGenerator,
-            clock: environment.clock
-        )(
-            program: program,
-            programID: programID,
-            adminID: try requireAdminID()
-        )
+        if let operations = repositories.authoritativeAdminOperations {
+            _ = try await operations.completeAndLockWinners(
+                programID: programID,
+                reason: "Program diselesaikan dan pemenang dikunci oleh Admin."
+            )
+        } else {
+            _ = try await LockAdminWinnersUseCase(
+                leaderboard: repositories.leaderboard,
+                enrollments: repositories.enrollments,
+                submissions: repositories.submissions,
+                weighIns: repositories.weighIns,
+                audit: repositories.audit,
+                identifierGenerator: environment.identifierGenerator,
+                clock: environment.clock
+            )(
+                program: program,
+                programID: programID,
+                adminID: try requireAdminID()
+            )
+        }
         lastMessage = "Snapshot lima pemenang berhasil dikunci."
         await loadLeaderboard(programID: programID)
         await load()

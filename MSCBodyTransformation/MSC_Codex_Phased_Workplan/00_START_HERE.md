@@ -95,6 +95,12 @@ Dikerjakan setelah Track A stabil.
 15. `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md`
 16. `15_PHASE_14_ANDROID_HANDOFF.md`
 
+Status saat ini (8 Agustus 2026): Phase 11 selesai dan terverifikasi terhadap
+Supabase lokal. Pekerjaan implementasi berikutnya adalah Phase 12 StoreKit dan
+server-side commerce verification. Hosted `main`, Release configuration,
+TestFlight, dan perangkat fisik tetap Phase 13 serta memerlukan persetujuan
+production eksplisit. SMTP/domain tetap skipped.
+
 ## Aturan dependency
 
 ### Phase 00 sampai 08

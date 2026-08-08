@@ -140,16 +140,6 @@ nonisolated struct AppEnvironment: Sendable {
             clock: clock,
             environmentIdentifier: configuration.environmentIdentifier
         )
-        let phase11Fallback = InMemoryAppRepository(
-            seed: try MockSeedData.load(),
-            sessionScenario: .loggedOut
-        )
-        let participantProfileRepository =
-            SupabaseParticipantProfileRepository(
-                sessionRepository: sessionRepository,
-                profileClient: profileClient,
-                fallback: phase11Fallback
-            )
         let publicClient = URLSessionSupabaseClient(
             configuration: runtimeConfiguration,
             authorization: .publicAnon
@@ -160,6 +150,11 @@ nonisolated struct AppEnvironment: Sendable {
                 sessionRepository: sessionRepository
             )
         )
+        let phase11Repository = SupabasePhase11Repository(
+            client: authenticatedClient,
+            sessionRepository: sessionRepository,
+            profileClient: profileClient
+        )
         return Self(
             configuration: configuration,
             clock: clock,
@@ -167,7 +162,7 @@ nonisolated struct AppEnvironment: Sendable {
             repositories: AppRepositories(
                 session: sessionRepository,
                 authentication: authenticationRepository,
-                profiles: participantProfileRepository,
+                profiles: phase11Repository,
                 authenticatedParticipantReads:
                     SupabaseAuthenticatedParticipantReadRepository(
                         client: authenticatedClient
@@ -186,7 +181,7 @@ nonisolated struct AppEnvironment: Sendable {
                     SupabasePublicManagedContentRepository(
                         client: publicClient
                     ),
-                phase11Fallback: phase11Fallback
+                phase11Repository: phase11Repository
             ),
             bootstrapError: nil
         )

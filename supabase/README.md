@@ -160,9 +160,9 @@ Environment policy:
 - Release clients must never contain local endpoints or sensitive server
   credentials.
 
-## Phase 09.5 handoff
+## Phase 11 local completion and Phase 12 handoff
 
-Phase 09.5 is intentionally local UI/mock and adds no database migration:
+Phase 09.5 remains the deterministic local UI/mock baseline:
 
 - Guest is logged out; it is not a database role and does not create an
   anonymous Auth identity.
@@ -171,14 +171,17 @@ Phase 09.5 is intentionally local UI/mock and adds no database migration:
   decision, protected role, and three-month entitlement are separate states.
 - A fake verified payment never grants Coach access.
 
-Required backend work remains:
+Current backend status:
 
 1. Phase 10 local Auth/profile bootstrap and RLS-safe session persistence are
-   implemented, including immediate local account deletion; provider/hosted
-   validation remains gated.
-2. Phase 11 adds public-safe Guest reads, Coach application tables/policies,
-   and atomic audited approve/reject operations.
-3. Phase 12 adds StoreKit verification, unique transactions, manual
+   implemented, including immediate local account deletion and locally
+   validated Google/Apple provider flows.
+2. Phase 11 is complete locally: public Guest reads, authenticated read
+   models, Coach application and protected decision, QR enrollment,
+   Participant activity/media/quiz/weigh-in/scoring, Coach monitoring/review,
+   Admin CMS/correction/closure, immutable winners, poster publication, and
+   orphan-media cleanup all use authoritative server operations.
+3. Phase 12 remains responsible for StoreKit verification, unique transactions, manual
    three-month entitlement, expiry/renewal/revocation, and refund policy.
 
 Do not add `anon` grants to private profiles, applications, payments,
@@ -187,13 +190,10 @@ grants remain mandatory because automatic table exposure is disabled.
 
 Before production deployment:
 
-1. Complete the broader Phase 11 operations: publish/duplicate program, paid
-   enrollment handoff, quiz reopen, weigh-in correction, winner lock, and
-   poster publication.
-2. Complete Phase 12 server-side StoreKit and Play Billing verification.
-3. Repeat fresh reset, lint, advisors, pgTAP, Storage API, and all relevant
+1. Complete Phase 12 server-side StoreKit and Play Billing verification.
+2. Repeat fresh reset, lint, advisors, pgTAP, Storage API, and all relevant
    race tests.
-4. Review the exact migration diff before applying it to hosted `main`.
-5. Put App Store Connect and Google Play credentials in server secrets only.
-6. Verify hosted-only callbacks and production configuration through an
+3. Review the exact migration diff before applying it to hosted `main`.
+4. Put App Store Connect and Google Play credentials in server secrets only.
+5. Verify hosted-only callbacks and production configuration through an
    explicit release gate. Never use hosted `main` for development experiments.

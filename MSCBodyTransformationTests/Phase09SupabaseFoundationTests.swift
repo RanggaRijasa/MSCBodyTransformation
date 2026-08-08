@@ -374,6 +374,35 @@ struct Phase09SupabaseFoundationTests {
                 responseData: Data(#"{"message":"conflict"}"#.utf8)
             ) == .conflict(reason: "conflict")
         )
+        #expect(
+            SupabaseErrorMapper.map(
+                statusCode: 400,
+                responseData: Data(
+                    #"{"message":"reason_required"}"#.utf8
+                )
+            ) == .validation(
+                field: "reason",
+                reason: "Alasan wajib diisi."
+            )
+        )
+        #expect(
+            SupabaseErrorMapper.map(
+                statusCode: 400,
+                responseData: Data(
+                    #"{"message":"pending_reviews_exist"}"#.utf8
+                )
+            ) == .conflict(
+                reason: "Selesaikan seluruh pemeriksaan tertunda terlebih dahulu."
+            )
+        )
+        #expect(
+            SupabaseErrorMapper.map(
+                statusCode: 400,
+                responseData: Data(
+                    #"{"message":"coach_entitlement_inactive"}"#.utf8
+                )
+            ) == .permissionDenied
+        )
     }
 
     @Test("Debug local configuration rejects a hosted endpoint")

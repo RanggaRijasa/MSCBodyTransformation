@@ -24,8 +24,8 @@ select extensions.ok(
   'authenticated cannot create a privileged profile'
 );
 select extensions.ok(
-  has_table_privilege('authenticated', 'public.programs', 'insert'),
-  'authenticated can reach the Admin-only program insert policy'
+  not has_table_privilege('authenticated', 'public.programs', 'insert'),
+  'Phase 11 requires the audited program RPC instead of direct insert'
 );
 select extensions.ok(
   not has_table_privilege(
@@ -208,6 +208,32 @@ on conflict (user_id) do update set
   provisional_expires_at = null,
   finalized_at = now(),
   updated_at = now();
+
+insert into public.coach_applications (
+  id, applicant_user_id, participant_profile_id, display_name_snapshot,
+  phone_number_snapshot, member_level_snapshot, has_completed_hom_sts,
+  has_completed_ict, terms_version, status, draft_idempotency_key,
+  submitted_at, decided_at, decided_by
+)
+values
+  ('0a000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'Coach Satu', '+628000000002', 'sc', true, true, 'test-v1', 'approved', 'grant-coach-one', now(), now(), '00000000-0000-0000-0000-000000000001'),
+  ('0a000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', 'Coach Dua', '+628000000003', 'sc', true, true, 'test-v1', 'approved', 'grant-coach-two', now(), now(), '00000000-0000-0000-0000-000000000001');
+
+insert into public.coach_payment_records (
+  id, application_id, state, price_band, amount_minor_units,
+  provider_reference, verified_at
+)
+values
+  ('0b000000-0000-0000-0000-000000000002', '0a000000-0000-0000-0000-000000000002', 'verified', 'entry', 100000, 'test-grant-one', now()),
+  ('0b000000-0000-0000-0000-000000000003', '0a000000-0000-0000-0000-000000000003', 'verified', 'entry', 100000, 'test-grant-two', now());
+
+insert into public.coach_access_entitlements (
+  id, application_id, payment_record_id, coach_user_id, status,
+  starts_at, ends_at
+)
+values
+  ('0c000000-0000-0000-0000-000000000002', '0a000000-0000-0000-0000-000000000002', '0b000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'active', now() - interval '1 day', now() + interval '30 days'),
+  ('0c000000-0000-0000-0000-000000000003', '0a000000-0000-0000-0000-000000000003', '0b000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', 'active', now() - interval '1 day', now() + interval '30 days');
 
 insert into public.programs (
   id,
@@ -484,8 +510,8 @@ select extensions.throws_like(
       '00000000-0000-0000-0000-000000000011'
     )
   $$,
-  '%row-level security policy%',
-  'Participant cannot mutate Program CMS rows'
+  '%permission denied for table programs%',
+  'Participant cannot directly mutate Program CMS rows'
 );
 
 set local "request.jwt.claims" =
@@ -541,42 +567,43 @@ select extensions.is(
 );
 select extensions.lives_ok(
   $$
-    insert into public.programs (
-      title,
-      status,
-      pace,
-      duration_mode,
-      starts_on,
-      ends_on,
-      timezone,
-      past_step_policy,
-      future_step_policy,
-      wellness_disclaimer,
-      points_per_activity,
-      points_per_weight_kg,
-      quiz_passing_percentage,
-      pricing_mode,
-      created_by
-    )
-    values (
-      'Draf Admin',
-      'draft',
-      'scheduled',
-      'fixed_duration',
-      date '2026-10-01',
-      date '2026-10-31',
-      'Asia/Makassar',
-      'available',
-      'locked',
-      'Program kebugaran non-diagnostik.',
-      10,
-      100,
-      70,
-      'free',
-      '00000000-0000-0000-0000-000000000001'
+    select public.save_program_draft(
+      jsonb_build_object(
+        'id', '1f000000-0000-0000-0000-000000000001',
+        'title', 'Draf Admin',
+        'summary', '',
+        'status', 'draft',
+        'pace', 'scheduled',
+        'duration_mode', 'fixed_duration',
+        'starts_on', '2026-10-01',
+        'ends_on', '2026-10-01',
+        'timezone', 'Asia/Makassar',
+        'past_step_policy', 'available',
+        'future_step_policy', 'locked',
+        'wellness_disclaimer', 'Program kebugaran non-diagnostik.',
+        'points_per_activity', 10,
+        'points_per_weight_kg', 0,
+        'quiz_passing_percentage', 70,
+        'pricing_mode', 'free',
+        'days', jsonb_build_array(jsonb_build_object(
+          'id', '1f100000-0000-0000-0000-000000000001',
+          'day_number', 1,
+          'title', 'Hari Admin',
+          'scheduled_on', '2026-10-01',
+          'steps', jsonb_build_array(jsonb_build_object(
+            'id', '1f200000-0000-0000-0000-000000000001',
+            'step_order', 1,
+            'title', 'Langkah Admin',
+            'content_kind', 'article',
+            'completion_policy', 'mark_complete',
+            'verification_mode', 'automatic'
+          ))
+        ))
+      ),
+      'admin-draft-save-001'
     )
   $$,
-  'Admin can mutate Program CMS rows'
+  'Admin can mutate Program CMS through the audited RPC'
 );
 
 reset role;

@@ -242,7 +242,7 @@ nonisolated enum SupabaseErrorMapper {
         let serverCode = payload?.message ?? payload?.code ?? ""
 
         switch serverCode {
-        case "permission_denied":
+        case "permission_denied", "coach_entitlement_inactive":
             return .permissionDenied
         case "coach_qr_invalid":
             return .validation(
@@ -263,6 +263,34 @@ nonisolated enum SupabaseErrorMapper {
             return .conflict(
                 reason: "Pembayaran program belum terverifikasi."
             )
+        case "pending_reviews_exist":
+            return .conflict(
+                reason: "Selesaikan seluruh pemeriksaan tertunda terlebih dahulu."
+            )
+        case "final_weight_missing":
+            return .conflict(
+                reason: "Timbang akhir seluruh peserta harus lengkap."
+            )
+        case "reason_required":
+            return .validation(
+                field: "reason",
+                reason: "Alasan wajib diisi."
+            )
+        case "coach_eligibility_incomplete", "profile_incomplete",
+             "terms_version_required", "member_level_invalid":
+            return .validation(
+                field: "coachApplication",
+                reason: "Data pengajuan Coach belum lengkap atau tidak valid."
+            )
+        case "application_locked", "application_terminal",
+             "decision_conflict", "winners_already_locked",
+             "program_not_completable", "program_not_completed",
+             "quiz_attempt_locked", "weigh_in_duplicate",
+             "adjustment_zero":
+            return .conflict(reason: serverCode)
+        case "application_not_found", "program_not_found",
+             "submission_not_found", "weigh_in_not_found":
+            return .notFound(resource: "Data")
         case "coach_required", "coach_invalid":
             return .validation(
                 field: "coach",

@@ -11,6 +11,7 @@ nonisolated struct AppRepositories: Sendable {
     let programs: any ProgramRepository
     let publicPrograms: any PublicProgramRepository
     let enrollments: any EnrollmentRepository
+    let coachQREnrollment: (any CoachQREnrollmentRepository)?
     let submissions: any SubmissionRepository
     let weighIns: any WeighInRepository
     let leaderboard: any LeaderboardRepository
@@ -21,6 +22,8 @@ nonisolated struct AppRepositories: Sendable {
     let adminPeople: any AdminPeopleRepository
     let coachApplications: any CoachApplicationRepository
     let adminProgramDrafts: any AdminProgramDraftRepository
+    let authoritativeAdminOperations:
+        (any AuthoritativeAdminOperationsRepository)?
     let audit: any AuditRepository
     let participantDemo: any ParticipantDemoRepository
 
@@ -34,6 +37,7 @@ nonisolated struct AppRepositories: Sendable {
         programs = repository
         publicPrograms = repository
         enrollments = repository
+        coachQREnrollment = nil
         submissions = repository
         weighIns = repository
         leaderboard = repository
@@ -44,10 +48,50 @@ nonisolated struct AppRepositories: Sendable {
         adminPeople = repository
         coachApplications = repository
         adminProgramDrafts = repository
+        authoritativeAdminOperations = nil
         audit = repository
         participantDemo = repository
     }
 
+    init(
+        session: any SessionRepository,
+        authentication: any AuthenticationRepository,
+        profiles: any ProfileRepository,
+        authenticatedParticipantReads:
+            any AuthenticatedParticipantReadRepository,
+        publicCoachDirectory: any PublicCoachDirectoryRepository,
+        publicPrograms: any PublicProgramRepository,
+        publicLeaderboard: any PublicLeaderboardRepository,
+        publicManagedContent: any PublicManagedContentRepository,
+        phase11Repository repository: SupabasePhase11Repository
+    ) {
+        self.session = session
+        self.authentication = authentication
+        self.profiles = profiles
+        self.authenticatedParticipantReads = authenticatedParticipantReads
+        self.publicCoachDirectory = publicCoachDirectory
+        self.publicPrograms = publicPrograms
+        self.publicLeaderboard = publicLeaderboard
+        self.publicManagedContent = publicManagedContent
+        coachQREnrollment = repository
+        coachDirectory = repository
+        programs = repository
+        enrollments = repository
+        submissions = repository
+        weighIns = repository
+        leaderboard = repository
+        coachParticipants = repository
+        managedContent = repository
+        adminPeople = repository
+        coachApplications = repository
+        adminProgramDrafts = repository
+        authoritativeAdminOperations = repository
+        audit = repository
+        participantDemo = repository
+    }
+
+    /// Deterministic test-only composition. Production Supabase assembly uses
+    /// the overload above with `phase11Repository` and never reaches fixtures.
     init(
         session: any SessionRepository,
         authentication: any AuthenticationRepository,
@@ -68,6 +112,7 @@ nonisolated struct AppRepositories: Sendable {
         self.publicPrograms = publicPrograms
         self.publicLeaderboard = publicLeaderboard
         self.publicManagedContent = publicManagedContent
+        coachQREnrollment = nil
         coachDirectory = repository
         programs = repository
         enrollments = repository
@@ -79,6 +124,7 @@ nonisolated struct AppRepositories: Sendable {
         adminPeople = repository
         coachApplications = repository
         adminProgramDrafts = repository
+        authoritativeAdminOperations = nil
         audit = repository
         participantDemo = repository
     }

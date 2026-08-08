@@ -321,6 +321,163 @@ paths:
           $ref: "#/components/responses/DomainError"
         "409":
           $ref: "#/components/responses/DomainError"
+  /me/coach-application:
+    get:
+      operationId: getCurrentCoachApplication
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: Current applicant-owned aggregate.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CoachApplication"
+                  - type: "null"
+    put:
+      operationId: saveCurrentCoachApplicationDraft
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoachApplicationDraftInput"
+      responses:
+        "200":
+          description: Idempotently saved applicant-owned draft.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachApplication"
+  /me/coach-application/{applicationId}/submit:
+    post:
+      operationId: submitCurrentCoachApplication
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Submitted application; payment remains a Phase 12 handoff.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachApplication"
+  /admin/coach-applications:
+    get:
+      operationId: listCoachApplicationsForAdmin
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: Admin-only aggregates with server-computed eligibility and payment state.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachApplication"
+  /admin/coach-applications/{applicationId}/decision:
+    post:
+      operationId: decideCoachApplication
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [approved, rejected] }
+                reason: { type: [string, "null"] }
+      responses:
+        "200":
+          description: Atomic, idempotent, audited terminal decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachApplication"
+        "409":
+          $ref: "#/components/responses/DomainError"
+  /coach/participants:
+    get:
+      operationId: listAssignedCoachParticipants
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: Active-entitled Coach roster projection.
+  /coach/submissions/pending:
+    get:
+      operationId: listAssignedPendingReviews
+      x-phase11-status: implemented-local
+      responses:
+        "200":
+          description: Pending submissions for participants assigned to the caller.
+  /admin/scores/{entryId}/adjust:
+    post:
+      operationId: adjustEnrollmentScore
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/EntryId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [points, reason]
+              properties:
+                points: { type: integer, not: { const: 0 } }
+                reason: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Server-reconciled authoritative score.
+  /programs/{programId}/complete:
+    post:
+      operationId: completeProgram
+      x-phase11-status: implemented-local
+      parameters:
+        - $ref: "#/components/parameters/ProgramId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Completed program after pending-review validation.
+  /admin/private-media/orphans/cleanup:
+    post:
+      operationId: cleanupOrphanQuestionPhotos
+      x-phase11-status: implemented-local-edge-function
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                olderThanHours: { type: integer, minimum: 1, default: 24 }
+                reason: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Storage API cleanup count; deleted object names are not returned.
   /programs/{programId}/purchase/apple/verify:
     post:
       operationId: verifyAppleProgramPurchase
@@ -570,6 +727,16 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    ApplicationId:
+      name: applicationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    EntryId:
+      name: entryId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -583,6 +750,75 @@ components:
           schema:
             $ref: "#/components/schemas/DomainError"
   schemas:
+    CoachApplicationDraftInput:
+      type: object
+      additionalProperties: false
+      required:
+        - memberLevel
+        - hasCompletedHomSts
+        - hasCompletedIct
+        - termsVersion
+      properties:
+        memberLevel:
+          type: string
+          enum:
+            - member
+            - sc
+            - sb
+            - supervisor
+            - world_team
+            - tab_team
+            - get_team
+            - millionaire_team
+            - presidents_team
+        hasCompletedHomSts: { type: boolean }
+        hasCompletedIct: { type: boolean }
+        termsVersion: { type: string, minLength: 1 }
+    CoachApplication:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - applicantUserId
+        - displayNameSnapshot
+        - phoneNumberSnapshot
+        - memberLevelSnapshot
+        - hasCompletedHomSts
+        - hasCompletedIct
+        - termsVersion
+        - status
+        - paymentState
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: string, format: uuid }
+        applicantUserId: { type: string, format: uuid }
+        displayNameSnapshot: { type: string }
+        phoneNumberSnapshot: { type: string }
+        memberLevelSnapshot: { type: string }
+        hasCompletedHomSts: { type: boolean }
+        hasCompletedIct: { type: boolean }
+        termsVersion: { type: string }
+        status:
+          type: string
+          enum:
+            - draft
+            - ineligible
+            - ready_for_payment
+            - payment_processing
+            - payment_verified
+            - pending_admin_approval
+            - approved
+            - rejected
+            - expired
+        paymentState:
+          type: [string, "null"]
+          enum: [null, not_started, processing, pending, verified, failed, cancelled, refunded]
+        submittedAt: { type: [string, "null"], format: date-time }
+        decidedAt: { type: [string, "null"], format: date-time }
+        rejectionReason: { type: [string, "null"] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     AuthenticatedProfile:
       type: object
       additionalProperties: false

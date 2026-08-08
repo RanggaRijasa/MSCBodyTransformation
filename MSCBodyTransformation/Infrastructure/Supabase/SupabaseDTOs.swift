@@ -259,6 +259,7 @@ nonisolated struct SupabaseProgramQuestionDTO: Decodable, Sendable {
     let kind: String
     let prompt: String
     let programQuestionOptions: [SupabaseProgramQuestionOptionDTO]
+    let programAnswerKeys: [SupabaseProgramAnswerKeyDTO]?
 
     private enum CodingKeys: String, CodingKey {
         case id
@@ -266,6 +267,7 @@ nonisolated struct SupabaseProgramQuestionDTO: Decodable, Sendable {
         case kind
         case prompt
         case programQuestionOptions = "program_question_options"
+        case programAnswerKeys = "program_answer_keys"
     }
 
     func domain() throws -> ProgramQuestionDefinition {
@@ -280,7 +282,35 @@ nonisolated struct SupabaseProgramQuestionDTO: Decodable, Sendable {
             options: programQuestionOptions
                 .sorted { $0.optionOrder < $1.optionOrder }
                 .map { $0.domain() },
-            answerKey: nil
+            answerKey: try programAnswerKeys?.first?.domain()
+        )
+    }
+}
+
+nonisolated struct SupabaseProgramAnswerKeyDTO: Decodable, Sendable {
+    let acceptedTextValues: [String]
+    let numberValue: Decimal?
+    let selectedOptionIDs: [UUID]
+    let matchingMode: String
+
+    private enum CodingKeys: String, CodingKey {
+        case acceptedTextValues = "accepted_text_values"
+        case numberValue = "number_value"
+        case selectedOptionIDs = "selected_option_ids"
+        case matchingMode = "matching_mode"
+    }
+
+    func domain() throws -> ProgramQuestionAnswerKey {
+        guard let matchingMode = ProgramAnswerMatchingMode(
+            rawValue: matchingMode
+        ) else {
+            throw SupabaseDTOError.invalidField("answerKey.matchingMode")
+        }
+        return ProgramQuestionAnswerKey(
+            acceptedTextValues: acceptedTextValues,
+            numberValue: numberValue,
+            selectedOptionIDs: selectedOptionIDs,
+            matchingMode: matchingMode
         )
     }
 }
