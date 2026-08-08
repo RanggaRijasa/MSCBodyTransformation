@@ -259,6 +259,7 @@ nonisolated struct SupabaseProgramQuestionDTO: Decodable, Sendable {
     let kind: String
     let prompt: String
     let programQuestionOptions: [SupabaseProgramQuestionOptionDTO]
+    let programAnswerKeys: [SupabaseProgramAnswerKeyDTO]?
 
     private enum CodingKeys: String, CodingKey {
         case id
@@ -266,6 +267,7 @@ nonisolated struct SupabaseProgramQuestionDTO: Decodable, Sendable {
         case kind
         case prompt
         case programQuestionOptions = "program_question_options"
+        case programAnswerKeys = "program_answer_keys"
     }
 
     func domain() throws -> ProgramQuestionDefinition {
@@ -280,7 +282,35 @@ nonisolated struct SupabaseProgramQuestionDTO: Decodable, Sendable {
             options: programQuestionOptions
                 .sorted { $0.optionOrder < $1.optionOrder }
                 .map { $0.domain() },
-            answerKey: nil
+            answerKey: try programAnswerKeys?.first?.domain()
+        )
+    }
+}
+
+nonisolated struct SupabaseProgramAnswerKeyDTO: Decodable, Sendable {
+    let acceptedTextValues: [String]
+    let numberValue: Decimal?
+    let selectedOptionIDs: [UUID]
+    let matchingMode: String
+
+    private enum CodingKeys: String, CodingKey {
+        case acceptedTextValues = "accepted_text_values"
+        case numberValue = "number_value"
+        case selectedOptionIDs = "selected_option_ids"
+        case matchingMode = "matching_mode"
+    }
+
+    func domain() throws -> ProgramQuestionAnswerKey {
+        guard let matchingMode = ProgramAnswerMatchingMode(
+            rawValue: matchingMode
+        ) else {
+            throw SupabaseDTOError.invalidField("answerKey.matchingMode")
+        }
+        return ProgramQuestionAnswerKey(
+            acceptedTextValues: acceptedTextValues,
+            numberValue: numberValue,
+            selectedOptionIDs: selectedOptionIDs,
+            matchingMode: matchingMode
         )
     }
 }
@@ -314,6 +344,159 @@ nonisolated struct SupabaseProgramQuestionOptionDTO:
     }
 }
 
+nonisolated struct SupabasePublicCoachDTO: Decodable, Sendable {
+    let id: UUID
+    let displayName: String
+    let biography: String
+    let city: String
+    let photoReference: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case displayName = "display_name"
+        case biography
+        case city
+        case photoReference = "photo_reference"
+    }
+
+    func domain() -> CoachProfile {
+        CoachProfile(
+            id: id,
+            userID: id,
+            enrollmentIdentifier: "",
+            displayName: displayName,
+            biography: biography,
+            city: city,
+            localPhotoReference: photoReference,
+            isPublic: true,
+            isApproved: true
+        )
+    }
+}
+
+nonisolated struct SupabasePublicLeaderboardDTO: Decodable, Sendable {
+    let id: UUID
+    let programID: UUID
+    let participantID: UUID
+    let participantDisplayName: String
+    let rank: Int
+    let progressPercentage: Int
+    let totalPoints: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case programID = "program_id"
+        case participantID = "participant_id"
+        case participantDisplayName = "participant_display_name"
+        case rank
+        case progressPercentage = "progress_percentage"
+        case totalPoints = "total_points"
+    }
+
+    func domain() -> LeaderboardEntry {
+        LeaderboardEntry(
+            id: id,
+            programID: programID,
+            participantID: participantID,
+            participantDisplayName: participantDisplayName,
+            rank: rank,
+            progressPercentage: progressPercentage,
+            score: ScoreBreakdown(
+                approvedStepPoints: totalPoints,
+                quizPoints: 0,
+                weightPoints: 0,
+                adjustmentPoints: 0
+            ),
+            isCurrentUser: false
+        )
+    }
+}
+
+nonisolated struct SupabasePublicWinnerDTO: Decodable, Sendable {
+    let id: UUID
+    let programID: UUID
+    let participantID: UUID
+    let rank: Int
+    let participantDisplayName: String
+    let totalPoints: Int
+    let lockedAt: Date
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case programID = "program_id"
+        case participantID = "participant_id"
+        case rank
+        case participantDisplayName = "participant_display_name"
+        case totalPoints = "total_points"
+        case lockedAt = "locked_at"
+    }
+
+    func domain() -> ProgramWinner {
+        ProgramWinner(
+            id: id,
+            programID: programID,
+            participantID: participantID,
+            rank: rank,
+            participantDisplayName: participantDisplayName,
+            totalPoints: totalPoints,
+            lockedAt: lockedAt
+        )
+    }
+}
+
+nonisolated struct SupabasePublicManagedContentDTO: Decodable, Sendable {
+    let id: UUID
+    let kind: String
+    let title: String
+    let body: String
+    let mediaReference: String?
+    let programID: UUID?
+    let winnerSnapshotID: UUID?
+    let visibleFrom: Date?
+    let visibleUntil: Date?
+    let sortOrder: Int
+    let isPublished: Bool
+    let isArchived: Bool
+    let updatedAt: Date
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case kind
+        case title
+        case body
+        case mediaReference = "media_reference"
+        case programID = "program_id"
+        case winnerSnapshotID = "winner_snapshot_id"
+        case visibleFrom = "visible_from"
+        case visibleUntil = "visible_until"
+        case sortOrder = "sort_order"
+        case isPublished = "is_published"
+        case isArchived = "is_archived"
+        case updatedAt = "updated_at"
+    }
+
+    func domain() throws -> ManagedContent {
+        guard let kind = ManagedContentKind(rawValue: kind) else {
+            throw SupabaseDTOError.invalidField("managedContent.kind")
+        }
+        return ManagedContent(
+            id: id,
+            kind: kind,
+            title: title,
+            body: body,
+            localMediaReference: mediaReference,
+            programID: programID,
+            winnerSnapshotID: winnerSnapshotID,
+            visibleFrom: visibleFrom,
+            visibleUntil: visibleUntil,
+            sortOrder: sortOrder,
+            isPublished: isPublished,
+            isArchived: isArchived,
+            updatedAt: updatedAt
+        )
+    }
+}
+
 nonisolated struct SupabaseEnrollmentDTO: Decodable, Sendable {
     let id: UUID
     let programID: UUID
@@ -342,6 +525,328 @@ nonisolated struct SupabaseEnrollmentDTO: Decodable, Sendable {
             coachID: coachID,
             status: status,
             enrolledAt: enrolledAt
+        )
+    }
+}
+
+nonisolated struct SupabaseAuthenticatedAccountDTO:
+    Decodable,
+    Sendable
+{
+    let userID: UUID
+    let publicProfileID: UUID
+    let role: String
+    let displayName: String
+    let city: String
+    let phoneNumber: String?
+    let currentCoachID: UUID?
+    let providerAvatarURL: String?
+    let memberLevel: String?
+    let onboardingStatus: String
+    let accountPurpose: String
+
+    private enum CodingKeys: String, CodingKey {
+        case userID = "user_id"
+        case publicProfileID = "public_profile_id"
+        case role
+        case displayName = "display_name"
+        case city
+        case phoneNumber = "phone_number"
+        case currentCoachID = "current_coach_id"
+        case providerAvatarURL = "provider_avatar_url"
+        case memberLevel = "member_level"
+        case onboardingStatus = "onboarding_status"
+        case accountPurpose = "account_purpose"
+    }
+
+    func domain() throws -> AuthenticatedAccountReadModel {
+        guard let role = UserRole(rawValue: role) else {
+            throw SupabaseDTOError.invalidField("profile.role")
+        }
+        let memberLevel: MemberLevel?
+        if let rawMemberLevel = self.memberLevel {
+            guard let parsedMemberLevel = MemberLevel(
+                rawValue: rawMemberLevel
+            ) else {
+                throw SupabaseDTOError.invalidField("profile.memberLevel")
+            }
+            memberLevel = parsedMemberLevel
+        } else {
+            memberLevel = nil
+        }
+        guard let onboardingStatus = ProfileOnboardingStatus(
+            rawValue: onboardingStatus
+        ) else {
+            throw SupabaseDTOError.invalidField(
+                "profile.onboardingStatus"
+            )
+        }
+        guard let accountPurpose = AccountPurpose(
+            rawValue: accountPurpose
+        ) else {
+            throw SupabaseDTOError.invalidField("profile.accountPurpose")
+        }
+        return AuthenticatedAccountReadModel(
+            publicProfileID: publicProfileID,
+            role: role,
+            displayName: displayName,
+            city: city,
+            phoneNumber: phoneNumber,
+            currentCoachID: currentCoachID,
+            avatarReference: providerAvatarURL,
+            memberLevel: memberLevel,
+            onboardingStatus: onboardingStatus,
+            accountPurpose: accountPurpose
+        )
+    }
+}
+
+nonisolated struct SupabaseAssignedCoachDTO: Decodable, Sendable {
+    let userID: UUID
+    let publicProfileID: UUID
+    let displayName: String
+    let city: String
+    let providerAvatarURL: String?
+    let isPublic: Bool
+    let isApproved: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case userID = "user_id"
+        case publicProfileID = "public_profile_id"
+        case displayName = "display_name"
+        case city
+        case providerAvatarURL = "provider_avatar_url"
+        case isPublic = "is_public"
+        case isApproved = "is_approved"
+    }
+
+    func domain() -> AuthenticatedAssignedCoachReadModel {
+        AuthenticatedAssignedCoachReadModel(
+            publicProfileID: publicProfileID,
+            profile: CoachProfile(
+                id: userID,
+                userID: userID,
+                enrollmentIdentifier: "",
+                displayName: displayName,
+                biography: "",
+                city: city,
+                localPhotoReference: providerAvatarURL,
+                isPublic: isPublic,
+                isApproved: isApproved
+            )
+        )
+    }
+}
+
+nonisolated struct SupabaseProgramDayAccessDTO: Decodable, Sendable {
+    let enrollmentID: UUID
+    let programID: UUID
+    let programDayID: UUID
+    let dayNumber: Int
+    let accessState: String
+    let isCurrentDay: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case enrollmentID = "enrollment_id"
+        case programID = "program_id"
+        case programDayID = "program_day_id"
+        case dayNumber = "day_number"
+        case accessState = "access_state"
+        case isCurrentDay = "is_current_day"
+    }
+
+    func domain() throws -> AuthenticatedProgramDayAccessState {
+        guard let access = ProgramDayAccess(rawValue: accessState) else {
+            throw SupabaseDTOError.invalidField("programDay.access")
+        }
+        return AuthenticatedProgramDayAccessState(
+            enrollmentID: enrollmentID,
+            programID: programID,
+            programDayID: programDayID,
+            dayNumber: dayNumber,
+            access: access,
+            isCurrentDay: isCurrentDay
+        )
+    }
+}
+
+nonisolated struct SupabaseDashboardSummaryDTO: Decodable, Sendable {
+    let accountRole: String
+    let activeEnrollmentCount: Int
+    let completedEnrollmentCount: Int
+    let pendingSubmissionCount: Int
+    let assignedParticipantCount: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case accountRole = "account_role"
+        case activeEnrollmentCount = "active_enrollment_count"
+        case completedEnrollmentCount = "completed_enrollment_count"
+        case pendingSubmissionCount = "pending_submission_count"
+        case assignedParticipantCount = "assigned_participant_count"
+    }
+
+    func domain() throws -> AuthenticatedDashboardSummary {
+        guard let role = UserRole(rawValue: accountRole) else {
+            throw SupabaseDTOError.invalidField("dashboard.role")
+        }
+        return AuthenticatedDashboardSummary(
+            role: role,
+            activeEnrollmentCount: activeEnrollmentCount,
+            completedEnrollmentCount: completedEnrollmentCount,
+            pendingSubmissionCount: pendingSubmissionCount,
+            assignedParticipantCount: assignedParticipantCount
+        )
+    }
+}
+
+nonisolated struct SupabaseSubmissionAnswerReadDTO:
+    Decodable,
+    Sendable
+{
+    let id: UUID
+    let questionID: UUID
+    let textValue: String?
+    let numberValue: Decimal?
+    let selectedOptionIDs: [UUID]
+    let privatePhotoPath: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case questionID = "question_id"
+        case textValue = "text_value"
+        case numberValue = "number_value"
+        case selectedOptionIDs = "selected_option_ids"
+        case privatePhotoPath = "private_photo_path"
+    }
+
+    func domain() -> StepSubmissionAnswer {
+        StepSubmissionAnswer(
+            id: id,
+            questionID: questionID,
+            textValue: textValue,
+            numberValue: numberValue,
+            selectedOptionIDs: selectedOptionIDs,
+            localPhotoReference: privatePhotoPath
+        )
+    }
+}
+
+nonisolated struct SupabaseQuizResultReadDTO: Decodable, Sendable {
+    let id: UUID
+    let correctCount: Int
+    let totalCount: Int
+    let percentage: Int
+    let passed: Bool
+    let awardedPoints: Int
+    let reopenedAt: Date?
+    let reopenedBy: UUID?
+    let reopenReason: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case correctCount = "correct_count"
+        case totalCount = "total_count"
+        case percentage
+        case passed
+        case awardedPoints = "awarded_points"
+        case reopenedAt = "reopened_at"
+        case reopenedBy = "reopened_by"
+        case reopenReason = "reopen_reason"
+    }
+}
+
+nonisolated struct SupabaseSubmissionReadDTO: Decodable, Sendable {
+    let id: UUID
+    let enrollmentID: UUID
+    let stepID: UUID
+    let attemptSequence: Int
+    let status: String
+    let submittedAt: Date
+    let reviewedAt: Date?
+    let reviewerID: UUID?
+    let reviewNote: String?
+    let answers: [SupabaseSubmissionAnswerReadDTO]
+    let quizResult: SupabaseQuizResultReadDTO?
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case enrollmentID = "enrollment_id"
+        case stepID = "step_id"
+        case attemptSequence = "attempt_sequence"
+        case status
+        case submittedAt = "submitted_at"
+        case reviewedAt = "reviewed_at"
+        case reviewerID = "reviewer_id"
+        case reviewNote = "review_note"
+        case answers = "step_submission_answers"
+        case quizResult = "quiz_attempt_results"
+    }
+
+    func domain() throws -> StepSubmission {
+        guard let status = SubmissionStatus(rawValue: status) else {
+            throw SupabaseDTOError.invalidField("submission.status")
+        }
+        let mappedQuizResult = quizResult.map {
+            QuizAttemptResult(
+                id: $0.id,
+                enrollmentID: enrollmentID,
+                stepID: stepID,
+                sequence: attemptSequence,
+                correctAnswerCount: $0.correctCount,
+                totalQuestionCount: $0.totalCount,
+                percentage: $0.percentage,
+                isPassed: $0.passed,
+                awardedPoints: $0.awardedPoints,
+                submittedAt: submittedAt,
+                reopenedAt: $0.reopenedAt,
+                reopenedByAdminID: $0.reopenedBy,
+                reopenReason: $0.reopenReason
+            )
+        }
+        return StepSubmission(
+            id: id,
+            enrollmentID: enrollmentID,
+            stepID: stepID,
+            status: status,
+            submittedAt: submittedAt,
+            reviewedAt: reviewedAt,
+            reviewerID: reviewerID,
+            reviewNote: reviewNote,
+            answers: answers.map { $0.domain() },
+            attemptSequence: attemptSequence,
+            quizResult: mappedQuizResult
+        )
+    }
+}
+
+nonisolated struct SupabaseWeighInReadDTO: Decodable, Sendable {
+    let id: UUID
+    let enrollmentID: UUID
+    let stepID: UUID?
+    let kind: String
+    let weightKilograms: Decimal
+    let recordedAt: Date
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case enrollmentID = "enrollment_id"
+        case stepID = "step_id"
+        case kind
+        case weightKilograms = "weight_kg"
+        case recordedAt = "recorded_at"
+    }
+
+    func domain() throws -> WeighIn {
+        guard let type = WeighInType(rawValue: kind) else {
+            throw SupabaseDTOError.invalidField("weighIn.kind")
+        }
+        return WeighIn(
+            id: id,
+            enrollmentID: enrollmentID,
+            stepID: stepID,
+            type: type,
+            weightKilograms: weightKilograms,
+            recordedAt: recordedAt
         )
     }
 }
@@ -389,6 +894,7 @@ nonisolated struct SupabaseSubmissionDTO: Decodable, Sendable {
 }
 
 nonisolated struct SupabaseProgramScoreDTO: Decodable, Sendable {
+    let publicID: UUID?
     let enrollmentID: UUID
     let activityPoints: Int
     let quizPoints: Int
@@ -398,6 +904,7 @@ nonisolated struct SupabaseProgramScoreDTO: Decodable, Sendable {
     let rank: Int?
 
     private enum CodingKeys: String, CodingKey {
+        case publicID = "public_id"
         case enrollmentID = "enrollment_id"
         case activityPoints = "activity_points"
         case quizPoints = "quiz_points"
@@ -405,6 +912,28 @@ nonisolated struct SupabaseProgramScoreDTO: Decodable, Sendable {
         case adjustmentPoints = "adjustment_points"
         case progressPercentage = "progress_percentage"
         case rank
+    }
+
+    func ownLeaderboardEntry(
+        programID: UUID,
+        participantID: UUID,
+        displayName: String
+    ) -> LeaderboardEntry {
+        LeaderboardEntry(
+            id: publicID ?? enrollmentID,
+            programID: programID,
+            participantID: participantID,
+            participantDisplayName: displayName,
+            rank: rank ?? 0,
+            progressPercentage: progressPercentage,
+            score: ScoreBreakdown(
+                approvedStepPoints: activityPoints,
+                quizPoints: quizPoints,
+                weightPoints: weightPoints,
+                adjustmentPoints: adjustmentPoints
+            ),
+            isCurrentUser: true
+        )
     }
 }
 

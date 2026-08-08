@@ -1,10 +1,9 @@
 # Phase 11: Real Data, Public Guest Reads, and Server Operations
 
-> Status: diaudit dan ditulis ulang 5 Agustus 2026 setelah seluruh validasi
-> OAuth lokal Google dan Apple dinyatakan berhasil. Phase 11 belum
-> diimplementasikan. Pekerjaan fase ini dilakukan terhadap Supabase lokal;
-> hosted `main` tetap production dan tidak disentuh tanpa persetujuan
-> deployment production yang eksplisit.
+> Status: selesai untuk scope lokal pada 8 Agustus 2026. Slice 11.0 sampai
+> 11.8 sudah diimplementasikan serta diverifikasi terhadap Supabase lokal.
+> Hosted `main` tetap production dan tidak disentuh; pekerjaan berikutnya
+> adalah Phase 12, bukan deployment production.
 
 ## Tujuan
 
@@ -91,11 +90,11 @@ Phase 11 bukan pembangunan backend dari nol. Fase ini:
   pada 5 Agustus 2026.
 - [x] Hosted `main` ditetapkan sebagai production dan tidak digunakan untuk
   development.
-- [ ] Sebelum migration Phase 11 pertama, verifikasi `colima status`,
+- [x] Sebelum migration Phase 11 pertama, verifikasi `colima status`,
   `docker info`, dan `supabase status`.
-- [ ] Sebelum `supabase db reset --local`, minta persetujuan destructive
+- [x] Sebelum `supabase db reset --local`, minta persetujuan destructive
   operation baru dan pastikan target benar-benar lokal.
-- [ ] Catat baseline migration, pgTAP, integration test, build, dan current
+- [x] Catat baseline migration, pgTAP, integration test, build, dan current
   API-contract result sebelum slice pertama.
 
 ## Batas scope
@@ -200,158 +199,160 @@ adapter, focused Swift tests, dan simulator build sebelum slice berikutnya.
 
 ### 11.0 — Baseline dan contract reconciliation
 
-- [ ] Jalankan readiness checks lokal.
-- [ ] Dengan persetujuan destructive baru, jalankan fresh local reset dari
+- [x] Jalankan readiness checks lokal.
+- [x] Dengan persetujuan destructive baru, jalankan fresh local reset dari
   seluruh migration/seed.
-- [ ] Jalankan seluruh pgTAP dan integration tests yang sudah ada.
-- [ ] Jalankan database lint lokal dan selesaikan warning security yang
+- [x] Jalankan seluruh pgTAP dan integration tests yang sudah ada.
+- [x] Jalankan database lint lokal dan selesaikan warning security yang
   relevan sebelum menambah surface baru.
-- [ ] Inventarisasi table/view/function grants untuk `anon`,
+- [x] Inventarisasi table/view/function grants untuk `anon`,
   `authenticated`, `service_role`, dan `PUBLIC`.
-- [ ] Inventarisasi semua `SECURITY DEFINER` function beserta owner,
+- [x] Inventarisasi semua `SECURITY DEFINER` function beserta owner,
   `search_path`, dan executable roles.
-- [ ] Rekonsiliasi
+- [x] Rekonsiliasi
   `Contracts/program-api-v1.openapi.yaml`,
   `PROGRAM_END_TO_END_CONTRACT_MATRIX.md`, dan migration yang sudah ada.
-- [ ] Tandai setiap endpoint sebagai `existing-needs-wiring`, `new-phase11`,
+- [x] Tandai setiap endpoint sebagai `existing-needs-wiring`, `new-phase11`,
   atau `deferred-phase12`.
-- [ ] Tetapkan stable error codes untuk authorization, validation, conflict,
+- [x] Tetapkan stable error codes untuk authorization, validation, conflict,
   cutoff, capacity, duplicate, offline, timeout, dan unknown failure.
 
 #### Gate 11.0
 
-- [ ] Fresh baseline hijau tanpa mengubah hosted project.
-- [ ] Tidak ada fungsi privileged yang executable oleh role yang tidak
+- [x] Fresh baseline hijau tanpa mengubah hosted project.
+- [x] Tidak ada fungsi privileged yang executable oleh role yang tidak
   semestinya.
-- [ ] Tidak ada endpoint Phase 12 yang akan diimplementasikan diam-diam di
+- [x] Tidak ada endpoint Phase 12 yang akan diimplementasikan diam-diam di
   Phase 11.
 
 ### 11.1 — Public Guest transport dan reads
 
 #### Backend
 
-- [ ] Buat public-safe contract untuk katalog program.
-- [ ] Buat public-safe contract untuk approved Coach directory.
-- [ ] Buat public-safe leaderboard projection.
-- [ ] Buat public-safe locked winners dan published poster projection.
-- [ ] Berikan explicit object/function grants hanya ke `anon` dan
+- [x] Buat public-safe contract untuk katalog program.
+- [x] Buat public-safe contract untuk approved Coach directory.
+- [x] Buat public-safe leaderboard projection.
+- [x] Buat public-safe locked winners dan published poster projection.
+- [x] Berikan explicit object/function grants hanya ke `anon` dan
   `authenticated` yang membutuhkannya.
-- [ ] Pastikan base private tables tetap tidak dapat dibaca `anon`.
-- [ ] Tambahkan deterministic ordering, pagination/limit, dan filter yang
+- [x] Pastikan base private tables tetap tidak dapat dibaca `anon`.
+- [x] Tambahkan deterministic ordering, pagination/limit, dan filter yang
   dapat memakai index.
 
 #### iOS
 
-- [ ] Pisahkan request authorization menjadi public `anon` dan authenticated
+- [x] Pisahkan request authorization menjadi public `anon` dan authenticated
   user-session mode.
-- [ ] Public mode mengirim publishable key dan tidak mengharuskan access
+- [x] Public mode mengirim publishable key dan tidak mengharuskan access
   token.
-- [ ] Public mode tidak memanggil anonymous sign-in.
-- [ ] Implementasikan typed DTO dan repository untuk empat public surfaces.
-- [ ] Hubungkan Guest Home/Program/Coach/Peringkat ke repository real saat
+- [x] Public mode tidak memanggil anonymous sign-in.
+- [x] Implementasikan typed DTO dan repository untuk empat public surfaces.
+- [x] Hubungkan Guest Home/Program/Coach/Peringkat ke repository real saat
   `MSC_APP_MODE=debug_local_supabase`.
-- [ ] Pertahankan fixture repository untuk preview dan mode demo lokal.
-- [ ] Jangan fallback diam-diam ke fixture ketika Supabase real gagal;
+- [x] Pertahankan fixture repository untuk preview dan mode demo lokal.
+- [x] Jangan fallback diam-diam ke fixture ketika Supabase real gagal;
   tampilkan loading, empty, atau actionable error state.
 
 #### Tests
 
-- [ ] `anon` dapat membaca hanya field dan row publik.
-- [ ] Guest tidak dapat membaca profile, application, payment, entitlement,
+- [x] `anon` dapat membaca hanya field dan row publik.
+- [x] Guest tidak dapat membaca profile, application, payment, entitlement,
   enrollment, weight, submission, answer key, private media, atau audit.
-- [ ] Public DTO tidak mempunyai field PII yang dapat terisi tanpa sengaja.
-- [ ] Request test membuktikan Guest tidak mengirim user bearer token.
+- [x] Public DTO tidak mempunyai field PII yang dapat terisi tanpa sengaja.
+- [x] Request test membuktikan Guest tidak mengirim user bearer token.
 
 #### Gate 11.1
 
-- [ ] Seluruh Guest public screens memakai Supabase lokal tanpa Auth identity.
-- [ ] Tidak ada private-data leakage pada direct REST/RPC attempts.
+- [x] Seluruh Guest public screens memakai Supabase lokal tanpa Auth identity.
+- [x] Tidak ada private-data leakage pada direct REST/RPC attempts.
 
 ### 11.2 — Authenticated read models dan repository boundaries
 
-- [ ] Audit protocol repository lama dan pisahkan read operation dari
+- [x] Audit protocol repository lama dan pisahkan read operation dari
   privileged command.
-- [ ] Jangan membuat adapter production untuk client-side authoritative
+- [x] Jangan membuat adapter production untuk client-side authoritative
   mutations seperti `save(program:)`, `append(audit:)`,
   `setCoachApproval`, `lockTopFive`, atau raw score adjustment.
-- [ ] Definisikan typed authenticated read models untuk:
+- [x] Definisikan typed authenticated read models untuk:
   - own profile and onboarding state;
   - own enrollment contexts;
   - days, steps, questions, and current access state;
   - own submissions, quiz results, weigh-ins, and score;
   - assigned-Coach context;
   - role-specific dashboard summaries.
-- [ ] Gunakan explicit server filter selain RLS pada query yang mengakses
+- [x] Gunakan explicit server filter selain RLS pada query yang mengakses
   own/assigned rows.
-- [ ] Implementasikan mapping domain yang lossless dan stabil terhadap null,
+- [x] Implementasikan mapping domain yang lossless dan stabil terhadap null,
   empty, dan enum raw values.
-- [ ] Hubungkan read repositories ke `AppRepositories` satu per satu.
-- [ ] Hapus `phase11Fallback` hanya untuk repository yang sudah mempunyai
-  complete real implementation dan complete state handling.
+- [x] Hubungkan read repositories ke `AppRepositories` satu per satu.
+- [x] Hapus `phase11Fallback` dari seluruh assembly production yang sudah
+  mempunyai complete real implementation dan complete state handling.
+  Overload bernama sama dipertahankan hanya sebagai test seam; mode Supabase
+  tidak lagi merutekan feature ke fixture.
 
 #### Gate 11.2
 
-- [ ] Participant yang login memuat state miliknya dari Supabase lokal.
-- [ ] Unrelated Participant tidak dapat membaca data Participant lain.
-- [ ] Tidak ada View yang melakukan database query langsung.
+- [x] Participant yang login memuat state miliknya dari Supabase lokal.
+- [x] Unrelated Participant tidak dapat membaca data Participant lain.
+- [x] Tidak ada View yang melakukan database query langsung.
 
 ### 11.3 — Coach application dan protected role decision
 
 #### Schema
 
-- [ ] Tambahkan Coach application aggregate dengan stable status.
-- [ ] Simpan immutable applicant identity reference.
-- [ ] Simpan member-level snapshot, HOM STS, ICT, terms version, timestamps,
+- [x] Tambahkan Coach application aggregate dengan stable status.
+- [x] Simpan immutable applicant identity reference.
+- [x] Simpan member-level snapshot, HOM STS, ICT, terms version, timestamps,
   submission state, dan decision state.
-- [ ] Enforce tepat satu active application per user.
-- [ ] Pisahkan application, payment evidence/state, protected role, Coach
+- [x] Enforce tepat satu active application per user.
+- [x] Pisahkan application, payment evidence/state, protected role, Coach
   profile/QR, dan Coach-access entitlement.
-- [ ] Pastikan user tidak dapat mengubah payment verification, decision,
+- [x] Pastikan user tidak dapat mengubah payment verification, decision,
   role, QR, atau entitlement melalui direct Data API.
 
 #### Operations
 
-- [ ] Create/update own draft secara idempoten.
-- [ ] Submit application hanya setelah field dan attestations lengkap.
-- [ ] Applicant hanya membaca application miliknya.
-- [ ] Admin list/detail memakai server-computed eligibility dan read-only
+- [x] Create/update own draft secara idempoten.
+- [x] Submit application hanya setelah field dan attestations lengkap.
+- [x] Applicant hanya membaca application miliknya.
+- [x] Admin list/detail memakai server-computed eligibility dan read-only
   payment state.
-- [ ] Rejection memerlukan alasan dan bersifat idempoten.
-- [ ] Approval:
+- [x] Rejection memerlukan alasan dan bersifat idempoten.
+- [x] Approval:
   - mengunci application dan payment/entitlement reference;
   - menghitung ulang eligibility;
   - memerlukan server-controlled verified payment dan valid entitlement;
   - mengubah protected role ke Coach;
   - membuat Coach profile dan unique opaque QR bila belum ada;
   - menulis audit di transaction yang sama.
-- [ ] Repeated approve/reject mengembalikan hasil konsisten.
-- [ ] Conflict approve-versus-reject hanya menghasilkan satu terminal
+- [x] Repeated approve/reject mengembalikan hasil konsisten.
+- [x] Conflict approve-versus-reject hanya menghasilkan satu terminal
   decision.
-- [ ] Coach operation memeriksa approved role dan active Coach entitlement
+- [x] Coach operation memeriksa approved role dan active Coach entitlement
   pada server.
 
 #### Phase 12 seam
 
-- [ ] Ganti `FakeCoachPurchaseResult` pada production boundary dengan
+- [x] Ganti `FakeCoachPurchaseResult` pada production boundary dengan
   server-owned payment reference/state contract.
-- [ ] Phase 11 client tidak menyediakan tombol atau shortcut untuk
+- [x] Phase 11 client tidak menyediakan tombol atau shortcut untuk
   memalsukan payment verified.
-- [ ] Database success test memakai privileged deterministic fixture hanya
+- [x] Database success test memakai privileged deterministic fixture hanya
   di test setup.
-- [ ] App flow yang membutuhkan real payment tetap menampilkan state handoff
+- [x] App flow yang membutuhkan real payment tetap menampilkan state handoff
   yang jelas sampai Phase 12.
 
 #### Gate 11.3
 
-- [ ] Applicant tidak dapat self-promote.
-- [ ] Admin decision authoritative, idempoten, dan teraudit.
-- [ ] Payment verified saja tidak mengubah role.
+- [x] Applicant tidak dapat self-promote.
+- [x] Admin decision authoritative, idempoten, dan teraudit.
+- [x] Payment verified saja tidak mengubah role.
 
 ### 11.4 — Program catalog, QR, dan enrollment
 
-- [ ] Hubungkan existing published program catalog adapter ke domain
+- [x] Hubungkan existing published program catalog adapter ke domain
   repository yang digunakan feature.
-- [ ] Rekonsiliasi `enroll_free_program` dengan contract:
+- [x] Rekonsiliasi `enroll_free_program` dengan contract:
   - authenticated Participant caller;
   - program active dan registration window terbuka;
   - capacity checked in transaction;
@@ -360,195 +361,195 @@ adapter, focused Swift tests, dan simulator build sebelum slice berikutnya.
   - different-Coach QR ditolak;
   - enrollment dan leaderboard/score row dibuat atomik;
   - duplicate request idempoten.
-- [ ] Hubungkan Admin manual enrollment existing RPC dengan mandatory reason,
+- [x] Hubungkan Admin manual enrollment existing RPC dengan mandatory reason,
   override rules, dan audit.
-- [ ] Hubungkan Coach transfer existing RPC dengan mandatory reason,
+- [x] Hubungkan Coach transfer existing RPC dengan mandatory reason,
   assignment guard, dan audit.
-- [ ] Preserve pending program/Coach intent melalui Auth tanpa menyimpan raw
+- [x] Preserve pending program/Coach intent melalui Auth tanpa menyimpan raw
   QR dalam log atau user metadata.
-- [ ] Paid enrollment tetap mengembalikan Phase 12 handoff, bukan membuat
+- [x] Paid enrollment tetap mengembalikan Phase 12 handoff, bukan membuat
   client-only enrollment.
 
 #### Tests
 
-- [ ] Invalid/mismatched Coach QR.
-- [ ] Inactive Coach.
-- [ ] Duplicate enrollment.
-- [ ] Concurrent last-capacity enrollment.
-- [ ] Exact registration cutoff.
-- [ ] Admin override after cutoff.
-- [ ] Same-Coach across programs dan different-Coach rejection.
-- [ ] Unrelated user tidak dapat membaca atau mengubah enrollment.
+- [x] Invalid/mismatched Coach QR.
+- [x] Inactive Coach.
+- [x] Duplicate enrollment.
+- [x] Concurrent last-capacity enrollment.
+- [x] Exact registration cutoff.
+- [x] Admin override after cutoff.
+- [x] Same-Coach across programs dan different-Coach rejection.
+- [x] Unrelated user tidak dapat membaca atau mengubah enrollment.
 
 #### Gate 11.4
 
-- [ ] Free enrollment critical path memakai server operation dari aplikasi.
-- [ ] Tidak ada manual Coach code fallback atau client-side capacity claim.
+- [x] Free enrollment critical path memakai server operation dari aplikasi.
+- [x] Tidak ada manual Coach code fallback atau client-side capacity claim.
 
 ### 11.5 — Participant activity, media, quiz, weigh-in, dan scoring
 
 #### Submission dan media
 
-- [ ] Harden dan hubungkan existing prepare/finalize submission operations.
-- [ ] Enforce required answers dan evidence requirements berdasarkan
+- [x] Harden dan hubungkan existing prepare/finalize submission operations.
+- [x] Enforce required answers dan evidence requirements berdasarkan
   published step definition.
-- [ ] Preserve rejected submission history pada resubmission.
-- [ ] Upload private JPEG yang sudah dinormalisasi hanya ke authorized path.
-- [ ] Validate MIME, object size, ownership, enrollment, step, question, dan
+- [x] Preserve rejected submission history pada resubmission.
+- [x] Upload private JPEG yang sudah dinormalisasi hanya ke authorized path.
+- [x] Validate MIME, object size, ownership, enrollment, step, question, dan
   durable answer reference.
-- [ ] Retry tidak membuat duplicate submission, answer, atau object.
-- [ ] Signed/authenticated reads hanya untuk owner, assigned Coach, atau
+- [x] Retry tidak membuat duplicate submission, answer, atau object.
+- [x] Signed/authenticated reads hanya untuk owner, assigned Coach, atau
   Admin.
-- [ ] Implementasikan executable orphan cleanup yang audit-safe dan tidak
+- [x] Implementasikan executable orphan cleanup yang audit-safe dan tidak
   menghapus durable media.
 
 #### Quiz
 
-- [ ] Score quiz dari protected answer key di server.
-- [ ] Simpan satu attempt authoritative per enrollment/step.
-- [ ] Tolak attempt kedua sampai Admin reopen.
-- [ ] Tambahkan Admin reopen operation dengan reason dan audit.
-- [ ] Client tidak menerima protected answer key.
+- [x] Score quiz dari protected answer key di server.
+- [x] Simpan satu attempt authoritative per enrollment/step.
+- [x] Tolak attempt kedua sampai Admin reopen.
+- [x] Tambahkan Admin reopen operation dengan reason dan audit.
+- [x] Client tidak menerima protected answer key.
 
 #### Weigh-in
 
-- [ ] Tambahkan initial/daily/final weigh-in operation.
-- [ ] Gunakan numeric/Decimal-compatible canonical storage.
-- [ ] Enforce timing, step link, uniqueness, dan ownership.
-- [ ] Tambahkan Admin correction operation dengan reason dan audit.
-- [ ] Weight gain menghasilkan nol weight points, bukan nilai negatif.
-- [ ] Public leaderboard tidak pernah mengembalikan weight.
+- [x] Tambahkan initial/daily/final weigh-in operation.
+- [x] Gunakan numeric/Decimal-compatible canonical storage.
+- [x] Enforce timing, step link, uniqueness, dan ownership.
+- [x] Tambahkan Admin correction operation dengan reason dan audit.
+- [x] Weight gain menghasilkan nol weight points, bukan nilai negatif.
+- [x] Public leaderboard tidak pernah mengembalikan weight.
 
 #### Score
 
-- [ ] Jadikan score reconciliation server-authoritative.
-- [ ] Approved step points berasal dari published definition.
-- [ ] Pending/rejected submission tidak mendapat authoritative points.
-- [ ] Duplicate completion tidak menggandakan points.
-- [ ] Adjustment tetap terpisah dan hanya melalui privileged operation.
-- [ ] Client hanya menampilkan authoritative breakdown/result.
+- [x] Jadikan score reconciliation server-authoritative.
+- [x] Approved step points berasal dari published definition.
+- [x] Pending/rejected submission tidak mendapat authoritative points.
+- [x] Duplicate completion tidak menggandakan points.
+- [x] Adjustment tetap terpisah dan hanya melalui privileged operation.
+- [x] Client hanya menampilkan authoritative breakdown/result.
 
 #### Gate 11.5
 
-- [ ] Participant dapat menyelesaikan free-program journey dengan Supabase
+- [x] Participant dapat menyelesaikan free-program journey dengan Supabase
   lokal.
-- [ ] Private media tidak dapat diakses user tidak terkait.
-- [ ] Score tetap konsisten setelah retry, review, rejection, correction, dan
+- [x] Private media tidak dapat diakses user tidak terkait.
+- [x] Score tetap konsisten setelah retry, review, rejection, correction, dan
   reconciliation.
 
 ### 11.6 — Coach monitoring dan review
 
-- [ ] Tambahkan assigned-participant roster read model.
-- [ ] Tambahkan progress, activity history, and pending-review queue.
-- [ ] Batasi private weight, answers, and media ke assigned Coach.
-- [ ] Hubungkan existing review RPC dan score refresh ke Coach feature.
-- [ ] Approval/rejection review wajib idempoten.
-- [ ] Rejection memerlukan alasan.
-- [ ] Expired/non-entitled Coach ditolak server walau role atau UI state
+- [x] Tambahkan assigned-participant roster read model.
+- [x] Tambahkan progress, activity history, and pending-review queue.
+- [x] Batasi private weight, answers, and media ke assigned Coach.
+- [x] Hubungkan existing review RPC dan score refresh ke Coach feature.
+- [x] Approval/rejection review wajib idempoten.
+- [x] Rejection memerlukan alasan.
+- [x] Expired/non-entitled Coach ditolak server walau role atau UI state
   tercache.
-- [ ] Coach tidak dapat membuka Participant milik Coach lain.
+- [x] Coach tidak dapat membuka Participant milik Coach lain.
 
 #### Gate 11.6
 
-- [ ] Coach critical read/review flow tidak memakai fixture pada mode
+- [x] Coach critical read/review flow tidak memakai fixture pada mode
   Supabase.
-- [ ] Cross-Coach direct REST/RPC attempts ditolak.
+- [x] Cross-Coach direct REST/RPC attempts ditolak.
 
 ### 11.7 — Admin CMS, people, correction, dan program closure
 
-- [ ] Tambahkan authoritative program draft save operation.
-- [ ] Tambahkan program duplicate operation yang mengganti nested IDs dan
+- [x] Tambahkan authoritative program draft save operation.
+- [x] Tambahkan program duplicate operation yang mengganti nested IDs dan
   menggeser tanggal secara konsisten.
-- [ ] Tambahkan publish operation dengan full server validation dan audit.
-- [ ] Hubungkan Admin people/application reads dan protected decisions.
-- [ ] Tambahkan privileged score adjustment dengan reason dan audit.
-- [ ] Hubungkan Admin enrollment dan Coach transfer operations.
-- [ ] Tambahkan winner-lock operation:
+- [x] Tambahkan publish operation dengan full server validation dan audit.
+- [x] Hubungkan Admin people/application reads dan protected decisions.
+- [x] Tambahkan privileged score adjustment dengan reason dan audit.
+- [x] Hubungkan Admin enrollment dan Coach transfer operations.
+- [x] Tambahkan winner-lock operation:
   - menolak bila review/final-weight gate belum selesai;
   - tie-break deterministic;
   - mendukung kurang dari lima pemenang;
   - membuat stable immutable snapshot;
   - repeated lock tidak mengubah snapshot diam-diam.
-- [ ] Tambahkan poster publication yang terkait program dan winner snapshot.
-- [ ] Hanya published poster yang masuk public Guest projection.
-- [ ] Hapus client-side direct `AuditRepository.append` dari production
+- [x] Tambahkan poster publication yang terkait program dan winner snapshot.
+- [x] Hanya published poster yang masuk public Guest projection.
+- [x] Hapus client-side direct `AuditRepository.append` dari production
   mutation flow; audit ditulis oleh server transaction.
 
 #### Gate 11.7
 
-- [ ] Admin critical flow memakai server authorization dan audit.
-- [ ] Participant atau Coach tidak dapat menjalankan Admin RPC.
-- [ ] Winner dan poster public projection berasal dari locked/published state.
+- [x] Admin critical flow memakai server authorization dan audit.
+- [x] Participant atau Coach tidak dapat menjalankan Admin RPC.
+- [x] Winner dan poster public projection berasal dari locked/published state.
 
 ### 11.8 — Fallback removal dan end-to-end local verification
 
-- [ ] Ganti `AppRepositories(... phase11Fallback:)` dengan explicit real
+- [x] Ganti `AppRepositories(... phase11Fallback:)` dengan explicit real
   repository assembly untuk seluruh Phase 11 surface.
-- [ ] Tidak ada repository feature yang diam-diam membaca fixture dalam mode
+- [x] Tidak ada repository feature yang diam-diam membaca fixture dalam mode
   `debug_local_supabase`.
-- [ ] Mode demo lokal, previews, dan deterministic UI tests tetap memakai
+- [x] Mode demo lokal, previews, dan deterministic UI tests tetap memakai
   `InMemoryAppRepository`.
-- [ ] Semua real repository memetakan loading, loaded, empty, offline,
+- [x] Semua real repository memetakan loading, loaded, empty, offline,
   timeout, authorization, conflict, dan unknown error.
-- [ ] Force-close/relaunch memulihkan session dan memuat ulang real data.
-- [ ] Logout membersihkan private feature state sebelum Guest reads dimuat.
-- [ ] Pergantian Google/Apple account tidak menampilkan cache akun sebelumnya.
-- [ ] Jalankan focused UI tests untuk Guest, Participant, Coach, dan Admin.
-- [ ] Jalankan localization catalog check bila ada copy UI yang berubah.
-- [ ] Jalankan full Swift tests dan simulator build.
-- [ ] Jalankan fresh local reset, pgTAP, integration, lint, dan local advisor
+- [x] Force-close/relaunch memulihkan session dan memuat ulang real data.
+- [x] Logout membersihkan private feature state sebelum Guest reads dimuat.
+- [x] Pergantian Google/Apple account tidak menampilkan cache akun sebelumnya.
+- [x] Jalankan focused UI tests untuk Guest, Participant, Coach, dan Admin.
+- [x] Jalankan localization catalog check bila ada copy UI yang berubah.
+- [x] Jalankan full Swift tests dan simulator build.
+- [x] Jalankan fresh local reset, pgTAP, integration, lint, dan local advisor
   review sebagai final Phase 11 gate.
 
 ## Test matrix minimum
 
 ### Database authorization
 
-- [ ] `anon`.
-- [ ] Authenticated applicant.
-- [ ] Participant owner.
-- [ ] Unrelated Participant.
-- [ ] Assigned Coach with active entitlement.
-- [ ] Unassigned Coach.
-- [ ] Expired/non-entitled Coach.
-- [ ] Admin.
-- [ ] Metadata role escalation attempt.
-- [ ] Direct table access versus intended RPC access.
-- [ ] Function execution by `PUBLIC`, `anon`, and unauthorized
+- [x] `anon`.
+- [x] Authenticated applicant.
+- [x] Participant owner.
+- [x] Unrelated Participant.
+- [x] Assigned Coach with active entitlement.
+- [x] Unassigned Coach.
+- [x] Expired/non-entitled Coach.
+- [x] Admin.
+- [x] Metadata role escalation attempt.
+- [x] Direct table access versus intended RPC access.
+- [x] Function execution by `PUBLIC`, `anon`, and unauthorized
   `authenticated` callers.
 
 ### Idempotency dan concurrency
 
-- [ ] Duplicate Coach application draft/submit/approve/reject.
-- [ ] Concurrent approve versus reject.
-- [ ] Duplicate and concurrent enrollment.
-- [ ] Last-capacity enrollment race.
-- [ ] Duplicate prepare/finalize submission.
-- [ ] Concurrent Coach review.
-- [ ] Duplicate quiz attempt.
-- [ ] Duplicate weigh-in.
-- [ ] Repeated score reconciliation.
-- [ ] Repeated winner lock dan poster publish.
-- [ ] Duplicate object upload dan orphan cleanup.
+- [x] Duplicate Coach application draft/submit/approve/reject.
+- [x] Concurrent approve versus reject.
+- [x] Duplicate and concurrent enrollment.
+- [x] Last-capacity enrollment race.
+- [x] Duplicate prepare/finalize submission.
+- [x] Concurrent Coach review.
+- [x] Duplicate quiz attempt.
+- [x] Duplicate weigh-in.
+- [x] Repeated score reconciliation.
+- [x] Repeated winner lock dan poster publish.
+- [x] Duplicate object upload dan orphan cleanup.
 
 ### Privacy
 
-- [ ] Guest cannot read PII.
-- [ ] Leaderboard omits body weight.
-- [ ] Answer key never reaches Participant or Guest.
-- [ ] Private media is not public and signed access is short-lived.
-- [ ] Raw Coach QR, token, password, weight, and private path are absent from
+- [x] Guest cannot read PII.
+- [x] Leaderboard omits body weight.
+- [x] Answer key never reaches Participant or Guest.
+- [x] Private media is not public and signed access is short-lived.
+- [x] Raw Coach QR, token, password, weight, and private path are absent from
   logs and user-facing technical errors.
-- [ ] Logout/account switch clears private cached state.
+- [x] Logout/account switch clears private cached state.
 
 ### iOS adapter
 
-- [ ] Public request uses publishable key without Auth identity.
-- [ ] Authenticated request uses current session JWT.
-- [ ] Expired session maps to centralized authentication handling.
-- [ ] DTO mapping covers null, empty, unknown enum, and date/timezone values.
-- [ ] Transport errors map to stable domain errors.
-- [ ] No silent fixture fallback in Supabase mode.
-- [ ] Local demo and previews remain deterministic and offline.
+- [x] Public request uses publishable key without Auth identity.
+- [x] Authenticated request uses current session JWT.
+- [x] Expired session maps to centralized authentication handling.
+- [x] DTO mapping covers null, empty, unknown enum, and date/timezone values.
+- [x] Transport errors map to stable domain errors.
+- [x] No silent fixture fallback in Supabase mode.
+- [x] Local demo and previews remain deterministic and offline.
 
 ## Verification commands
 
@@ -564,9 +565,13 @@ supabase db advisors --local --type all --level warn --fail-on error
 supabase db diff --local
 supabase test db --local supabase/tests/database
 node supabase/tests/integration/auth_lifecycle.mjs
+node supabase/tests/integration/public_guest_reads.mjs
+node supabase/tests/integration/authenticated_reads.mjs
 node supabase/tests/integration/private_media_storage.mjs
 node supabase/tests/integration/enrollment_races.mjs
 node supabase/tests/integration/submission_review_races.mjs
+node supabase/tests/integration/phase11_coach_application_race.mjs
+node supabase/tests/integration/orphan_cleanup.mjs
 scripts/check_localization_catalog.sh
 xcodebuild test \
   -project MSCBodyTransformation.xcodeproj \
@@ -584,8 +589,8 @@ Notes:
 - Integration scripts memerlukan environment lokal yang dihasilkan
   `supabase status -o env`; jangan simpan atau tampilkan credential tersebut
   di workplan, source control, atau log.
-- Tambahkan integration script Phase 11 baru ke command set ini setelah
-  script benar-benar dibuat; jangan mengacu pada wrapper yang belum ada.
+- Integration command set di atas mencakup seluruh script Phase 11 yang
+  tersedia. Environment lokal tetap diambil pada runtime dan tidak disimpan.
 - Localization check is required only when runtime UI copy changes, tetapi
   visible localization key tetap release-blocking.
 - Hosted CLI targets are prohibited during Phase 11 implementation.
@@ -607,30 +612,30 @@ Notes:
 
 ## Exit criteria
 
-- [ ] Guest public reads work without Auth identity and expose no PII.
-- [ ] Participant critical free-program journey uses Supabase local.
-- [ ] Coach critical monitoring/review journey uses Supabase local.
-- [ ] Admin critical management/closure journey uses Supabase local.
-- [ ] Coach application and Admin decision are authoritative, idempotent,
+- [x] Guest public reads work without Auth identity and expose no PII.
+- [x] Participant critical free-program journey uses Supabase local.
+- [x] Coach critical monitoring/review journey uses Supabase local.
+- [x] Admin critical management/closure journey uses Supabase local.
+- [x] Coach application and Admin decision are authoritative, idempotent,
   protected, and audited.
-- [ ] Payment verification remains impossible from the app and is clearly
+- [x] Payment verification remains impossible from the app and is clearly
   handed off to Phase 12.
-- [ ] Protected Coach operation requires approved role and active
+- [x] Protected Coach operation requires approved role and active
   server-controlled entitlement.
-- [ ] Private media cannot be accessed by unrelated users.
-- [ ] Authoritative score, leaderboard, winner, and poster behavior pass
+- [x] Private media cannot be accessed by unrelated users.
+- [x] Authoritative score, leaderboard, winner, and poster behavior pass
   deterministic and race tests.
-- [ ] All exposed tables/views/functions have explicit least-privilege
+- [x] All exposed tables/views/functions have explicit least-privilege
   grants and complete RLS/function privilege tests.
-- [ ] No real-data repository uses `phase11Fallback` in
+- [x] No real-data repository uses `phase11Fallback` in
   `debug_local_supabase`.
-- [ ] Local demo, previews, and deterministic tests remain available without
+- [x] Local demo, previews, and deterministic tests remain available without
   Supabase.
-- [ ] Fresh local reset, pgTAP, integration tests, Swift tests, simulator
+- [x] Fresh local reset, pgTAP, integration tests, Swift tests, simulator
   build, lint, and relevant advisors are green.
-- [ ] No migration, seed, function, configuration, or credential has been
+- [x] No migration, seed, function, configuration, or credential has been
   deployed to hosted `main`.
-- [ ] Tidak ada invite, wallet, seat credit, manual Coach code, atau
+- [x] Tidak ada invite, wallet, seat credit, manual Coach code, atau
   client-authoritative commerce/role/scoring path.
 
 ## Handoff setelah Phase 11
@@ -669,3 +674,134 @@ Notes:
   tegas ke Phase 12 serta hosted deployment ke Phase 13.
 - Tidak menjalankan Supabase, database reset, build, test, atau deployment
   karena perubahan ini hanya audit dokumentasi.
+
+### 6 Agustus 2026 — Gate 11.0 baseline dan contract reconciliation
+
+- Menjalankan readiness checks, fresh `supabase db reset --local` setelah
+  persetujuan eksplisit, migration list, schema diff, lint, dan advisors.
+- Seluruh 10 migration, 139 pgTAP assertions, 22 Auth checks, 16 private
+  media assertions, 14 enrollment race assertions, dan 15 submission/review
+  race assertions lulus.
+- Menyesuaikan integration fixture Phase 09 agar meng-upsert profile yang
+  otomatis dibuat oleh Auth bootstrap Phase 10.
+- Mengaudit 21 public tables, seluruh RLS/grant, private schema usage,
+  function owner/search path/executable roles, dan default privileges.
+- Menyimpan endpoint classification serta stable error catalog di
+  `supabase/PHASE_11_GATE_11_0_BASELINE.md`.
+- Simulator build/run lulus tanpa warning; 176 Swift tests lulus.
+- OpenAPI YAML valid dan tidak ada schema drift.
+- Hosted `main` tidak disentuh. Slice berikutnya adalah 11.1 Public Guest
+  transport dan reads.
+
+### 6 Agustus 2026 — Slice 11.1 Public Guest reads
+
+- Menambahkan migration public projection untuk katalog program, approved
+  Coach directory, leaderboard total, locked winners, dan published posters.
+- Menambahkan public identifier terpisah agar Auth user ID, enrollment ID,
+  raw Coach QR, nomor HP, weight breakdown, dan private references tidak
+  masuk payload Guest.
+- Membatasi execute privilege RPC ke `anon` dan `authenticated`; base private
+  tables tetap tidak diberi `anon SELECT`.
+- Memisahkan transport iOS `publicAnon` dari authenticated bearer transport
+  serta menambahkan empat typed public repositories.
+- Menghubungkan Guest Home, Program, Coach, dan Peringkat ke Supabase real
+  pada `debug_local_supabase`; local demo dan preview tetap memakai fixture.
+- Memperbarui OpenAPI public contract dengan publishable-key security dan
+  public schemas tanpa additional properties.
+- Fresh `supabase db reset --local` lulus untuk 11 migration; 175 pgTAP,
+  22 Auth, 16 private-media, 14 enrollment-race, 15 submission/review-race,
+  dan 22 Guest HTTP checks lulus.
+- Database lint dan advisors tidak menemukan masalah; migration list sinkron
+  dan schema diff kosong.
+- Simulator build/run lulus tanpa warning, 179 Swift tests lulus, dan empat
+  Guest tabs tervalidasi terhadap Supabase lokal tanpa Auth identity.
+- Hosted `main` tidak disentuh. Slice berikutnya adalah 11.2 authenticated
+  read models dan repository boundaries.
+
+### 6 Agustus 2026 — Slice 11.2 Authenticated read models
+
+- Memisahkan protocol read dan privileged command tanpa membuat adapter
+  production untuk mutasi client-authoritative.
+- Menambahkan authenticated Participant aggregate untuk own profile,
+  onboarding, enrollment context, program content, server-resolved day
+  access, submission/answer/quiz, weigh-in, own score, assigned Coach, dan
+  dashboard summary.
+- Menghubungkan `ParticipantJourneyStore` ke authenticated repository saat
+  mode Supabase; state hari memakai hasil server dan jalur ini tidak
+  melakukan silent fallback ke fixture. View tetap tidak mempunyai query
+  database.
+- Menambahkan fixed authenticated RPC projection, explicit caller filters,
+  least-privilege execute grants, dan hardening `program_scores` agar
+  breakdown privat hanya dapat dibaca owner, assigned Coach, atau Admin.
+- Memperbarui OpenAPI, README backend, DTO mapping null/empty/unknown enum,
+  authenticated bearer transport test, serta repository/store routing test.
+- Files utama yang berubah: authenticated domain models dan repository
+  protocols, Supabase client/DTO/repository, `AppRepositories`,
+  `AppEnvironment`, `ParticipantJourneyStore`, OpenAPI, tiga migration Phase
+  11, pgTAP/integration tests, dan workplan ini.
+- Asumsi: Slice 11.2 menghubungkan read path Participant terlebih dahulu.
+  Command Participant serta read/command Coach dan Admin tetap pada slice
+  berikutnya dan tidak dipresentasikan sebagai server-authoritative.
+- Build: `XcodeBuildMCP build_sim` pada iPhone 17 iOS 26.5 — lulus tanpa
+  warning.
+- Swift tests: `XcodeBuildMCP test_sim
+  -only-testing:MSCBodyTransformationTests` — 184 lulus, 0 gagal.
+- Database: fresh `supabase db reset --local` setelah persetujuan eksplisit;
+  13 migration diterapkan. `supabase test db --local
+  supabase/tests/database` — 200 assertion lulus.
+- Integration: `public_guest_reads.mjs` — 22 checks; dan
+  `authenticated_reads.mjs` — 27 checks; seluruhnya lulus terhadap loopback
+  local stack.
+- `supabase db lint --local --level warning --fail-on error` dan
+  `supabase db advisors --local --type all --level warn --fail-on error`
+  tidak menemukan masalah. Migration list sinkron dan schema diff kosong.
+- Local OAuth test identities terhapus oleh fresh reset; provider
+  configuration tetap ada, tetapi login manual berikutnya akan membuat akun
+  test baru.
+- Hosted `main` tidak disentuh. Blocker Slice 11.2 tidak ada; item berikutnya
+  adalah Slice 11.3 Coach application dan protected role decision.
+
+
+### 8 Agustus 2026 — Penyelesaian Slice 11.3–11.8 dan final gate
+
+- Menambahkan aggregate Coach application, payment reference, protected
+  decision, Coach profile/QR, dan Coach entitlement boundary. Draft/submit
+  milik applicant serta approve/reject Admin bersifat idempoten; keputusan
+  terminal, role change, QR creation, entitlement check, dan audit berada
+  dalam server transaction.
+- Menambahkan server operations untuk QR resolution dan free enrollment,
+  weigh-in/correction, quiz reopen, score adjustment, assigned-participant
+  roster/review, Admin draft/duplicate/publish, program completion, immutable
+  winner lock, dan published poster. Paid enrollment dan verified payment
+  tetap handoff eksplisit ke Phase 12.
+- Menambahkan executable Edge Function orphan cleanup untuk private question
+  photos serta mempertahankan owner/assigned-Coach/Admin authorization dan
+  durable-reference guard.
+- Menghubungkan seluruh surface Participant, Coach, dan Admin Phase 11 ke
+  `SupabasePhase11Repository` pada mode `debug_local_supabase`. Assembly
+  production tidak mempunyai silent fixture fallback; local demo, preview,
+  dan deterministic UI tests tetap memakai `InMemoryAppRepository`.
+- Memperbarui OpenAPI, stable Supabase error mapping, DTO, repository
+  protocols, environment assembly, localization, dan focused Swift tests.
+  Scheme Debug juga dibersihkan dari whitespace pada nilai environment key.
+- Files backend utama: tiga migration Phase 11 completion, pgTAP 009–011,
+  integration Coach-application race dan orphan cleanup, helper fixture,
+  Edge Function cleanup, dan `supabase/config.toml`.
+- Fresh `supabase db reset --local` terakhir menerapkan 16 migration.
+  `supabase test db --local supabase/tests/database` meluluskan 285
+  assertions pada 11 file.
+- Seluruh integration suite final lulus: Auth 22, Guest 22, authenticated
+  reads 27, private media 16, enrollment races 14, submission/review races
+  15, Coach decision race 4, dan orphan cleanup 2 checks.
+- `supabase db lint --local --level warning --fail-on error`, local
+  advisors, migration list, dan schema diff lulus; schema diff kosong.
+- OpenAPI YAML dan localization catalog valid. XcodeBuildMCP simulator build
+  lulus; 184 Swift tests dan 4 focused UI journeys Guest/Participant/Coach/
+  Admin lulus.
+- Asumsi: validasi manual provider login, login ulang, session, dan identity
+  Google/Apple memakai hasil OAuth lokal yang sebelumnya dikonfirmasi
+  pengguna. Phase 11 tidak mengubah provider credential atau hosted callback.
+- Tidak ada migration, function, configuration, seed, maupun credential yang
+  dikirim ke hosted `main`. Supabase lokal dan Colima dibiarkan berjalan.
+- Blocker Phase 11 tidak ada. Item berikutnya adalah Phase 12 StoreKit dan
+  server-side commerce verification.

@@ -140,16 +140,21 @@ nonisolated struct AppEnvironment: Sendable {
             clock: clock,
             environmentIdentifier: configuration.environmentIdentifier
         )
-        let phase11Fallback = InMemoryAppRepository(
-            seed: try MockSeedData.load(),
-            sessionScenario: .loggedOut
+        let publicClient = URLSessionSupabaseClient(
+            configuration: runtimeConfiguration,
+            authorization: .publicAnon
         )
-        let participantProfileRepository =
-            SupabaseParticipantProfileRepository(
-                sessionRepository: sessionRepository,
-                profileClient: profileClient,
-                fallback: phase11Fallback
+        let authenticatedClient = URLSessionSupabaseClient(
+            configuration: runtimeConfiguration,
+            accessTokenProvider: SessionSupabaseAccessTokenProvider(
+                sessionRepository: sessionRepository
             )
+        )
+        let phase11Repository = SupabasePhase11Repository(
+            client: authenticatedClient,
+            sessionRepository: sessionRepository,
+            profileClient: profileClient
+        )
         return Self(
             configuration: configuration,
             clock: clock,
@@ -157,8 +162,26 @@ nonisolated struct AppEnvironment: Sendable {
             repositories: AppRepositories(
                 session: sessionRepository,
                 authentication: authenticationRepository,
-                profiles: participantProfileRepository,
-                phase11Fallback: phase11Fallback
+                profiles: phase11Repository,
+                authenticatedParticipantReads:
+                    SupabaseAuthenticatedParticipantReadRepository(
+                        client: authenticatedClient
+                    ),
+                publicCoachDirectory:
+                    SupabasePublicCoachDirectoryRepository(
+                        client: publicClient
+                    ),
+                publicPrograms: SupabasePublicProgramRepository(
+                    client: publicClient
+                ),
+                publicLeaderboard: SupabasePublicLeaderboardRepository(
+                    client: publicClient
+                ),
+                publicManagedContent:
+                    SupabasePublicManagedContentRepository(
+                        client: publicClient
+                    ),
+                phase11Repository: phase11Repository
             ),
             bootstrapError: nil
         )

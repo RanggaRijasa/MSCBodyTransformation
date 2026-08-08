@@ -179,6 +179,32 @@ on conflict (user_id) do update set
   finalized_at = now(),
   updated_at = now();
 
+insert into public.coach_applications (
+  id, applicant_user_id, participant_profile_id, display_name_snapshot,
+  phone_number_snapshot, member_level_snapshot, has_completed_hom_sts,
+  has_completed_ict, terms_version, status, draft_idempotency_key,
+  submitted_at, decided_at, decided_by
+)
+values
+  ('9a000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'Coach Vertical Slice', '+628200000002', 'sc', true, true, 'test-v1', 'approved', 'vertical-coach-one', now(), now(), '91000000-0000-0000-0000-000000000001'),
+  ('9a000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'Coach Tidak Terkait', '+628200000003', 'sc', true, true, 'test-v1', 'approved', 'vertical-coach-two', now(), now(), '91000000-0000-0000-0000-000000000001');
+
+insert into public.coach_payment_records (
+  id, application_id, state, price_band, amount_minor_units,
+  provider_reference, verified_at
+)
+values
+  ('9b000000-0000-0000-0000-000000000002', '9a000000-0000-0000-0000-000000000002', 'verified', 'entry', 100000, 'test-vertical-one', now()),
+  ('9b000000-0000-0000-0000-000000000003', '9a000000-0000-0000-0000-000000000003', 'verified', 'entry', 100000, 'test-vertical-two', now());
+
+insert into public.coach_access_entitlements (
+  id, application_id, payment_record_id, coach_user_id, status,
+  starts_at, ends_at
+)
+values
+  ('9c000000-0000-0000-0000-000000000002', '9a000000-0000-0000-0000-000000000002', '9b000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000002', 'active', now() - interval '1 day', now() + interval '30 days'),
+  ('9c000000-0000-0000-0000-000000000003', '9a000000-0000-0000-0000-000000000003', '9b000000-0000-0000-0000-000000000003', '91000000-0000-0000-0000-000000000003', 'active', now() - interval '1 day', now() + interval '30 days');
+
 insert into public.programs (
   id,
   title,

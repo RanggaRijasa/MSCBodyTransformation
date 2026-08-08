@@ -85,6 +85,21 @@ nonisolated struct FixedSupabaseAccessTokenProvider:
     }
 }
 
+nonisolated struct SessionSupabaseAccessTokenProvider:
+    SupabaseAccessTokenProviding,
+    Sendable
+{
+    private let sessionRepository: any SessionRepository
+
+    init(sessionRepository: any SessionRepository) {
+        self.sessionRepository = sessionRepository
+    }
+
+    func accessToken() async throws -> String {
+        try await sessionRepository.validAccessToken()
+    }
+}
+
 nonisolated enum SupabaseHTTPMethod: String, Sendable {
     case get = "GET"
     case post = "POST"
@@ -105,9 +120,14 @@ nonisolated protocol SupabaseClientProviding: Sendable {
     func execute(_ request: SupabaseRequest) async throws -> Data
 }
 
+nonisolated enum SupabaseClientAuthorization: Sendable {
+    case publicAnon
+    case authenticated(any SupabaseAccessTokenProviding)
+}
+
 actor URLSessionSupabaseClient: SupabaseClientProviding {
     private let configuration: SupabaseRuntimeConfiguration
-    private let accessTokenProvider: any SupabaseAccessTokenProviding
+    private let authorization: SupabaseClientAuthorization
     private let session: URLSession
 
     init(
@@ -116,27 +136,42 @@ actor URLSessionSupabaseClient: SupabaseClientProviding {
         session: URLSession = .shared
     ) {
         self.configuration = configuration
-        self.accessTokenProvider = accessTokenProvider
+        authorization = .authenticated(accessTokenProvider)
+        self.session = session
+    }
+
+    init(
+        configuration: SupabaseRuntimeConfiguration,
+        authorization: SupabaseClientAuthorization,
+        session: URLSession = .shared
+    ) {
+        self.configuration = configuration
+        self.authorization = authorization
         self.session = session
     }
 
     func execute(_ request: SupabaseRequest) async throws -> Data {
-        let token = try await accessTokenProvider.accessToken()
         let url = try makeURL(request)
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.httpBody = request.body
         urlRequest.timeoutInterval = 30
+        for (name, value) in request.headers {
+            urlRequest.setValue(value, forHTTPHeaderField: name)
+        }
         urlRequest.setValue(
             configuration.publishableKey,
             forHTTPHeaderField: "apikey"
         )
-        urlRequest.setValue(
-            "Bearer \(token)",
-            forHTTPHeaderField: "Authorization"
-        )
-        for (name, value) in request.headers {
-            urlRequest.setValue(value, forHTTPHeaderField: name)
+        switch authorization {
+        case .publicAnon:
+            urlRequest.setValue(nil, forHTTPHeaderField: "Authorization")
+        case .authenticated(let accessTokenProvider):
+            let token = try await accessTokenProvider.accessToken()
+            urlRequest.setValue(
+                "Bearer \(token)",
+                forHTTPHeaderField: "Authorization"
+            )
         }
 
         do {
@@ -207,7 +242,7 @@ nonisolated enum SupabaseErrorMapper {
         let serverCode = payload?.message ?? payload?.code ?? ""
 
         switch serverCode {
-        case "permission_denied":
+        case "permission_denied", "coach_entitlement_inactive":
             return .permissionDenied
         case "coach_qr_invalid":
             return .validation(
@@ -228,6 +263,34 @@ nonisolated enum SupabaseErrorMapper {
             return .conflict(
                 reason: "Pembayaran program belum terverifikasi."
             )
+        case "pending_reviews_exist":
+            return .conflict(
+                reason: "Selesaikan seluruh pemeriksaan tertunda terlebih dahulu."
+            )
+        case "final_weight_missing":
+            return .conflict(
+                reason: "Timbang akhir seluruh peserta harus lengkap."
+            )
+        case "reason_required":
+            return .validation(
+                field: "reason",
+                reason: "Alasan wajib diisi."
+            )
+        case "coach_eligibility_incomplete", "profile_incomplete",
+             "terms_version_required", "member_level_invalid":
+            return .validation(
+                field: "coachApplication",
+                reason: "Data pengajuan Coach belum lengkap atau tidak valid."
+            )
+        case "application_locked", "application_terminal",
+             "decision_conflict", "winners_already_locked",
+             "program_not_completable", "program_not_completed",
+             "quiz_attempt_locked", "weigh_in_duplicate",
+             "adjustment_zero":
+            return .conflict(reason: serverCode)
+        case "application_not_found", "program_not_found",
+             "submission_not_found", "weigh_in_not_found":
+            return .notFound(resource: "Data")
         case "coach_required", "coach_invalid":
             return .validation(
                 field: "coach",

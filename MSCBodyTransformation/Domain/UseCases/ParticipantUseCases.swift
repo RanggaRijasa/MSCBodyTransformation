@@ -4,6 +4,7 @@ nonisolated struct JoinProgramWithCoachUseCase: Sendable {
     let enrollments: any EnrollmentRepository
     let identifierGenerator: any IdentifierGenerating
     let clock: any AppClock
+    var coachQREnrollment: (any CoachQREnrollmentRepository)? = nil
 
     func callAsFunction(
         program: Program,
@@ -22,6 +23,13 @@ nonisolated struct JoinProgramWithCoachUseCase: Sendable {
             return existing
         }
 
+        if coachQREnrollment != nil {
+            throw DomainError.validation(
+                field: "coachQR",
+                reason: "Payload QR Coach diperlukan untuk pendaftaran server."
+            )
+        }
+
         return try await enrollments.createEnrollment(
             ProgramEnrollment(
                 id: identifierGenerator.makeIdentifier(),
@@ -31,6 +39,36 @@ nonisolated struct JoinProgramWithCoachUseCase: Sendable {
                 status: .active,
                 enrolledAt: clock.now()
             )
+        )
+    }
+
+    func callAsFunction(
+        program: Program,
+        participantID: UUID,
+        coach: CoachProfile
+    ) async throws -> ProgramEnrollment {
+        if let existing = try await enrollments.enrollment(
+            programID: program.id,
+            participantID: participantID
+        ) {
+            return existing
+        }
+        if let coachQREnrollment {
+            guard !coach.enrollmentIdentifier.isEmpty else {
+                throw DomainError.validation(
+                    field: "coachQR",
+                    reason: "QR Coach tidak valid."
+                )
+            }
+            return try await coachQREnrollment.enrollFreeProgram(
+                programID: program.id,
+                coachQROpaqueValue: coach.enrollmentIdentifier
+            )
+        }
+        return try await callAsFunction(
+            program: program,
+            participantID: participantID,
+            coachID: coach.id
         )
     }
 }

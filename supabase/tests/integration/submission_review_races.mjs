@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { activateCoachEntitlement } from "./phase11_fixture_helpers.mjs";
 
 const apiURL = requireEnvironment("API_URL");
 const anonKey = requireEnvironment("ANON_KEY");
@@ -91,6 +92,18 @@ async function insert(table, rows) {
   await expectSuccess(response, `insert ${table} fixtures`);
 }
 
+async function upsertProfiles(rows) {
+  const response = await request("/rest/v1/profiles?on_conflict=user_id", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(rows),
+  });
+  await expectSuccess(response, "upsert bootstrapped profile fixtures");
+}
+
 async function rpc(name, token, body) {
   const response = await request(`/rest/v1/rpc/${name}`, {
     method: "POST",
@@ -118,7 +131,7 @@ const coach = await createUser("submission-coach");
 const participant = await createUser("submission-participant");
 const coachQR = `coach-${randomUUID()}`;
 
-await insert("profiles", [
+await upsertProfiles([
   {
     user_id: admin.id,
     role: "admin",
@@ -144,6 +157,12 @@ await insert("profiles", [
     coach_is_approved: false,
   },
 ]);
+await activateCoachEntitlement(
+  insert,
+  coach.id,
+  admin.id,
+  "Coach Submission Race",
+);
 
 const programID = randomUUID();
 const dayID = randomUUID();

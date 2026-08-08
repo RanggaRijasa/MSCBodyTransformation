@@ -293,9 +293,23 @@ final class AuthenticationFlowState {
     }
 
     func selectScannedParticipantCoach(identifier: String) async {
-        let normalized = identifier
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let opaqueValue = identifier.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let normalized = opaqueValue
             .uppercased()
+        if let resolver = environment.repositories?.coachQREnrollment {
+            do {
+                selectedParticipantCoach = try await resolver.resolveCoach(
+                    qrOpaqueValue: opaqueValue
+                )
+                errorMessage = nil
+            } catch {
+                selectedParticipantCoach = nil
+                errorMessage = mappedMessage(for: error)
+            }
+            return
+        }
         let coaches: [CoachProfile]
         if store.publicCoaches.isEmpty {
             do {
@@ -362,6 +376,49 @@ final class AuthenticationFlowState {
     func performPurchase() async {
         guard let preview = paymentPreview else {
             errorMessage = genericErrorMessage
+            return
+        }
+        if !isLocalDemo {
+            isSubmitting = true
+            defer { isSubmitting = false }
+            await finalizeRegistration(coachID: nil, coachPayment: nil)
+            guard errorMessage == nil,
+                  let repositories = environment.repositories,
+                  let session = try? await repositories.session.restoreSession(),
+                  let user = session.user else {
+                return
+            }
+            do {
+                let now = environment.clock.now()
+                let draft = CoachApplication(
+                    id: environment.identifierGenerator.makeIdentifier(),
+                    userID: user.id,
+                    participantProfileID: user.id,
+                    displayNameSnapshot: displayName,
+                    phoneNumberSnapshot: phoneNumber,
+                    memberLevel: memberLevel,
+                    hasCompletedHOMSTS: hasCompletedHOMSTS,
+                    hasCompletedICT: hasCompletedICT,
+                    termsVersion: "coach-terms-v1",
+                    status: .readyForPayment,
+                    payment: preview,
+                    createdAt: now,
+                    submittedAt: nil,
+                    updatedAt: now,
+                    decision: nil
+                )
+                let saved = try await repositories.coachApplications
+                    .saveCoachApplication(draft)
+                application = try await repositories.coachApplications
+                    .submitCoachApplication(applicationID: saved.id)
+                errorMessage = String(
+                    localized: "coach.payment.phase12_handoff",
+                    defaultValue:
+                        "Pengajuan tersimpan. Pembayaran Coach akan tersedia pada Phase 12."
+                )
+            } catch {
+                errorMessage = mappedMessage(for: error)
+            }
             return
         }
         isSubmitting = true
