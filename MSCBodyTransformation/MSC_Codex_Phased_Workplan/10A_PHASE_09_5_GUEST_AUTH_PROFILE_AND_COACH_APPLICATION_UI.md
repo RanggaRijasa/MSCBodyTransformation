@@ -973,9 +973,10 @@ Checklist ini merupakan bagian exit criteria, bukan pekerjaan opsional.
   - Tambahkan manual three-month Coach access payment.
   - Evaluasi StoreKit non-renewing subscription.
   - Tambahkan server verification, entitlement, expiry, restore/refund.
-- [x] `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md`
-  - Tambahkan Guest privacy, Coach application, payment, expiry, dan reviewer
-    scenarios.
+- [x] `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md` dan
+  `14A_PHASE_13_1_RELEASE_HARDENING_HOSTED_AND_PHYSICAL_TESTING.md`
+  - Pertahankan Guest privacy, Coach application, payment, expiry, dan
+    physical-device acceptance scenarios pada workplan Phase 13.1.
 - [x] `PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md`
   - Tambahkan guest/auth/onboarding/Coach access lifecycle.
 - [x] `PROGRAM_END_TO_END_CONTRACT_MATRIX.md`
