@@ -6,7 +6,24 @@ nonisolated struct AppEnvironment: Sendable {
     let clock: any AppClock
     let identifierGenerator: any IdentifierGenerating
     let repositories: AppRepositories?
+    let commerce: CommerceCoordinator?
     let bootstrapError: DomainError?
+
+    init(
+        configuration: AppConfiguration,
+        clock: any AppClock,
+        identifierGenerator: any IdentifierGenerating,
+        repositories: AppRepositories?,
+        commerce: CommerceCoordinator? = nil,
+        bootstrapError: DomainError?
+    ) {
+        self.configuration = configuration
+        self.clock = clock
+        self.identifierGenerator = identifierGenerator
+        self.repositories = repositories
+        self.commerce = commerce
+        self.bootstrapError = bootstrapError
+    }
 
     @MainActor static var live: Self {
         let clock = SystemClock()
@@ -33,6 +50,7 @@ nonisolated struct AppEnvironment: Sendable {
                 clock: clock,
                 identifierGenerator: identifiers,
                 repositories: nil,
+                commerce: nil,
                 bootstrapError: .validation(
                     field: "appConfiguration",
                     reason: "Konfigurasi aplikasi belum lengkap."
@@ -73,6 +91,7 @@ nonisolated struct AppEnvironment: Sendable {
                 clock: clock,
                 identifierGenerator: identifierGenerator,
                 repositories: AppRepositories(repository: repository),
+                commerce: nil,
                 bootstrapError: nil
             )
         } catch let error as DomainError {
@@ -81,6 +100,7 @@ nonisolated struct AppEnvironment: Sendable {
                 clock: clock,
                 identifierGenerator: identifierGenerator,
                 repositories: nil,
+                commerce: nil,
                 bootstrapError: error
             )
         } catch {
@@ -89,6 +109,7 @@ nonisolated struct AppEnvironment: Sendable {
                 clock: clock,
                 identifierGenerator: identifierGenerator,
                 repositories: nil,
+                commerce: nil,
                 bootstrapError: .unknown
             )
         }
@@ -155,6 +176,15 @@ nonisolated struct AppEnvironment: Sendable {
             sessionRepository: sessionRepository,
             profileClient: profileClient
         )
+        let commerceRepository = SupabaseCommerceRepository(
+            client: authenticatedClient
+        )
+        let commerce = CommerceCoordinator(
+            service: StoreKitProgramPurchaseService(
+                server: commerceRepository
+            ),
+            sessionRepository: sessionRepository
+        )
         return Self(
             configuration: configuration,
             clock: clock,
@@ -180,9 +210,10 @@ nonisolated struct AppEnvironment: Sendable {
                 publicManagedContent:
                     SupabasePublicManagedContentRepository(
                         client: publicClient
-                    ),
+                ),
                 phase11Repository: phase11Repository
             ),
+            commerce: commerce,
             bootstrapError: nil
         )
     }

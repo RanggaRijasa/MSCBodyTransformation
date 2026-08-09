@@ -1,90 +1,71 @@
 import Foundation
 import StoreKit
 
-nonisolated protocol ProgramPurchaseVerificationSubmitting: Sendable {
-    func verifyAppleTransaction(
-        jwsRepresentation: String,
-        programID: UUID,
-        participantID: UUID,
-        coachID: UUID
-    ) async throws -> ProgramEntitlement
+nonisolated enum CommerceClientStage: Equatable, Sendable {
+    case purchasing
+    case verifying
 }
 
-nonisolated enum ProgramPurchaseOutcome: Equatable, Sendable {
-    case entitled(ProgramEntitlement)
-    case pending
-    case cancelled
-}
-
-nonisolated struct StoreProductPresentation:
-    Equatable,
-    Identifiable,
-    Sendable
-{
-    let id: String
-    let displayName: String
-    let description: String
-    let displayPrice: String
+nonisolated enum CommerceTransactionUpdate: Sendable {
+    case fulfilled(CommerceFulfillment)
+    case failed(DomainError)
 }
 
 actor StoreKitProgramPurchaseService {
-    private let verifier: any ProgramPurchaseVerificationSubmitting
+    private let server: any CommerceServerRepository
     private var productsByID: [String: Product] = [:]
 
-    init(verifier: any ProgramPurchaseVerificationSubmitting) {
-        self.verifier = verifier
+    init(server: any CommerceServerRepository) {
+        self.server = server
     }
 
-    func loadProduct(
-        productID: String
-    ) async throws -> StoreProductPresentation {
-        let products = try await Product.products(for: [productID])
-        guard let product = products.first(where: { $0.id == productID }) else {
-            throw DomainError.notFound(resource: "store_product")
-        }
-        productsByID[product.id] = product
-        return StoreProductPresentation(
-            id: product.id,
-            displayName: product.displayName,
-            description: product.description,
-            displayPrice: product.displayPrice
+    func prepareProgramPurchase(
+        programID: UUID,
+        idempotencyKey: String
+    ) async throws -> CommerceProductPresentation {
+        let intent = try await server.prepareProgramPurchase(
+            programID: programID,
+            idempotencyKey: idempotencyKey
         )
+        return try await presentation(for: intent)
+    }
+
+    func prepareCoachAccessPurchase(
+        idempotencyKey: String
+    ) async throws -> CommerceProductPresentation {
+        let intent = try await server.prepareCoachAccessPurchase(
+            idempotencyKey: idempotencyKey
+        )
+        return try await presentation(for: intent)
     }
 
     func purchase(
-        productID: String,
-        programID: UUID,
-        participantID: UUID,
-        validatedCoachID: UUID
-    ) async throws -> ProgramPurchaseOutcome {
-        let product: Product
-        if let cached = productsByID[productID] {
-            product = cached
-        } else {
-            _ = try await loadProduct(productID: productID)
-            guard let loaded = productsByID[productID] else {
-                throw DomainError.notFound(resource: "store_product")
-            }
-            product = loaded
-        }
+        _ offering: CommerceProductPresentation,
+        onStage: @Sendable (CommerceClientStage) async -> Void
+    ) async throws -> CommercePurchaseOutcome {
+        let product = try await product(for: offering.intent.productID)
+        try await server.markPurchasePending(intentID: offering.intent.id)
+        await onStage(.purchasing)
 
-        switch try await product.purchase() {
+        let result = try await product.purchase(
+            options: [
+                .appAccountToken(offering.intent.appAccountToken)
+            ]
+        )
+        switch result {
         case .success(let verification):
-            switch verification {
-            case .verified(let transaction):
-                let entitlement = try await verifier.verifyAppleTransaction(
-                    jwsRepresentation: verification.jwsRepresentation,
-                    programID: programID,
-                    participantID: participantID,
-                    coachID: validatedCoachID
-                )
-                await transaction.finish()
-                return .entitled(entitlement)
-            case .unverified:
+            guard case .verified(let transaction) = verification else {
                 throw DomainError.conflict(
-                    reason: "Transaksi tidak dapat diverifikasi."
+                    reason: "Transaksi Apple tidak dapat diverifikasi."
                 )
             }
+            await onStage(.verifying)
+            let fulfillment = try await server.verifyApplePurchase(
+                intentID: offering.intent.id,
+                signedTransaction: verification.jwsRepresentation
+            )
+            await transaction.finish()
+            return .fulfilled(fulfillment)
         case .pending:
             return .pending
         case .userCancelled:
@@ -94,62 +75,110 @@ actor StoreKitProgramPurchaseService {
         }
     }
 
-    func recoverCurrentEntitlements(
-        productIDs: Set<String>,
-        programByProductID: [String: UUID],
-        participantID: UUID,
-        validatedCoachID: UUID
-    ) async -> [ProgramEntitlement] {
-        var entitlements: [ProgramEntitlement] = []
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result,
-                  productIDs.contains(transaction.productID),
-                  let programID = programByProductID[
-                      transaction.productID
-                  ],
-                  let entitlement = try? await verifier
-                      .verifyAppleTransaction(
-                          jwsRepresentation: result.jwsRepresentation,
-                          programID: programID,
-                          participantID: participantID,
-                          coachID: validatedCoachID
-                      ) else {
-                continue
+    func recoverUnfinishedTransactions() async throws
+        -> [CommerceFulfillment]
+    {
+        var fulfillments: [CommerceFulfillment] = []
+        for await verification in Transaction.unfinished {
+            guard !Task.isCancelled else { throw CancellationError() }
+            guard case .verified(let transaction) = verification else {
+                throw DomainError.conflict(
+                    reason: "Transaksi tertunda tidak dapat diverifikasi."
+                )
             }
+            let restored = try await server.restoreApplePurchases(
+                signedTransactions: [verification.jwsRepresentation]
+            )
             await transaction.finish()
-            entitlements.append(entitlement)
+            fulfillments.append(contentsOf: restored)
         }
-        return entitlements
+        return fulfillments
     }
 
-    /// The feature layer owns and cancels the task running this method.
-    /// Enrollment is still created only after the server verifier returns an
-    /// entitlement.
-    func listenForTransactionUpdates(
-        productIDs: Set<String>,
-        programByProductID: [String: UUID],
-        participantID: UUID,
-        validatedCoachID: UUID,
-        onEntitlement: @Sendable (ProgramEntitlement) async -> Void
-    ) async {
-        for await result in Transaction.updates {
-            guard !Task.isCancelled else { return }
-            guard case .verified(let transaction) = result,
-                  productIDs.contains(transaction.productID),
-                  let programID = programByProductID[
-                      transaction.productID
-                  ],
-                  let entitlement = try? await verifier
-                      .verifyAppleTransaction(
-                          jwsRepresentation: result.jwsRepresentation,
-                          programID: programID,
-                          participantID: participantID,
-                          coachID: validatedCoachID
-                      ) else {
-                continue
+    func restorePurchases() async throws -> [CommerceFulfillment] {
+        try await AppStore.sync()
+        let productIDs = Set(try await server.history().map(\.productID))
+        guard !productIDs.isEmpty else { return [] }
+
+        var signedTransactions: [String] = []
+        var transactions: [Transaction] = []
+        for await verification in Transaction.currentEntitlements {
+            guard !Task.isCancelled else { throw CancellationError() }
+            guard case .verified(let transaction) = verification else {
+                throw DomainError.conflict(
+                    reason: "Pembelian tersimpan tidak dapat diverifikasi."
+                )
             }
-            await transaction.finish()
-            await onEntitlement(entitlement)
+            guard productIDs.contains(transaction.productID) else { continue }
+            signedTransactions.append(verification.jwsRepresentation)
+            transactions.append(transaction)
         }
+        guard !signedTransactions.isEmpty else { return [] }
+        let fulfillments = try await server.restoreApplePurchases(
+            signedTransactions: signedTransactions
+        )
+        for transaction in transactions {
+            await transaction.finish()
+        }
+        return fulfillments
+    }
+
+    func history() async throws -> [CommerceTransactionRecord] {
+        try await server.history()
+    }
+
+    /// The app-level coordinator owns and cancels the single task that calls
+    /// this method. Every verified update is persisted server-side before the
+    /// StoreKit transaction is finished.
+    func listenForTransactionUpdates(
+        onUpdate: @Sendable (CommerceTransactionUpdate) async -> Void
+    ) async {
+        for await verification in Transaction.updates {
+            guard !Task.isCancelled else { return }
+            do {
+                guard case .verified(let transaction) = verification else {
+                    throw DomainError.conflict(
+                        reason: "Pembaruan transaksi tidak dapat diverifikasi."
+                    )
+                }
+                let results = try await server.restoreApplePurchases(
+                    signedTransactions: [verification.jwsRepresentation]
+                )
+                await transaction.finish()
+                for result in results {
+                    await onUpdate(.fulfilled(result))
+                }
+            } catch is CancellationError {
+                return
+            } catch let error as DomainError {
+                await onUpdate(.failed(error))
+            } catch {
+                await onUpdate(.failed(.unknown))
+            }
+        }
+    }
+
+    private func presentation(
+        for intent: CommercePurchaseIntent
+    ) async throws -> CommerceProductPresentation {
+        let product = try await product(for: intent.productID)
+        return CommerceProductPresentation(
+            intent: intent,
+            displayName: product.displayName,
+            description: product.description,
+            displayPrice: product.displayPrice
+        )
+    }
+
+    private func product(for productID: String) async throws -> Product {
+        if let product = productsByID[productID] {
+            return product
+        }
+        let products = try await Product.products(for: [productID])
+        guard let product = products.first(where: { $0.id == productID }) else {
+            throw DomainError.notFound(resource: "Produk App Store")
+        }
+        productsByID[product.id] = product
+        return product
     }
 }

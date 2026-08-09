@@ -1,0 +1,47 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "02-Orbit-Red.png",
+          "name" : "02-Orbit-Red"
+        },
+        {
+          "image-name" : "03-MSC-Yellow.png",
+          "name" : "03-MSC-Yellow"
+        },
+        {
+          "image-name" : "04-Body-Yellow.png",
+          "name" : "04-Body-Yellow"
+        },
+        {
+          "image-name" : "05-Transformation-Red.png",
+          "name" : "05-Transformation-Red"
+        },
+        {
+          "glass" : false,
+          "image-name" : "01-Background.png",
+          "name" : "01-Background"
+        }
+      ],
+      "name" : "MSC Body Transformation",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

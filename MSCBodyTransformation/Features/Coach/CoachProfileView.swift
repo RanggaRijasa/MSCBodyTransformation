@@ -50,6 +50,15 @@ struct CoachProfileView: View {
                     )
                 case .delete(let user):
                     AccountDeletionView(user: user)
+                case .commerce(let userID):
+                    if let commerce = state.commerceCoordinator,
+                       let applications = state.coachApplicationRepository {
+                        CommerceAccountView(
+                            accountID: userID,
+                            coordinator: commerce,
+                            applications: applications
+                        )
+                    }
                 }
             }
             .alert(
@@ -76,6 +85,7 @@ struct CoachProfileView: View {
             )
             qrSection
             settingsSection(bindableState: bindableState)
+            commerceSection(userID: snapshot.user.id)
             legalSection
             accountSection(user: snapshot.user)
         }
@@ -304,6 +314,36 @@ struct CoachProfileView: View {
         }
     }
 
+    @ViewBuilder
+    private func commerceSection(userID: UUID) -> some View {
+        if !state.isLocalDemo,
+           state.commerceCoordinator != nil,
+           state.coachApplicationRepository != nil {
+            Section {
+                Button {
+                    presentedSheet = .commerce(userID)
+                } label: {
+                    Label(
+                        String(
+                            localized: "commerce.account.open",
+                            defaultValue: "Pembelian dan akses Coach"
+                        ),
+                        systemImage: "creditcard"
+                    )
+                    .frame(minHeight: 44)
+                }
+                .accessibilityIdentifier("coach.commerce.open")
+            } header: {
+                Text(
+                    String(
+                        localized: "commerce.account.section",
+                        defaultValue: "Pembelian"
+                    )
+                )
+            }
+        }
+    }
+
     private func accountSection(user: AppUser) -> some View {
         Section {
             Button(
@@ -382,6 +422,7 @@ struct CoachProfileView: View {
 private enum CoachProfileSheet: Identifiable {
     case edit(CoachProfileSnapshot)
     case delete(AppUser)
+    case commerce(UUID)
 
     var id: String {
         switch self {
@@ -389,6 +430,8 @@ private enum CoachProfileSheet: Identifiable {
             "edit"
         case .delete:
             "delete"
+        case .commerce:
+            "commerce"
         }
     }
 }

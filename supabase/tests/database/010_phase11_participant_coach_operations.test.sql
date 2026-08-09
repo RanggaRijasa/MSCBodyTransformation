@@ -40,8 +40,8 @@ insert into public.coach_applications(
   submitted_at, decided_at, decided_by
 )
 values
-  ('f2000000-0000-0000-0000-000000000002', 'f1000000-0000-0000-0000-000000000002', 'f1000000-0000-0000-0000-000000000002', 'Coach Aktif', '+628400000002', 'sc', true, true, 'test-v1', 'approved', 'ops-coach-active', now(), now(), 'f1000000-0000-0000-0000-000000000001'),
-  ('f2000000-0000-0000-0000-000000000003', 'f1000000-0000-0000-0000-000000000003', 'f1000000-0000-0000-0000-000000000003', 'Coach Kedaluwarsa', '+628400000003', 'sc', true, true, 'test-v1', 'approved', 'ops-coach-expired', now(), now(), 'f1000000-0000-0000-0000-000000000001');
+  ('f2000000-0000-0000-0000-000000000002', 'f1000000-0000-0000-0000-000000000002', 'f1000000-0000-0000-0000-000000000002', 'Coach Aktif', '+628400000002', 'sc', true, true, 'test-v1', 'active', 'ops-coach-active', now(), now(), 'f1000000-0000-0000-0000-000000000001'),
+  ('f2000000-0000-0000-0000-000000000003', 'f1000000-0000-0000-0000-000000000003', 'f1000000-0000-0000-0000-000000000003', 'Coach Kedaluwarsa', '+628400000003', 'sc', true, true, 'test-v1', 'expired', 'ops-coach-expired', now(), now(), 'f1000000-0000-0000-0000-000000000001');
 insert into public.coach_payment_records(
   id, application_id, state, price_band, amount_minor_units,
   provider_reference, verified_at

@@ -106,7 +106,7 @@ values (
   'a1000000-0000-0000-0000-000000000002',
   'a1000000-0000-0000-0000-000000000002',
   'Coach Deadline', '+628300000002', 'sc', true, true, 'test-v1',
-  'approved', 'deadline-coach-one', now(), now(),
+  'active', 'deadline-coach-one', now(), now(),
   'a1000000-0000-0000-0000-000000000001'
 );
 

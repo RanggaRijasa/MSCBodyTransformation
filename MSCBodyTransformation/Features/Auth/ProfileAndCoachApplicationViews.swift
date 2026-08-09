@@ -325,7 +325,9 @@ struct CoachApplicationView: View {
                 }
 
                 Label(
-                    "coach.eligibility.approval_notice",
+                    state.isLocalDemo
+                        ? "coach.eligibility.approval_notice"
+                        : "coach.eligibility.review_before_payment",
                     systemImage: "person.badge.clock"
                 )
                 .font(AppTypography.secondary)
@@ -336,13 +338,17 @@ struct CoachApplicationView: View {
                 }
 
                 Button {
-                    state.continueToPayment()
+                    Task { await state.continueCoachApplication() }
                 } label: {
-                    Text("coach.eligibility.continue_payment")
-                        .frame(maxWidth: .infinity)
+                    SubmittingButtonLabel(
+                        title: state.isLocalDemo
+                            ? "coach.eligibility.continue_payment"
+                            : "coach.eligibility.submit_application",
+                        isSubmitting: state.isSubmitting
+                    )
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
-                .disabled(!state.eligibility.isComplete)
+                .disabled(!state.eligibility.isComplete || state.isSubmitting)
                 .accessibilityIdentifier(
                     "coach.eligibility.continue-payment"
                 )
@@ -421,7 +427,9 @@ struct CoachPendingApprovalView: View {
                 AuthFlowHeader(
                     systemImage: "clock.badge.checkmark",
                     title: "coach.pending.title",
-                    message: "coach.pending.message"
+                    message: state.isLocalDemo
+                        ? "coach.pending.message"
+                        : "coach.pending.live_message"
                 )
                 .accessibilityIdentifier("coach.pending")
 
@@ -465,9 +473,15 @@ struct CoachPendingApprovalView: View {
     }
 
     private var paymentVerifiedText: String {
-        String(
-            localized: "coach.pending.payment_verified",
-            defaultValue: "Pembayaran terverifikasi"
+        if state.isLocalDemo {
+            return String(
+                localized: "coach.pending.payment_verified",
+                defaultValue: "Pembayaran demo terverifikasi"
+            )
+        }
+        return String(
+            localized: "coach.pending.application_submitted",
+            defaultValue: "Pengajuan sudah dikirim"
         )
     }
 

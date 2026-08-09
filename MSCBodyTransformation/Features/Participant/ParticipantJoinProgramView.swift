@@ -10,6 +10,8 @@ struct ParticipantJoinProgramView: View {
     @State private var stage = JoinProgramStage.scanCoach
     @State private var fieldError: String?
     @State private var showsScanner = false
+    @State private var commerceOffering: CommerceProductPresentation?
+    @State private var isPreparingPurchase = false
 
     init(
         store: ParticipantJourneyStore,
@@ -187,13 +189,32 @@ struct ParticipantJoinProgramView: View {
                 )
 
                 Button {
-                    stage = .payment
+                    Task { await proceedAfterCoachConfirmation(program) }
                 } label: {
-                    Text("participant.join.confirm_coach.action")
+                    if isPreparingPurchase || store.isPerformingAction {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text(
+                            program.effectiveCommerceConfiguration.requiresPayment
+                                ? String(
+                                    localized: "participant.join.continue_to_payment",
+                                    defaultValue: "Lanjutkan ke pembayaran"
+                                )
+                                : String(
+                                    localized: "participant.join.free_action",
+                                    defaultValue: "Ikuti program gratis"
+                                )
+                        )
                         .frame(maxWidth: .infinity)
+                    }
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
-                .disabled(selectedCoach == nil)
+                .disabled(
+                    selectedCoach == nil
+                        || isPreparingPurchase
+                        || store.isPerformingAction
+                )
                 .accessibilityIdentifier("participant.join.confirm-coach")
 
                 Button("participant.join.scan_again") {
@@ -227,6 +248,13 @@ struct ParticipantJoinProgramView: View {
                         "participant.join.program_label",
                         value: program.title
                     )
+                    LabeledContent {
+                        Text(
+                            "\(program.durationInDays, format: .number.locale(ParticipantFormatting.locale)) \(Text("participant.program.days_suffix"))"
+                        )
+                    } label: {
+                        Text("participant.program.duration")
+                    }
                     if let selectedCoach {
                         LabeledContent(
                             "participant.join.coach_label",
@@ -236,9 +264,10 @@ struct ParticipantJoinProgramView: View {
                     Divider()
                     LabeledContent(
                         "participant.payment.total",
-                        value: ParticipantFormatting.currency(
-                            program.price ?? 0
-                        )
+                        value: commerceOffering?.displayPrice
+                            ?? ParticipantFormatting.currency(
+                                program.price ?? 0
+                            )
                     )
                     .font(AppTypography.cardTitle.monospacedDigit())
                 }
@@ -252,7 +281,15 @@ struct ParticipantJoinProgramView: View {
                 )
 
                 Label(
-                    "participant.payment.placeholder_notice",
+                    store.isLocalDemo
+                        ? String(
+                            localized: "participant.payment.placeholder_notice",
+                            defaultValue: "Pembayaran ini hanya simulasi lokal."
+                        )
+                        : String(
+                            localized: "participant.payment.apple_notice",
+                            defaultValue: "Pembayaran diproses oleh Apple. Akses diberikan setelah transaksi diverifikasi server."
+                        ),
                     systemImage: "info.circle.fill"
                 )
                 .font(AppTypography.secondary)
@@ -266,14 +303,24 @@ struct ParticipantJoinProgramView: View {
 
                 Button {
                     Task {
-                        await completeLocalPaymentPlaceholder()
+                        await completePayment(program)
                     }
                 } label: {
                     if store.isPerformingAction {
                         ProgressView()
                             .frame(maxWidth: .infinity)
                     } else {
-                        Text("participant.payment.demo_action")
+                        Text(
+                            store.isLocalDemo
+                                ? String(
+                                    localized: "participant.payment.demo_action",
+                                    defaultValue: "Selesaikan pembayaran demo"
+                                )
+                                : String(
+                                    localized: "participant.payment.apple_action",
+                                    defaultValue: "Beli dengan Apple"
+                                )
+                        )
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -281,7 +328,7 @@ struct ParticipantJoinProgramView: View {
                 .disabled(
                     selectedCoach == nil || store.isPerformingAction
                 )
-                .accessibilityIdentifier("participant.payment.demo")
+                .accessibilityIdentifier("participant.payment.purchase")
             }
             .frame(maxWidth: 560, alignment: .leading)
             .padding(AppSpacing.large)
@@ -350,6 +397,96 @@ struct ParticipantJoinProgramView: View {
             stage = .completed
         } catch let error as DomainError {
             fieldError = ParticipantFormatting.fieldReason(error)
+        } catch {
+            fieldError = String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
+        }
+    }
+
+    private func proceedAfterCoachConfirmation(_ program: Program) async {
+        guard let selectedCoach else { return }
+        fieldError = nil
+        if !program.effectiveCommerceConfiguration.requiresPayment {
+            do {
+                try await store.joinProgram(
+                    programID: program.id,
+                    with: selectedCoach
+                )
+                stage = .completed
+            } catch let error as DomainError {
+                fieldError = ParticipantFormatting.fieldReason(error)
+            } catch {
+                fieldError = String(
+                    localized: "participant.error.generic",
+                    defaultValue: "Terjadi kendala. Coba lagi."
+                )
+            }
+            return
+        }
+
+        guard !store.isLocalDemo else {
+            stage = .payment
+            return
+        }
+        guard let commerce = store.commerceCoordinator else {
+            fieldError = String(
+                localized: "commerce.unavailable",
+                defaultValue: "Pembayaran belum tersedia. Coba lagi nanti."
+            )
+            return
+        }
+        isPreparingPurchase = true
+        defer { isPreparingPurchase = false }
+        do {
+            commerceOffering = try await commerce.prepareProgramPurchase(
+                programID: program.id
+            )
+            stage = .payment
+        } catch let error as DomainError {
+            fieldError = ParticipantFormatting.fieldReason(error)
+        } catch {
+            fieldError = String(
+                localized: "participant.error.generic",
+                defaultValue: "Terjadi kendala. Coba lagi."
+            )
+        }
+    }
+
+    private func completePayment(_ program: Program) async {
+        if store.isLocalDemo {
+            await completeLocalPaymentPlaceholder()
+            return
+        }
+        guard let offering = commerceOffering,
+              let commerce = store.commerceCoordinator else {
+            fieldError = String(
+                localized: "commerce.product_unavailable",
+                defaultValue: "Produk App Store belum tersedia."
+            )
+            return
+        }
+        do {
+            switch try await commerce.purchase(offering) {
+            case .fulfilled:
+                try await store.refreshAfterCommercePurchase(
+                    programID: program.id
+                )
+                fieldError = nil
+                stage = .completed
+            case .pending:
+                fieldError = String(
+                    localized: "commerce.pending",
+                    defaultValue: "Pembelian menunggu persetujuan Apple. Akses akan diperbarui setelah transaksi selesai."
+                )
+            case .cancelled:
+                fieldError = nil
+            }
+        } catch let error as DomainError {
+            fieldError = ParticipantFormatting.fieldReason(error)
+        } catch is CancellationError {
+            return
         } catch {
             fieldError = String(
                 localized: "participant.error.generic",

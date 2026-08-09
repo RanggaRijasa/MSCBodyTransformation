@@ -360,7 +360,7 @@ final class AuthenticationFlowState {
         await finish()
     }
 
-    func continueToPayment() {
+    func continueCoachApplication() async {
         guard eligibility.isComplete else {
             errorMessage = String(
                 localized: "coach.eligibility.error.incomplete",
@@ -370,7 +370,51 @@ final class AuthenticationFlowState {
             return
         }
         errorMessage = nil
-        destination = .coachPayment
+        if isLocalDemo {
+            destination = .coachPayment
+            return
+        }
+
+        guard !isSubmitting else { return }
+        isSubmitting = true
+        defer { isSubmitting = false }
+        await finalizeRegistration(coachID: nil, coachPayment: nil)
+        guard errorMessage == nil,
+              let repositories = environment.repositories else {
+            return
+        }
+        do {
+            let session = try await repositories.session.restoreSession()
+            guard let user = session.user else {
+                throw AuthenticationError.sessionExpired
+            }
+            let now = environment.clock.now()
+            let draft = CoachApplication(
+                id: environment.identifierGenerator.makeIdentifier(),
+                userID: user.id,
+                participantProfileID: user.id,
+                displayNameSnapshot: displayName,
+                phoneNumberSnapshot: phoneNumber,
+                memberLevel: memberLevel,
+                hasCompletedHOMSTS: hasCompletedHOMSTS,
+                hasCompletedICT: hasCompletedICT,
+                termsVersion: "coach-terms-v1",
+                status: .submitted,
+                payment: nil,
+                createdAt: now,
+                submittedAt: nil,
+                updatedAt: now,
+                decision: nil
+            )
+            let saved = try await repositories.coachApplications
+                .saveCoachApplication(draft)
+            application = try await repositories.coachApplications
+                .submitCoachApplication(applicationID: saved.id)
+            errorMessage = nil
+            destination = .pendingCoachApproval
+        } catch {
+            errorMessage = mappedMessage(for: error)
+        }
     }
 
     func performPurchase() async {
@@ -379,46 +423,11 @@ final class AuthenticationFlowState {
             return
         }
         if !isLocalDemo {
-            isSubmitting = true
-            defer { isSubmitting = false }
-            await finalizeRegistration(coachID: nil, coachPayment: nil)
-            guard errorMessage == nil,
-                  let repositories = environment.repositories,
-                  let session = try? await repositories.session.restoreSession(),
-                  let user = session.user else {
-                return
-            }
-            do {
-                let now = environment.clock.now()
-                let draft = CoachApplication(
-                    id: environment.identifierGenerator.makeIdentifier(),
-                    userID: user.id,
-                    participantProfileID: user.id,
-                    displayNameSnapshot: displayName,
-                    phoneNumberSnapshot: phoneNumber,
-                    memberLevel: memberLevel,
-                    hasCompletedHOMSTS: hasCompletedHOMSTS,
-                    hasCompletedICT: hasCompletedICT,
-                    termsVersion: "coach-terms-v1",
-                    status: .readyForPayment,
-                    payment: preview,
-                    createdAt: now,
-                    submittedAt: nil,
-                    updatedAt: now,
-                    decision: nil
-                )
-                let saved = try await repositories.coachApplications
-                    .saveCoachApplication(draft)
-                application = try await repositories.coachApplications
-                    .submitCoachApplication(applicationID: saved.id)
-                errorMessage = String(
-                    localized: "coach.payment.phase12_handoff",
-                    defaultValue:
-                        "Pengajuan tersimpan. Pembayaran Coach akan tersedia pada Phase 12."
-                )
-            } catch {
-                errorMessage = mappedMessage(for: error)
-            }
+            errorMessage = String(
+                localized: "coach.payment.after_approval_only",
+                defaultValue:
+                    "Pembayaran Coach tersedia setelah pengajuan diterima Admin."
+            )
             return
         }
         isSubmitting = true

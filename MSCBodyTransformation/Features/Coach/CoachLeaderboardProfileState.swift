@@ -88,6 +88,14 @@ final class CoachProfileState {
         environment.configuration.mode == .localDemo
     }
 
+    var commerceCoordinator: CommerceCoordinator? {
+        environment.commerce
+    }
+
+    var coachApplicationRepository: (any CoachApplicationRepository)? {
+        environment.repositories?.coachApplications
+    }
+
     var state: CoachFeatureLoadState<CoachProfileSnapshot> = .idle
     var displayName = ""
     var biography = ""

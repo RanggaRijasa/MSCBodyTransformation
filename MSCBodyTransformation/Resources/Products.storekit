@@ -1,0 +1,85 @@
+{
+  "identifier" : "42D64EA8-04A5-469B-AE5C-AD34A97030D3",
+  "nonRenewingSubscriptions" : [
+    {
+      "displayPrice" : "100000",
+      "familyShareable" : false,
+      "internalID" : "B7DDB658-3F63-4A10-A481-63228C2BA409",
+      "localizations" : [
+        {
+          "description" : "Akses fitur dan QR Coach selama tiga bulan.",
+          "displayName" : "Akses Coach Entry 3 Bulan",
+          "locale" : "id_ID"
+        }
+      ],
+      "productID" : "local.msc.coach.access.entry.3months",
+      "referenceName" : "Akses Coach Entry 3 Bulan",
+      "type" : "NonRenewingSubscription"
+    },
+    {
+      "displayPrice" : "150000",
+      "familyShareable" : false,
+      "internalID" : "85548B7B-5AFF-4500-8121-67AF4362E36A",
+      "localizations" : [
+        {
+          "description" : "Akses fitur dan QR Coach selama tiga bulan.",
+          "displayName" : "Akses Coach Growth 3 Bulan",
+          "locale" : "id_ID"
+        }
+      ],
+      "productID" : "local.msc.coach.access.growth.3months",
+      "referenceName" : "Akses Coach Growth 3 Bulan",
+      "type" : "NonRenewingSubscription"
+    },
+    {
+      "displayPrice" : "200000",
+      "familyShareable" : false,
+      "internalID" : "966387E7-9E36-44F7-8A8F-71BB68C495E9",
+      "localizations" : [
+        {
+          "description" : "Akses fitur dan QR Coach selama tiga bulan.",
+          "displayName" : "Akses Coach Leadership 3 Bulan",
+          "locale" : "id_ID"
+        }
+      ],
+      "productID" : "local.msc.coach.access.leadership.3months",
+      "referenceName" : "Akses Coach Leadership 3 Bulan",
+      "type" : "NonRenewingSubscription"
+    }
+  ],
+  "products" : [
+    {
+      "displayPrice" : "250000",
+      "familyShareable" : false,
+      "internalID" : "AF8B946C-7F2F-4778-BEAE-F819CC13E307",
+      "localizations" : [
+        {
+          "description" : "Akses satu cohort program MSC Body Transformation.",
+          "displayName" : "Program Transformasi Phase 12",
+          "locale" : "id_ID"
+        }
+      ],
+      "productID" : "local.msc.program.phase12.cohort",
+      "referenceName" : "Program Transformasi Phase 12",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "com.ranggar.MSCBodyTransformation",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "id_ID",
+    "_storefront" : "IDN",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

@@ -608,7 +608,8 @@ private struct AdminPeopleView: View {
 
     private func personSubtitle(_ person: AdminPersonSummary) -> String {
         if let application = person.coachApplication,
-           application.status == .pendingAdminApproval {
+           application.status == .submitted
+            || application.status == .pendingAdminApproval {
             return String(
                 localized: "admin.coach_application.row.subtitle",
                 defaultValue: "Pengajuan Coach menunggu persetujuan"
@@ -637,8 +638,12 @@ private extension CoachApplicationStatus {
             "coach.application.status.payment_processing"
         case .paymentVerified:
             "coach.application.status.payment_verified"
-        case .pendingAdminApproval:
+        case .pendingAdminApproval, .submitted:
             "coach.application.status.pending_admin_approval"
+        case .acceptedPendingPayment:
+            "coach.application.status.accepted_payment"
+        case .active:
+            "coach.application.status.active"
         case .approved:
             "coach.application.status.approved"
         case .rejected:
@@ -650,11 +655,12 @@ private extension CoachApplicationStatus {
 
     var adminStatusKind: AppStatusKind {
         switch self {
-        case .approved:
+        case .approved, .active:
             .success
         case .rejected, .ineligible, .expired:
             .error
-        case .pendingAdminApproval, .paymentProcessing:
+        case .pendingAdminApproval, .submitted, .paymentProcessing,
+             .acceptedPendingPayment:
             .pending
         case .paymentVerified:
             .information

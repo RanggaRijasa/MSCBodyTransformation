@@ -17,6 +17,7 @@ struct ParticipantProfileView: View {
                 profileDataSection(snapshot)
                 coachSection(snapshot)
                 settingsSection
+                commerceSection(userID: snapshot.user.id)
                 legalSection
 #if DEBUG
                 ParticipantDebugToolsView(store: store)
@@ -36,6 +37,15 @@ struct ParticipantProfileView: View {
                     )
                 case .delete(let user):
                     AccountDeletionView(user: user)
+                case .commerce(let userID):
+                    if let commerce = store.commerceCoordinator,
+                       let applications = store.coachApplicationRepository {
+                        CommerceAccountView(
+                            accountID: userID,
+                            coordinator: commerce,
+                            applications: applications
+                        )
+                    }
                 }
             }
         } else {
@@ -220,6 +230,36 @@ struct ParticipantProfileView: View {
         }
     }
 
+    @ViewBuilder
+    private func commerceSection(userID: UUID) -> some View {
+        if !store.isLocalDemo,
+           store.commerceCoordinator != nil,
+           store.coachApplicationRepository != nil {
+            Section {
+                Button {
+                    presentedSheet = .commerce(userID)
+                } label: {
+                    Label(
+                        String(
+                            localized: "commerce.account.open",
+                            defaultValue: "Pembelian dan akses Coach"
+                        ),
+                        systemImage: "creditcard"
+                    )
+                    .frame(minHeight: 44)
+                }
+                .accessibilityIdentifier("participant.commerce.open")
+            } header: {
+                Text(
+                    String(
+                        localized: "commerce.account.section",
+                        defaultValue: "Pembelian"
+                    )
+                )
+            }
+        }
+    }
+
     private var legalSection: some View {
         Section("participant.profile.privacy") {
             NavigationLink {
@@ -304,6 +344,7 @@ struct ParticipantProfileView: View {
 private enum ParticipantProfileSheet: Identifiable {
     case edit(ParticipantProfile, String)
     case delete(AppUser)
+    case commerce(UUID)
 
     var id: String {
         switch self {
@@ -311,6 +352,8 @@ private enum ParticipantProfileSheet: Identifiable {
             "edit"
         case .delete:
             "delete"
+        case .commerce:
+            "commerce"
         }
     }
 }

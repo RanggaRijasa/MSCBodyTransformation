@@ -1,147 +1,80 @@
-# Phase 13: Security, Privacy, Reliability, and App Store Release
+# Phase 13: Production Release Overview
 
-> Status: external release gate. Review memakai commerce program per cohort;
-> checklist seat credit dan invite dari baseline lama tidak berlaku.
-> Amendment 4 Agustus 2026 memasukkan Guest dan lifecycle Coach access.
+Phase 13 sekarang dibagi menjadi tiga workplan authoritative agar owner dapat
+menguji aplikasi sendiri sebelum archive, TestFlight, dan App Review.
 
-## Tujuan
+## Urutan wajib
 
-Mengeraskan aplikasi dan backend untuk TestFlight dan App Store submission.
+### 13.1 — Release hardening, hosted main, sandbox, dan physical testing
 
-## Security audit
+File:
+`14A_PHASE_13_1_RELEASE_HARDENING_HOSTED_AND_PHYSICAL_TESTING.md`
 
-- [ ] Full RLS matrix.
-- [ ] Storage access matrix.
-- [ ] Database advisors.
-- [ ] No service-role key in client or repository.
-- [ ] No OAuth client secret in client.
-- [ ] No App Store private key in client.
-- [ ] Redirect allowlist minimal.
-- [ ] Role authorization server-controlled.
-- [ ] Private evidence URLs expire or require authorization.
-- [ ] Security-definer functions reviewed.
-- [ ] Audit records for privileged action.
-- [ ] Rate limiting or abuse controls where needed.
-- [ ] Logs contain no weight, token, password, or private URL.
-- [ ] Guest/anon hanya dapat membaca public-safe projection.
-- [ ] Guest tidak membuat anonymous Auth account.
-- [ ] Member level/application metadata tidak dapat menaikkan role.
-- [ ] Applicant tidak dapat menulis payment verified, approval, role, QR,
-  atau entitlement.
-- [ ] Coach operation memerlukan approved role dan active entitlement.
-- [ ] Application approve/reject dan payment reconciliation teraudit.
+Mencakup:
 
-## Privacy
+- Release hardening, privacy manifest, legal, App Icon, dan Release config;
+- deploy Supabase hosted `main` setelah approval production;
+- hosted Google/Apple OAuth;
+- StoreKit/App Store Connect products dan Apple server integration;
+- sandbox serta physical-device testing;
+- exploratory test langsung oleh owner.
 
-Weight and evidence photos are sensitive.
+**Hard stop:** jangan membuat/upload archive sebelum owner menyatakan Phase
+13.1 layak dilanjutkan.
 
-- [ ] Privacy policy.
-- [ ] Terms.
-- [ ] Wellness disclaimer.
-- [ ] Data minimization.
-- [ ] Retention policy.
-- [ ] Account deletion.
-- [ ] Media metadata stripping.
-- [ ] Camera/photo purpose strings.
-- [ ] App Privacy responses.
-- [ ] Privacy manifest.
-- [ ] No advertising use of health-related data.
-- [ ] Contest rules when leaderboard has prizes.
-- [ ] State that Apple is not contest sponsor where required.
-- [ ] Coach terms version, rejection/refund policy, expiry, dan manual renewal
-  dijelaskan.
-- [ ] Nomor HP applicant tidak muncul pada public/Guest surface.
+### 13.2 — Archive dan TestFlight
 
-## Accessibility final audit
+File: `14B_PHASE_13_2_ARCHIVE_AND_TESTFLIGHT.md`
 
-- [ ] VoiceOver.
-- [ ] Dynamic Type.
-- [ ] Reduce Motion.
-- [ ] Reduce Transparency.
-- [ ] Increase Contrast.
-- [ ] Differentiate Without Color.
-- [ ] Keyboard navigation iPad where practical.
-- [ ] Error association.
-- [ ] Purchase flow accessibility.
-- [ ] OAuth web session accessibility sanity.
+Mencakup:
 
-## Reliability
+- freeze release candidate;
+- production archive dan bundle inspection;
+- upload ke App Store Connect setelah approval;
+- internal TestFlight distribution;
+- TestFlight end-to-end validation terhadap hosted backend.
 
-- [ ] Session expiry recovery.
-- [ ] Upload interruption.
-- [ ] Transaction interruption.
-- [ ] Realtime reconnect.
-- [ ] Pagination.
-- [ ] Empty states.
-- [ ] Offline states.
-- [ ] Background/foreground.
-- [ ] Memory profiling.
-- [ ] Image-heavy screen profiling.
-- [ ] Liquid Glass profiling iOS 26.
-- [ ] Crash-free critical flows.
+**Hard stop:** jangan submit App Review dari Phase 13.2.
 
-## App Store requirements
+### 13.3 — Metadata, App Review, dan release
 
-- [ ] Final bundle identifier.
-- [ ] Signing.
-- [ ] App icons.
-- [ ] Launch experience.
-- [ ] Privacy and terms links.
-- [ ] Google login plus Sign in with Apple unless valid exemption.
-- [ ] IAP products submitted.
-- [ ] App Store Server Notifications endpoints.
-- [ ] Demo participant account.
-- [ ] Demo coach account.
-- [ ] Demo admin account.
-- [ ] Review sample QR.
-- [ ] Review explanation untuk program payment dan manual Coach access tiga
-  bulan.
-- [ ] Camera/photo explanation.
-- [ ] Wellness purpose explanation.
-- [ ] No placeholder screen or dead link.
-- [ ] Contest rules supplied when applicable.
+File: `14C_PHASE_13_3_APP_STORE_REVIEW_AND_RELEASE.md`
 
-## TestFlight matrix
+Mencakup:
 
-- [ ] Guest membuka seluruh tab publik tanpa personal-data leakage.
-- [ ] Guest `Gabung program` membuka Login dan resume destination benar.
-- [ ] Participant registration.
-- [ ] Google login.
-- [ ] Apple login.
-- [ ] Email reset.
-- [ ] Invite scan.
-- [ ] Initial weigh-in.
-- [ ] Evidence upload.
-- [ ] Step completion.
-- [ ] Final weigh-in.
-- [ ] Leaderboard.
-- [ ] Coach application Member ineligible.
-- [ ] Coach application SC+ memerlukan HOM STS dan ICT.
-- [ ] Coach purchase manual tiga bulan.
-- [ ] Coach tetap Participant saat menunggu Admin.
-- [ ] Admin approval/rejection dan reason.
-- [ ] Coach expiry, renewal, restore, refund/revocation.
-- [ ] Coach QR baru tersedia setelah activation authoritative.
-- [ ] Coach review.
-- [ ] Admin CMS.
-- [ ] Manual enrollment.
-- [ ] Account deletion.
-- [ ] Refund/reconciliation.
+- metadata, screenshots, privacy/compliance responses, dan review notes;
+- reviewer accounts, QR Coach, serta IAP submission association;
+- final pre-submission audit;
+- `Submit for Review` hanya setelah approval eksplisit owner;
+- public release sesuai manual/automatic mode yang disetujui.
 
-## Exit criteria
+## Approval yang tidak boleh digabung
 
-- [ ] Release candidate passes physical-device critical flows.
-- [ ] No critical security or accessibility blocker.
-- [ ] Reviewer can access all roles.
-- [ ] IAP review path documented.
-- [ ] Reviewer dapat membedakan fake Debug preview dari flow production.
-- [ ] TestFlight end-to-end passes.
-- [ ] App submission metadata ready.
+Persetujuan berikut selalu terpisah:
+
+1. Hosted Supabase/Auth/secret/config mutation.
+2. App Store Connect product/notification configuration.
+3. Archive upload.
+4. TestFlight tester distribution.
+5. App Review submission.
+6. Manual public release.
+
+Persetujuan pada satu tahap tidak mengizinkan tahap berikutnya.
+
+## Status saat split
+
+- App Icon production default/dark/tinted sudah selesai dan tercatat pada
+  Phase 13.1.
+- Hosted `main`, production OAuth/StoreKit, sandbox, dan physical-device gate
+  belum dinyatakan selesai.
+- Archive, TestFlight upload/distribution, App Review, dan public release belum
+  dijalankan.
+- SMTP/domain/email-password tetap skipped.
 
 ## Progress log
 
-### 4 Agustus 2026 — Guest dan Coach access release matrix
+### 9 Agustus 2026 — Phase 13 dibagi menjadi tiga workplan
 
-- Menambahkan privacy Guest, escalation resistance, Coach application,
-  payment, Admin decision, expiry/renewal/refund, dan reviewer scenarios.
-- Menghapus referensi seat-credit/Coach invite yang tidak lagi berlaku.
+- Memisahkan testable production integration dari distribution dan submission.
+- Menambahkan owner exploratory-test gate sebelum archive/TestFlight.
+- Mempertahankan approval boundary untuk setiap external mutation.

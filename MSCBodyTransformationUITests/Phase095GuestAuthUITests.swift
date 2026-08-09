@@ -271,7 +271,7 @@ final class Phase095GuestAuthUITests: XCTestCase {
                 .waitForExistence(timeout: 8)
         )
         XCTAssertTrue(
-            pending.staticTexts["Pembayaran terverifikasi"]
+            pending.staticTexts["Pembayaran demo terverifikasi"]
                 .waitForExistence(timeout: 5)
         )
         XCTAssertTrue(

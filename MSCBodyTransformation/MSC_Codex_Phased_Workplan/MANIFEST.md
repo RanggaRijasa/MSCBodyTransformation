@@ -33,7 +33,14 @@
 - `11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`
 - `12_PHASE_11_REAL_DATA_AND_SERVER_OPERATIONS.md`
 - `13_PHASE_12_STOREKIT_PROGRAM_PAYMENTS.md`
-- `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md`
+- `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md` — overview dan approval
+  boundary Phase 13.
+- `14A_PHASE_13_1_RELEASE_HARDENING_HOSTED_AND_PHYSICAL_TESTING.md` — source,
+  hosted `main`, production OAuth/StoreKit, sandbox, dan physical testing.
+- `14B_PHASE_13_2_ARCHIVE_AND_TESTFLIGHT.md` — archive, upload, internal
+  TestFlight distribution, dan TestFlight validation.
+- `14C_PHASE_13_3_APP_STORE_REVIEW_AND_RELEASE.md` — metadata, screenshots,
+  privacy responses, review notes, submission, dan release.
 
 ## Future platform
 

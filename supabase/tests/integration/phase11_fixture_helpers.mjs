@@ -18,7 +18,7 @@ export async function activateCoachEntitlement(
     has_completed_hom_sts: true,
     has_completed_ict: true,
     terms_version: "integration-v1",
-    status: "approved",
+    status: "active",
     draft_idempotency_key: `fixture-${randomUUID()}`,
     submitted_at: new Date().toISOString(),
     decided_at: new Date().toISOString(),

@@ -109,8 +109,8 @@ select extensions.lives_ok(
 );
 select extensions.is(
   (select status from public.coach_applications limit 1),
-  'ready_for_payment',
-  'submitted application waits for trusted payment'
+  'submitted',
+  'submitted application waits for Admin review before payment'
 );
 select extensions.throws_like(
   $$ select public.decide_coach_application(
@@ -123,31 +123,10 @@ select extensions.throws_like(
 
 reset role;
 
-insert into public.coach_payment_records (
-  id, application_id, state, price_band, amount_minor_units,
-  provider_reference, verified_at
-)
-select 'e2000000-0000-0000-0000-000000000011', id, 'verified', 'entry',
-  100000, 'trusted-test-payment', now()
-from public.coach_applications
-where applicant_user_id = 'e1000000-0000-0000-0000-000000000011';
-
-insert into public.coach_access_entitlements (
-  id, application_id, payment_record_id, coach_user_id, status,
-  starts_at, ends_at
-)
-select 'e3000000-0000-0000-0000-000000000011', application.id,
-  payment.id, application.applicant_user_id, 'active',
-  now() - interval '1 minute', now() + interval '3 months'
-from public.coach_applications application
-join public.coach_payment_records payment on payment.application_id = application.id
-where application.applicant_user_id = 'e1000000-0000-0000-0000-000000000011';
-
 select extensions.is(
-  (select role from public.profiles
-   where user_id = 'e1000000-0000-0000-0000-000000000011'),
-  'participant',
-  'verified payment and entitlement alone do not change role'
+  (select count(*)::bigint from public.coach_payment_records),
+  0::bigint,
+  'submission and review do not charge the applicant'
 );
 
 set local role authenticated;
@@ -160,25 +139,26 @@ select extensions.lives_ok(
      where applicant_user_id = 'e1000000-0000-0000-0000-000000000011'),
     'approved', null, 'coach-admin-approve-001'
   ) $$,
-  'Admin can approve after eligibility, payment, and entitlement checks'
+  'Admin can accept an eligible submitted application before payment'
 );
 select extensions.is(
-  (select role from public.profiles
-   where user_id = 'e1000000-0000-0000-0000-000000000011'),
-  'coach',
-  'approval changes the protected role transactionally'
+  (select status from public.coach_applications
+   where applicant_user_id = 'e1000000-0000-0000-0000-000000000011'),
+  'accepted_pending_payment',
+  'accepted application waits for a verified purchase'
 );
-select extensions.ok(
-  (select coach_qr_identifier is not null
+select extensions.is(
+  (select role
    from public.profiles
    where user_id = 'e1000000-0000-0000-0000-000000000011'),
-  'approval creates an opaque Coach QR'
+  'participant',
+  'Admin acceptance alone cannot activate the Coach role'
 );
 select extensions.is(
   (select count(*)::bigint from public.audit_events
-   where kind = 'coach_approved'),
+   where kind = 'coach_application_accepted'),
   1::bigint,
-  'approval writes one audit event'
+  'acceptance writes one audit event'
 );
 select extensions.lives_ok(
   $$ select public.decide_coach_application(
@@ -190,9 +170,9 @@ select extensions.lives_ok(
 );
 select extensions.is(
   (select count(*)::bigint from public.audit_events
-   where kind = 'coach_approved'),
+   where kind = 'coach_application_accepted'),
   1::bigint,
-  'idempotent approval does not duplicate audit'
+  'idempotent acceptance does not duplicate audit'
 );
 select extensions.throws_like(
   $$ select public.decide_coach_application(

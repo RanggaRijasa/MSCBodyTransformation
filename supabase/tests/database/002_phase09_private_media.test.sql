@@ -191,8 +191,8 @@ insert into public.coach_applications (
   submitted_at, decided_at, decided_by
 )
 values
-  ('1a000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'Coach Storage Satu', '+628100000002', 'sc', true, true, 'test-v1', 'approved', 'storage-coach-one', now(), now(), '00000000-0000-0000-0000-000000000001'),
-  ('1a000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', 'Coach Storage Dua', '+628100000003', 'sc', true, true, 'test-v1', 'approved', 'storage-coach-two', now(), now(), '00000000-0000-0000-0000-000000000001');
+  ('1a000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'Coach Storage Satu', '+628100000002', 'sc', true, true, 'test-v1', 'active', 'storage-coach-one', now(), now(), '00000000-0000-0000-0000-000000000001'),
+  ('1a000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', 'Coach Storage Dua', '+628100000003', 'sc', true, true, 'test-v1', 'active', 'storage-coach-two', now(), now(), '00000000-0000-0000-0000-000000000001');
 
 insert into public.coach_payment_records (
   id, application_id, state, price_band, amount_minor_units,

@@ -268,6 +268,9 @@ nonisolated enum CoachApplicationStatus:
     case paymentProcessing = "payment_processing"
     case paymentVerified = "payment_verified"
     case pendingAdminApproval = "pending_admin_approval"
+    case submitted
+    case acceptedPendingPayment = "accepted_pending_payment"
+    case active
     case approved
     case rejected
     case expired
@@ -275,7 +278,8 @@ nonisolated enum CoachApplicationStatus:
     var isActive: Bool {
         switch self {
         case .draft, .ineligible, .readyForPayment, .paymentProcessing,
-             .paymentVerified, .pendingAdminApproval:
+             .paymentVerified, .pendingAdminApproval, .submitted,
+             .acceptedPendingPayment, .active:
             true
         case .approved, .rejected, .expired:
             false
@@ -358,7 +362,8 @@ nonisolated struct CoachApplication:
     }
 
     var isReadyForAdminApproval: Bool {
-        eligibility.isComplete && payment?.state == .verified
+        eligibility.isComplete
+            && (status == .submitted || status == .pendingAdminApproval)
     }
 }
 

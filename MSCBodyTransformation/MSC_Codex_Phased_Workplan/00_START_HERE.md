@@ -92,14 +92,18 @@ Dikerjakan setelah Track A stabil.
 12. `11_PHASE_10_AUTH_EMAIL_GOOGLE_APPLE.md`
 13. `12_PHASE_11_REAL_DATA_AND_SERVER_OPERATIONS.md`
 14. `13_PHASE_12_STOREKIT_PROGRAM_PAYMENTS.md`
-15. `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md`
+15. `14_PHASE_13_SECURITY_RELEASE_AND_TESTFLIGHT.md` — overview Phase 13.
+    - `14A_PHASE_13_1_RELEASE_HARDENING_HOSTED_AND_PHYSICAL_TESTING.md`
+    - `14B_PHASE_13_2_ARCHIVE_AND_TESTFLIGHT.md`
+    - `14C_PHASE_13_3_APP_STORE_REVIEW_AND_RELEASE.md`
 16. `15_PHASE_14_ANDROID_HANDOFF.md`
 
-Status saat ini (8 Agustus 2026): Phase 11 selesai dan terverifikasi terhadap
-Supabase lokal. Pekerjaan implementasi berikutnya adalah Phase 12 StoreKit dan
-server-side commerce verification. Hosted `main`, Release configuration,
-TestFlight, dan perangkat fisik tetap Phase 13 serta memerlukan persetujuan
-production eksplisit. SMTP/domain tetap skipped.
+Status saat ini (9 Agustus 2026): Phase 12 selesai dan terverifikasi secara
+lokal. Pekerjaan berikutnya adalah Phase 13.1: release hardening, hosted `main`,
+OAuth/StoreKit production, sandbox, dan pengujian perangkat fisik. Owner harus
+menyelesaikan exploratory test sendiri sebelum Phase 13.2 membuat/upload
+archive dan mendistribusikan TestFlight. Phase 13.3 metadata/App Review tetap
+memerlukan approval terpisah. SMTP/domain tetap skipped.
 
 ## Aturan dependency
 

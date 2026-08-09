@@ -88,17 +88,6 @@ async function patchProfile(userID, body) {
   );
 }
 
-async function insert(table, body) {
-  await success(
-    await request(`/rest/v1/${table}`, {
-      method: "POST",
-      body,
-      prefer: "return=minimal",
-    }),
-    `insert ${table}`,
-  );
-}
-
 async function rpc(token, name, body) {
   return request(`/rest/v1/rpc/${name}`, {
     method: "POST",
@@ -169,26 +158,6 @@ try {
     "Applicant must not create verified payment state",
   );
 
-  const paymentID = randomUUID();
-  await insert("coach_payment_records", {
-    id: paymentID,
-    application_id: draft.id,
-    state: "verified",
-    price_band: "entry",
-    amount_minor_units: 100000,
-    duration_months: 3,
-    provider_reference: `trusted-fixture-${randomUUID()}`,
-    verified_at: new Date().toISOString(),
-  });
-  await insert("coach_access_entitlements", {
-    application_id: draft.id,
-    payment_record_id: paymentID,
-    coach_user_id: applicant.id,
-    status: "active",
-    starts_at: new Date(Date.now() - 60_000).toISOString(),
-    ends_at: new Date(Date.now() + 90 * 86_400_000).toISOString(),
-  });
-
   const [approve, reject] = await Promise.all([
     rpc(adminToken, "decide_coach_application", {
       target_application_id: draft.id,
@@ -216,7 +185,7 @@ try {
     "read terminal application fixture",
   );
   assert.ok(
-    ["approved", "rejected"].includes(aggregate[0]?.status),
+    ["accepted_pending_payment", "rejected"].includes(aggregate[0]?.status),
     "Application must have one terminal status",
   );
 

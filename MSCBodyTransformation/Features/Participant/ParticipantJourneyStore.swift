@@ -185,6 +185,14 @@ final class ParticipantJourneyStore {
         environment.configuration.mode == .localDemo
     }
 
+    var commerceCoordinator: CommerceCoordinator? {
+        environment.commerce
+    }
+
+    var coachApplicationRepository: (any CoachApplicationRepository)? {
+        environment.repositories?.coachApplications
+    }
+
     var programs: [Program] {
         snapshot?.programs ?? guestSnapshot?.programs ?? []
     }
@@ -880,6 +888,11 @@ final class ParticipantJourneyStore {
             participantID: snapshot.profile.id,
             coach: coach
         )
+        focusedProgramID = programID
+        try await reloadSnapshot()
+    }
+
+    func refreshAfterCommercePurchase(programID: UUID) async throws {
         focusedProgramID = programID
         try await reloadSnapshot()
     }

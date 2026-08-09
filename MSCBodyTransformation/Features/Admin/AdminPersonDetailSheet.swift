@@ -173,7 +173,8 @@ struct AdminPersonDetailSheet: View {
     private func coachApplicationActions(
         _ application: CoachApplication
     ) -> some View {
-        if application.status == .pendingAdminApproval {
+        if application.status == .submitted
+            || application.status == .pendingAdminApproval {
             Section {
                 Button("admin.coach_application.approve.action") {
                     showsApprovalConfirmation = true
@@ -678,8 +679,12 @@ struct AdminPersonDetailSheet: View {
             "coach.application.status.payment_processing"
         case .paymentVerified:
             "coach.application.status.payment_verified"
-        case .pendingAdminApproval:
+        case .pendingAdminApproval, .submitted:
             "coach.application.status.pending_admin_approval"
+        case .acceptedPendingPayment:
+            "coach.application.status.accepted_payment"
+        case .active:
+            "coach.application.status.active"
         case .approved:
             "coach.application.status.approved"
         case .rejected:
@@ -693,11 +698,12 @@ struct AdminPersonDetailSheet: View {
         _ status: CoachApplicationStatus
     ) -> AppStatusKind {
         switch status {
-        case .approved:
+        case .approved, .active:
             .success
         case .rejected, .ineligible, .expired:
             .error
-        case .pendingAdminApproval, .paymentProcessing:
+        case .pendingAdminApproval, .submitted, .paymentProcessing,
+             .acceptedPendingPayment:
             .pending
         case .paymentVerified:
             .information

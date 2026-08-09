@@ -3,9 +3,10 @@
 Status: authoritative companion untuk
 `PROGRAM_END_TO_END_REMEDIATION_WORKPLAN.md`.
 
-Implementation status: seluruh contract non-commerce Phase 11 selesai dan
-terverifikasi terhadap Supabase lokal pada 8 Agustus 2026. Store verification
-dan entitlement lifecycle tetap Phase 12; hosted deployment tetap Phase 13.
+Implementation status: seluruh contract Phase 11 dan provider-neutral
+commerce Phase 12 selesai serta terverifikasi terhadap Supabase lokal pada
+8 Agustus 2026. Hosted deployment, App Store sandbox/TestFlight, dan public
+Notification V2 configuration tetap Phase 13; Google Play tetap Phase 14.
 
 Dokumen ini menjelaskan pemilik setiap field, consumer runtime, batas privasi,
 dan jalur migrasi. Phase lama hanya menjadi catatan historis bila bertentangan
@@ -22,7 +23,7 @@ dengan matriks ini.
 | Kapasitas | participant limit | Mengatur | Melihat availability | Tidak mengubah | Menegakkan atomik |
 | Batas pendaftaran | `registrationClosesAt` exact timestamp atau `null` | Mengatur; dapat melakukan enrollment manual setelah tutup dengan alasan | Melihat cutoff; self-enrollment ditolak tepat pada/selewat cutoff | Tidak mengubah | Mengunci program, mengecek server clock, dan mengaudit override Admin |
 | Akses | publik | Tidak ada picker | Memilih dari katalog | Tidak mengundang | Menegakkan program publik |
-| Commerce | gratis/berbayar, desired price, platform availability | Mengatur intent | Membaca harga store | Tidak mengubah | Memetakan produk/entitlement |
+| Commerce | gratis/berbayar, desired price, platform product mapping | Mengatur intent; membaca status | Membaca `Product.displayPrice`; tidak mengirim harga/Coach/identity authoritative | Boleh membeli program; akses fitur Coach adalah produk terpisah | Membuat intent/reservation, memetakan product/environment, memverifikasi JWS, dan memenuhi ledger/entitlement atomik |
 | Scoring | activity points, weight points/kg, quiz threshold | Mengatur sebelum enrollment | Melihat aturan | Melihat breakdown | Menghitung authoritative |
 | Hari | ID, order, date/offset, visibility policy | Menyusun dan menyalin isi antarhari; memilih tersedia/terkunci/disembunyikan | Menjalankan sesuai policy | Memantau | Menentukan availability |
 | Langkah | ID, order, kind, instructions, media, completion policy | Menyusun | Merender | Melihat konteks | Memvalidasi submission |
@@ -49,17 +50,20 @@ dengan matriks ini.
 | Member level | Profile/application snapshot | Tidak membaca | Memilih; tidak memberi capability | Membaca | Phase 10/11 validation |
 | Eligibility | Domain/server rule | — | Attest HOM STS dan ICT | Membaca hasil | Server menghitung ulang |
 | Coach application | Application aggregate | — | Membuat satu active application | Approve/reject | Phase 11 atomic operation selesai lokal |
-| Price band | Server/store mapping | — | Membaca preview | Membaca | Phase 12 authoritative mapping |
-| Payment | Store verification | — | Tidak dapat menandai verified | Membaca | Phase 12 idempotent verification |
+| Price band | Server/store mapping | — | Membaca store display price | Membaca | Phase 12 authoritative mapping selesai lokal |
+| Payment | Apple signed transaction + server ledger | — | Tidak dapat menandai verified atau memilih environment/product authoritative | Membaca history/status | Phase 12 idempotent verification selesai lokal; sandbox hosted Phase 13 |
 | Approval | Protected server decision | — | Tidak dapat menulis | Konfirmasi/rejection reason | Phase 11 atomic dan audited selesai lokal |
 | Role | Protected role table | Tidak ada | Tetap Participant selama pending | Tidak mengedit metadata client | Berubah hanya setelah approval valid |
-| Entitlement | Server clock/store state | Public only | Membaca miliknya | Membaca untuk review | Phase 12 expiry/renewal/revocation |
+| Entitlement | Server clock/store state | Public only | Membaca miliknya | Membaca untuk review | Phase 12 expiry/renewal/refund/revocation selesai lokal |
 
 Phase 09.5 mengimplementasikan presentation dan repository lokal untuk
 matriks ini. Phase 11 kemudian mengganti seluruh surface non-commerce pada
-mode Supabase dengan read model dan operasi server authoritative. Fake
-payment tetap tidak boleh dianggap verifikasi; boundary tersebut hanya dapat
-diselesaikan oleh Phase 12.
+mode Supabase dengan read model dan operasi server authoritative. Fake payment
+tetap tidak boleh dianggap verifikasi. Phase 12 menyelesaikan boundary
+Supabase mode melalui StoreKit 2, opaque purchase intent, `appAccountToken`,
+server-side Apple JWS verification, durable transaction ledger, dan
+entitlement projection. Demo/previews tetap memakai fake adapter yang berlabel
+lokal dan tidak dirakit pada Supabase production mode.
 
 ## Inventory migrasi source
 
@@ -131,6 +135,25 @@ divalidasi.
   dan empat UI journey terfokus lulus.
 - Hosted `main` tidak disentuh. Contract commerce Phase 12 dan deployment
   Phase 13 tetap belum dijalankan.
+
+## Phase 12 local completion 8 Agustus 2026
+
+- Program berbayar memakai non-consumable unik per cohort. Akses Coach memakai
+  non-renewing subscription tiga bulan dengan initial Admin acceptance,
+  manual renewal, server-clock expiry, dan refund/revocation reconciliation.
+- Purchase intent menyimpan subject, owner, product mapping, Coach snapshot,
+  environment, appAccountToken, idempotency, dan reservation expiry. Client
+  verify hanya mengirim opaque intent ID serta signed transaction.
+- Unique ledger dan immutable event history menolak replay lintas account,
+  environment, program/application, serta original transaction lineage.
+- Program fulfillment membuat transaction, entitlement, enrollment, dan score
+  exactly once. Coach fulfillment membuat transaction, period entitlement,
+  payment projection, capability, dan audit exactly once.
+- Notification V2 menyimpan notification UUID unik sebelum success, memproses
+  duplicate/out-of-order secara idempoten, dan mempertahankan retry/dead-letter
+  metadata tanpa menyimpan signed payload mentah.
+- Fresh local reset menerapkan 17 migration; 348 pgTAP assertions dan 151
+  integration checks/assertions lulus. Hosted `main` tetap tidak disentuh.
 
 ## Aturan stabilitas contract
 
