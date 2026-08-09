@@ -53,7 +53,7 @@ Menghasilkan release candidate iOS/iPadOS yang:
 | Area | Kondisi saat audit | Tindakan Phase 13 |
 |---|---|---|
 | Phase 12 lokal | 17 migrations, 348 pgTAP assertions, 151 integration checks, 190 Swift/StoreKit tests, UI/build/lint/advisors/schema diff lulus | Jangan mengulang desain commerce; gunakan sebagai baseline |
-| App Icon | `AppIcon.appiconset` hanya berisi `Contents.json`, tanpa bitmap | Tambahkan icon final dan validasi archive |
+| App Icon | Default, dark, dan tinted 1024×1024 tanpa alpha sudah dipasang; source, layer terpisah, dan dokumen native Icon Composer tersedia | Pertahankan aset final dan validasi ulang saat archive |
 | Privacy manifest | `PrivacyInfo.xcprivacy` ada tetapi seluruh array kosong | Audit API dan isi data collection/tracking declarations yang benar |
 | Legal UI | Privasi dan Ketentuan masih `ContentUnavailableView` dengan copy placeholder | Ganti dengan dokumen/URL production yang dapat dibuka |
 | Camera purpose | Masih menyebut “QR undangan program” | Ubah menjadi QR Coach dan foto bukti |
@@ -97,7 +97,7 @@ shared, committed `.env`, screenshot, fixture, atau log.
 
 ### Sebelum Slice 13.1 selesai
 
-- [ ] Sediakan artwork App Icon final 1024×1024 atau setujui pembuatan aset.
+- [x] Sediakan artwork App Icon final 1024×1024 atau setujui pembuatan aset.
 - [ ] Sediakan teks final privacy policy, terms, wellness disclaimer, retention,
   account deletion, Coach payment/expiry, serta contest rules bila ada hadiah.
 - [ ] Sediakan URL HTTPS publik Privacy Policy dan Terms of Use. Custom domain
@@ -174,7 +174,7 @@ tidak ada mutation hosted.
 
 ### Slice 13.1 — Bundle, privacy, legal, dan Release configuration
 
-- [ ] Tambahkan App Icon production untuk default, dark, dan tinted appearance;
+- [x] Tambahkan App Icon production untuk default, dark, dan tinted appearance;
   periksa alpha/transparency dan rendering ukuran kecil.
 - [ ] Perbaiki `NSCameraUsageDescription` menjadi QR Coach dan foto bukti.
 - [ ] Audit kebutuhan photo-library purpose string. `PhotosPicker` tidak boleh
@@ -537,6 +537,29 @@ menyelesaikan target resolution dan approval.
   https://supabase.com/docs/guides/functions/limits
 
 ## Progress log
+
+### 9 Agustus 2026 — App Icon production dan Icon Composer
+
+- Memasang App Icon final yang disetujui ke `AppIcon.appiconset` dalam varian
+  default, dark, dan tinted 1024×1024; ketiganya opaque tanpa alpha.
+- Menyimpan source final, preview 180/120/60/40 piksel, layer background,
+  orbit, MSC, BODY, TRANSFORMATION, serta artwork monokrom di `Design/AppIcon`.
+- Membuat dan membuka ulang dokumen native
+  `MSCBodyTransformation-AppIcon.icon` di Icon Composer 1.6. Background tidak
+  memakai glass effect; layer artwork tetap menggunakan treatment native.
+- Menambahkan generator native AppKit/CoreGraphics yang reproducible tanpa
+  dependency pihak ketiga. Asumsi: artwork terpilih adalah master visual dan
+  mask sudut tetap menjadi tanggung jawab sistem Apple.
+- Build/test command: `swiftc -warnings-as-errors -typecheck
+  scripts/generate_app_icon_assets.swift`; lulus tanpa warning.
+- Build command: XcodeBuildMCP `build_run_sim` Debug pada iPhone 17 Pro Max
+  iOS 26.5; lulus, aplikasi terpasang, dan icon tervalidasi di Home Screen.
+- Build command: XcodeBuildMCP `build_sim` Release dengan
+  `CODE_SIGNING_ALLOWED=NO`; lulus tanpa error Asset Catalog.
+- Remaining blockers Slice 13.1: camera/photo purpose strings, legal content
+  dan URL, privacy manifest, required-reason API audit, serta konfigurasi
+  Release hosted. Archive/App Store validation tetap dilakukan pada gate
+  archive final.
 
 ### 8 Agustus 2026 — Audit dan rekonsiliasi Phase 13
 
