@@ -3,6 +3,11 @@
 Peta ini mendefinisikan parity perilaku. Web tidak menerjemahkan source Swift
 baris demi baris dan tidak meniru kontrol native yang tidak sesuai web.
 
+Capability, role, state, adaptation, dan historical prohibition lengkap
+dibekukan pada [Phase 00 Capability and State Parity Matrix](./PHASE_00_PARITY_MATRIX.md).
+Pemetaan test berada di
+[iOS to Web Test Mapping](../testing/IOS_TO_WEB_TEST_MAPPING.md).
+
 | iOS/reference | Target web/PWA | Catatan parity |
 |---|---|---|
 | `App/RootView.swift` | root layouts dan role routing | Guest bukan role |
@@ -70,4 +75,3 @@ Satu capability dinyatakan parity bila:
 4. Unit/integration/E2E terkait lulus.
 5. Perbedaan platform dicatat sebagai deliberate adaptation, bukan fitur yang
    diam-diam hilang.
-

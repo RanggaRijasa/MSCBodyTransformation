@@ -107,6 +107,12 @@ periode menggunakan server clock dan policy yang ditetapkan.
 Keputusan final Phase 00 dan product gate closure dicatat di
 `../decisions/PHASE_00_MANUAL_COMMERCE_DECISIONS.md`.
 
+Desain logical aggregate, operasi, enum target, storage, authorization, dan
+test gate yang telah dibekukan berada di
+[Target Manual Commerce Contract](./TARGET_MANUAL_COMMERCE_CONTRACT.md).
+Urutan migration/decommission berada di
+[Forward-only Migration and Decommission Plan](./FORWARD_ONLY_MIGRATION_AND_DECOMMISSION.md).
+
 ## Storage dan privasi
 
 - Bucket bukti transfer privat dan terpisah dari media program.

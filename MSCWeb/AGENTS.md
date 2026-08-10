@@ -16,6 +16,26 @@ menjadi bagian runtime web. Pembayaran program serta akses Coach menggunakan
 transfer manual, bukti pembayaran privat, pemeriksaan Admin, dan aktivasi
 server-authoritative.
 
+## Batas direktori kerja
+
+- Seluruh file baru dan perubahan untuk implementasi Web/PWA wajib berada di
+  dalam direktori `MSCWeb/` ini.
+- Jangan membuat source, konfigurasi, dokumentasi hasil konversi, fixture,
+  test, script, atau artefak Web/PWA baru di root repository maupun di folder
+  proyek iOS.
+- File dan folder di luar `MSCWeb/` hanya boleh dibaca sebagai referensi,
+  kecuali pengguna secara eksplisit meminta perubahan pada path tertentu.
+- Instruksi goal yang menyebut Phase Web/PWA tidak memperluas write scope:
+  write scope tetap hanya `MSCWeb/`, meskipun penyelesaian goal memerlukan
+  audit read-only terhadap source iOS, `Contracts`, atau `supabase` existing.
+- Jika suatu phase membutuhkan perubahan pada shared backend, `Contracts`,
+  hosted Supabase, DNS, domain, OAuth production, atau deployment, hentikan di
+  gate tersebut dan minta persetujuan eksplisit pengguna sebelum melakukan
+  perubahan.
+- Jangan memindahkan, menghapus, atau mengarsipkan source iOS secara otomatis.
+  Pemindahan `MSCWeb/` ke repository baru tetap merupakan tindakan manual yang
+  diputuskan pengguna setelah parity dan cutover dinyatakan aman.
+
 ## Bacaan wajib sebelum mengubah source web
 
 1. `MSCWeb_Codex_Phased_Workplan/00_START_HERE.md`.
@@ -142,4 +162,3 @@ Route/Page
   eksplisit pengguna untuk tindakan tersebut.
 - Preview dan production deployment adalah perubahan eksternal; lakukan hanya
   saat phase dan pengguna memberi otorisasi.
-

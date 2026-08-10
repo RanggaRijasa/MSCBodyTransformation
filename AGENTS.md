@@ -25,6 +25,25 @@ Primary technical direction:
 - Supabase, OAuth, and production StoreKit integration are deferred to their assigned phases.
 - Android will be implemented later with Kotlin and Jetpack Compose using the same backend contract.
 
+## MSCWeb Conversion Scope
+
+For every task or Codex goal concerning the Web/PWA conversion:
+
+- All new files and modifications for the Web/PWA implementation must remain
+  inside `MSCWeb/`.
+- Read and follow `MSCWeb/AGENTS.md` before working on any Web/PWA phase.
+- Files outside `MSCWeb/`, including the iOS project, `Contracts`, `supabase`,
+  and root documentation, are read-only references unless the user explicitly
+  authorizes a change to a specific path.
+- A Web/PWA goal does not implicitly expand its write scope beyond `MSCWeb/`,
+  even when it requires read-only audits of the existing iOS or backend code.
+- If completion requires changing shared backend files, contracts, hosted
+  Supabase, DNS, domain configuration, production OAuth, or deployment state,
+  stop at that gate and obtain explicit user authorization first.
+- Never move, delete, archive, or rewrite the existing iOS project as part of
+  the conversion. Moving `MSCWeb/` to a new repository remains a user-approved
+  cutover action after parity has been verified.
+
 ## Required Reading Before Work
 
 Before changing code:
