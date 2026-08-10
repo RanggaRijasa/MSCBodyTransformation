@@ -5,6 +5,7 @@ const apiURL = requireEnvironment("API_URL");
 const anonKey = process.env.ANON_KEY ?? requireEnvironment("PUBLISHABLE_KEY");
 const serviceRoleKey = process.env.SERVICE_ROLE_KEY
   ?? requireEnvironment("SECRET_KEY");
+const scheduledFunctionKey = process.env.SECRET_KEY ?? serviceRoleKey;
 
 assert.ok(
   ["127.0.0.1", "localhost", "::1"].includes(new URL(apiURL).hostname),
@@ -95,7 +96,44 @@ try {
   );
   assert.equal(denied.status, 403, "Participant cleanup must be denied");
 
+  const scheduled = await request(
+    "/functions/v1/cleanup-orphan-question-photos",
+    {
+      method: "POST",
+      token: scheduledFunctionKey,
+      apiKey: scheduledFunctionKey,
+      body: {
+        older_than_hours: 24,
+        reason: "Pembersihan terjadwal Phase 13.1.",
+      },
+    },
+  );
+  const scheduledBody = await payload(scheduled);
+  assert.ok(
+    scheduled.ok,
+    `Scheduled cleanup failed: ${JSON.stringify(scheduledBody)}`,
+  );
+  assert.equal(
+    scheduledBody.deleted_count,
+    0,
+    "Scheduled service cleanup should accept a clean database",
+  );
+
   const adminToken = await signIn(admin);
+  const oversized = await request(
+    "/functions/v1/cleanup-orphan-question-photos",
+    {
+      method: "POST",
+      token: adminToken,
+      apiKey: anonKey,
+      body: {
+        older_than_hours: 24,
+        reason: "x".repeat(8_192),
+      },
+    },
+  );
+  assert.equal(oversized.status, 422, "Oversized cleanup body must be denied");
+
   const cleanup = await request(
     "/functions/v1/cleanup-orphan-question-photos",
     {
@@ -118,7 +156,7 @@ try {
     0,
     "Clean database should have no expired orphan objects",
   );
-  console.log("Phase 11 orphan cleanup checks passed: 2");
+  console.log("Phase 11 orphan cleanup checks passed: 4");
 } finally {
   for (const user of [participant, admin]) {
     if (!user?.id) continue;

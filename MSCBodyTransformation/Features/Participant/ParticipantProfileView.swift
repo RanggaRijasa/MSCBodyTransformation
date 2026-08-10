@@ -263,10 +263,7 @@ struct ParticipantProfileView: View {
     private var legalSection: some View {
         Section("participant.profile.privacy") {
             NavigationLink {
-                ParticipantLegalPlaceholderView(
-                    title: "participant.legal.privacy.title",
-                    message: "participant.legal.privacy.message"
-                )
+                LegalDocumentView(kind: .privacy)
                 .singlePressNavigationBackButton()
             } label: {
                 Label(
@@ -277,10 +274,7 @@ struct ParticipantProfileView: View {
             .accessibilityIdentifier("participant.profile.legal.privacy")
 
             NavigationLink {
-                ParticipantLegalPlaceholderView(
-                    title: "participant.legal.terms.title",
-                    message: "participant.legal.terms.message"
-                )
+                LegalDocumentView(kind: .terms)
                 .singlePressNavigationBackButton()
             } label: {
                 Label(
@@ -355,20 +349,6 @@ private enum ParticipantProfileSheet: Identifiable {
         case .commerce:
             "commerce"
         }
-    }
-}
-
-private struct ParticipantLegalPlaceholderView: View {
-    let title: LocalizedStringKey
-    let message: LocalizedStringKey
-
-    var body: some View {
-        ContentUnavailableView {
-            Label(title, systemImage: "doc.text")
-        } description: {
-            Text(message)
-        }
-        .navigationTitle(Text(title))
     }
 }
 

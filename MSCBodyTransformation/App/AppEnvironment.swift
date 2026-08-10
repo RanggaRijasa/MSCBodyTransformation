@@ -138,6 +138,10 @@ nonisolated struct AppEnvironment: Sendable {
         let accountDeletionClient = URLSessionSupabaseAccountDeletionClient(
             configuration: runtimeConfiguration
         )
+        let appleIdentityLifecycleClient =
+            URLSessionSupabaseAppleIdentityLifecycleClient(
+                configuration: runtimeConfiguration
+            )
         let sessionRepository = SupabaseSessionRepository(
             authClient: authClient,
             profileClient: profileClient,
@@ -148,6 +152,7 @@ nonisolated struct AppEnvironment: Sendable {
         let externalAuthentication = NativeProviderAuthenticationCoordinator(
             authClient: authClient,
             profileClient: profileClient,
+            appleLifecycleClient: appleIdentityLifecycleClient,
             secureStore: secureStore,
             configuration: configuration,
             clock: clock

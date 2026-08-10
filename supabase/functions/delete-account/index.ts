@@ -1,3 +1,14 @@
+import {
+  ClaimedAppleCredential,
+  loadAppleIdentityConfiguration,
+} from "../_shared/apple_identity.ts";
+import { revokeClaimedAppleCredential } from "../_shared/apple_account_cleanup.ts";
+import { fetchWithTimeout } from "../_shared/http_safety.ts";
+import {
+  loadSupabaseRuntimeKeys,
+  serviceRequestHeaders,
+} from "../_shared/supabase_keys.ts";
+
 type MediaObject = {
   bucket_id: string;
   name: string;
@@ -20,7 +31,7 @@ async function checkedFetch(
   init: RequestInit,
   failureCode: string,
 ): Promise<Response> {
-  const response = await fetch(input, init);
+  const response = await fetchWithTimeout(input, init);
   if (!response.ok) {
     const allowedCodes = new Set([
       "recent_reauthentication_required",
@@ -54,11 +65,15 @@ export default {
     }
 
     const projectURL = Deno.env.get("SUPABASE_URL");
-    const publishableKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    let keys: ReturnType<typeof loadSupabaseRuntimeKeys>;
+    try {
+      keys = loadSupabaseRuntimeKeys();
+    } catch {
+      return jsonResponse(500, "server_configuration_missing");
+    }
     const authorization = request.headers.get("Authorization");
 
-    if (!projectURL || !publishableKey || !serviceRoleKey) {
+    if (!projectURL) {
       return jsonResponse(500, "server_configuration_missing");
     }
     if (!authorization?.startsWith("Bearer ")) {
@@ -66,13 +81,12 @@ export default {
     }
 
     const userHeaders = {
-      "apikey": publishableKey,
+      "apikey": keys.publishableKey,
       "Authorization": authorization,
       "Content-Type": "application/json",
     };
     const adminHeaders = {
-      "apikey": serviceRoleKey,
-      "Authorization": `Bearer ${serviceRoleKey}`,
+      ...serviceRequestHeaders(keys.secretKey),
       "Content-Type": "application/json",
     };
 
@@ -85,6 +99,31 @@ export default {
       const user = await userResponse.json() as { id?: string };
       if (!user.id) {
         return jsonResponse(401, "authentication_required");
+      }
+
+      const appleCredential = await claimAppleCredential(
+        projectURL,
+        adminHeaders,
+        user.id,
+      );
+      if (appleCredential) {
+        try {
+          const appleConfiguration = loadAppleIdentityConfiguration();
+          await revokeClaimedAppleCredential(
+            appleConfiguration,
+            appleCredential,
+          );
+        } catch (error) {
+          const code = error instanceof Error
+            ? error.message
+            : "apple_revoke_failed";
+          await completeAppleRevocationFailure(
+            projectURL,
+            adminHeaders,
+            appleCredential.id,
+            code,
+          );
+        }
       }
 
       const manifestResponse = await checkedFetch(
@@ -172,3 +211,47 @@ export default {
     }
   },
 };
+
+async function claimAppleCredential(
+  projectURL: string,
+  adminHeaders: Record<string, string>,
+  accountID: string,
+): Promise<ClaimedAppleCredential | null> {
+  const response = await checkedFetch(
+    new URL(
+      "/rest/v1/rpc/claim_apple_identity_credential_for_account",
+      projectURL,
+    ),
+    {
+      method: "POST",
+      headers: adminHeaders,
+      body: JSON.stringify({ target_account_id: accountID }),
+    },
+    "apple_credential_claim_failed",
+  );
+  return await response.json() as ClaimedAppleCredential | null;
+}
+
+async function completeAppleRevocationFailure(
+  projectURL: string,
+  adminHeaders: Record<string, string>,
+  credentialID: string,
+  errorCode: string,
+): Promise<void> {
+  await checkedFetch(
+    new URL(
+      "/rest/v1/rpc/complete_apple_identity_revocation",
+      projectURL,
+    ),
+    {
+      method: "POST",
+      headers: adminHeaders,
+      body: JSON.stringify({
+        target_credential_id: credentialID,
+        succeeded: false,
+        error_code: errorCode,
+      }),
+    },
+    "apple_credential_retry_failed",
+  );
+}

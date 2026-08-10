@@ -162,6 +162,7 @@ struct RoleAppShellView: View {
             ParticipantEntryFlowView(store: store)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+#if DEBUG
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             router.presentedSheet = .scenarioInformation(
@@ -175,6 +176,7 @@ struct RoleAppShellView: View {
                         )
                         .accessibilityIdentifier("shell.scenario-info")
                     }
+#endif
                 }
         }
     }

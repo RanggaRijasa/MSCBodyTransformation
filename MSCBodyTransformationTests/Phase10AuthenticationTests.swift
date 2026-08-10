@@ -93,7 +93,8 @@ struct Phase10AuthenticationTests {
     func releaseModeRejectsLocalEndpoint() {
         #expect(throws: AuthenticationError.validation) {
             try AppConfiguration.load(
-                environment: [
+                environment: [:],
+                bundledConfiguration: [
                     AppConfiguration.modeEnvironmentKey:
                         AppConfiguration.Mode.hostedProduction.rawValue,
                     SupabaseRuntimeConfiguration.urlEnvironmentKey:
@@ -104,6 +105,116 @@ struct Phase10AuthenticationTests {
                 build: .release
             )
         }
+    }
+
+    @Test("Build Release membaca konfigurasi publik dari bundle")
+    func releaseModeUsesBundledPublicConfiguration() throws {
+        let configuration = try AppConfiguration.load(
+            environment: [:],
+            bundledConfiguration: [
+                AppConfiguration.modeEnvironmentKey:
+                    AppConfiguration.Mode.hostedProduction.rawValue,
+                SupabaseRuntimeConfiguration.urlEnvironmentKey:
+                    "https://example-project.supabase.co",
+                SupabaseRuntimeConfiguration.publishableKeyEnvironmentKey:
+                    "sb_publishable_example"
+            ],
+            build: .release
+        )
+
+        #expect(configuration.mode == .hostedProduction)
+        #expect(
+            configuration.supabaseURL?.absoluteString
+                == "https://example-project.supabase.co"
+        )
+        #expect(
+            configuration.supabasePublishableKey
+                == "sb_publishable_example"
+        )
+    }
+
+    @Test("Build Release tidak dapat diarahkan ke lokal oleh Run scheme")
+    func releaseModeIgnoresProcessEnvironmentOverride() throws {
+        let configuration = try AppConfiguration.load(
+            environment: [
+                AppConfiguration.modeEnvironmentKey:
+                    AppConfiguration.Mode.debugLocalSupabase.rawValue,
+                SupabaseRuntimeConfiguration.urlEnvironmentKey:
+                    "http://127.0.0.1:54321",
+                SupabaseRuntimeConfiguration.publishableKeyEnvironmentKey:
+                    "local-key"
+            ],
+            bundledConfiguration: [
+                AppConfiguration.modeEnvironmentKey:
+                    AppConfiguration.Mode.hostedProduction.rawValue,
+                SupabaseRuntimeConfiguration.urlEnvironmentKey:
+                    "https://example-project.supabase.co",
+                SupabaseRuntimeConfiguration.publishableKeyEnvironmentKey:
+                    "sb_publishable_example"
+            ],
+            build: .release
+        )
+
+        #expect(configuration.mode == .hostedProduction)
+        #expect(
+            configuration.supabaseURL?.host
+                == "example-project.supabase.co"
+        )
+    }
+
+    @Test("Build Release gagal tertutup saat konfigurasi bundle kosong")
+    func releaseModeFailsClosedWithoutBundledConfiguration() {
+        #expect(throws: AuthenticationError.validation) {
+            try AppConfiguration.load(
+                environment: [:],
+                bundledConfiguration: [:],
+                build: .release
+            )
+        }
+    }
+
+    @Test("Kode otorisasi Apple memakai kontrak snake case server")
+    func appleIdentityLifecycleUsesServerContract() async throws {
+        let sessionConfiguration = URLSessionConfiguration.ephemeral
+        sessionConfiguration.protocolClasses = [
+            Phase13AppleIdentityRequestCaptureURLProtocol.self
+        ]
+        Phase13AppleIdentityRequestCaptureURLProtocol.capturedRequest = nil
+        Phase13AppleIdentityRequestCaptureURLProtocol.capturedBody = nil
+        defer {
+            Phase13AppleIdentityRequestCaptureURLProtocol.capturedRequest = nil
+            Phase13AppleIdentityRequestCaptureURLProtocol.capturedBody = nil
+        }
+        let runtime = try SupabaseRuntimeConfiguration(
+            projectURL: URL(string: "https://example-project.supabase.co")!,
+            publishableKey: "sb_publishable_example"
+        )
+        let client = URLSessionSupabaseAppleIdentityLifecycleClient(
+            configuration: runtime,
+            session: URLSession(configuration: sessionConfiguration)
+        )
+
+        try await client.registerAuthorizationCode(
+            "native-authorization-code",
+            accessToken: "access-token"
+        )
+
+        let request = try #require(
+            Phase13AppleIdentityRequestCaptureURLProtocol.capturedRequest
+        )
+        #expect(
+            request.url?.absoluteString
+                == "https://example-project.supabase.co/functions/v1/apple-identity-lifecycle"
+        )
+        #expect(request.value(forHTTPHeaderField: "apikey") == "sb_publishable_example")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access-token")
+        let body = try #require(
+            Phase13AppleIdentityRequestCaptureURLProtocol.capturedBody
+        )
+        let object = try #require(
+            JSONSerialization.jsonObject(with: body) as? [String: String]
+        )
+        #expect(object == ["authorization_code": "native-authorization-code"])
     }
 
     @Test("Pending enrollment intent mematuhi TTL dan environment")
@@ -243,5 +354,59 @@ struct Phase10AuthenticationTests {
             environment: "debug_local_supabase",
             expiresAt: now.addingTimeInterval(60)
         )
+    }
+}
+
+private final class Phase13AppleIdentityRequestCaptureURLProtocol:
+    URLProtocol,
+    @unchecked Sendable
+{
+    nonisolated(unsafe) static var capturedRequest: URLRequest?
+    nonisolated(unsafe) static var capturedBody: Data?
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(
+        for request: URLRequest
+    ) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        Self.capturedRequest = request
+        Self.capturedBody = request.httpBody ?? Self.readBody(
+            from: request.httpBodyStream
+        )
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: 204,
+            httpVersion: nil,
+            headerFields: nil
+        )!
+        client?.urlProtocol(
+            self,
+            didReceive: response,
+            cacheStoragePolicy: .notAllowed
+        )
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+
+    private static func readBody(from stream: InputStream?) -> Data? {
+        guard let stream else { return nil }
+        stream.open()
+        defer { stream.close() }
+        var body = Data()
+        var buffer = [UInt8](repeating: 0, count: 1_024)
+        while stream.hasBytesAvailable {
+            let count = stream.read(&buffer, maxLength: buffer.count)
+            if count < 0 { return nil }
+            if count == 0 { break }
+            body.append(buffer, count: count)
+        }
+        return body
     }
 }

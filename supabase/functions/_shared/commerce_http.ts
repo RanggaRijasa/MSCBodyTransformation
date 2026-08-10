@@ -1,3 +1,9 @@
+import { fetchWithTimeout } from "./http_safety.ts";
+import {
+  loadSupabaseRuntimeKeys,
+  serviceRequestHeaders,
+} from "./supabase_keys.ts";
+
 export type CommerceEnvironment =
   | "xcode"
   | "local_testing"
@@ -7,7 +13,7 @@ export type CommerceEnvironment =
 export type CommerceFunctionConfiguration = {
   projectURL: string;
   publishableKey: string;
-  serviceRoleKey: string;
+  secretKey: string;
   environment: CommerceEnvironment;
 };
 
@@ -62,10 +68,9 @@ export function jsonResponse(
 
 export function loadCommerceConfiguration(): CommerceFunctionConfiguration {
   const projectURL = Deno.env.get("SUPABASE_URL");
-  const publishableKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const keys = loadSupabaseRuntimeKeys();
   const environment = Deno.env.get("COMMERCE_APPLE_ENVIRONMENT");
-  if (!projectURL || !publishableKey || !serviceRoleKey) {
+  if (!projectURL) {
     throw new Error("server_configuration_missing");
   }
   if (
@@ -76,8 +81,8 @@ export function loadCommerceConfiguration(): CommerceFunctionConfiguration {
   }
   return {
     projectURL,
-    publishableKey,
-    serviceRoleKey,
+    publishableKey: keys.publishableKey,
+    secretKey: keys.secretKey,
     environment,
   };
 }
@@ -94,7 +99,7 @@ export async function authenticateCommerceUser(
   configuration: CommerceFunctionConfiguration,
   authorization: string,
 ): Promise<string> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     new URL("/auth/v1/user", configuration.projectURL),
     {
       method: "GET",
@@ -123,8 +128,8 @@ export async function callServiceRPC<Result>(
     configuration,
     functionName,
     body,
-    `Bearer ${configuration.serviceRoleKey}`,
-    configuration.serviceRoleKey,
+    null,
+    configuration.secretKey,
   );
 }
 
@@ -147,16 +152,18 @@ async function callRPC<Result>(
   configuration: CommerceFunctionConfiguration,
   functionName: string,
   body: Record<string, unknown>,
-  authorization: string,
+  authorization: string | null,
   apiKey: string,
 ): Promise<Result> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     new URL(`/rest/v1/rpc/${functionName}`, configuration.projectURL),
     {
       method: "POST",
       headers: {
         "apikey": apiKey,
-        "Authorization": authorization,
+        ...(authorization
+          ? { "Authorization": authorization }
+          : serviceRequestHeaders(apiKey)),
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
@@ -197,6 +204,9 @@ export function errorResponse(error: unknown): Response {
   const candidate = error instanceof Error ? error.message : "unknown";
   const edgeErrorCodes = new Set([
     "authentication_required",
+    "apple_server_api_configuration_invalid",
+    "apple_server_api_configuration_missing",
+    "apple_server_api_environment_invalid",
     "commerce_environment_missing",
     "idempotency_key_invalid",
     "method_not_allowed",
@@ -221,6 +231,9 @@ export function errorResponse(error: unknown): Response {
         code === "purchase_unverified"
     ? 422
     : code === "server_configuration_missing" ||
+        code === "apple_server_api_configuration_invalid" ||
+        code === "apple_server_api_configuration_missing" ||
+        code === "apple_server_api_environment_invalid" ||
         code === "commerce_environment_missing"
     ? 500
     : 409;

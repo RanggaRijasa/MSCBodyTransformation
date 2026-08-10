@@ -1,3 +1,13 @@
+import {
+  fetchWithTimeout,
+  readLimitedJSON,
+} from "../_shared/http_safety.ts";
+import {
+  isAuthorizedServiceRequest,
+  loadSupabaseRuntimeKeys,
+  serviceRequestHeaders,
+} from "../_shared/supabase_keys.ts";
+
 type OrphanObject = {
   object_name: string;
 };
@@ -19,7 +29,7 @@ async function checkedFetch(
   init: RequestInit,
   failureCode: string,
 ): Promise<Response> {
-  const response = await fetch(input, init);
+  const response = await fetchWithTimeout(input, init);
   if (!response.ok) {
     const payload = await response.clone().json().catch(() => null) as {
       message?: string;
@@ -36,43 +46,58 @@ export default {
     }
 
     const projectURL = Deno.env.get("SUPABASE_URL");
-    const publishableKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const authorization = request.headers.get("Authorization");
-    if (!projectURL || !publishableKey || !serviceRoleKey) {
+    let keys: ReturnType<typeof loadSupabaseRuntimeKeys>;
+    try {
+      keys = loadSupabaseRuntimeKeys();
+    } catch {
       return jsonResponse(500, { code: "server_configuration_missing" });
     }
-    if (!authorization?.startsWith("Bearer ")) {
+    const authorization = request.headers.get("Authorization");
+    const isServiceRequest = isAuthorizedServiceRequest(
+      request,
+      keys.secretKey,
+    );
+    if (!projectURL) {
+      return jsonResponse(500, { code: "server_configuration_missing" });
+    }
+    if (!isServiceRequest && !authorization?.startsWith("Bearer ")) {
       return jsonResponse(401, { code: "authentication_required" });
     }
 
-    const body = await request.json().catch(() => ({})) as {
-      older_than_hours?: number;
-      reason?: string;
-    };
-    const olderThanHours = body.older_than_hours ?? 24;
-    const reason = body.reason?.trim() ?? "Pembersihan media pertanyaan yatim.";
-    if (!Number.isInteger(olderThanHours) || olderThanHours < 1 || !reason) {
-      return jsonResponse(422, { code: "cleanup_request_invalid" });
-    }
-
     const userHeaders = {
-      "apikey": publishableKey,
-      "Authorization": authorization,
+      "apikey": keys.publishableKey,
+      "Authorization": authorization ?? "",
       "Content-Type": "application/json",
     };
     const serviceHeaders = {
-      "apikey": serviceRoleKey,
-      "Authorization": `Bearer ${serviceRoleKey}`,
+      ...serviceRequestHeaders(keys.secretKey),
       "Content-Type": "application/json",
     };
+    const operationHeaders = isServiceRequest ? serviceHeaders : userHeaders;
 
     try {
+      if (!isServiceRequest) {
+        await checkedFetch(
+          new URL("/auth/v1/user", projectURL),
+          { method: "GET", headers: userHeaders },
+          "authentication_required",
+        );
+      }
+      const body = await readLimitedJSON(request, 8_192) as {
+        older_than_hours?: number;
+        reason?: string;
+      };
+      const olderThanHours = body.older_than_hours ?? 24;
+      const reason = body.reason?.trim() ??
+        "Pembersihan media pertanyaan yatim.";
+      if (!Number.isInteger(olderThanHours) || olderThanHours < 1 || !reason) {
+        throw new Error("cleanup_request_invalid");
+      }
       const listResponse = await checkedFetch(
         new URL("/rest/v1/rpc/list_orphan_question_photos", projectURL),
         {
           method: "POST",
-          headers: userHeaders,
+          headers: operationHeaders,
           body: JSON.stringify({ older_than: `${olderThanHours} hours` }),
         },
         "orphan_list_failed",
@@ -100,7 +125,7 @@ export default {
         ),
         {
           method: "POST",
-          headers: userHeaders,
+          headers: operationHeaders,
           body: JSON.stringify({
             deleted_object_names: names,
             cleanup_reason: reason,
@@ -114,7 +139,13 @@ export default {
       const code = error instanceof Error
         ? error.message
         : "orphan_cleanup_failed";
-      const status = code === "permission_denied" ? 403 : 409;
+      const status = code === "authentication_required"
+        ? 401
+        : code === "permission_denied"
+        ? 403
+        : code === "cleanup_request_invalid" || code === "request_invalid"
+        ? 422
+        : 409;
       return jsonResponse(status, { code });
     }
   },

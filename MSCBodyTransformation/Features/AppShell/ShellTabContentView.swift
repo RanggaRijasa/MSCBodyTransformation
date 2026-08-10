@@ -31,6 +31,7 @@ struct ShellTabContentView: View {
                 usesPinnedContentTitle ? .inline : .automatic
             )
             .toolbar {
+#if DEBUG
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         router.presentedSheet = .scenarioInformation(
@@ -42,6 +43,7 @@ struct ShellTabContentView: View {
                     .accessibilityLabel(Text("action.scenario_information"))
                     .accessibilityIdentifier("shell.scenario-info")
                 }
+#endif
             }
     }
 

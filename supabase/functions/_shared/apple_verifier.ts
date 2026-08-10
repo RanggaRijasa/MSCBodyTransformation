@@ -31,6 +31,7 @@ export type VerifiedAppleTransaction = {
   signedAt: string;
   expiresAt: string | null;
   revocationAt: string | null;
+  revocationReason: "refund" | "revoke" | null;
   currencyCode: string | null;
   priceMilliunits: number | null;
   signedPayloadHash: string;
@@ -270,6 +271,9 @@ export class AppleSignedDataVerifier {
         ? null
         : new Date(requireDateMilliseconds(payload.revocationDate))
           .toISOString(),
+      revocationReason: payload.revocationDate === undefined
+        ? null
+        : payload.revocationReason === 0 ? "refund" : "revoke",
       currencyCode: payload.currency ?? null,
       priceMilliunits,
       signedPayloadHash: await sha256(signedTransaction),

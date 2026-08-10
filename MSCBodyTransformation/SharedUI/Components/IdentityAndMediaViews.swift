@@ -12,9 +12,11 @@ enum LocalMediaImageResolver {
         if let image = UIImage(named: reference) {
             return image
         }
+        #if DEBUG
         if isBundledEvidenceFixture(reference) {
             return UIImage(named: "EvidenceDemoFixture")
         }
+        #endif
         return nil
     }
 

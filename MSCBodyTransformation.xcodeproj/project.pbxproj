@@ -434,7 +434,19 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = TLC6Y5XJMM;
 				ENABLE_PREVIEWS = YES;
-				EXCLUDED_SOURCE_FILE_NAMES = Products.storekit;
+				EXCLUDED_SOURCE_FILE_NAMES = (
+					"*.md",
+					coaches.json,
+					DemoAssets.xcassets,
+					enrollments.json,
+					leaderboard.json,
+					managed_content.json,
+					Products.storekit,
+					programs.json,
+					submissions.json,
+					users.json,
+					video_placeholder_day_1.mp4,
+				);
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Configuration/MSCBodyTransformation-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (

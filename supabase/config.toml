@@ -43,7 +43,7 @@ file_size_limit = "20MiB"
 
 [functions.delete-account]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/delete-account/index.ts"
@@ -53,15 +53,40 @@ entrypoint = "./functions/delete-account/index.ts"
 
 [functions.cleanup-orphan-question-photos]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 entrypoint = "./functions/cleanup-orphan-question-photos/index.ts"
 
 [functions.commerce]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 entrypoint = "./functions/commerce/index.ts"
 
 [functions.commerce-apple-notifications]
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/commerce-apple-notifications/index.ts"
+
+[functions.apple-identity-lifecycle]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/apple-identity-lifecycle/index.ts"
+
+[functions.apple-account-events]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/apple-account-events/index.ts"
+
+[functions.apple-identity-reconciliation]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/apple-identity-reconciliation/index.ts"
+
+[functions.apple-commerce-reconciliation]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/apple-commerce-reconciliation/index.ts"
+
+[functions.legal]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/legal/index.ts"
