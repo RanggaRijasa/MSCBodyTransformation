@@ -156,3 +156,15 @@ dan mengaktifkan projection secara atomik/idempoten.
 - Target default adalah Cloudflare Workers melalui OpenNext setelah adapter
   runtime lulus compatibility test. Vercel tetap fallback tanpa menulis ulang
   feature/domain bila ada blocker kompatibilitas yang belum aman.
+
+## Phase 00 contract set
+
+Dokumen berikut menjadi companion wajib arsitektur sebelum scaffold dan
+vertical slice terkait:
+
+- [Source and Runtime Baseline](../baseline/PHASE_00_SOURCE_AND_RUNTIME_BASELINE.md).
+- [Contract Reconciliation](../baseline/PHASE_00_CONTRACT_RECONCILIATION.md).
+- [Capability and State Parity Matrix](./PHASE_00_PARITY_MATRIX.md).
+- [Target Manual Commerce Contract](./TARGET_MANUAL_COMMERCE_CONTRACT.md).
+- [Forward-only Migration and Decommission Plan](./FORWARD_ONLY_MIGRATION_AND_DECOMMISSION.md).
+- [iOS to Web Test Mapping](../testing/IOS_TO_WEB_TEST_MAPPING.md).

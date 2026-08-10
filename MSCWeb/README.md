@@ -7,7 +7,8 @@ lulus.
 
 ## Status
 
-- Workplan dan arsitektur: tersedia.
+- Phase 00 baseline dan contract freeze: selesai 10 Agustus 2026.
+- Workplan dan arsitektur: tersedia; Phase 01 menjadi langkah berikutnya.
 - Implementasi web: belum dimulai.
 - Source iOS: tidak diubah oleh pembuatan workplan ini.
 - Backend authoritative selama transisi: `../supabase`.
@@ -22,11 +23,16 @@ lulus.
 3. Baca seluruh dokumen dalam `docs/architecture` yang diwajibkan phase.
 4. Untuk keputusan manual payment, baca
    `docs/decisions/PHASE_00_MANUAL_COMMERCE_DECISIONS.md`.
-5. Untuk landing page, baca
+5. Untuk hasil audit Phase 00, baca
+   `docs/baseline/PHASE_00_SOURCE_AND_RUNTIME_BASELINE.md`,
+   `docs/architecture/PHASE_00_PARITY_MATRIX.md`, dan
+   `docs/architecture/TARGET_MANUAL_COMMERCE_CONTRACT.md`.
+6. Untuk landing page, baca
    `docs/design/LANDING_PAGE_DESIGN_AND_CONTENT.md` dan mockup v2.
-6. Kerjakan tepat satu phase dari
+7. Kerjakan tepat satu phase dari
    `MSCWeb_Codex_Phased_Workplan/MANIFEST.md`.
 
-Jangan membuat scaffold Next.js sebelum keputusan dan baseline Phase 00
-selesai. Jangan menghapus StoreKit, Apple identity, source Swift, migration,
-atau test iOS hanya karena adapter tersebut tidak dipakai oleh PWA.
+Phase 01 boleh membuat scaffold sesuai workplan, tetapi codegen dari
+`CoachApplication` OpenAPI lama tetap diblokir oleh contract reconciliation.
+Jangan menghapus StoreKit, Apple identity, source Swift, migration, atau test
+iOS hanya karena adapter tersebut tidak dipakai oleh PWA.

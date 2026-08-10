@@ -4,7 +4,7 @@ Status awal seluruh implementation phase adalah `BELUM DIMULAI`.
 
 | Urutan | Phase | File | Prasyarat | Status |
 |---:|---|---|---|---|
-| 1 | 00 | `01_PHASE_00_BASELINE_AND_CONTRACT_FREEZE.md` | — | Belum dimulai |
+| 1 | 00 | `01_PHASE_00_BASELINE_AND_CONTRACT_FREEZE.md` | — | Selesai |
 | 2 | 01 | `02_PHASE_01_WEB_FOUNDATION.md` | 00 | Belum dimulai |
 | 3 | 02 | `03_PHASE_02_DESIGN_SYSTEM_AND_SHELLS.md` | 01 | Belum dimulai |
 | 4 | 02A | `03A_PHASE_02A_PUBLIC_LANDING_AND_INSTALL_CTA.md` | 02 | Belum dimulai |

@@ -98,3 +98,18 @@
 - Semua keputusan produk GATE-003 sampai GATE-009 telah memiliki jawaban.
 - Phase 00 belum selesai: inventory, hash, parity, contract reconciliation,
   forward-only migration plan, dan verification masih harus dilaksanakan.
+
+## Amendment 10 Agustus 2026 — Phase 00 baseline closure
+
+- Approver: pengguna, melalui keputusan manual commerce terdokumentasi dan
+  instruksi eksplisit untuk menyelesaikan Phase 00 pada 10 Agustus 2026.
+- Inventory source/local/hosted, hash manifest, parity matrix, test mapping,
+  target manual commerce contract, dan forward-only plan telah dibuat.
+- GATE-003 sampai GATE-009 tetap closed oleh amendment sebelumnya; keputusan
+  uang, expiry, late transfer, reversal, retention, dan Coach renewal sudah
+  melalui human approval.
+- OpenAPI valid secara sintaks tetapi memiliki drift Coach application terhadap
+  constraint SQL terbaru. Resolution mengikat: codegen dilarang sampai
+  shared OpenAPI dan schema manual commerce diperbarui dalam authorized slice.
+- Phase 00 tidak mengubah `Contracts`, `supabase`, source iOS, hosted resource,
+  provider, cron, DNS, domain, package, atau executable source.

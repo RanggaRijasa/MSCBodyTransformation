@@ -1,6 +1,6 @@
 # Phase 00: Baseline and Contract Freeze
 
-> Status: BELUM DIMULAI
+> Status: SELESAI — 10 Agustus 2026
 
 ## Tujuan
 
@@ -49,83 +49,85 @@ drift dan keputusan produk manual payment yang akan memengaruhi semua phase.
 
 ## Slice 00.1 — Inventory dan hash baseline
 
-- [ ] Catat `git status` read-only dan jangan menyentuh user changes.
-- [ ] Inventaris source/lines/tests per feature iOS.
-- [ ] Inventaris migration, schema, RPC, grants, RLS, buckets, functions, cron,
+- [x] Catat `git status` read-only dan jangan menyentuh user changes.
+- [x] Inventaris source/lines/tests per feature iOS.
+- [x] Inventaris migration, schema, RPC, grants, RLS, buckets, functions, cron,
   dan provider yang aktif berdasarkan local serta deployment record.
-- [ ] Catat contract/model/status enum yang benar-benar digunakan SQL terbaru.
-- [ ] Buat manifest hash untuk source backend/contract yang akan dijadikan
+- [x] Catat contract/model/status enum yang benar-benar digunakan SQL terbaru.
+- [x] Buat manifest hash untuk source backend/contract yang akan dijadikan
   referensi transfer ownership di Phase 13.
-- [ ] Bedakan fakta source, fakta local runtime, fakta hosted, dan deferred
+- [x] Bedakan fakta source, fakta local runtime, fakta hosted, dan deferred
   manual gate; jangan menggabungkannya menjadi satu status palsu.
 
 ## Slice 00.2 — Parity contract
 
-- [ ] Petakan seluruh route dan capability Guest/Peserta, Coach, Admin.
-- [ ] Petakan seluruh content/question type, access-day state, submission,
+- [x] Petakan seluruh route dan capability Guest/Peserta, Coach, Admin.
+- [x] Petakan seluruh content/question type, access-day state, submission,
   quiz, weigh-in, scoring, leaderboard, winner, poster, dan account lifecycle.
-- [ ] Tandai konsep historis yang dilarang: program invite, typed QR fallback,
+- [x] Tandai konsep historis yang dilarang: program invite, typed QR fallback,
   wallet/seat credit, access non-public, poin per langkah, global weigh-in.
-- [ ] Petakan test Swift/XCUI ke test web target dan edge cases.
-- [ ] Catat deliberate web adaptations untuk navigation, sheets, media,
+- [x] Petakan test Swift/XCUI ke test web target dan edge cases.
+- [x] Catat deliberate web adaptations untuk navigation, sheets, media,
   permissions, install, offline, dan Admin desktop.
 
 ## Slice 00.3 — Manual payment product gate
 
-- [ ] Putuskan rekening tujuan dan siapa yang boleh mengelola.
-- [ ] Rekonsiliasi rekening berversi dan optional gambar QRIS statis; QRIS
+- [x] Putuskan rekening tujuan dan siapa yang boleh mengelola.
+- [x] Rekonsiliasi rekening berversi dan optional gambar QRIS statis; QRIS
   bukan payment gateway atau verifikasi otomatis.
-- [ ] Putuskan nominal snapshot, mata uang IDR, dan apakah nominal unik dipakai.
-- [ ] Putuskan reservation TTL program; rekomendasi awal audit adalah 24 jam.
-- [ ] Putuskan bahwa bukti yang submitted sebelum expiry mempertahankan
+- [x] Putuskan nominal snapshot, mata uang IDR, dan apakah nominal unik dipakai.
+- [x] Putuskan reservation TTL program; rekomendasi awal audit adalah 24 jam.
+- [x] Putuskan bahwa bukti yang submitted sebelum expiry mempertahankan
   reservation selama review atau tentukan alternatif yang aman.
-- [ ] Putuskan transfer terlambat, capacity full, duplicate payment, salah
+- [x] Putuskan transfer terlambat, capacity full, duplicate payment, salah
   rekening/nominal, program batal, refund, cancellation, dan revoke.
-- [ ] Putuskan jumlah retry evidence dan expiry setelah rejection.
-- [ ] Putuskan SLA review Admin dan copy status Peserta/Coach.
-- [ ] Putuskan file type/size, retention, deletion, dan audit data bukti.
-- [ ] Konfirmasi urutan Coach: eligibility diterima sebelum diminta membayar;
+- [x] Putuskan jumlah retry evidence dan expiry setelah rejection.
+- [x] Putuskan SLA review Admin dan copy status Peserta/Coach.
+- [x] Putuskan file type/size, retention, deletion, dan audit data bukti.
+- [x] Konfirmasi urutan Coach: eligibility diterima sebelum diminta membayar;
   bukti ditolak tidak membatalkan acceptance.
-- [ ] Konfirmasi periode serta renewal akses Coach.
+- [x] Konfirmasi periode serta renewal akses Coach.
 
 ## Slice 00.4 — Target contract
 
-- [ ] Desain `payment_destinations` berversi/effective-dated.
-- [ ] Destination mendukung optional versioned QRIS image reference tanpa
+- [x] Desain `payment_destinations` berversi/effective-dated.
+- [x] Destination mendukung optional versioned QRIS image reference tanpa
   menyimpan asset nyata atau credential dalam source/workplan.
-- [ ] Desain `payment_orders` per purpose, owner, amount, target, reservation,
+- [x] Desain `payment_orders` per purpose, owner, amount, target, reservation,
   status, dan idempotency.
-- [ ] Desain `payment_evidence_attempts` append/retry tanpa mutable submitted
+- [x] Desain `payment_evidence_attempts` append/retry tanpa mutable submitted
   evidence.
-- [ ] Desain verified `payment_ledger` dan immutable `payment_events`.
-- [ ] Pertahankan program/Coach entitlement sebagai access projection.
-- [ ] Definisikan protected operations create order, upload intent, submit,
+- [x] Desain verified `payment_ledger` dan immutable `payment_events`.
+- [x] Pertahankan program/Coach entitlement sebagai access projection.
+- [x] Definisikan protected operations create order, upload intent, submit,
   approve, reject, expire, cancel, refund/revoke, dan renewal.
-- [ ] Rekonsiliasi OpenAPI enum/DTO agar sesuai SQL target dan stable
+- [x] Rekonsiliasi OpenAPI enum/DTO agar sesuai SQL target dan stable
   `snake_case` values.
-- [ ] Definisikan bucket private `payment-evidence`, access matrix, object path,
+- [x] Definisikan bucket private `payment-evidence`, access matrix, object path,
   signed access, cleanup, dan retention.
 
 ## Slice 00.5 — Forward-only migration plan
 
-- [ ] Klasifikasikan Apple/StoreKit objects: retain active, stop new writes,
+- [x] Klasifikasikan Apple/StoreKit objects: retain active, stop new writes,
   legacy read-only, archive, atau later drop.
-- [ ] Buat urutan additive migration tanpa rewrite history production.
-- [ ] Buat rollback sebagai forward-fix, bukan down migration destructive.
-- [ ] Tentukan kapan Apple Auth provider dan recurring jobs dinonaktifkan;
+- [x] Buat urutan additive migration tanpa rewrite history production.
+- [x] Buat rollback sebagai forward-fix, bukan down migration destructive.
+- [x] Tentukan kapan Apple Auth provider dan recurring jobs dinonaktifkan;
   jangan lakukan sekarang.
-- [ ] Tentukan one-time backend/Contracts ownership transfer untuk Phase 13.
+- [x] Tentukan one-time backend/Contracts ownership transfer untuk Phase 13.
 
 ## Verifikasi
 
-- [ ] Markdown links dan path checker lulus.
-- [ ] OpenAPI syntax/parser lulus setelah contract edit.
-- [ ] Tidak ada source executable, package, migration, config, atau hosted
+- [x] Markdown links dan path checker lulus.
+- [x] OpenAPI syntax/parser lulus. Tidak ada contract edit pada Phase 00 karena
+  `Contracts/` read-only; semantic drift memiliki blocking resolution eksplisit
+  sebelum codegen.
+- [x] Tidak ada source executable, package, migration, config, atau hosted
   resource yang berubah pada phase documentation-only ini.
-- [ ] Decision Register telah memiliki amendment untuk semua gate Phase 00.
-- [ ] Verifikasi decision document berstatus final dan seluruh product gate
+- [x] Decision Register telah memiliki amendment untuk semua gate Phase 00.
+- [x] Verifikasi decision document berstatus final dan seluruh product gate
   GATE-003 sampai GATE-009 telah ditutup oleh amendment.
-- [ ] Review manusia menyetujui keputusan uang, refund, retention, dan expiry.
+- [x] Review manusia menyetujui keputusan uang, refund, retention, dan expiry.
 
 ## Definition of done
 
@@ -141,3 +143,34 @@ drift dan keputusan produk manual payment yang akan memengaruhi semua phase.
 
 Tambahkan entry bertanggal berisi file, inventory/hash, keputusan, command,
 hasil, blocker, dan approver. Jangan memasukkan credential atau private URL.
+
+### 10 Agustus 2026 — Phase 00 selesai
+
+- Files: baseline source/runtime, hash manifest, contract reconciliation,
+  parity matrix, target manual commerce contract, test mapping,
+  forward-only/decommission plan, Decision Register, manifest, dan status
+  workplan; semuanya berada di `MSCWeb/`.
+- Inventory: 145 file/49.352 baris Swift production, 194 deklarasi Swift test,
+  52 metode XCUI, 20 migration, 9 Edge Functions, 14 pgTAP files, 29 tabel
+  public local dengan 29 RLS, 50 policy, dan 5 cron aktif.
+- Hash: combined `Contracts/` + `supabase/` 71 file adalah
+  `778856ac913f27123db224b0e390fc4433551c04b9639097b5118960d9b664d4`.
+- Keputusan: seluruh GATE-003–GATE-009 closed; manual commerce lifecycle,
+  privacy, capacity, exceptional reversal, retention, dan Coach renewal final.
+- Contract: OpenAPI YAML valid tetapi enum Coach application lebih lama dari
+  SQL. Codegen diblokir sampai authorized shared-contract update Phase 06.
+- Commands: `git status --short`; `colima status`;
+  `docker info --format '{{.ServerVersion}}'`; `supabase status`; read-only
+  local `psql` inventory queries; `ruby -e` OpenAPI YAML parser; `ruby -e`
+  relative Markdown link checker; `git diff --check -- MSCWeb`;
+  `git ls-files -z supabase Contracts | sort -z | xargs -0 shasum -a 256 |
+  shasum -a 256`.
+- Result: link/path, OpenAPI syntax, whitespace/diff, scope, and hash checks
+  lulus. Tidak ada build/test executable karena Phase 00 melarang scaffold,
+  package, dan source web.
+- Blocker: tidak ada blocker Phase 00. Drift OpenAPI adalah gate eksplisit
+  sebelum codegen/shared update, bukan alasan menebak contract di Phase 01.
+- Approver: pengguna; keputusan manual commerce dan instruksi eksplisit untuk
+  menyelesaikan Phase 00 diberikan pada 10 Agustus 2026.
+- Next unchecked item: Phase 01 Slice 01.1, pin toolchain dan scaffold minimal
+  di `MSCWeb/` setelah verifikasi versi pada hari eksekusi.

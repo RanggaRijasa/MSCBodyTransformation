@@ -3,13 +3,24 @@
 
 ## Status
 
-Workplan dibuat pada 10 Agustus 2026. Implementasi web belum dimulai.
+Workplan dibuat pada 10 Agustus 2026. Phase 00 baseline dan contract freeze
+selesai pada tanggal yang sama; implementasi executable web belum dimulai dan
+Phase 01 adalah phase berikutnya.
 
 Source iOS sudah mencapai Phase 13.1 dan tetap menjadi behavioral/design
 reference. Hosted Supabase `main` sudah memiliki 20 migration, sembilan Edge
 Functions, recurring jobs, legal endpoint, serta Google dan Apple provider.
 Karena itu migrasi web harus forward-only dan tidak boleh memperlakukan
 backend sebagai prototype Phase 12 yang belum pernah dideploy.
+
+Hasil Phase 00:
+
+- `../docs/baseline/PHASE_00_SOURCE_AND_RUNTIME_BASELINE.md`.
+- `../docs/baseline/PHASE_00_CONTRACT_RECONCILIATION.md`.
+- `../docs/architecture/PHASE_00_PARITY_MATRIX.md`.
+- `../docs/architecture/TARGET_MANUAL_COMMERCE_CONTRACT.md`.
+- `../docs/architecture/FORWARD_ONLY_MIGRATION_AND_DECOMMISSION.md`.
+- `../docs/testing/IOS_TO_WEB_TEST_MAPPING.md`.
 
 ## Keputusan produk yang sudah disetujui
 
