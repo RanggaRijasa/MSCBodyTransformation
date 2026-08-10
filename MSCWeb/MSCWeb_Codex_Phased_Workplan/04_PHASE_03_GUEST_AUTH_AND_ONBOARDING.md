@@ -1,6 +1,6 @@
 # Phase 03: Guest, Auth, and Onboarding
 
-> Status: BELUM DIMULAI
+> Status: SELESAI LOKAL
 
 ## Tujuan
 
@@ -16,67 +16,67 @@ account deletion. Apple tidak diport.
 
 ## Slice 03.1 — Guest
 
-- [ ] Guest adalah logged-out state tanpa `auth.users` row.
-- [ ] Public reads hanya program published, leaderboard public-safe, winner
+- [x] Guest adalah logged-out state tanpa `auth.users` row.
+- [x] Public reads hanya program published, leaderboard public-safe, winner
   poster, dan Coach approved/public.
-- [ ] Tidak ada fixture profile, enrollment, weight, submission, current Coach,
+- [x] Tidak ada fixture profile, enrollment, weight, submission, current Coach,
   payment, atau private media pada Guest.
-- [ ] Central auth gate mempertahankan pending public program intent secara
+- [x] Central auth gate mempertahankan pending public program intent secara
   opaque/expiring tanpa QR mentah.
 
 ## Slice 03.2 — Auth pages
 
-- [ ] `/masuk`, `/daftar`, callback, cancel/error, and return-to behavior.
-- [ ] Google provider-first UI dengan official brand asset/component.
-- [ ] Tidak ada Sign in with Apple.
-- [ ] Email/password/forgot password tetap feature-gated sesuai keputusan.
-- [ ] PKCE callback memvalidasi state, redirect allowlist, environment, TTL,
+- [x] `/masuk`, `/daftar`, callback, cancel/error, and return-to behavior.
+- [x] Google provider-first UI dengan official brand asset/component.
+- [x] Tidak ada Sign in with Apple.
+- [x] Email/password/forgot password tetap feature-gated sesuai keputusan.
+- [x] PKCE callback memvalidasi state, redirect allowlist, environment, TTL,
   dan code exchange; open redirect ditolak.
-- [ ] Generic account-recovery response tidak membocorkan keberadaan akun.
+- [x] Generic account-recovery response tidak membocorkan keberadaan akun.
 
 ## Slice 03.3 — Session dan role routing
 
-- [ ] SSR cookie refresh mengikuti current Supabase guidance.
-- [ ] Protected route menggunakan verified identity/claims dan protected
+- [x] SSR cookie refresh mengikuti current Supabase guidance.
+- [x] Protected route menggunakan verified identity/claims dan protected
   profile, bukan client metadata.
-- [ ] Logout membersihkan cookie, feature state, PWA cache yang relevan, dan
+- [x] Logout membersihkan cookie, feature state, PWA cache yang relevan, dan
   pending personal intent.
-- [ ] Session expiry, account switch, stale role, revoked session, concurrent
+- [x] Session expiry, account switch, stale role, revoked session, concurrent
   tabs, retry, dan offline state teruji.
-- [ ] Guest dan Participant tidak dapat memilih Coach/Admin role.
+- [x] Guest dan Participant tidak dapat memilih Coach/Admin role.
 
 ## Slice 03.4 — Onboarding
 
-- [ ] Nama, nomor HP, member level, dan tujuan Peserta/Ajukan Coach.
-- [ ] App-owned form memakai Bahasa Indonesia dan `id-ID`.
-- [ ] New registration membuat Participant terlebih dahulu.
-- [ ] Participant onboarding memerlukan QR Coach valid pada browser-capability
+- [x] Nama, nomor HP, member level, dan tujuan Peserta/Ajukan Coach.
+- [x] App-owned form memakai Bahasa Indonesia dan `id-ID`.
+- [x] New registration membuat Participant terlebih dahulu.
+- [x] Participant onboarding memerlukan QR Coach valid pada browser-capability
   seam; production scanner diselesaikan Phase 04.
-- [ ] Coach applicant SC+ mengisi HOM STS/ICT attestations; `Member` tidak
+- [x] Coach applicant SC+ mengisi HOM STS/ICT attestations; `Member` tidak
   eligible dan tidak diberi capability.
-- [ ] Draft tidak menjadi authoritative profile sebelum server operation
+- [x] Draft tidak menjadi authoritative profile sebelum server operation
   selesai; cancel membersihkan draft dengan aman.
 
 ## Slice 03.5 — Profile/account lifecycle
 
-- [ ] Read/edit allowlisted profile fields.
-- [ ] Email read-only, role/server status read-only.
-- [ ] Logout dan account deletion dengan reauthentication.
-- [ ] Coach dengan assignment aktif tetap mengikuti transfer guard.
-- [ ] Retention/anonymization dan private media cleanup dipertahankan.
-- [ ] Apple token revoke tidak dipanggil untuk web-created Google accounts;
+- [x] Read/edit allowlisted profile fields.
+- [x] Email read-only, role/server status read-only.
+- [x] Logout dan account deletion dengan reauthentication.
+- [x] Coach dengan assignment aktif tetap mengikuti transfer guard.
+- [x] Retention/anonymization dan private media cleanup dipertahankan.
+- [x] Apple token revoke tidak dipanggil untuk web-created Google accounts;
   legacy Apple identity retirement ditunda Phase 13.
 
 ## Verification
 
-- [ ] Unit tests auth state machine/pending intent/role routing.
-- [ ] Integration tests local Auth bootstrap/RLS/profile/account deletion.
-- [ ] E2E Guest browse -> auth gate; Google callback stub; onboarding Peserta;
+- [x] Unit tests auth state machine/pending intent/role routing.
+- [x] Integration tests local Auth bootstrap/RLS/profile/account deletion.
+- [x] E2E Guest browse -> auth gate; Google callback stub; onboarding Peserta;
   application intent; logout; expiry; deletion denial/success.
-- [ ] Forged metadata/role, open redirect, CSRF/state mismatch, cross-user read,
+- [x] Forged metadata/role, open redirect, CSRF/state mismatch, cross-user read,
   and cached response tests.
-- [ ] Browser `en-US` tetap Bahasa Indonesia.
-- [ ] Lint, typecheck, test, build lulus.
+- [x] Browser `en-US` tetap Bahasa Indonesia.
+- [x] Lint, typecheck, test, build lulus.
 
 ## Definition of done
 
@@ -91,3 +91,36 @@ account deletion. Apple tidak diport.
 - Google web client/callback hosted dan domain production: Phase 12.
 - SMTP/email production: tetap skipped sampai keputusan eksplisit.
 
+## Progress log
+
+### 10 Agustus 2026 — selesai lokal
+
+- Files changed: model dan state machine Auth di `src/features/auth/model`,
+  server boundary dan repository profile di `src/features/auth/server`, operasi
+  aplikasi di `src/application/auth`, adapter SSR Supabase di
+  `src/infrastructure/supabase`, route/page Auth dan account lifecycle di
+  `src/app`, komponen serta style Auth, asset resmi Google, dokumentasi
+  security, script verifikasi lokal, dan test unit/component/E2E/integration.
+- Assumptions: Google menjadi provider pertama dan Apple tidak tersedia pada
+  UI/runtime web. Participant scanner tetap berupa capability seam yang gagal
+  tertutup; implementasi scanner produksi adalah scope Phase 04. Hosted Google
+  client/callback, domain production, dan SMTP tetap gate Phase 12 atau
+  keputusan eksplisit.
+- Security: transaksi OAuth dan pending program intent ditandatangani,
+  HttpOnly, memiliki TTL, serta hanya menerima return-to internal. Identity
+  diverifikasi server-side memakai Supabase claims dan profile diload melalui
+  client SSR terverifikasi yang sama; client metadata tidak memberi role.
+- Build command: `PATH="/opt/homebrew/opt/node@24/bin:$PATH" corepack pnpm build`.
+  Result: lulus; 39 route terbentuk tanpa development gallery.
+- Test commands: `corepack pnpm test` (62/62 lulus),
+  `corepack pnpm test:e2e` (42 lulus lintas Chromium/WebKit; 22 skip
+  conditional sesuai browser/local-backend), focused local Auth Playwright
+  (4/4 lulus), dan `corepack pnpm test:phase03:local` (4 file, 111 pgTAP
+  lulus dan seluruh perubahan database di-rollback/dibersihkan).
+- Quality commands: `corepack pnpm format:check`, `corepack pnpm verify`, dan
+  pemeriksaan arsitektur, localization, public env, serta secret scan di dalam
+  pipeline. Result: lint, typecheck, unit/component test, production build,
+  localization, dan batas dependency lulus.
+- Remaining blockers: tidak ada untuk local Definition of Done Phase 03.
+  Google hosted configuration/domain production tetap Phase 12, SMTP tetap
+  skipped, dan production QR scanner diteruskan ke Phase 04.

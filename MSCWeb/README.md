@@ -8,8 +8,18 @@ lulus.
 ## Status
 
 - Phase 00 baseline dan contract freeze: selesai 10 Agustus 2026.
-- Workplan dan arsitektur: tersedia; Phase 01 menjadi langkah berikutnya.
-- Implementasi web: belum dimulai.
+- Phase 01 web foundation: selesai 10 Agustus 2026; seluruh local gate lulus.
+- Phase 02 design system dan shells: selesai 10 Agustus 2026; seluruh local
+  gate lulus.
+- Phase 02A public landing dan install CTA: selesai 10 Agustus 2026; seluruh
+  gate lokal lulus, dengan device/service-worker gate diteruskan ke Phase 11.
+- Phase 03 Guest, Auth, dan onboarding: selesai lokal 10 Agustus 2026; hosted
+  Google/domain tetap gate Phase 12 dan scanner QR produksi masuk Phase 04.
+- Phase 04 browser media, QR, dan video: selesai lokal 10 Agustus 2026; device
+  fisik dan release-candidate performance tetap gate Phase 11/13.
+- Phase 05–10 selesai lokal; seluruh local gate sampai scoring, leaderboard,
+  closure, winner, dan cross-role journey telah lulus.
+- Implementasi web: scaffold Next.js/TypeScript dan test harness tersedia.
 - Source iOS: tidak diubah oleh pembuatan workplan ini.
 - Backend authoritative selama transisi: `../supabase`.
 - Kontrak authoritative selama transisi: `../Contracts`.

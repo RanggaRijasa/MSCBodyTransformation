@@ -1,6 +1,6 @@
 # Phase 09: Admin CMS and Operations
 
-> Status: BELUM DIMULAI
+> Status: SELESAI LOKAL
 
 ## Tujuan
 
@@ -10,73 +10,73 @@ preview, audit, dan privileged mutations.
 
 ## Slice 09.1 — Dashboard/navigation
 
-- [ ] Admin `/admin` default dengan sidebar desktop/mobile fallback.
-- [ ] Action counts: payment review, Coach application, submission/closure
+- [x] Admin `/admin` default dengan sidebar desktop/mobile fallback.
+- [x] Action counts: payment review, Coach application, submission/closure
   blockers, system attention, recent audit safe summary.
-- [ ] Quick actions tidak menduplikasi sidebar.
-- [ ] Unauthorized/non-Admin fail closed tanpa resource disclosure.
+- [x] Quick actions tidak menduplikasi sidebar.
+- [x] Unauthorized/non-Admin fail closed tanpa resource disclosure.
 
 ## Slice 09.2 — Program list/lifecycle
 
-- [ ] Search/filter/status, create draft, duplicate-as-draft.
-- [ ] Published read-only and explicit controlled operations.
-- [ ] Registration deadline/capacity/timezone/price/payment destination policy.
-- [ ] Archive/closure state sesuai server lifecycle.
+- [x] Search/filter/status, create draft, duplicate-as-draft.
+- [x] Published read-only and explicit controlled operations.
+- [x] Registration deadline/capacity/timezone/price/payment destination policy.
+- [x] Archive/closure state sesuai server lifecycle.
 
 ## Slice 09.3 — Draft settings/editor
 
-- [ ] Identity, cover/alt text, category/summary.
-- [ ] Schedule, timezone, duration/access-day policy, capacity/cutoff.
-- [ ] Program-wide scoring and quiz threshold lock rules.
-- [ ] Hari/langkah/content/question editors seluruh typed variants.
-- [ ] Copy day content to multiple targets dengan new nested IDs dan overwrite
+- [x] Identity, cover/alt text, category/summary.
+- [x] Schedule, timezone, duration/access-day policy, capacity/cutoff.
+- [x] Program-wide scoring and quiz threshold lock rules.
+- [x] Hari/langkah/content/question editors seluruh typed variants.
+- [x] Copy day content to multiple targets dengan new nested IDs dan overwrite
   confirmation.
-- [ ] File terpisah per editor/capability; jangan port giant Swift View.
+- [x] File terpisah per editor/capability; jangan port giant Swift View.
 
 ## Slice 09.4 — Preview/publish
 
-- [ ] Peserta/Coach segmented preview wrapper.
-- [ ] Runtime shared renderer, not Admin-only duplicate card hierarchy.
-- [ ] Lossless draft round-trip and publish validation summary.
-- [ ] Publish protected operation and post-publish read-only projection.
-- [ ] Duplicate program does not copy enrollment/payment/runtime/winners.
+- [x] Peserta/Coach segmented preview wrapper.
+- [x] Runtime shared renderer, not Admin-only duplicate card hierarchy.
+- [x] Lossless draft round-trip and publish validation summary.
+- [x] Publish protected operation and post-publish read-only projection.
+- [x] Duplicate program does not copy enrollment/payment/runtime/winners.
 
 ## Slice 09.5 — People/Coach applications
 
-- [ ] Segmented Peserta/Coach/Admin directory and role-specific detail.
-- [ ] Coach application eligibility/accept/reject/reason/payment status.
-- [ ] Manual enrollment after cutoff only deadline override; all other guards
+- [x] Segmented Peserta/Coach/Admin directory and role-specific detail.
+- [x] Coach application eligibility/accept/reject/reason/payment status.
+- [x] Manual enrollment after cutoff only deadline override; all other guards
   remain and reason audited.
-- [ ] Coach transfer with reason; weight/score corrections with audit.
-- [ ] Admin account restrictions and no editable role metadata shortcut.
+- [x] Coach transfer with reason; weight/score corrections with audit.
+- [x] Admin account restrictions and no editable role metadata shortcut.
 
 ## Slice 09.6 — Payment operations
 
-- [ ] Extend Phase 06 queue with metrics, search, filters, attempt/ledger/events,
+- [x] Extend Phase 06 queue with metrics, search, filters, attempt/ledger/events,
   destination management, refund/revoke/cancel actions per policy.
-- [ ] Dual-control/confirmation requirement if decided Phase 00.
-- [ ] Evidence viewer no public caching/download leakage.
-- [ ] Operational export, if needed, excludes evidence and excessive PII by
+- [x] Dual-control/confirmation requirement if decided Phase 00.
+- [x] Evidence viewer no public caching/download leakage.
+- [x] Operational export, if needed, excludes evidence and excessive PII by
   default; scope must be explicitly approved.
 
 ## Slice 09.7 — Managed content and audit
 
-- [ ] Winner poster gallery, 9:16 preview, add/replace/delete/publish.
-- [ ] Winner snapshot remains leaderboard-owned; content gallery does not edit
+- [x] Winner poster gallery, 9:16 preview, add/replace/delete/publish.
+- [x] Winner snapshot remains leaderboard-owned; content gallery does not edit
   ranking.
-- [ ] Audit list/detail with allowlisted metadata, actor/time/reason.
-- [ ] Legal/settings surface uses true backend/config values only.
+- [x] Audit list/detail with allowlisted metadata, actor/time/reason.
+- [x] Legal/settings surface uses true backend/config values only.
 
 ## Verification
 
-- [ ] Port Phase05 Admin CMS and contract tests.
-- [ ] Draft round-trip/publish/duplicate/copy-day/validation tests.
-- [ ] Integration Admin authorization/idempotency/race/audit/storage.
-- [ ] E2E Admin create -> content -> preview -> publish; payment review; Coach
+- [x] Port Phase05 Admin CMS and contract tests.
+- [x] Draft round-trip/publish/duplicate/copy-day/validation tests.
+- [x] Integration Admin authorization/idempotency/race/audit/storage.
+- [x] E2E Admin create -> content -> preview -> publish; payment review; Coach
   approval; correction; closure preflight; poster publish.
-- [ ] Desktop wide/tablet/mobile fallback screenshots and keyboard navigation.
-- [ ] Large dataset pagination/virtualization/performance and empty/error states.
-- [ ] Lint, typecheck, test, build lulus.
+- [x] Desktop wide/tablet/mobile fallback screenshots and keyboard navigation.
+- [x] Large dataset pagination/virtualization/performance and empty/error states.
+- [x] Lint, typecheck, test, build lulus.
 
 ## Definition of done
 
@@ -85,3 +85,29 @@ preview, audit, dan privileged mutations.
 - Shared renderer prevents preview drift.
 - Admin UI desktop-useful, mobile-operable, and modular.
 
+## External gate
+
+Migration Phase 09 hanya diterapkan dan diuji pada Supabase lokal. Hosted
+`main`, secrets, OAuth production, DNS, dan deployment tidak disentuh; seluruh
+gate tersebut tetap berada pada Phase 12 dan memerlukan persetujuan eksplisit.
+
+## Progress log
+
+### 10 Agustus 2026 — selesai lokal
+
+- Files changed: domain dan use case Admin, repository Supabase, protected
+  mutations, dashboard/program editor/people/payments/content/settings,
+  migration additive, gallery, serta unit/component/pgTAP/E2E.
+- Assumptions: operasi privileged tetap server-authoritative; confirmation
+  tunggal mengikuti keputusan Phase 00 karena dual-control tidak diwajibkan;
+  export operasional tidak dibuat karena belum ada scope eksplisit.
+- Build command:
+  `PATH="/opt/homebrew/opt/node@24/bin:$PATH" corepack pnpm verify`.
+- Test commands:
+  `PATH="/opt/homebrew/opt/node@24/bin:$PATH" corepack pnpm test:phase09:local`
+  dan `PATH="/opt/homebrew/opt/node@24/bin:$PATH" corepack pnpm test:gallery`.
+- Result: PASS — DB lint; 53 pgTAP; 13 unit/component fokus; enam Chromium
+  journey; 26 gallery Chromium/WebKit + axe; 32 file/145 Vitest; lint,
+  architecture, typecheck, production build 39 halaman, dan bundle gate.
+- Remaining blockers: tidak ada untuk gate lokal. Deployment hosted tetap
+  Phase 12 sesuai workplan.

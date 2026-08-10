@@ -1,0 +1,21 @@
+.sticky-install {
+  display: none;
+}
+
+@media (max-width: 52rem) {
+  .sticky-install[data-visible="true"] {
+    position: fixed;
+    z-index: 450;
+    inset-block-end: 0;
+    inset-inline: 0;
+    display: flex;
+    justify-content: center;
+    padding: var(--space-xs) var(--space-md) max(var(--space-xs), env(safe-area-inset-bottom));
+    border-block-start: 1px solid var(--color-border);
+    background: var(--color-surface-elevated);
+  }
+
+  .sticky-install__action {
+    width: min(100%, 30rem);
+  }
+}
