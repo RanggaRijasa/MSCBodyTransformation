@@ -25,16 +25,24 @@ async function request(path, {
   headers = {},
   prefer,
 } = {}) {
+  const serializedBody = body === undefined ? undefined : JSON.stringify(body);
   return fetch(`${apiURL}${path}`, {
     method,
     headers: {
       apikey: apiKey,
       Authorization: `Bearer ${token}`,
-      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      ...(serializedBody === undefined
+        ? {}
+        : {
+          "Content-Type": "application/json",
+          "Content-Length": String(Buffer.byteLength(serializedBody)),
+        }),
       ...(prefer ? { Prefer: prefer } : {}),
+      Connection: "close",
       ...headers,
     },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: serializedBody,
+    signal: AbortSignal.timeout(30_000),
   });
 }
 
@@ -330,6 +338,18 @@ try {
   );
   assert.equal(unauthenticated.status, 401, "commerce rejects missing user JWT");
 
+  const oversizedNotification = await expectStatus(
+    await request("/functions/v1/commerce-apple-notifications", {
+      method: "POST",
+      token: anonKey,
+      apiKey: anonKey,
+      body: { signedPayload: "x".repeat(262_144) },
+    }),
+    422,
+    "oversized Apple notification",
+  );
+  assert.equal(oversizedNotification.code, "request_invalid");
+
   const invalidNotification = await expectStatus(
     await request("/functions/v1/commerce-apple-notifications", {
       method: "POST",
@@ -391,6 +411,19 @@ try {
   assert.equal(preflight.subjectKind, "program");
   assert.equal(preflight.productId, "local.msc.program.phase12.edge");
   assert.equal(preflight.environment, "xcode");
+
+  const oversizedVerification = await expectStatus(
+    await commerce(participantToken, "apple/verify", {
+      method: "POST",
+      body: {
+        purchaseIntentId: preflight.purchaseIntentId,
+        signedTransaction: "x".repeat(131_072),
+      },
+    }),
+    422,
+    "oversized transaction verification",
+  );
+  assert.equal(oversizedVerification.code, "request_invalid");
 
   const pending = await expectStatus(
     await commerce(
@@ -498,7 +531,7 @@ try {
   assert.equal(restored.fulfillments.length, 1);
   assert.equal(restored.fulfillments[0].idempotent, true);
 
-  process.stdout.write("Phase 12 commerce integration: 29 assertions passed.\n");
+  process.stdout.write("Phase 12 commerce integration: 31 assertions passed.\n");
 } finally {
   try {
     await remove(

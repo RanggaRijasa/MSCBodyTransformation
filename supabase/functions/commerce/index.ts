@@ -9,6 +9,7 @@ import {
   requestAuthorization,
   requireIdempotencyKey,
 } from "../_shared/commerce_http.ts";
+import { readLimitedJSON } from "../_shared/http_safety.ts";
 import {
   AppleSignedDataVerifier,
   type PurchaseIntentVerificationContext,
@@ -153,8 +154,8 @@ async function fulfillVerifiedTransaction(
 export default {
   async fetch(request: Request): Promise<Response> {
     try {
-      const configuration = loadCommerceConfiguration();
       const authorization = requestAuthorization(request);
+      const configuration = loadCommerceConfiguration();
       const userID = await authenticateCommerceUser(
         configuration,
         authorization,
@@ -245,7 +246,7 @@ export default {
         parts[0] === "apple" && parts[1] === "verify"
       ) {
         const body = requireExactObject(
-          await request.json().catch(() => null),
+          await readLimitedJSON(request, 131_072),
           ["purchaseIntentId", "signedTransaction"],
         );
         if (
@@ -286,7 +287,7 @@ export default {
         parts[0] === "apple" && parts[1] === "restore"
       ) {
         const body = requireExactObject(
-          await request.json().catch(() => null),
+          await readLimitedJSON(request, 4_194_304),
           ["transactions"],
         );
         if (

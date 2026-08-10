@@ -9085,6 +9085,336 @@
         }
       }
     },
+    "legal.document.bundled_notice" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salinan ini tersedia di aplikasi agar tetap dapat dibaca saat koneksi bermasalah."
+          }
+        }
+      }
+    },
+    "legal.document.open_online" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka versi daring"
+          }
+        }
+      }
+    },
+    "legal.document.updated" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diperbarui 9 Agustus 2026"
+          }
+        }
+      }
+    },
+    "legal.privacy.control.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda dapat memperbarui profil, keluar, atau meminta penghapusan akun dari layar Profil. Pertanyaan privasi dapat dikirim melalui kanal dukungan yang tercantum pada halaman aplikasi di App Store."
+          }
+        }
+      }
+    },
+    "legal.privacy.control.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrol Anda"
+          }
+        }
+      }
+    },
+    "legal.privacy.media.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto atau video bukti dan berat badan merupakan data pribadi yang sensitif. Media diproses untuk kebutuhan program, metadata yang tidak diperlukan dihapus sebelum unggah, dan akses dibatasi sesuai peran. Aplikasi ini tidak memberikan diagnosis atau saran medis."
+          }
+        }
+      }
+    },
+    "legal.privacy.media.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto, video, dan data wellness"
+          }
+        }
+      }
+    },
+    "legal.privacy.providers.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autentikasi dapat melibatkan Google atau Apple. Data aplikasi disimpan melalui Supabase. Pembelian diproses oleh Apple melalui StoreKit. MSC Body Transformation tidak menerima nomor kartu atau detail rekening pembayaran Anda."
+          }
+        }
+      }
+    },
+    "legal.privacy.providers.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penyedia layanan"
+          }
+        }
+      }
+    },
+    "legal.privacy.purpose.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data digunakan untuk autentikasi, membuat profil, menghubungkan Participant dengan Coach, menjalankan program, menilai kiriman, menghitung skor, menampilkan peringkat, memproses akses berbayar, mencegah penyalahgunaan, dan memenuhi kewajiban keamanan."
+          }
+        }
+      }
+    },
+    "legal.privacy.purpose.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tujuan penggunaan"
+          }
+        }
+      }
+    },
+    "legal.privacy.retention.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data disimpan selama akun atau kewajiban program, keamanan, audit, dan transaksi masih memerlukannya. Saat akun dihapus, akses dicabut dan data pribadi serta media dihapus. Catatan pemenang, audit, atau transaksi yang wajib dipertahankan dapat disimpan tanpa identitas pribadi."
+          }
+        }
+      }
+    },
+    "legal.privacy.retention.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penyimpanan dan penghapusan"
+          }
+        }
+      }
+    },
+    "legal.privacy.scope.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kami memproses nama, email, nomor HP, ID akun, peran, profil, keikutsertaan program, jawaban, berat badan, foto atau video bukti, skor, riwayat pembelian, serta data operasional yang diperlukan untuk menjalankan layanan."
+          }
+        }
+      }
+    },
+    "legal.privacy.scope.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data yang diproses"
+          }
+        }
+      }
+    },
+    "legal.privacy.tracking.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi tidak menggunakan data untuk pelacakan lintas aplikasi atau situs dan tidak menjual data pribadi untuk periklanan."
+          }
+        }
+      }
+    },
+    "legal.privacy.tracking.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelacakan dan iklan"
+          }
+        }
+      }
+    },
+    "legal.terms.account.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaga keamanan akun dan jangan membagikan akses. Kami dapat membatasi akun atau kiriman yang melanggar aturan, memalsukan bukti, menyalahgunakan pembayaran, mengganggu layanan, atau membahayakan pengguna lain."
+          }
+        }
+      }
+    },
+    "legal.terms.account.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun dan penegakan"
+          }
+        }
+      }
+    },
+    "legal.terms.changes.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perubahan penting akan dicantumkan pada versi terbaru dokumen. Penggunaan layanan setelah perubahan berlaku berarti Anda menerima ketentuan terbaru."
+          }
+        }
+      }
+    },
+    "legal.terms.changes.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perubahan ketentuan"
+          }
+        }
+      }
+    },
+    "legal.terms.coach.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengajuan Coach pertama harus memenuhi kelayakan dan diterima Admin sebelum pembayaran. Renewal dilakukan manual dan tidak memerlukan persetujuan ulang selama approval belum dicabut. Coach dengan Participant aktif tidak dapat menghapus akun sebelum pengalihan diselesaikan oleh Admin."
+          }
+        }
+      }
+    },
+    "legal.terms.coach.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengajuan Coach"
+          }
+        }
+      }
+    },
+    "legal.terms.enrollment.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendaftaran Participant memerlukan QR Coach yang aktif. Kapasitas, jadwal, cutoff, langkah, bukti, penilaian, dan aturan skor mengikuti program yang dipublikasikan. Akses Coach berlaku tiga bulan setelah pembayaran terverifikasi dan menjadi nonaktif saat masa akses berakhir."
+          }
+        }
+      }
+    },
+    "legal.terms.enrollment.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program dan Coach"
+          }
+        }
+      }
+    },
+    "legal.terms.purchase.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program berbayar dan akses Coach dibeli melalui Apple. Tidak tersedia pengembalian dana sukarela setelah pembelian. Hak pengembalian dana, pembatalan, atau pencabutan oleh Apple tetap berlaku dan dapat menyebabkan akses terkait dihentikan."
+          }
+        }
+      }
+    },
+    "legal.terms.purchase.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian dan pengembalian dana"
+          }
+        }
+      }
+    },
+    "legal.terms.ranking.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skor authoritative dihitung server dari kiriman yang disetujui, berat badan, dan penyesuaian yang teraudit. Keputusan pemenang mengikuti snapshot final yang dikunci Admin. Jika hadiah diumumkan untuk suatu program, syarat hadiah tersebut akan dicantumkan pada detail program."
+          }
+        }
+      }
+    },
+    "legal.terms.ranking.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peringkat dan pemenang"
+          }
+        }
+      }
+    },
+    "legal.terms.service.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan aplikasi secara jujur, aman, dan sesuai program. Anda bertanggung jawab atas ketepatan data, jawaban, berat badan, dan media yang dikirim serta dilarang mengunggah konten milik orang lain tanpa izin."
+          }
+        }
+      }
+    },
+    "legal.terms.service.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penggunaan layanan"
+          }
+        }
+      }
+    },
+    "legal.terms.wellness.body" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program berfokus pada kebiasaan dan wellness, bukan layanan medis, diagnosis, atau pengganti konsultasi profesional. Hentikan aktivitas dan cari bantuan profesional bila Anda merasa tidak aman atau mengalami keluhan kesehatan."
+          }
+        }
+      }
+    },
+    "legal.terms.wellness.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informasi wellness"
+          }
+        }
+      }
+    },
     "participant.legal.privacy.message" : {
       "localizations" : {
         "id" : {
@@ -9273,7 +9603,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pembayaran Apple akan tersedia pada fase StoreKit."
+            "value" : "Pembayaran diproses melalui App Store dan diverifikasi server sebelum akses diberikan."
           }
         }
       }

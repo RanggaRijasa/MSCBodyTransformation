@@ -12,6 +12,8 @@ final class NativeProviderAuthenticationCoordinator:
 {
     private let authClient: any SupabaseAuthClientProviding
     private let profileClient: any SupabaseProfileClientProviding
+    private let appleLifecycleClient:
+        any SupabaseAppleIdentityLifecycleClientProviding
     private let secureStore: any SessionSecureStoring
     private let configuration: AppConfiguration
     private let clock: any AppClock
@@ -28,12 +30,15 @@ final class NativeProviderAuthenticationCoordinator:
     init(
         authClient: any SupabaseAuthClientProviding,
         profileClient: any SupabaseProfileClientProviding,
+        appleLifecycleClient:
+            any SupabaseAppleIdentityLifecycleClientProviding,
         secureStore: any SessionSecureStoring,
         configuration: AppConfiguration,
         clock: any AppClock
     ) {
         self.authClient = authClient
         self.profileClient = profileClient
+        self.appleLifecycleClient = appleLifecycleClient
         self.secureStore = secureStore
         self.configuration = configuration
         self.clock = clock
@@ -86,12 +91,37 @@ final class NativeProviderAuthenticationCoordinator:
         }.flatMap { $0.isEmpty ? nil : $0 }
         let client = authClient
         let profiles = profileClient
+        let lifecycle = appleLifecycleClient
+        let authorizationCode = credential.authorizationCode.flatMap {
+            String(data: $0, encoding: .utf8)
+        }
+        let requiresServerCredential = configuration.mode == .hostedProduction
         Task {
             do {
                 let material = try await client.signInWithAppleIdentityToken(
                     identityToken,
                     nonce: attempt.nonce
                 )
+                if requiresServerCredential {
+                    guard let authorizationCode,
+                          !authorizationCode.isEmpty else {
+                        try? await client.signOut(
+                            accessToken: material.accessToken
+                        )
+                        throw AuthenticationError.callbackMismatch
+                    }
+                    do {
+                        try await lifecycle.registerAuthorizationCode(
+                            authorizationCode,
+                            accessToken: material.accessToken
+                        )
+                    } catch {
+                        try? await client.signOut(
+                            accessToken: material.accessToken
+                        )
+                        throw error
+                    }
+                }
                 _ = try await profiles.applyProviderProfileDefaults(
                     displayName: providerDisplayName,
                     avatarURL: nil,

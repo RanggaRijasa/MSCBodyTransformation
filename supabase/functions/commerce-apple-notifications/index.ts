@@ -9,6 +9,7 @@ import {
   jsonResponse,
   loadCommerceConfiguration,
 } from "../_shared/commerce_http.ts";
+import { readLimitedJSON } from "../_shared/http_safety.ts";
 
 type NotificationInboxResult = {
   notification_uuid: string;
@@ -72,11 +73,10 @@ export default {
       if (request.method !== "POST") {
         throw new Error("method_not_allowed");
       }
-      const configuration = loadCommerceConfiguration();
-
       const signedPayload = requireExactSignedPayloadBody(
-        await request.json().catch(() => null),
+        await readLimitedJSON(request, 262_144),
       );
+      const configuration = loadCommerceConfiguration();
       const verifier = new AppleSignedDataVerifier(configuration.environment);
       const verifiedNotification = await verifier.verifyNotification(
         signedPayload,

@@ -23,6 +23,30 @@ x-phase-09-5-handoff:
     - Member level, eligibility, payment, approval, role, and entitlement are separate authoritative states.
     - Backend paths and schemas are added with Phase 10-12 migrations and RLS, not by the Phase 09.5 mock.
 paths:
+  /legal/{document}:
+    get:
+      operationId: getPublicLegalDocument
+      x-implementation-status: implemented-phase13-local
+      security: []
+      description: >
+        Public Bahasa Indonesia Privacy Policy or Terms of Use page. The
+        response contains no user data and requires no project or user
+        credential.
+      parameters:
+        - name: document
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [privacy, terms]
+      responses:
+        "200":
+          description: Public legal document HTML.
+          content:
+            text/html:
+              schema: { type: string }
+        "404":
+          description: Unknown legal document.
   /delete-account:
     post:
       operationId: deleteCurrentAccount
@@ -39,6 +63,39 @@ paths:
         "401":
           $ref: "#/components/responses/DomainError"
         "409":
+          $ref: "#/components/responses/DomainError"
+  /apple-identity-lifecycle:
+    post:
+      operationId: registerAppleIdentityAuthorizationCode
+      x-implementation-status: implemented-phase13-local
+      description: >
+        Exchanges the fresh native Sign in with Apple authorization code on
+        the server, verifies that its Apple subject belongs to the current
+        Supabase identity, and stores only an encrypted refresh token for
+        account-deletion revocation. The code and token are never logged or
+        returned to the client.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [authorization_code]
+              properties:
+                authorization_code:
+                  type: string
+                  minLength: 8
+                  maxLength: 4096
+                  writeOnly: true
+      responses:
+        "204":
+          description: Apple identity credential was verified and stored.
+        "400":
+          $ref: "#/components/responses/DomainError"
+        "401":
+          $ref: "#/components/responses/DomainError"
+        "500":
           $ref: "#/components/responses/DomainError"
   /programs:
     get:
@@ -640,6 +697,91 @@ paths:
       responses:
         "202":
           description: Verified notification was durably accepted or was a duplicate.
+  /apple-account-events:
+    post:
+      operationId: receiveSignInWithAppleAccountEvent
+      x-implementation-status: implemented-phase13-local
+      security: []
+      description: >
+        Public server-to-server endpoint for Apple-signed account events.
+        Signature and audience are verified before an idempotent inbox write;
+        account deletion is completed immediately when possible and otherwise
+        retained for the reconciliation worker.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [payload]
+              properties:
+                payload:
+                  type: string
+                  minLength: 1
+                  maxLength: 12000
+                  writeOnly: true
+      responses:
+        "204":
+          description: Verified event was durably accepted or was a duplicate.
+        "400":
+          $ref: "#/components/responses/DomainError"
+        "500":
+          $ref: "#/components/responses/DomainError"
+  /apple-identity-reconciliation:
+    post:
+      operationId: reconcileSignInWithAppleIdentityLifecycle
+      x-implementation-status: implemented-phase13-local
+      security:
+        - serviceKey: []
+      description: >
+        Scheduled server-only worker. Retries encrypted Apple token revocation
+        and verified account events that could not be completed inline. A
+        publishable key or user JWT never authorizes this operation.
+      responses:
+        "200":
+          description: Retry batch result without identity or token material.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [revoked, processed]
+                properties:
+                  revoked: { type: integer, minimum: 0 }
+                  processed: { type: integer, minimum: 0 }
+        "401":
+          $ref: "#/components/responses/DomainError"
+        "500":
+          $ref: "#/components/responses/DomainError"
+  /apple-commerce-reconciliation:
+    post:
+      operationId: reconcileAppleCommerceFromServerAPI
+      x-implementation-status: implemented-phase13-local
+      security:
+        - serviceKey: []
+      description: >
+        Scheduled server-only worker that claims due known Apple transactions,
+        pages through App Store Server API V2 history, verifies every signed
+        transaction with Apple's official library, and idempotently reconciles
+        refund, revoke, expiry, or verified state. Failed calls are retained
+        with a bounded retry backoff.
+      responses:
+        "200":
+          description: Reconciliation batch result without purchase credentials.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [reconciled, deferred]
+                properties:
+                  reconciled: { type: integer, minimum: 0 }
+                  deferred: { type: integer, minimum: 0 }
+        "401":
+          $ref: "#/components/responses/DomainError"
+        "500":
+          $ref: "#/components/responses/DomainError"
   /commerce/google/verify:
     post:
       operationId: verifyGooglePurchase
@@ -852,6 +994,14 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    serviceKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: >
+        Modern sb_secret server credential for scheduled workers. It must
+        never be embedded in an application, Authorization bearer header,
+        URL, query parameter, fixture, or log.
   parameters:
     ProgramId:
       name: programId
@@ -1583,6 +1733,16 @@ components:
             - authentication_required
             - rate_limited
             - request_invalid
+            - apple_authorization_code_invalid
+            - apple_identity_mismatch
+            - apple_notification_invalid
+            - apple_notification_signature_invalid
+            - apple_identity_operation_failed
+            - server_configuration_invalid
+            - server_configuration_missing
+            - apple_server_api_configuration_invalid
+            - apple_server_api_configuration_missing
+            - apple_server_api_environment_invalid
             - idempotency_key_invalid
             - already_enrolled
             - payment_not_required

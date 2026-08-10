@@ -22,6 +22,8 @@ nonisolated struct AppConfiguration: Equatable, Sendable {
 
     static let indonesianLocaleIdentifier = "id-ID"
     static let modeEnvironmentKey = "MSC_APP_MODE"
+    static let privacyPolicyURLEnvironmentKey = "MSC_PRIVACY_POLICY_URL"
+    static let termsOfUseURLEnvironmentKey = "MSC_TERMS_OF_USE_URL"
     static let callbackURL = URL(
         string: "mscbodytransformation://auth/callback"
     )!
@@ -57,13 +59,17 @@ nonisolated struct AppConfiguration: Equatable, Sendable {
 
     static func load(
         environment: [String: String] = ProcessInfo.processInfo.environment,
+        bundledConfiguration: [String: String]? = nil,
         build: Build = .current
     ) throws -> Self {
+        let configurationValues = build == .release
+            ? (bundledConfiguration ?? releaseConfigurationFromMainBundle())
+            : environment
         let defaultMode: Mode = build == .debug
             ? .localDemo
             : .hostedProduction
         let mode: Mode
-        if let rawMode = environment[modeEnvironmentKey] {
+        if let rawMode = configurationValues[modeEnvironmentKey] {
             guard let parsedMode = Mode(rawValue: rawMode) else {
                 throw AuthenticationError.validation
             }
@@ -86,12 +92,12 @@ nonisolated struct AppConfiguration: Equatable, Sendable {
             )
         }
 
-        guard let rawURL = environment[
+        guard let rawURL = configurationValues[
             SupabaseRuntimeConfiguration.urlEnvironmentKey
         ], let url = URL(string: rawURL),
               let scheme = url.scheme?.lowercased(),
               let host = url.host?.lowercased(),
-              let publishableKey = environment[
+              let publishableKey = configurationValues[
                 SupabaseRuntimeConfiguration.publishableKeyEnvironmentKey
               ], !publishableKey.trimmingCharacters(
                 in: .whitespacesAndNewlines
@@ -149,5 +155,23 @@ nonisolated struct AppConfiguration: Equatable, Sendable {
             return false
         }
         return (16...31).contains(second)
+    }
+
+    private static func releaseConfigurationFromMainBundle() -> [String: String] {
+        let keys = [
+            modeEnvironmentKey,
+            SupabaseRuntimeConfiguration.urlEnvironmentKey,
+            SupabaseRuntimeConfiguration.publishableKeyEnvironmentKey,
+            privacyPolicyURLEnvironmentKey,
+            termsOfUseURLEnvironmentKey
+        ]
+
+        return keys.reduce(into: [:]) { result, key in
+            if let value = Bundle.main.object(
+                forInfoDictionaryKey: key
+            ) as? String {
+                result[key] = value
+            }
+        }
     }
 }

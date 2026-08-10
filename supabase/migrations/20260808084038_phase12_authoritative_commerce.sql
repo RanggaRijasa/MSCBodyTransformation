@@ -2014,20 +2014,3 @@ comment on function public.fulfill_apple_purchase(
   timestamptz, timestamptz, timestamptz, text, bigint
 ) is
   'Trusted Edge-only atomic fulfillment after cryptographic Apple JWS verification.';
-
--- Deterministic local products are intentionally distinct from future App
--- Store Connect identifiers and exist only for xcode/local_testing.
-insert into public.coach_store_products(
-  price_band, platform, environment, product_id, product_type,
-  provisioning_status, actual_price, currency_code
-)
-values
-  ('entry', 'app_store', 'xcode',
-   'local.msc.coach.access.entry.3months',
-   'non_renewing_subscription', 'ready', 100000, 'IDR'),
-  ('growth', 'app_store', 'xcode',
-   'local.msc.coach.access.growth.3months',
-   'non_renewing_subscription', 'ready', 150000, 'IDR'),
-  ('leadership', 'app_store', 'xcode',
-   'local.msc.coach.access.leadership.3months',
-   'non_renewing_subscription', 'ready', 200000, 'IDR');

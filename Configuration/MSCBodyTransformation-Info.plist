@@ -34,7 +34,17 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Kamera digunakan untuk memindai QR undangan program dan mengambil foto bukti.</string>
+	<string>Kamera digunakan untuk memindai QR Coach dan mengambil foto bukti program.</string>
+	<key>MSC_APP_MODE</key>
+	<string>hosted_production</string>
+	<key>MSC_SUPABASE_URL</key>
+	<string>https://uoymesmgsitdoxouvgca.supabase.co</string>
+	<key>MSC_SUPABASE_PUBLISHABLE_KEY</key>
+	<string>sb_publishable_UIwtDt-ZK9A9G4f0d22T7g_5WUDWcOw</string>
+	<key>MSC_PRIVACY_POLICY_URL</key>
+	<string>https://uoymesmgsitdoxouvgca.supabase.co/functions/v1/legal/privacy</string>
+	<key>MSC_TERMS_OF_USE_URL</key>
+	<string>https://uoymesmgsitdoxouvgca.supabase.co/functions/v1/legal/terms</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
