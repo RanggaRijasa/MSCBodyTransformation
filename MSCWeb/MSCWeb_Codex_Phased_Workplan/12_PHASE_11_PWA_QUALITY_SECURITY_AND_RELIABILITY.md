@@ -130,6 +130,88 @@ target sebelum menyentuh production hosting.
 - Screenshot landing berasal dari PWA release candidate atau placeholder masih
   diberi label serta memiliki approval launch eksplisit.
 
+## Gate perubahan desain landing setelah Phase 11
+
+Gate ini wajib dipakai oleh task/chat baru yang mengubah frontend landing
+setelah Phase 11 berstatus `SELESAI LOKAL`. Perubahan diperbolehkan sebelum
+Phase 12, tetapi evidence Phase 11 tidak boleh dianggap masih mutakhir tanpa
+regression check berikut.
+
+### Scope dan status
+
+- Seluruh perubahan tetap hanya di `MSCWeb/`; perubahan desain landing tidak
+  memberi izin mengubah root `supabase`, `Contracts`, source iOS, hosted main,
+  DNS, domain, atau deployment.
+- Baca Phase 02A, `docs/design/LANDING_PAGE_DESIGN_AND_CONTENT.md`, UI reference
+  iOS, baseline visual saat ini, serta gate Phase 11 sebelum mengedit.
+- Hero, navigation, section order, responsive CSS, typography, color, copy,
+  screenshot/asset, metadata, install CTA, route, atau dependency frontend
+  dihitung sebagai perubahan material.
+- Saat perubahan material mulai diterapkan, catat sebagai regression work yang
+  sedang berjalan. Status `SELESAI LOKAL` hanya boleh dipertahankan/dipulihkan
+  setelah gate relevan lulus dan progress log baru ditambahkan.
+- Perubahan visual-only tidak memerlukan Colima/Supabase. Nyalakan backend lokal
+  hanya bila task turut menyentuh Auth, role-aware CTA, repository, atau journey
+  data; hosted Supabase tetap dilarang tanpa approval Phase 12.
+
+### Requirement desain yang tidak boleh regresi
+
+- `/` tetap landing publik dan `/hari-ini` tetap entry aplikasi.
+- CTA install tetap jelas, truthful, dan adaptif untuk Chromium, iPhone manual
+  guidance, unsupported, dismissed, serta already-standalone state.
+- Landing tetap usable pada mobile/desktop, light/dark, reduced motion, high
+  contrast, keyboard, screen reader, zoom 200%/400%, dan viewport 320 px.
+- Touch target, focus, heading hierarchy, dialog, wrapping Bahasa Indonesia,
+  safe area, dan status tanpa color-only cue tetap lulus.
+- Tidak boleh ada PII, private URL, QR mentah, berat, payment evidence, signed
+  URL, production data, atau metadata sensitif pada copy/HTML/asset/screenshot.
+- Perubahan copy tidak boleh menambah klaim hasil, statistik, testimoni, harga,
+  kebijakan, atau status install yang tidak memiliki source/approval.
+- Jangan menghapus atau mem-bypass PWA runtime/provider, manifest, service
+  worker, cache/privacy policy, route boundary, dan security headers demi UI.
+
+### Verification minimum setiap perubahan visual
+
+Jalankan dari `MSCWeb/` dengan Node/pnpm yang dipin:
+
+```text
+corepack pnpm format:check
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm exec vitest run tests/component/landing-and-install.test.tsx tests/unit/landing-boundaries.test.ts tests/unit/pwa-install-state.test.ts
+corepack pnpm build
+corepack pnpm check:phase11:performance
+corepack pnpm exec playwright test tests/e2e/phase02a-landing.smoke.spec.ts --project=chromium
+corepack pnpm exec playwright test tests/e2e/phase02a-landing.smoke.spec.ts --project=webkit
+corepack pnpm exec playwright test tests/e2e/phase02a-landing.visual.spec.ts --project=chromium
+```
+
+- Update visual snapshot hanya bila perbedaan memang dimaksudkan. Inspect hasil
+  desktop light, mobile light/dark, dan 320 px large text secara visual; jangan
+  menerima snapshot baru secara buta hanya agar test hijau.
+- Untuk perubahan visual yang disetujui, jalankan command visual yang sama
+  dengan `--update-snapshots`, inspect seluruh PNG hasilnya, lalu jalankan ulang
+  tanpa flag tersebut untuk membuktikan baseline baru stabil.
+- Jika layout yang menampilkan screenshot kandidat rilis berubah, verifikasi
+  ulang `public/images/pwa-participant-rc-v1.jpg` dan
+  `public/images/pwa-coach-rc-v1.jpg` masih representatif, tidak terdistorsi,
+  responsive, memiliki alt text benar, dan bebas data sensitif. Recapture hanya
+  bila isi screenshot aplikasi sudah tidak mewakili build aktual.
+- Catat file, alasan desain, viewport yang diperiksa, snapshot yang berubah,
+  command/result, dan remaining manual-device evidence pada progress log.
+
+### Full regression trigger
+
+Jalankan `corepack pnpm test` dan `corepack pnpm test:phase11:local` bila
+perubahan menyentuh install CTA/provider/state, manifest, service worker,
+offline/update, navigation/route boundary, session-aware content, dependency,
+security/cache header, atau restrukturisasi landing yang luas. Full local gate
+memerlukan Colima dan Supabase lokal; tidak pernah memakai hosted main.
+
+Setiap failure accessibility, PWA, privacy, security, performance, build, atau
+visual yang belum dijelaskan memblokir Phase 12. Jangan menandai regression
+selesai hanya karena desain terlihat benar pada satu browser atau viewport.
+
 ## Progress log — 11 Agustus 2026
 
 - Files changed: implementasi install/runtime PWA, service worker/offline,

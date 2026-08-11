@@ -151,6 +151,15 @@ pnpm build
 Nama filter test disesuaikan dengan runner Phase 01; jangan mengklaim command
 lulus sebelum benar-benar tersedia dan dijalankan.
 
+## Perubahan desain setelah Phase 11
+
+Jika frontend landing diubah setelah Phase 11 selesai lokal, task/chat baru
+wajib mengikuti `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md`, bagian
+`Gate perubahan desain landing setelah Phase 11`. Definition of Done Phase 02A
+tidak otomatis tetap valid hanya karena perubahan bersifat visual. Snapshot,
+accessibility, install CTA, responsive layout, privacy asset, performance, dan
+build harus diverifikasi ulang sesuai luas perubahan.
+
 ## Definition of done
 
 - Landing menarik, modular, responsive, accessible, dan public-safe.
