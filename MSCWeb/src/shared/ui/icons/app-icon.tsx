@@ -24,6 +24,7 @@ export type AppIconName =
 type AppIconProperties = Readonly<
   SVGProps<SVGSVGElement> & {
     name: AppIconName;
+    variant?: "default" | "outline";
   }
 >;
 
@@ -64,8 +65,21 @@ const stroked = new Set<AppIconName>([
   "warning",
 ]);
 
-export function AppIcon({ name, ...properties }: AppIconProperties) {
-  const usesStroke = stroked.has(name);
+const outlinePaths: Partial<Record<AppIconName, string>> = {
+  coach:
+    "M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6",
+  dashboard: "M3 3h7v7H3V3Zm11 0h7v5h-7V3Zm0 9h7v9h-7v-9ZM3 14h7v7H3v-7Z",
+  home: "m3 11 9-8 9 8v10h-6v-6H9v6H3V11Z",
+  payment: "M12 16V4m-5 5 5-5 5 5M5 20h14",
+  people:
+    "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+  program: "M9 5h6M9 12h6m-6 4h6M7 3h10a2 2 0 0 1 2 2v16H5V5a2 2 0 0 1 2-2Z",
+  ranking: "M4 20v-7m6 7V8m6 12V4m6 16H2",
+};
+
+export function AppIcon({ name, variant = "default", ...properties }: AppIconProperties) {
+  const path = variant === "outline" ? (outlinePaths[name] ?? paths[name]) : paths[name];
+  const usesStroke = variant === "outline" || stroked.has(name);
 
   return (
     <svg
@@ -77,9 +91,9 @@ export function AppIcon({ name, ...properties }: AppIconProperties) {
       stroke={usesStroke ? "currentColor" : "none"}
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={usesStroke ? 2 : undefined}
+      strokeWidth={usesStroke ? (variant === "outline" ? 1.8 : 2) : undefined}
     >
-      <path d={paths[name]} />
+      <path d={path} />
     </svg>
   );
 }

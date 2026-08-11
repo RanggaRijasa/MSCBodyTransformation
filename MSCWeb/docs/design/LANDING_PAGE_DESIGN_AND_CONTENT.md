@@ -4,7 +4,11 @@ Dokumen ini menjadi source of truth untuk landing page publik MSC Body
 Transformation. Mockup ImageGen adalah referensi hierarchy dan mood, bukan
 gambar halaman yang ditempel sebagai production UI.
 
-![Konsep landing page MSC](./landing-page-concept-v2.png)
+![Konsep landing page MSC](./landing-page-concept-v3.png)
+
+Konsep v3 adalah arah visual yang disetujui pada 11 Agustus 2026. Implementasi
+tetap dibuat sebagai HTML/CSS responsif dan accessible; gambar konsep tidak
+ditampilkan sebagai screenshot halaman produksi.
 
 ## Keputusan repository dan route
 
@@ -53,11 +57,11 @@ Alasan:
 Header desktop:
 
 - wordmark `MSC Body Transformation`;
-- `Program` menuju section/katalog publik;
+- `Program` menuju katalog publik `/program`;
 - `Cara kerja` menuju section langkah;
 - `Untuk Coach` menuju penjelasan Coach;
 - `Masuk` menuju `/masuk`;
-- CTA utama adaptif `Pasang aplikasi`.
+- CTA utama adaptif; state custom install prompt memakai label `Unduh MSC`.
 
 Mobile:
 
@@ -76,13 +80,13 @@ Transformasi lebih terarah, bersama Coach.
 Ikuti program harian, unggah progres, dan dapatkan pendampingan Coach—langsung
 dari ponselmu.
 
-Pasang aplikasi
+Unduh MSC
 Lihat program
-Gratis dipasang • Tanpa App Store
 ```
 
-Copy `Tanpa App Store` menjelaskan distribusi PWA, bukan mengkritik platform
-lain atau menyiratkan semua browser dapat memunculkan prompt instalasi.
+`Unduh MSC` adalah copy produk terbaru untuk state custom install prompt. State
+iPhone/manual, standalone, unsupported, dan not-ready tetap memakai label
+adaptif yang jujur; CTA tidak menawarkan APK atau IPA.
 
 ### Benefits
 
@@ -135,8 +139,8 @@ foto, atau berat. Copy harus mengikuti RLS dan capability authoritative.
 Pasang MSC di layar utama
 Akses lebih cepat dan pengalaman yang terasa seperti aplikasi, tanpa App Store.
 
-Pasang aplikasi
-Tersedia sebagai PWA di iPhone, Android, dan desktop yang mendukung.
+Unduh MSC
+Akses lebih cepat langsung dari layar utama.
 ```
 
 ### FAQ baseline
@@ -170,7 +174,7 @@ feature-detected dan copy yang jujur.
 
 | State | Label utama | Aksi |
 |---|---|---|
-| Chromium install prompt ready | `Pasang aplikasi` | Panggil retained `beforeinstallprompt.prompt()` |
+| Chromium install prompt ready | `Unduh MSC` | Panggil retained `beforeinstallprompt.prompt()` |
 | iPhone/iPad browser, belum standalone | `Cara memasang di iPhone` | Buka sheet langkah Share lalu Add to Home Screen |
 | Browser installable tanpa custom prompt | `Cara memasang` | Buka petunjuk browser-specific yang telah diuji |
 | Sudah standalone/installed | `Buka aplikasi` | Arahkan ke destination sesuai session/role |
@@ -179,7 +183,8 @@ feature-detected dan copy yang jujur.
 
 Rules:
 
-- label `Unduh` tidak digunakan karena tidak ada file APK/IPA yang diunduh;
+- label `Unduh MSC` hanya digunakan untuk custom install prompt sesuai
+  keputusan produk terbaru; tidak boleh menyiratkan unduhan APK/IPA;
 - install UI disembunyikan/diadaptasi bila app sudah standalone;
 - jangan user-agent sniffing sebagai satu-satunya kebenaran;
 - jangan menyimpan install prompt event, token, atau session ke persistent
@@ -194,9 +199,15 @@ Rules:
 - Near-black untuk header, identity surface, dan install callout terbatas.
 - Merah semantic brand untuk satu CTA utama per viewport.
 - Kuning hanya untuk achievement/accent kecil dengan teks near-black.
-- Reading sections tetap putih/off-white agar tidak terasa seperti poster.
-- Gunakan system font dan responsive type; tidak menyalin raster text dari
-  mockup.
+- Reading sections memakai near-black berlapis dengan border/kontras yang
+  cukup; merah dan kuning tetap aksen, bukan warna dasar semua panel.
+- Landing memakai Poppins melalui `next/font` dengan system fallback dan
+  responsive type; font di-self-host oleh build dan tidak menyalin raster text
+  dari mockup.
+- Jalur progres desktop harus berupa kurva tunggal yang halus dari hero dan
+  menyatu pada garis langkah tepat setelah langkah 4. Panah callout instalasi
+  memakai kurva S bertitik, bukan siku patah. Dekorasi jalur disederhanakan pada
+  mobile agar tidak mengganggu isi.
 - Hero people imagery harus inklusif, realistis, tidak memakai before/after,
   tidak mempermalukan tubuh, dan tidak menjanjikan hasil tertentu.
 - Phone/dashboard preview memakai data fiktif non-PII yang jelas sebagai
@@ -204,8 +215,8 @@ Rules:
 
 ## Placeholder dan screenshot aplikasi final
 
-Selama PWA belum mencapai parity, area preview aplikasi pada hero dan section
-fitur boleh memakai placeholder. Mockup ImageGen v2 menunjukkan komposisi dan
+Selama screenshot PWA terbaru belum disetujui untuk komposisi landing v3, area
+preview aplikasi pada hero memakai placeholder. Mockup ImageGen v3 menunjukkan komposisi dan
 hierarchy placeholder tersebut, bukan screenshot produk final.
 
 Aturan placeholder:
@@ -288,15 +299,15 @@ final dicatat. Tidak boleh ada TODO tanpa phase tujuan.
 
 - Mode: built-in ImageGen.
 - Taxonomy: `ui-mockup`.
-- Output final: `landing-page-concept-v2.png`, 1536 × 1024 PNG.
+- Output terpilih: `landing-page-concept-v3.png`, 853 × 1844 PNG.
 - SHA-256:
-  `475544f057013611359985c198f91cfd4ad6b21c3618934879eecafb6879d3f2`.
-- Prompt intent: high-fidelity responsive landing design board, exact Bahasa
-  Indonesia hero/install copy, red dominant install CTA, black/red/yellow
-  semantic palette, desktop plus mobile inset, no App Store badge, no fake
-  testimonials/statistics, no medical or guaranteed transformation claims.
-- Revision v2 menghapus klaim `Coach profesional` yang belum terverifikasi dan
-  mengganti preview chat yang tidak ada di contract dengan status pemeriksaan.
+  `9dd04f71768fbd0284b1c06fa5c65f6a6f7a0690d144cce5acb60b59c07a93fb`.
+- Prompt intent: landing performance digital dengan kanvas near-black,
+  tipografi besar, garis progres kuning 1–4, placeholder PWA berlapis, panel
+  Peserta/Coach yang saling mengunci, leaderboard visual, dan CTA tunggal.
+- Revision v3 menghapus section program dari landing, mengarahkan katalog ke
+  `/program`, menghapus CTA sekunder pada panel peran/leaderboard, dan mengubah
+  install tutorial menjadi satu CTA.
 
 Mockup tidak boleh digunakan sebagai production screenshot tanpa visual,
 copy, accessibility, consent/licensing, dan responsive review ulang.

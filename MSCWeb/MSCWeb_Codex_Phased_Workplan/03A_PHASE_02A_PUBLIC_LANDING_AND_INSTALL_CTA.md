@@ -205,3 +205,34 @@ hasil accessibility/performance, asumsi, dan remaining Phase 11 gates.
 - Remaining blockers: tidak ada untuk Phase 02A. Gate service worker, device
   fisik, Core Web Vitals production, domain, kebijakan legal final, dan capture
   release-candidate tetap milik Phase 11–13.
+
+### 11 Agustus 2026 — redesign landing v3
+
+- Files: route dan komposisi landing, hero placeholder, benefit, jalur empat
+  langkah, panel Peserta/Coach, leaderboard visual, install callout, header,
+  footer, copy Indonesia, tiga file CSS terpisah, dokumentasi desain, serta
+  unit/component/E2E/visual test; seluruh perubahan tetap di `MSCWeb/`.
+- Copy dan struktur: katalog program dinamis dihapus dari landing dan navigasi
+  `Program` diarahkan ke `/program`; CTA prompt-ready memakai `Unduh MSC`,
+  sedangkan iPhone/manual/standalone/unsupported tetap memakai label adaptif
+  yang jujur. Leaderboard tidak memiliki aksi `Selengkapnya`.
+- Asset provenance: wordmark memakai `/icons/app-icon-192.png` yang sudah
+  diturunkan dari master icon iOS approved. Konsep ImageGen yang disetujui
+  disimpan hanya sebagai referensi desain di
+  `docs/design/landing-page-concept-v3.png`, bukan sebagai raster UI produksi.
+  Preview aplikasi dibuat sebagai placeholder HTML/CSS berlabel dan bebas PII.
+- Screenshots: baseline Chromium diperbarui dan diperiksa pada desktop
+  1440×1000, mobile 390×844 light/dark, tablet 768×1024 dark, serta 320×900
+  large text 200%; rerun tanpa `--update-snapshots` lulus 5/5.
+- Accessibility/responsive: Axe Chromium/WebKit, kontras light/dark, reduced
+  motion, keyboard/menu/FAQ, zoom 400%, dan overflow 320/390/768/1024/1440
+  lulus. Sticky CTA tetap diuji oleh smoke test dan disembunyikan hanya dari
+  screenshot regression agar baseline full-page deterministik.
+- Commands: `corepack pnpm format:check`, `lint`, `typecheck`, focused Vitest
+  24/24, `test` 163/163, `build`, `check:phase11:performance`, smoke Chromium
+  7 pass + 1 engine skip, smoke WebKit 6 pass + 2 engine skip, visual 5/5,
+  dan `test:phase11:local`; semuanya lulus dengan Node 24 yang dipin.
+- Remaining gate: placeholder aplikasi harus diganti dengan screenshot PWA
+  aktual yang bebas data sensitif sebelum cutover, lalu baseline visual dan
+  bukti perangkat fisik perlu diperbarui. Tidak ada hosted Supabase, DNS,
+  domain, atau deployment yang diubah.

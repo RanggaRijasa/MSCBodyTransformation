@@ -1,15 +1,14 @@
 import type { LandingActor } from "@/features/landing/model/landing-actor";
 import { resolveLandingDestination } from "@/features/landing/model/landing-actor";
-import type { LandingPublicData } from "@/features/landing/model/landing-public-data";
 import { LandingHero } from "@/features/landing/components/landing-hero";
 import {
   AudienceSection,
   BenefitsSection,
   FaqSection,
   InstallCallout,
-  ProgramsSection,
   StepsSection,
 } from "@/features/landing/components/landing-sections";
+import { LeaderboardSection } from "@/features/landing/components/landing-leaderboard";
 import { MarketingFooter } from "@/features/landing/components/marketing-footer";
 import { MarketingHeader } from "@/features/landing/components/marketing-header";
 import { MarketingRouteBehavior } from "@/features/landing/components/marketing-route-behavior";
@@ -18,28 +17,31 @@ import { copy } from "@/shared/i18n/id";
 
 type LandingPageProperties = Readonly<{
   actor: LandingActor;
-  publicData: LandingPublicData;
 }>;
 
-export function LandingPage({ actor, publicData }: LandingPageProperties) {
+export function LandingPage({ actor }: LandingPageProperties) {
   return (
     <PwaInstallProvider actorDestination={resolveLandingDestination(actor)}>
-      <a className="skip-link" href="#landing-main">
-        {copy.navigation.skipToContent}
-      </a>
-      <MarketingHeader />
-      <main id="landing-main">
-        <LandingHero />
-        <BenefitsSection />
-        <StepsSection />
-        <ProgramsSection publicData={publicData} />
-        <AudienceSection />
-        <InstallCallout />
-        <FaqSection />
-      </main>
-      <MarketingFooter />
-      <StickyInstallBar />
-      <MarketingRouteBehavior />
+      <div className="landing-page">
+        <a className="skip-link" href="#landing-main">
+          {copy.navigation.skipToContent}
+        </a>
+        <MarketingHeader />
+        <main id="landing-main">
+          <div className="landing-intro">
+            <LandingHero />
+            <BenefitsSection />
+            <StepsSection />
+          </div>
+          <AudienceSection />
+          <LeaderboardSection />
+          <InstallCallout />
+          <FaqSection />
+        </main>
+        <MarketingFooter />
+        <StickyInstallBar />
+        <MarketingRouteBehavior />
+      </div>
     </PwaInstallProvider>
   );
 }

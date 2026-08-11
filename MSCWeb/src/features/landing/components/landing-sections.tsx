@@ -1,23 +1,29 @@
 import Image from "next/image";
-import Link from "next/link";
 
-import type { LandingPublicData } from "@/features/landing/model/landing-public-data";
 import { InstallCta } from "@/features/pwa-install";
+import { AppIcon, type AppIconName } from "@/shared/ui";
 import { copy } from "@/shared/i18n/id";
+
+const benefitIcons: readonly AppIconName[] = ["program", "coach", "ranking"];
+const stepIcons: readonly AppIconName[] = ["dashboard", "coach", "payment", "check"];
+const participantIcons: readonly AppIconName[] = ["home", "program", "ranking", "info"];
+const coachIcons: readonly AppIconName[] = ["people", "check", "ranking", "dashboard"];
 
 export function BenefitsSection() {
   return (
-    <section className="landing-section" aria-labelledby="benefits-title">
+    <section className="landing-section landing-benefits" aria-labelledby="benefits-title">
       <p className="landing-eyebrow">{copy.landing.benefits.eyebrow}</p>
-      <h2 id="benefits-title">{copy.landing.benefits.title}</h2>
-      <div className="landing-card-grid">
+      <h2 id="benefits-title">
+        {copy.landing.benefits.titleLead} <span>{copy.landing.benefits.titleAccent}</span>
+      </h2>
+      <div className="landing-benefits__items">
         {copy.landing.benefits.items.map((item, index) => (
-          <article className="landing-card" key={item.title}>
-            <span aria-hidden="true" className="landing-card__number">
-              {index + 1}
-            </span>
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
+          <article key={item.title}>
+            <AppIcon name={benefitIcons[index] ?? "program"} variant="outline" />
+            <div>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </div>
           </article>
         ))}
       </div>
@@ -27,14 +33,23 @@ export function BenefitsSection() {
 
 export function StepsSection() {
   return (
-    <section className="landing-section landing-section--tinted" id="cara-kerja" tabIndex={-1}>
+    <section
+      className="landing-section landing-steps-section"
+      id="cara-kerja"
+      aria-labelledby="steps-title"
+      tabIndex={-1}
+    >
       <div className="landing-section__heading">
         <p className="landing-eyebrow">{copy.landing.steps.eyebrow}</p>
-        <h2>{copy.landing.steps.title}</h2>
+        <h2 id="steps-title">{copy.landing.steps.title}</h2>
       </div>
       <ol className="landing-steps">
-        {copy.landing.steps.items.map((item) => (
+        {copy.landing.steps.items.map((item, index) => (
           <li key={item.title}>
+            <span className="landing-step__number">{index + 1}</span>
+            <span className="landing-step__icon" aria-hidden="true">
+              <AppIcon name={stepIcons[index] ?? "program"} variant="outline" />
+            </span>
             <div>
               <h3>{item.title}</h3>
               <p>{item.description}</p>
@@ -46,65 +61,48 @@ export function StepsSection() {
   );
 }
 
-export function ProgramsSection({ publicData }: Readonly<{ publicData: LandingPublicData }>) {
-  const message =
-    publicData.availability === "unavailable"
-      ? copy.landing.programs.unavailable
-      : copy.landing.programs.empty;
+function CapabilityList({
+  icons,
+  items,
+}: Readonly<{ icons: readonly AppIconName[]; items: readonly string[] }>) {
   return (
-    <section
-      className="landing-section"
-      id="program-publik"
-      aria-labelledby="program-title"
-      tabIndex={-1}
-    >
-      <div className="landing-section__heading">
-        <h2 id="program-title">{copy.landing.programs.title}</h2>
-        {publicData.programs.length === 0 ? <p>{message}</p> : null}
-      </div>
-      {publicData.programs.length > 0 ? (
-        <div className="landing-card-grid">
-          {publicData.programs.map((program) => (
-            <article className="landing-card" key={program.id}>
-              <p className="landing-card__meta">{program.scheduleLabel}</p>
-              <h3>{program.title}</h3>
-              <p>{program.summary}</p>
-            </article>
-          ))}
-        </div>
-      ) : null}
-      <Link className="landing-text-link" href="/program">
-        {copy.landing.programs.browse}
-      </Link>
-    </section>
+    <ul>
+      {items.map((item, index) => (
+        <li key={item}>
+          <AppIcon name={icons[index] ?? "info"} variant="outline" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
 export function AudienceSection() {
   return (
     <section className="landing-section landing-audiences" aria-labelledby="audience-title">
-      <h2 id="audience-title">{copy.landing.audiences.title}</h2>
-      <div>
+      <h2 className="visually-hidden" id="audience-title">
+        {copy.landing.audiences.title}
+      </h2>
+      <div className="landing-audiences__panels">
         <article>
+          <p className="landing-eyebrow">{copy.landing.audiences.participantEyebrow}</p>
           <h3>{copy.landing.audiences.participantTitle}</h3>
           <p>{copy.landing.audiences.participantSummary}</p>
+          <CapabilityList
+            icons={participantIcons}
+            items={copy.landing.audiences.participantCapabilities}
+          />
         </article>
+        <div className="landing-audiences__mark" aria-hidden="true">
+          <Image alt="" height={84} loading="eager" src="/icons/app-icon-192.png" width={84} />
+        </div>
         <article id="untuk-coach" tabIndex={-1}>
+          <p className="landing-eyebrow">{copy.landing.audiences.coachEyebrow}</p>
           <h3>{copy.landing.audiences.coachTitle}</h3>
           <p>{copy.landing.audiences.coachSummary}</p>
+          <CapabilityList icons={coachIcons} items={copy.landing.audiences.coachCapabilities} />
         </article>
       </div>
-      <figure className="landing-coach-preview">
-        <Image
-          alt={copy.landing.audiences.coachPreviewAlt}
-          height={1497}
-          loading="lazy"
-          sizes="(max-width: 48rem) calc(100vw - 2rem), 70rem"
-          src="/images/pwa-coach-rc-v1.jpg"
-          width={1120}
-        />
-        <figcaption>{copy.landing.audiences.coachPreviewCaption}</figcaption>
-      </figure>
     </section>
   );
 }
@@ -112,12 +110,26 @@ export function AudienceSection() {
 export function InstallCallout() {
   return (
     <section className="landing-install-callout" aria-labelledby="install-callout-title">
-      <div>
+      <div className="landing-install-callout__copy">
+        <p className="landing-eyebrow">{copy.landing.install.eyebrow}</p>
         <h2 id="install-callout-title">{copy.landing.install.calloutTitle}</h2>
         <p>{copy.landing.install.calloutSummary}</p>
-        <small>{copy.landing.install.availability}</small>
       </div>
-      <InstallCta />
+      <span aria-hidden="true" className="landing-install-callout__route">
+        <svg viewBox="0 0 160 72">
+          <circle cx="12" cy="19" r="6" />
+          <path d="M18 19C38 5 59 9 59 28c0 21 16 28 43 24h40" />
+          <path d="m132 44 12 8-12 9" />
+        </svg>
+      </span>
+      <div className="landing-install-callout__action">
+        <InstallCta />
+        <div>
+          <Image alt="" height={80} loading="eager" src="/icons/app-icon-192.png" width={80} />
+          <strong>MSC</strong>
+          <span>Body Transformation</span>
+        </div>
+      </div>
     </section>
   );
 }

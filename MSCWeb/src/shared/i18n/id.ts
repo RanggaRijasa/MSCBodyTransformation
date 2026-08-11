@@ -26,17 +26,32 @@ export const copy = {
     hero: {
       eyebrow: "Program wellness terstruktur",
       title: "Transformasi lebih terarah, bersama Coach.",
+      titleLead: "Transformasi lebih terarah,",
+      titleAccent: "bersama Coach.",
       summary:
         "Ikuti program harian, unggah progres, dan dapatkan pendampingan Coach—langsung dari ponselmu.",
       viewPrograms: "Lihat program",
-      trust: "Gratis dipasang • Tanpa App Store",
-      previewLabel: "PWA versi kandidat rilis",
-      previewAlt:
-        "Tampilan papan peringkat Peserta pada PWA MSC dengan data fixture tanpa identitas pribadi",
+      previewLabel: "Pratinjau aplikasi",
+      previewAlt: "Pratinjau placeholder antarmuka PWA MSC dengan progres dan tugas harian fiktif",
+      preview: {
+        greeting: "Halo, Peserta!",
+        program: "Program MSC Demo",
+        progress: "76%",
+        progressLabel: "selesai",
+        tasks: ["Menu dan kalori", "Aktivitas", "Foto progres"],
+        complete: "Selesai",
+        rankLabel: "Peringkat peserta",
+        rankValue: "310",
+        rankDetail: "Peringkat 3",
+        scoreLabel: "Poin saya",
+        scoreValue: "460",
+        scoreDetail: "+40 hari ini",
+      },
     },
     benefits: {
       eyebrow: "Manfaat utama",
-      title: "Lebih mudah menjaga arah program",
+      titleLead: "Hasil lebih terarah.",
+      titleAccent: "Konsisten lebih mudah.",
       items: [
         {
           title: "Program terstruktur",
@@ -79,11 +94,15 @@ export const copy = {
     },
     audiences: {
       title: "Satu aplikasi, batas akses yang jelas",
+      participantEyebrow: "Untuk Peserta",
       participantTitle: "Untuk Peserta",
       participantSummary:
         "Jalani langkah harian, kirim progres, dan lihat statusmu dalam satu aplikasi.",
+      participantCapabilities: ["Tugas harian", "Progres jelas", "Peringkat", "Notifikasi"],
+      coachEyebrow: "Untuk Coach",
       coachTitle: "Untuk Coach",
       coachSummary: "Pantau peserta yang ditugaskan dan periksa aktivitas sesuai kewenanganmu.",
+      coachCapabilities: ["Kelola peserta", "Periksa aktivitas", "Skor dan poin", "Laporan"],
       coachPreviewCaption: "Dashboard Coach pada PWA versi kandidat rilis",
       coachPreviewAlt:
         "Dashboard Coach MSC dengan ringkasan peserta, program aktif, dan papan peringkat menggunakan data fixture",
@@ -96,15 +115,15 @@ export const copy = {
       browse: "Buka katalog program",
     },
     install: {
-      install: "Pasang aplikasi",
+      install: "Unduh MSC",
       iosGuidance: "Cara memasang di iPhone",
       manualGuidance: "Cara memasang",
       openApp: "Buka aplikasi",
       useBrowser: "Gunakan di browser",
+      eyebrow: "Unduh aplikasi",
       calloutTitle: "Pasang MSC di layar utama",
-      calloutSummary:
-        "Akses lebih cepat dan pengalaman yang terasa seperti aplikasi, tanpa App Store.",
-      availability: "Tersedia sebagai PWA di iPhone, Android, dan desktop yang mendukung.",
+      calloutSummary: "Akses lebih cepat langsung dari layar utama.",
+      availability: "Pemasangan menyesuaikan kemampuan browser yang digunakan.",
       sheetTitle: "Cara memasang MSC",
       iosSteps:
         "Di Safari, buka menu Bagikan, lalu pilih Tambahkan ke Layar Utama. Nama menu dapat berbeda menurut versi iOS.",
@@ -112,6 +131,26 @@ export const copy = {
         "Buka menu browser, lalu cari Pasang aplikasi atau Tambahkan ke layar utama. Pilihan hanya muncul pada browser yang mendukung.",
       consumed:
         "Permintaan pemasangan sudah ditampilkan. Kamu tetap dapat menggunakan MSC di browser.",
+    },
+    leaderboard: {
+      eyebrow: "Papan peringkat",
+      title: "Papan peringkat peserta",
+      summary:
+        "Poin dan progres diperbarui berdasarkan aktivitas yang telah diperiksa tanpa menampilkan data berat badan.",
+      caption: "Pratinjau papan peringkat dengan data fiktif",
+      columns: {
+        rank: "Peringkat",
+        participant: "Peserta",
+        progress: "Progres",
+        points: "Poin",
+      },
+      rows: [
+        { rank: 1, participant: "Peserta Satu", progress: 94, points: "460 poin" },
+        { rank: 2, participant: "Peserta Dua", progress: 85, points: "390 poin" },
+        { rank: 3, participant: "Peserta Tiga", progress: 72, points: "310 poin" },
+        { rank: 4, participant: "Peserta Empat", progress: 68, points: "280 poin" },
+        { rank: 5, participant: "Peserta Lima", progress: 61, points: "245 poin" },
+      ],
     },
     faq: {
       eyebrow: "Pertanyaan umum",

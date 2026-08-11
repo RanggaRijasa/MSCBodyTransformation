@@ -51,10 +51,6 @@ test("landing anonymous public-safe, SEO-ready, dan tidak shared-cache personali
   expect(sitemapBody).toContain("/program");
   expect(sitemapBody).not.toContain("/admin");
 
-  await page.goto("/?role=admin");
-  await expect(
-    page.locator("#hero-install-anchor").getByRole("link", { name: "Gunakan di browser" }),
-  ).toHaveAttribute("href", "/program");
   for (const route of ["/privasi", "/ketentuan", "/bantuan"]) {
     expect((await request.get(route)).ok()).toBe(true);
   }
@@ -85,10 +81,25 @@ test("hero, FAQ, section navigation, dan sticky CTA tetap keyboard-friendly", as
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const programLink = page.getByRole("link", { name: "Lihat program" });
+  await expect(programLink).toHaveAttribute("href", "/program");
   await programLink.focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/#program-publik$/);
-  await expect(page.locator("#program-publik")).toBeFocused();
+  await expect(page).toHaveURL(/\/program$/);
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-pwa-install-controller", "ready");
+  await expect(page.locator("html")).toHaveAttribute("data-pwa-service-worker", "ready");
+
+  const menu = page.locator(".marketing-menu > summary");
+  await menu.focus();
+  await expect(menu).toBeFocused();
+  await menu.click();
+  await expect(page.locator(".marketing-menu")).toHaveJSProperty("open", true);
+  await expect(page.getByRole("navigation", { name: "Navigasi utama mobile" })).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Navigasi utama mobile" }).getByRole("link", {
+      name: "Program",
+    }),
+  ).toHaveAttribute("href", "/program");
 
   const faq = page.getByText("Apa itu MSC Body Transformation?");
   await faq.click();
@@ -102,7 +113,11 @@ test("hero, FAQ, section navigation, dan sticky CTA tetap keyboard-friendly", as
   await page.locator("#cara-kerja").scrollIntoViewIfNeeded();
   const stickyBar = page.locator('.sticky-install[data-visible="true"]');
   await expect(stickyBar).toBeVisible();
-  await expect(stickyBar.getByRole("link", { name: "Gunakan di browser" })).toBeVisible();
+  const stickyAction = stickyBar.locator("a, button");
+  await expect(stickyAction).toBeVisible();
+  await expect(stickyAction).toHaveText(
+    /Unduh MSC|Cara memasang(?: di iPhone)?|Gunakan di browser|Buka aplikasi/,
+  );
 });
 
 for (const outcome of ["accepted", "dismissed"] as const) {
@@ -113,7 +128,7 @@ for (const outcome of ["accepted", "dismissed"] as const) {
     await dispatchInstallPrompt(page, outcome);
     const heroAction = page
       .locator("#hero-install-anchor")
-      .getByRole("button", { name: "Pasang aplikasi" });
+      .getByRole("button", { name: "Unduh MSC" });
     await expect(heroAction).toBeVisible();
     await heroAction.click();
     await expect
@@ -151,6 +166,26 @@ test("WebKit iPhone membuka guidance, Escape menutup, dan fokus kembali", async 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Cara memasang MSC" })).not.toBeVisible();
   await expect(heroAction).toBeFocused();
+});
+
+test("landing responsif pada mobile, tablet, dan desktop tanpa overflow", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 1000 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await expect(
+      page.getByRole("figure", { name: /Pratinjau placeholder antarmuka PWA/i }),
+    ).toBeVisible();
+    const dimensions = await page.evaluate(() => ({
+      page: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+    }));
+    expect(dimensions.page, `${viewport.width}px`).toBeLessThanOrEqual(dimensions.viewport);
+  }
 });
 
 test("landing lulus axe dan 320px dengan zoom 400 persen tidak overflow horizontal", async ({

@@ -231,3 +231,62 @@ selesai hanya karena desain terlihat benar pada satu browser atau viewport.
   yang diketahui.
 - Remaining blockers: tidak ada blocker lokal Phase 11. Konfigurasi produksi
   dan checklist perangkat owner didokumentasikan untuk follow-up.
+
+## Progress log regresi landing v3 — 11 Agustus 2026
+
+- Files changed: komposisi dan styling landing, copy Indonesia, placeholder
+  preview, app-icon branding, leaderboard visual, dokumentasi konsep, serta
+  focused/unit/component/smoke/visual/PWA-quality tests; semua di `MSCWeb/`.
+- Assumptions: permintaan terbaru user menyetujui placeholder sementara dan
+  copy `Unduh MSC` untuk state yang benar-benar memiliki install prompt.
+  Guidance manual/iPhone, standalone, serta fallback browser tetap adaptif.
+- Visual evidence: baseline diperbarui dan diperiksa manual pada desktop
+  1440×1000, mobile 390×844 light/dark, tablet 768×1024 dark, dan 320×900
+  large text 200%. Jalur langkah tersambung 1→2→3→4; jalur atas baru menyatu
+  setelah langkah 4; tidak ada overflow pada 320/390/768/1024/1440.
+- Build command: `PATH="/opt/homebrew/opt/node@24/bin:$PATH" corepack pnpm build`
+  — lulus; 40 static pages dan seluruh dynamic route tervalidasi.
+- Focused test commands: lint, typecheck, focused Vitest 24/24, full Vitest
+  163/163, Chromium smoke 7 pass + 1 engine skip, WebKit smoke 6 pass + 2
+  engine skip, performance budget, serta visual 5/5 — seluruhnya lulus.
+- Full regression: `corepack pnpm test:phase11:local` — lulus terhadap
+  Supabase lokal: 13 pgTAP, security/cache/metadata, SBOM 127 paket,
+  format/lint/typecheck, 163 unit/component, build, performance, PWA-quality
+  Chromium/WebKit 6 pass + 2 engine skip, visual 5/5, dan gallery capture 2/2.
+- Remaining blockers: placeholder landing perlu diganti screenshot PWA aktual
+  dan bukti perangkat fisik diperbarui sebelum cutover. Hosted main, DNS,
+  domain, dan deployment tidak disentuh.
+
+### Follow-up visual kecil — 11 Agustus 2026
+
+- Files changed: `features/landing/styles/landing.css`,
+  `landing-responsive.css`, dan empat baseline visual yang terdampak.
+- Result: kepala panah ditambahkan pada ujung jalur desktop; tabel leaderboard
+  mobile mendapat inset 12 px dan tidak lagi menempel ke sisi viewport.
+- Verification: focused visual Chromium desktop/mobile/large-text 4/4 lulus
+  setelah snapshot diperbarui dan diulang tanpa update; `format:check` serta
+  `git diff --check` lulus. Full regression sengaja tidak diulang karena scope
+  hanya CSS dekoratif dan spacing sesuai instruksi user.
+
+### Polish visual landing — 11 Agustus 2026
+
+- Files changed: integrasi font di `src/app/layout.tsx`, varian ikon outline di
+  `src/shared/ui/icons/app-icon.tsx`, komposisi ikon/panah install di
+  `features/landing/components/landing-sections.tsx`, tiga stylesheet landing,
+  dokumen desain, serta lima baseline visual Chromium.
+- Result: landing memakai Poppins yang di-self-host oleh `next/font`; heading
+  tidak lagi memotong kata pada viewport normal; merah/kuning dan surface
+  near-black diperkuat; ikon marketing memakai bahasa outline yang konsisten;
+  jalur utama melengkung dan menyatu tepat setelah langkah 4; panah install
+  menjadi kurva S bertitik; inset tabel mobile tetap dipertahankan.
+- Accessibility/performance: merah CTA disetel ke `#e1271f` agar tetap vivid
+  sekaligus mencapai rasio kontras AA terhadap putih. Axe 320 px/zoom 400%
+  lulus dan landing tetap 102.0 KiB gzip dari batas 280 KiB.
+- Verification: `format:check`, `lint`, `typecheck`, focused Vitest 17/17,
+  production build 40 halaman statis, performance budget, visual Chromium 5/5,
+  smoke WebKit 6 pass + 2 engine skip, serta smoke Chromium layout/Axe lulus.
+  Dua skenario custom install prompt berkonflik ketika suite Chromium berjalan
+  paralel, lalu masing-masing lulus saat diisolasi satu worker; kode install
+  tidak diubah pada polish ini.
+- Scope: sesuai permintaan user, full comprehensive Phase 11 tidak diulang.
+  Hosted backend, deployment, dan source iOS tidak disentuh.

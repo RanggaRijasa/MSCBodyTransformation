@@ -49,7 +49,7 @@ describe("install state machine", () => {
   it("memberi label dan aksi jujur untuk tiap state", () => {
     expect(getInstallPresentation("prompt-ready")).toMatchObject({
       action: "prompt",
-      label: "Pasang aplikasi",
+      label: "Unduh MSC",
     });
     expect(getInstallPresentation("ios-guidance").action).toBe("guidance");
     expect(getInstallPresentation("standalone")).toMatchObject({

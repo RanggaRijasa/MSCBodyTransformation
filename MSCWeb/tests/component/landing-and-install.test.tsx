@@ -1,15 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { LandingPage } from "@/features/landing";
 import { InstallCtaPresentation } from "@/features/pwa-install";
 
-const emptyPublicData = { availability: "available", coaches: [], programs: [] } as const;
-
 describe("landing dan install CTA", () => {
   it.each([
-    ["prompt-ready", "Pasang aplikasi", "button"],
+    ["prompt-ready", "Unduh MSC", "button"],
     ["ios-guidance", "Cara memasang di iPhone", "button"],
     ["manual-guidance", "Cara memasang", "button"],
     ["standalone", "Buka aplikasi", "link"],
@@ -39,7 +37,7 @@ describe("landing dan install CTA", () => {
         onPrompt={onPrompt}
       />,
     );
-    await user.click(screen.getByRole("button", { name: "Pasang aplikasi" }));
+    await user.click(screen.getByRole("button", { name: "Unduh MSC" }));
     expect(onPrompt).toHaveBeenCalledOnce();
 
     rerender(
@@ -55,9 +53,7 @@ describe("landing dan install CTA", () => {
   });
 
   it("menjaga hero, FAQ, dan CTA role dari actor server", () => {
-    render(
-      <LandingPage actor={{ kind: "authenticated", role: "coach" }} publicData={emptyPublicData} />,
-    );
+    render(<LandingPage actor={{ kind: "authenticated", role: "coach" }} />);
     expect(
       screen.getByRole("heading", { name: "Transformasi lebih terarah, bersama Coach." }),
     ).toBeVisible();
@@ -67,5 +63,28 @@ describe("landing dan install CTA", () => {
       "/coach-area",
     );
     expect(screen.queryByText(/testimoni|rating|peserta aktif/i)).not.toBeInTheDocument();
+  });
+
+  it("merender struktur redesign tanpa CTA visual yang tidak diminta", () => {
+    render(<LandingPage actor={{ kind: "anonymous" }} />);
+
+    expect(screen.getByRole("link", { name: "Lihat program" })).toHaveAttribute("href", "/program");
+    const productPreview = screen.getByLabelText(/Pratinjau placeholder antarmuka PWA MSC/i);
+    expect(productPreview).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Program yang dapat dipilih" })).toBeNull();
+    expect(screen.queryByText(/Selengkapnya|Lihat semua peringkat/i)).toBeNull();
+
+    const stepsSection = screen
+      .getByRole("heading", { name: "Empat langkah menuju program aktif" })
+      .closest("section");
+    expect(stepsSection).not.toBeNull();
+    expect(within(stepsSection as HTMLElement).getAllByRole("listitem")).toHaveLength(4);
+
+    const leaderboardSection = screen
+      .getByRole("heading", { name: "Papan peringkat peserta" })
+      .closest("section");
+    expect(leaderboardSection).not.toBeNull();
+    expect(within(leaderboardSection as HTMLElement).queryByRole("link")).toBeNull();
+    expect(within(leaderboardSection as HTMLElement).queryByRole("button")).toBeNull();
   });
 });

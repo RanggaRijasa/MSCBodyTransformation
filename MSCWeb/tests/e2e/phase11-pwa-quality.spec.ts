@@ -1,16 +1,19 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("manifest, release screenshots, dan header hardening konsisten", async ({ page, request }) => {
+test("manifest, placeholder landing, dan header hardening konsisten", async ({ page, request }) => {
   const response = await page.goto("/");
   expect(response?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
   expect(response?.headers()["strict-transport-security"]).toContain("max-age=63072000");
   expect(response?.headers()["x-content-type-options"]).toBe("nosniff");
   expect(response?.headers()["x-correlation-id"]).toMatch(/^[0-9a-f-]{36}$/i);
   expect(response?.headers()["cache-control"]).toContain("no-store");
-  await expect(page.getByAltText(/papan peringkat Peserta/i)).toBeVisible();
-  await expect(page.getByAltText(/Dashboard Coach MSC/i)).toBeVisible();
-  expect(await page.getByText(/placeholder|tampilan contoh/i).count()).toBe(0);
+  await expect(
+    page.getByRole("figure", { name: /Pratinjau placeholder antarmuka PWA MSC/i }),
+  ).toBeVisible();
+  expect(await page.locator('img[src*="pwa-participant-rc-v1"]').count()).toBe(0);
+  expect(await page.locator('img[src*="pwa-coach-rc-v1"]').count()).toBe(0);
+  await expect(page.getByText("Pratinjau aplikasi", { exact: true })).toBeVisible();
 
   const manifestResponse = await request.get("/manifest.webmanifest");
   const manifest = (await manifestResponse.json()) as {
