@@ -105,7 +105,8 @@ fastlane/test_output/
 *.iml
 supabase/.branches/
 
-# Codex or agent scratch output
-.codex/
+# Codex project configuration; keep all other Codex scratch output ignored.
+.codex/*
+!.codex/config.toml
 .agent-cache/
 .agent-scratch/

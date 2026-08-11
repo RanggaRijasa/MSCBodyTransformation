@@ -5,18 +5,18 @@ Status awal seluruh implementation phase adalah `BELUM DIMULAI`.
 | Urutan | Phase | File | Prasyarat | Status |
 |---:|---|---|---|---|
 | 1 | 00 | `01_PHASE_00_BASELINE_AND_CONTRACT_FREEZE.md` | — | Selesai |
-| 2 | 01 | `02_PHASE_01_WEB_FOUNDATION.md` | 00 | Belum dimulai |
-| 3 | 02 | `03_PHASE_02_DESIGN_SYSTEM_AND_SHELLS.md` | 01 | Belum dimulai |
-| 4 | 02A | `03A_PHASE_02A_PUBLIC_LANDING_AND_INSTALL_CTA.md` | 02 | Belum dimulai |
-| 5 | 03 | `04_PHASE_03_GUEST_AUTH_AND_ONBOARDING.md` | 02A | Belum dimulai |
-| 6 | 04 | `05_PHASE_04_BROWSER_MEDIA_QR_AND_VIDEO.md` | 02–03 | Belum dimulai |
-| 7 | 05 | `06_PHASE_05_PROGRAM_CATALOG_AND_ENROLLMENT.md` | 03–04 | Belum dimulai |
-| 8 | 06 | `07_PHASE_06_MANUAL_PAYMENTS_AND_ADMIN_VERIFICATION.md` | 05 | Belum dimulai |
-| 9 | 07 | `08_PHASE_07_PARTICIPANT_EXPERIENCE.md` | 03–06 | Belum dimulai |
-| 10 | 08 | `09_PHASE_08_COACH_EXPERIENCE.md` | 03–07 | Belum dimulai |
-| 11 | 09 | `10_PHASE_09_ADMIN_CMS_AND_OPERATIONS.md` | 03–08 | Belum dimulai |
-| 12 | 10 | `11_PHASE_10_SCORING_LEADERBOARD_AND_CLOSURE.md` | 07–09 | Belum dimulai |
-| 13 | 11 | `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md` | 02A–10 | Belum dimulai |
+| 2 | 01 | `02_PHASE_01_WEB_FOUNDATION.md` | 00 | Selesai |
+| 3 | 02 | `03_PHASE_02_DESIGN_SYSTEM_AND_SHELLS.md` | 01 | Selesai |
+| 4 | 02A | `03A_PHASE_02A_PUBLIC_LANDING_AND_INSTALL_CTA.md` | 02 | Selesai |
+| 5 | 03 | `04_PHASE_03_GUEST_AUTH_AND_ONBOARDING.md` | 02A | Selesai lokal |
+| 6 | 04 | `05_PHASE_04_BROWSER_MEDIA_QR_AND_VIDEO.md` | 02–03 | Selesai lokal |
+| 7 | 05 | `06_PHASE_05_PROGRAM_CATALOG_AND_ENROLLMENT.md` | 03–04 | Selesai lokal |
+| 8 | 06 | `07_PHASE_06_MANUAL_PAYMENTS_AND_ADMIN_VERIFICATION.md` | 05 | Selesai lokal |
+| 9 | 07 | `08_PHASE_07_PARTICIPANT_EXPERIENCE.md` | 03–06 | Selesai lokal |
+| 10 | 08 | `09_PHASE_08_COACH_EXPERIENCE.md` | 03–07 | Selesai lokal |
+| 11 | 09 | `10_PHASE_09_ADMIN_CMS_AND_OPERATIONS.md` | 03–08 | Selesai lokal |
+| 12 | 10 | `11_PHASE_10_SCORING_LEADERBOARD_AND_CLOSURE.md` | 07–09 | Selesai lokal |
+| 13 | 11 | `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md` | 02A–10 | Selesai lokal |
 | 14 | 12 | `13_PHASE_12_HOSTING_DOMAIN_AND_PRODUCTION.md` | 11 | Belum dimulai |
 | 15 | 13 | `14_PHASE_13_PARITY_UAT_AND_CUTOVER.md` | 12 | Belum dimulai |
 
@@ -40,3 +40,6 @@ Status awal seluruh implementation phase adalah `BELUM DIMULAI`.
 - `../docs/decisions/PHASE_00_MANUAL_COMMERCE_DECISIONS.md`
 - `../docs/design/LANDING_PAGE_DESIGN_AND_CONTENT.md`
 - `../docs/operations/HOSTING_DOMAIN_AND_ENVIRONMENTS.md`
+- `../docs/progress/PHASE_11_DOD_AUDIT.md`
+- `../docs/security/PHASE_11_THREAT_MODEL.md`
+- `../docs/testing/PHASE_11_BROWSER_DEVICE_EVIDENCE.md`

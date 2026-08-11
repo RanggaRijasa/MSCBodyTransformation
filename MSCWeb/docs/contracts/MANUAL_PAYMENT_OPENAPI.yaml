@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  title: MSC manual payment contract
+  version: 0.1.0-local
+  description: >-
+    Kontrak additive Phase 06. Browser tidak mengirim owner, harga,
+    destination, status terverifikasi, role, atau entitlement authoritative.
+paths:
+  /api/programs/{programId}/payment-order:
+    post:
+      operationId: createProgramPaymentOrder
+      responses:
+        "200":
+          description: Kursi direservasi selama 24 jam.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentOrderPreflight"
+  /api/coach-applications/{applicationId}/payment-order:
+    post:
+      operationId: createCoachPaymentOrder
+      responses:
+        "201":
+          description: Instruksi transfer akses Coach tiga bulan dibuat setelah eligibility diterima.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachPaymentOrderPreflight"
+  /api/payments/{paymentId}/evidence:
+    get:
+      operationId: readLatestPrivateEvidence
+      responses:
+        "200": { description: JPEG privat dengan Cache-Control no-store. }
+    post:
+      operationId: submitPaymentEvidence
+      responses:
+        "200": { description: Bukti immutable diterima untuk pemeriksaan Admin. }
+  /api/admin/payments/{paymentId}/decision:
+    post:
+      operationId: decidePayment
+      responses:
+        "200": { description: Keputusan versioned dan fulfillment atomik selesai. }
+        "409": { description: Versi atau state telah berubah. }
+  /api/payments/{paymentId}/qris:
+    get:
+      operationId: readStaticPaymentQris
+      responses:
+        "200": { description: JPEG QRIS statis dari destination snapshot; tidak memverifikasi pembayaran. }
+components:
+  schemas:
+    PaymentPurpose:
+      type: string
+      enum: [program_enrollment, coach_access]
+    PaymentOrderStatus:
+      type: string
+      enum:
+        - awaiting_evidence
+        - under_review
+        - correction_required
+        - approved
+        - expired
+        - cancelled
+        - rejected
+        - reversal_pending
+        - reversed
+    PaymentEvidenceStatus:
+      type: string
+      enum: [prepared, submitted, rejected, approved, deleted]
+    CoachApplicationStatus:
+      type: string
+      enum:
+        - draft
+        - ineligible
+        - submitted
+        - accepted_pending_payment
+        - active
+        - rejected
+        - expired
+    PaymentOrderPreflight:
+      type: object
+      additionalProperties: false
+      required: [orderId, amountMinor, currency, status, reservationExpiresAt]
+      properties:
+        orderId: { type: string, format: uuid }
+        amountMinor: { type: string, pattern: "^[1-9][0-9]*$" }
+        currency: { const: IDR }
+        status: { const: awaiting_evidence }
+        reservationExpiresAt: { type: string, format: date-time }
+    CoachPaymentOrderPreflight:
+      type: object
+      additionalProperties: false
+      required: [orderId, amountMinor, currency, status]
+      properties:
+        orderId: { type: string, format: uuid }
+        amountMinor: { type: string, pattern: "^[1-9][0-9]*$" }
+        currency: { const: IDR }
+        status: { const: awaiting_evidence }
+    AdminPaymentDecision:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required:
+            [decision, version, amountMinor, reconciliationReference, destinationMatches]
+          properties:
+            decision: { const: approve }
+            version: { type: integer, minimum: 1 }
+            amountMinor: { type: string, pattern: "^[1-9][0-9]*$" }
+            reconciliationReference: { type: string, minLength: 4, maxLength: 128 }
+            destinationMatches: { const: true }
+        - type: object
+          additionalProperties: false
+          required: [decision, version, reason]
+          properties:
+            decision: { const: reject }
+            version: { type: integer, minimum: 1 }
+            reason: { type: string, minLength: 5, maxLength: 1000 }
+x-security-boundary:
+  evidenceBucket: payment-evidence
+  destinationAssetBucket: payment-destination-assets-private
+  evidenceVisibility: owner-or-admin-through-no-store-server-route
+  evidenceNormalization: server-validates-and-strips-private-jpeg-metadata-before-storage
+  evidenceThumbnailPolicy: client-preview-only-no-server-retention
+  recurringCleanup: storage-delete-before-immutable-metadata-marker
+  accountDeletion: anonymize-owner-and-preserve-ledger-event-until-retention
+  clientAuthoritativeFields: []
+  legacyStoreKitRuntimeUsedByWeb: false

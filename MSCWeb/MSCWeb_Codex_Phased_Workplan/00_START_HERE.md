@@ -123,6 +123,10 @@ Jika menyentuh data, Auth, payment, role, media privat, atau Supabase:
 - Jangan membuat mutation hosted hanya karena local tests lulus.
 - Checkbox baru dicentang setelah command verifikasi dicatat.
 - Semua perbedaan iOS/web harus menjadi keputusan adaptasi eksplisit.
+- Perubahan frontend landing setelah Phase 11 wajib memakai regression gate di
+  `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md`; evidence visual,
+  accessibility, PWA, privacy, performance, dan build harus diperbarui sesuai
+  luas perubahan sebelum Phase 12.
 - Phase 13 tidak menghapus source lama secara otomatis; archive/pemindahan repo
   adalah manual gate pengguna.
 

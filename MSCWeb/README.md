@@ -8,8 +8,23 @@ lulus.
 ## Status
 
 - Phase 00 baseline dan contract freeze: selesai 10 Agustus 2026.
-- Workplan dan arsitektur: tersedia; Phase 01 menjadi langkah berikutnya.
-- Implementasi web: belum dimulai.
+- Phase 01 web foundation: selesai 10 Agustus 2026; seluruh local gate lulus.
+- Phase 02 design system dan shells: selesai 10 Agustus 2026; seluruh local
+  gate lulus.
+- Phase 02A public landing dan install CTA: selesai 10 Agustus 2026; seluruh
+  gate lokal lulus, dengan device/service-worker gate diteruskan ke Phase 11.
+- Phase 03 Guest, Auth, dan onboarding: selesai lokal 10 Agustus 2026; hosted
+  Google/domain tetap gate Phase 12 dan scanner QR produksi masuk Phase 04.
+- Phase 04 browser media, QR, dan video: selesai lokal 10 Agustus 2026; device
+  fisik dan release-candidate performance tetap gate Phase 11/13.
+- Phase 05–10 selesai lokal; seluruh local gate sampai scoring, leaderboard,
+  closure, winner, dan cross-role journey telah lulus.
+- Phase 11 PWA quality, security, dan reliability selesai lokal 11 Agustus
+  2026; install/update/offline, Push MVP, accessibility, performance,
+  hardening, SBOM, runbook, dan release screenshot telah lulus seluruh gate
+  otomatis. Checklist HP/laptop disiapkan untuk owner sesuai penundaan manual
+  yang disetujui; konfigurasi production tetap Phase 12.
+- Implementasi web: scaffold Next.js/TypeScript dan test harness tersedia.
 - Source iOS: tidak diubah oleh pembuatan workplan ini.
 - Backend authoritative selama transisi: `../supabase`.
 - Kontrak authoritative selama transisi: `../Contracts`.
@@ -31,6 +46,8 @@ lulus.
    `docs/design/LANDING_PAGE_DESIGN_AND_CONTENT.md` dan mockup v2.
 7. Kerjakan tepat satu phase dari
    `MSCWeb_Codex_Phased_Workplan/MANIFEST.md`.
+8. Untuk evidence Phase 11, baca `docs/progress/PHASE_11_DOD_AUDIT.md` dan
+   `docs/testing/PHASE_11_BROWSER_DEVICE_EVIDENCE.md`.
 
 Phase 01 boleh membuat scaffold sesuai workplan, tetapi codegen dari
 `CoachApplication` OpenAPI lama tetap diblokir oleh contract reconciliation.

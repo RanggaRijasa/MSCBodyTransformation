@@ -1,0 +1,132 @@
+:root {
+  color-scheme: light dark;
+
+  --color-brand-primary: #d92d20;
+  --color-brand-primary-pressed: #b42318;
+  --color-brand-text: #b42318;
+  --color-brand-secondary: #111111;
+  --color-brand-accent: #f5c542;
+  --color-background: #f7f7f8;
+  --color-background-secondary: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-text-primary: #111111;
+  --color-text-secondary: #5f6368;
+  --color-border: #dadce0;
+  --color-border-strong: #9aa0a6;
+  --color-identity-surface: #111111;
+  --color-identity-on-surface: #ffffff;
+  --color-surface-subtle: var(--color-background-secondary);
+  --color-destructive: #c62828;
+  --color-success: #18794e;
+  --color-warning: #8a5a00;
+  --color-info: #2457a6;
+  --color-disabled: #74777c;
+  --color-on-primary: #ffffff;
+  --color-on-accent: #111111;
+  --color-overlay: rgb(0 0 0 / 52%);
+  --color-poster-base: #111111;
+  --color-poster-primary: #d92d20;
+  --color-poster-info: #2457a6;
+  --color-poster-accent: #f5c542;
+  --color-podium-bronze: #cd7f32;
+
+  --status-success-background: #e8f5ee;
+  --status-warning-background: #fff3cd;
+  --status-error-background: #fdecec;
+  --status-info-background: #eaf1fb;
+  --status-neutral-background: #eceef0;
+
+  --space-xxs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-xxl: 3rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-prominent: 1.5rem;
+  --radius-round: 999px;
+  --radius-xl: var(--radius-prominent);
+  --radius-pill: var(--radius-round);
+
+  --text-caption: clamp(0.78rem, 0.75rem + 0.15vw, 0.875rem);
+  --text-secondary: clamp(0.9rem, 0.85rem + 0.2vw, 1rem);
+  --text-body: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-card-title: clamp(1.05rem, 1rem + 0.3vw, 1.25rem);
+  --text-title-3: var(--text-card-title);
+  --text-section-title: clamp(1.4rem, 1.2rem + 1vw, 2rem);
+  --text-screen-title: clamp(2rem, 1.55rem + 2.4vw, 3.5rem);
+  --text-metric: clamp(1.75rem, 1.45rem + 1.5vw, 2.75rem);
+
+  --line-tight: 1.15;
+  --line-body: 1.55;
+  --shadow-elevated: 0 0.75rem 2rem rgb(17 17 17 / 10%);
+  --elevation-medium: var(--shadow-elevated);
+  --elevation-high: 0 1.5rem 4rem rgb(17 17 17 / 18%);
+  --focus-ring: 0 0 0 0.2rem var(--color-brand-accent);
+  --content-max: 72rem;
+  --reading-max: 44rem;
+  --control-min: 2.75rem;
+  --bottom-nav-height: 4.75rem;
+  --sidebar-width: 17rem;
+  --motion-fast: 140ms;
+  --motion-standard: 220ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-brand-secondary: #f5f5f5;
+    --color-brand-text: #ff8a80;
+    --color-background: #0d0d0f;
+    --color-background-secondary: #151517;
+    --color-surface: #1c1c1e;
+    --color-surface-elevated: #242426;
+    --color-text-primary: #f5f5f5;
+    --color-text-secondary: #b0b0b5;
+    --color-border: #3a3a3c;
+    --color-border-strong: #74777c;
+    --color-success: #5ed39a;
+    --color-warning: #ffd166;
+    --color-info: #78a9ff;
+    --color-disabled: #8f9197;
+    --status-success-background: #163d2c;
+    --status-warning-background: #4a3400;
+    --status-error-background: #4b2020;
+    --status-info-background: #172f56;
+    --status-neutral-background: #303034;
+    --shadow-elevated: 0 0.75rem 2rem rgb(0 0 0 / 35%);
+    --elevation-high: 0 1.5rem 4rem rgb(0 0 0 / 45%);
+  }
+}
+
+[data-color-scheme="dark"] {
+  color-scheme: dark;
+  --color-brand-secondary: #f5f5f5;
+  --color-brand-text: #ff8a80;
+  --color-background: #0d0d0f;
+  --color-background-secondary: #151517;
+  --color-surface: #1c1c1e;
+  --color-surface-elevated: #242426;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #b0b0b5;
+  --color-border: #3a3a3c;
+  --color-success: #5ed39a;
+  --color-warning: #ffd166;
+  --color-info: #78a9ff;
+  --status-success-background: #163d2c;
+  --status-warning-background: #4a3400;
+  --status-error-background: #4b2020;
+  --status-info-background: #172f56;
+  --status-neutral-background: #303034;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: currentColor;
+    --focus-ring: 0 0 0 0.25rem var(--color-brand-accent);
+  }
+}
