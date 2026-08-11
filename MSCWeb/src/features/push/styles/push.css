@@ -1,0 +1,23 @@
+.push-settings {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.push-settings__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.push-settings__heading p,
+.push-settings > p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 30rem) {
+  .push-settings__heading {
+    display: grid;
+  }
+}

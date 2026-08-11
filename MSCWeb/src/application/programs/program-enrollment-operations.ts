@@ -10,6 +10,7 @@ import {
 } from "@/domain/programs/enrollment";
 import { failure, success, type Result } from "@/domain/result";
 import { getVerifiedSupabaseContext } from "@/infrastructure/supabase/auth/get-verified-actor";
+import { consumeAuthenticatedRateLimit } from "@/application/security/authenticated-rate-limit";
 
 type CoachPreflightRow = Readonly<{
   city?: unknown;
@@ -50,6 +51,12 @@ export async function resolveCoachForProgramOperation(
   }
   const context = await getVerifiedSupabaseContext();
   if (!context.isSuccess) return context;
+  const rateLimit = await consumeAuthenticatedRateLimit(
+    context.value,
+    "qr_validation",
+    `${programId}:${coachQrPayload}`,
+  );
+  if (!rateLimit.isSuccess) return rateLimit;
   const { data, error } = await context.value.supabase.rpc("resolve_coach_qr_for_enrollment", {
     scanned_coach_qr: coachQrPayload,
   });
@@ -78,6 +85,12 @@ export async function enrollFreeProgramOperation(
   }
   const context = await getVerifiedSupabaseContext();
   if (!context.isSuccess) return context;
+  const rateLimit = await consumeAuthenticatedRateLimit(
+    context.value,
+    "qr_validation",
+    `${programId}:${coachQrPayload}:enroll`,
+  );
+  if (!rateLimit.isSuccess) return rateLimit;
   const { data, error } = await context.value.supabase.rpc("enroll_free_program", {
     scanned_coach_qr: coachQrPayload,
     target_program_id: programId,

@@ -4,6 +4,7 @@ import { ProfileLifecycle } from "@/features/auth/components/profile-lifecycle";
 import { loadParticipantProfileContextOperation } from "@/application/participant/participant-profile-operations";
 import { requireVerifiedProfile } from "@/features/auth/server/session-routing";
 import { copy } from "@/shared/i18n/id";
+import { PushNotificationSettings } from "@/features/push";
 
 export const metadata: Metadata = { title: copy.shell.participant.profileTitle };
 
@@ -20,6 +21,7 @@ export default async function ProfilePage() {
         participantContext={participantContext.isSuccess ? participantContext.value : null}
         profile={profile}
       />
+      <PushNotificationSettings />
     </div>
   );
 }

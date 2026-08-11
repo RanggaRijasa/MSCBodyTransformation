@@ -17,4 +17,5 @@ test-results/
 
 # local tooling
 .DS_Store
+.pnpm-store/
 *.tsbuildinfo

@@ -60,7 +60,7 @@ export function ParticipantRanking({
           <Surface className="participant-ranking__summary">
             <div>
               <h2>{selected.program.title}</h2>
-              <p>Urutan stabil berdasarkan skor authoritative server.</p>
+              <p>Urutan stabil berdasarkan skor resmi server.</p>
             </div>
             <div>
               <strong>{formatNumber.format(selected.score.totalPoints)}</strong>

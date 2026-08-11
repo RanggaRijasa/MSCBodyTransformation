@@ -11,6 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#f7f7f8",
     theme_color: "#d92d20",
     lang: "id-ID",
+    dir: "ltr",
+    id: "/hari-ini",
     icons: [
       {
         src: "/icons/app-icon-192.png",
@@ -29,6 +31,22 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
+      },
+    ],
+    screenshots: [
+      {
+        src: "/images/pwa-participant-rc-v1.jpg",
+        sizes: "358x1010",
+        type: "image/jpeg",
+        form_factor: "narrow",
+        label: "Papan peringkat Peserta",
+      },
+      {
+        src: "/images/pwa-coach-rc-v1.jpg",
+        sizes: "1120x1497",
+        type: "image/jpeg",
+        form_factor: "wide",
+        label: "Dashboard Coach",
       },
     ],
   };

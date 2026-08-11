@@ -7,6 +7,16 @@ import { subscribeToAuthClientEvents } from "@/application/auth/client-auth-even
 
 const channelName = "msc-auth-session";
 
+function clearAccountScopedBrowserState() {
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter(
+      (key): key is string => Boolean(key?.startsWith("msc.")),
+    );
+    for (const key of keys) storage.removeItem(key);
+  }
+  navigator.serviceWorker?.controller?.postMessage({ type: "MSC_CLEAR_CLIENT_STATE" });
+}
+
 export function SessionSynchronizer() {
   const router = useRouter();
 
@@ -14,7 +24,11 @@ export function SessionSynchronizer() {
     let channel: BroadcastChannel | null = null;
     try {
       channel = "BroadcastChannel" in window ? new BroadcastChannel(channelName) : null;
-      channel?.addEventListener("message", () => router.refresh());
+      channel?.addEventListener("message", (message) => {
+        if (["SIGNED_IN", "SIGNED_OUT"].includes(message.data?.event))
+          clearAccountScopedBrowserState();
+        router.refresh();
+      });
     } catch {
       channel = null;
     }
@@ -22,6 +36,7 @@ export function SessionSynchronizer() {
     let unsubscribe: (() => void) | undefined;
     try {
       unsubscribe = subscribeToAuthClientEvents((event) => {
+        if (event === "SIGNED_IN" || event === "SIGNED_OUT") clearAccountScopedBrowserState();
         channel?.postMessage({ event });
         router.refresh();
       });

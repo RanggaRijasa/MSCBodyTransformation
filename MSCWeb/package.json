@@ -12,6 +12,7 @@
   "packageManager": "pnpm@11.21.0",
   "scripts": {
     "dev": "next dev",
+    "dev:https": "next dev --experimental-https --hostname 127.0.0.1",
     "dev:gallery": "vite --config development/vite.config.ts",
     "build": "next build",
     "start": "next start",
@@ -29,6 +30,7 @@
     "test:phase08:local": "bash scripts/test-phase08-local.sh",
     "test:phase09:local": "bash scripts/test-phase09-local.sh",
     "test:phase10:local": "bash scripts/test-phase10-local.sh",
+    "test:phase11:local": "bash scripts/test-phase11-local.sh",
     "payments:recurring:local": "node scripts/run-phase06-recurring-operations.mjs",
     "test:gallery": "playwright test --config=playwright.gallery.config.ts",
     "format": "prettier --write .",
@@ -40,8 +42,11 @@
     "check:phase06:contract": "node scripts/check-phase06-contract.mjs",
     "check:phase08:privacy": "node scripts/check-phase08-privacy.mjs",
     "check:phase10:privacy": "node scripts/check-phase10-privacy.mjs",
+    "check:phase11:performance": "node scripts/check-phase11-performance.mjs",
+    "check:phase11:security": "node scripts/check-phase11-security.mjs",
+    "generate:phase11:sbom": "node scripts/generate-phase11-sbom.mjs",
     "check:secrets": "node scripts/check-public-secrets.mjs",
-    "verify": "node scripts/check-architecture.mjs && node scripts/check-file-size.mjs && node scripts/check-public-secrets.mjs && node scripts/check-localization.mjs && node scripts/check-phase06-contract.mjs && node scripts/check-phase08-privacy.mjs && node scripts/check-phase10-privacy.mjs && eslint . && tsc --noEmit && vitest run && next build && node scripts/check-phase04-bundle.mjs"
+    "verify": "node scripts/check-architecture.mjs && node scripts/check-file-size.mjs && node scripts/check-public-secrets.mjs && node scripts/check-localization.mjs && node scripts/check-phase06-contract.mjs && node scripts/check-phase08-privacy.mjs && node scripts/check-phase10-privacy.mjs && node scripts/check-phase11-security.mjs && eslint . && tsc --noEmit && vitest run && next build && node scripts/check-phase04-bundle.mjs && node scripts/check-phase11-performance.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
@@ -51,7 +56,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1",
-    "uqr": "0.1.3"
+    "uqr": "0.1.3",
+    "web-push": "3.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
@@ -62,6 +68,7 @@
     "@types/node": "24.13.3",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
+    "@types/web-push": "3.6.4",
     "@vitejs/plugin-react": "6.0.5",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.0",

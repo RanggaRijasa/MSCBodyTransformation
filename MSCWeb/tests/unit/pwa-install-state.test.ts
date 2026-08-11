@@ -33,9 +33,14 @@ describe("install state machine", () => {
       type: "custom-prompt-available",
     });
     expect(ready).toEqual({ kind: "prompt-ready" });
-    expect(transitionInstallState(ready, { type: "prompt-consumed" })).toEqual({
-      kind: "not-ready",
+    expect(
+      transitionInstallState(ready, { outcome: "dismissed", type: "prompt-consumed" }),
+    ).toEqual({
+      kind: "dismissed",
     });
+    expect(transitionInstallState(ready, { outcome: "accepted", type: "prompt-consumed" })).toEqual(
+      { kind: "not-ready" },
+    );
     expect(transitionInstallState(ready, { type: "standalone-detected" })).toEqual({
       kind: "standalone",
     });

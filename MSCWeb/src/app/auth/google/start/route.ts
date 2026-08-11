@@ -9,8 +9,29 @@ import {
 } from "@/features/auth/model/auth-flow";
 import { readAuthServerEnvironment } from "@/features/auth/server/auth-environment";
 import { sealCookie } from "@/features/auth/server/sealed-cookie";
+import {
+  consumeRequestLimit,
+  opaqueRequestFingerprint,
+} from "@/shared/security/request-rate-limiter";
 
 export async function GET(request: NextRequest) {
+  const requestLimit = consumeRequestLimit(
+    "auth-google-start",
+    opaqueRequestFingerprint(request.headers),
+    { limit: 10, windowMs: 60_000 },
+  );
+  if (!requestLimit.allowed) {
+    return NextResponse.json(
+      { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi sebentar." },
+      {
+        headers: {
+          "Cache-Control": "private, no-store",
+          "Retry-After": String(requestLimit.retryAfterSeconds),
+        },
+        status: 429,
+      },
+    );
+  }
   try {
     const serverEnvironment = readAuthServerEnvironment();
     const modeValue = request.nextUrl.searchParams.get("mode");

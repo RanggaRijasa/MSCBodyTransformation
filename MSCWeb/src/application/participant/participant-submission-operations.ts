@@ -9,6 +9,7 @@ import { canonicalIndonesianWeight } from "@/domain/services/participant-program
 import { failure, success } from "@/domain/result";
 import { getVerifiedSupabaseContext } from "@/infrastructure/supabase/auth/get-verified-actor";
 import { createSupabaseServiceClient } from "@/infrastructure/supabase/client/service";
+import { consumeAuthenticatedRateLimit } from "@/application/security/authenticated-rate-limit";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const idempotencyPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/;
@@ -55,6 +56,12 @@ export async function prepareParticipantSubmissionOperation(
   }
   const context = await getVerifiedSupabaseContext();
   if (!context.isSuccess) return context;
+  const rateLimit = await consumeAuthenticatedRateLimit(
+    context.value,
+    "submission",
+    input.enrollmentId,
+  );
+  if (!rateLimit.isSuccess) return rateLimit;
   const { data, error } = await context.value.supabase.rpc("prepare_step_submission", {
     request_idempotency_key: input.idempotencyKey,
     target_enrollment_id: input.enrollmentId,
@@ -82,6 +89,12 @@ export async function uploadParticipantQuestionPhotoOperation(
   if (!sanitized.isSuccess) return sanitized;
   const context = await getVerifiedSupabaseContext();
   if (!context.isSuccess) return context;
+  const rateLimit = await consumeAuthenticatedRateLimit(
+    context.value,
+    "upload",
+    input.submissionId,
+  );
+  if (!rateLimit.isSuccess) return rateLimit;
   const [submissionResult, questionResult] = await Promise.all([
     context.value.supabase
       .from("step_submissions")
@@ -140,6 +153,12 @@ export async function submitParticipantAnswersOperation(
   }
   const context = await getVerifiedSupabaseContext();
   if (!context.isSuccess) return context;
+  const rateLimit = await consumeAuthenticatedRateLimit(
+    context.value,
+    "submission",
+    input.submissionId,
+  );
+  if (!rateLimit.isSuccess) return rateLimit;
   const answers = input.answers.map((answer) => ({
     number_value: answer.numberValue ?? null,
     private_photo_path: answer.privatePhotoPath ?? null,
@@ -200,6 +219,12 @@ export async function submitParticipantWeighInOperation(
   if (!weight.isSuccess) return weight;
   const context = await getVerifiedSupabaseContext();
   if (!context.isSuccess) return context;
+  const rateLimit = await consumeAuthenticatedRateLimit(
+    context.value,
+    "submission",
+    input.enrollmentId,
+  );
+  if (!rateLimit.isSuccess) return rateLimit;
   const { data, error } = await context.value.supabase.rpc("submit_weigh_in", {
     request_idempotency_key: input.idempotencyKey,
     target_enrollment_id: input.enrollmentId,

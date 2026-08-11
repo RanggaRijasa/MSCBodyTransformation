@@ -113,3 +113,26 @@
   shared OpenAPI dan schema manual commerce diperbarui dalam authorized slice.
 - Phase 00 tidak mengubah `Contracts`, `supabase`, source iOS, hosted resource,
   provider, cron, DNS, domain, package, atau executable source.
+
+## Amendment 11 Agustus 2026 — Phase 11 PWA MVP gates
+
+- Owner keputusan GATE-011: pengguna, melalui instruksi eksplisit bahwa push
+  notification masuk MVP.
+- GATE-011 ditutup: Web Push menjadi bagian MVP dengan permission hanya setelah
+  tindakan pengguna pada Pengaturan. Payload wajib generik dan tidak memuat
+  PII; subscription owner/RLS, outbox, retry, serta revoke endpoint menjadi
+  kontrak kandidat lokal. VAPID secret, deployment function, dan scheduler
+  production tetap memerlukan approval Phase 12.
+- GATE-016 ditutup untuk MVP tanpa analytics vendor. Kandidat rilis memakai
+  event operasional first-party yang allowlisted dan correlation ID acak tanpa
+  PII. Pemasangan vendor observability/analytics kelak wajib mendapat approval
+  privacy, dependency, biaya, retention, dan consent terpisah.
+- GATE-017 ditutup: screenshot final yang dipilih adalah fixture kandidat rilis
+  Peserta dan Coach dari Phase 10. Keduanya deterministic, metadata-stripped,
+  diperiksa bebas PII/private URL, dipakai pada landing/manifest, dan dijaga
+  oleh visual serta security regression test.
+- Opsi yang ditolak: placeholder landing dipertahankan; permission push saat
+  page load; payload notifikasi berisi detail aktivitas/pembayaran; analytics
+  vendor ditambahkan tanpa approval.
+- Dampak hanya berada di `MSCWeb/`; hosted Supabase, DNS, domain, Contracts,
+  source iOS, dan backend root tidak diubah.

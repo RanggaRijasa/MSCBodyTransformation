@@ -71,16 +71,18 @@ export function PwaInstallProvider({ actorDestination, children }: PwaInstallPro
   useEffect(() => {
     document.documentElement.dataset.pwaInstallController = "ready";
     const displayMode = window.matchMedia("(display-mode: standalone)");
-    dispatch({
-      type: "capability-detected",
-      capability: {
-        hasCustomPrompt: false,
-        isIOS: detectIOS(),
-        isInstallReadinessGateOpen: false,
-        isStandalone: detectStandalone(),
-        supportsManualInstall: "serviceWorker" in navigator,
-      },
-    });
+    const detectCapability = () =>
+      dispatch({
+        type: "capability-detected",
+        capability: {
+          hasCustomPrompt: Boolean(promptReference.current),
+          isIOS: detectIOS(),
+          isInstallReadinessGateOpen: document.documentElement.dataset.pwaServiceWorker === "ready",
+          isStandalone: detectStandalone(),
+          supportsManualInstall: "serviceWorker" in navigator,
+        },
+      });
+    detectCapability();
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -94,15 +96,18 @@ export function PwaInstallProvider({ actorDestination, children }: PwaInstallPro
     const handleDisplayMode = () => {
       if (detectStandalone()) dispatch({ type: "standalone-detected" });
     };
+    const handlePwaReady = () => detectCapability();
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleInstalled);
     displayMode.addEventListener("change", handleDisplayMode);
+    window.addEventListener("msc:pwa-ready", handlePwaReady);
     return () => {
       delete document.documentElement.dataset.pwaInstallController;
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
       displayMode.removeEventListener("change", handleDisplayMode);
+      window.removeEventListener("msc:pwa-ready", handlePwaReady);
     };
   }, []);
 
@@ -111,8 +116,8 @@ export function PwaInstallProvider({ actorDestination, children }: PwaInstallPro
     if (!prompt) return;
     promptReference.current = undefined;
     await prompt.prompt();
-    await prompt.userChoice;
-    dispatch({ type: "prompt-consumed" });
+    const choice = await prompt.userChoice;
+    dispatch({ outcome: choice.outcome, type: "prompt-consumed" });
     setAnnouncement(copy.landing.install.consumed);
   }, []);
 

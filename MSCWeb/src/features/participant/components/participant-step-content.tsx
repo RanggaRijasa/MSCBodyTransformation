@@ -170,7 +170,9 @@ export function ParticipantStepContent({
           ? "Jawaban terkirim dan menunggu pemeriksaan Coach."
           : "Aktivitas berhasil disimpan oleh server.",
       );
-      router.refresh();
+      // Pertahankan hasil kuis yang baru diterima agar tidak hilang ketika
+      // refresh Server Component selesai lebih cepat pada browser tertentu.
+      if (!payload.quizResult) router.refresh();
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
       setMessage(
@@ -237,7 +239,9 @@ export function ParticipantStepContent({
         </Surface>
       ) : null}
       <AppButton
-        disabled={isSubmitting || (step.contentKind === "video" && !step.mediaUrl)}
+        disabled={
+          isSubmitting || Boolean(result) || (step.contentKind === "video" && !step.mediaUrl)
+        }
         isLoading={isSubmitting}
         onClick={() => void submit()}
       >

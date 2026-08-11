@@ -323,6 +323,7 @@ test("upload offline retry lalu Admin approve mengaktifkan program", async ({ br
 
 test("upload tanpa sesi ditolak sebelum membaca body", async ({ request }) => {
   const response = await request.post(`/api/payments/${orderId}/evidence`, {
+    headers: { Origin: baseUrl },
     multipart: { idempotencyKey: "phase06-no-session" },
   });
   expect(response.status()).toBe(401);

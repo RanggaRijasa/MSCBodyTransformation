@@ -271,6 +271,7 @@ test("Peserta memindai QR visual, enroll gratis idempoten, dan mode berubah ke a
 
   const duplicate = await context.request.post(`/api/programs/${ids.programs[0]}/enroll/free`, {
     data: { coachQrPayload: coachQr[0] },
+    headers: { Origin: baseUrl },
   });
   expect(duplicate.status()).toBe(200);
 });

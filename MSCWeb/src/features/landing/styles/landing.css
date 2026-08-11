@@ -148,14 +148,12 @@
 .product-preview {
   position: relative;
   width: min(100%, 27rem);
-  aspect-ratio: 4 / 5;
   justify-self: center;
   margin: 0;
   padding: var(--space-sm);
   border-radius: 2.5rem;
   background: var(--color-identity-surface);
   box-shadow: var(--elevation-high);
-  color: var(--color-identity-on-surface);
   rotate: 2deg;
 }
 
@@ -172,69 +170,42 @@
   font-weight: 800;
 }
 
-.product-preview__screen {
-  display: grid;
-  height: 100%;
-  align-content: end;
-  gap: var(--space-sm);
-  padding: var(--space-xl) var(--space-lg);
-  border-radius: 2rem;
-  background: linear-gradient(
-    155deg,
-    color-mix(in srgb, var(--color-brand-primary) 88%, black),
-    var(--color-identity-surface) 55%
-  );
-}
-
-.product-preview__screen > strong {
-  max-width: 13ch;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  line-height: 1.05;
-}
-
-.product-preview__screen > p {
-  max-width: 27ch;
-  color: color-mix(in srgb, var(--color-identity-on-surface) 76%, transparent);
-}
-
-.product-preview__status,
-.product-preview__rows span {
-  background: color-mix(in srgb, var(--color-identity-on-surface) 16%, transparent);
-}
-
-.product-preview__status {
-  width: 36%;
-  height: 0.75rem;
-  border-radius: var(--radius-pill);
-}
-
-.product-preview__progress {
-  height: 0.5rem;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-identity-on-surface) 18%, transparent);
-}
-
-.product-preview__progress span {
+.product-preview__image {
   display: block;
-  width: 62%;
-  height: 100%;
-  background: var(--color-brand-accent);
-}
-
-.product-preview__rows {
-  display: grid;
-  gap: var(--space-xs);
-}
-
-.product-preview__rows span {
-  height: 3.25rem;
-  border-radius: var(--radius-md);
+  width: 100%;
+  height: auto;
+  max-height: 42rem;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 2rem;
+  overflow: hidden;
 }
 
 .landing-section {
   padding-block: clamp(3.5rem, 8vw, 7rem);
   scroll-margin-block-start: 6rem;
+}
+
+.landing-coach-preview {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-xl) 0 0;
+}
+
+.landing-coach-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-medium);
+}
+
+.landing-coach-preview figcaption {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  text-align: center;
 }
 
 .landing-section > h2,
@@ -498,10 +469,6 @@
     width: min(88vw, 26rem);
   }
 
-  .product-preview__rows {
-    display: none;
-  }
-
   .landing-card-grid,
   .landing-steps,
   .landing-audiences > div {
@@ -580,7 +547,6 @@
     rotate: 0deg;
   }
 
-  .product-preview__screen,
   .landing-card,
   .landing-section--tinted,
   .landing-audiences article,

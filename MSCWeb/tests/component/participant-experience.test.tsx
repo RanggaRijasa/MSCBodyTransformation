@@ -215,6 +215,45 @@ describe("pengalaman Peserta", () => {
     expect(window.localStorage.length).toBe(0);
   });
 
+  it("mempertahankan hasil kuis server tanpa tertimpa refresh route", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ submissionId: "00000000-0000-4000-8000-000000000041" }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            quizResult: {
+              awardedPoints: 10,
+              correctCount: 1,
+              passed: true,
+              percentage: 100,
+              totalCount: 1,
+            },
+            status: "approved",
+          }),
+          { status: 200 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <ParticipantStepContent
+        participantProgram={participantProgram()}
+        step={step({ completionPolicy: "automatic_quiz", contentKind: "quiz" })}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Kirim kuis" }));
+
+    expect(await screen.findByText("Lulus", { exact: true })).toBeVisible();
+    expect(screen.getByText(/1 dari 1 jawaban benar/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Kirim kuis" })).toBeDisabled();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it("tidak mengaku selesai saat jaringan gagal", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")));
     render(<ParticipantStepContent participantProgram={participantProgram()} step={step()} />);

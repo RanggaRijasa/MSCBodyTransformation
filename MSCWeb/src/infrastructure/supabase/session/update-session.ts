@@ -3,13 +3,15 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { readPublicEnvironment } from "@/shared/config/environment";
 
-export async function updateSupabaseSession(request: NextRequest) {
+export async function updateSupabaseSession(request: NextRequest, requestHeaders?: Headers) {
+  const nextResponse = () =>
+    NextResponse.next({ request: { headers: requestHeaders ?? request.headers } });
   const environment = readPublicEnvironment();
   if (!environment.isSuccess) {
-    return NextResponse.next({ request });
+    return nextResponse();
   }
 
-  let response = NextResponse.next({ request });
+  let response = nextResponse();
   const supabase = createServerClient(
     environment.value.supabaseUrl,
     environment.value.supabasePublishableKey,
@@ -21,7 +23,7 @@ export async function updateSupabaseSession(request: NextRequest) {
             request.cookies.set(name, value);
           }
 
-          response = NextResponse.next({ request });
+          response = nextResponse();
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
           }

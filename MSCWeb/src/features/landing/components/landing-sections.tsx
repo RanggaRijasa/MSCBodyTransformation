@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import type { LandingPublicData } from "@/features/landing/model/landing-public-data";
@@ -93,6 +94,17 @@ export function AudienceSection() {
           <p>{copy.landing.audiences.coachSummary}</p>
         </article>
       </div>
+      <figure className="landing-coach-preview">
+        <Image
+          alt={copy.landing.audiences.coachPreviewAlt}
+          height={1497}
+          loading="lazy"
+          sizes="(max-width: 48rem) calc(100vw - 2rem), 70rem"
+          src="/images/pwa-coach-rc-v1.jpg"
+          width={1120}
+        />
+        <figcaption>{copy.landing.audiences.coachPreviewCaption}</figcaption>
+      </figure>
     </section>
   );
 }

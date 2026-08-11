@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { sanitizeServerImageUpload } from "@/application/media/server-image-validation";
+import { consumeAuthenticatedRateLimit } from "@/application/security/authenticated-rate-limit";
 import { AppError } from "@/domain/errors/app-error";
 import type {
   AdminPaymentEvent,
@@ -32,6 +33,12 @@ export const supabasePaymentRepository: PaymentRepository = {
   async createCoachOrder(input) {
     const context = await actorContext();
     if (!context.isSuccess) return context;
+    const rateLimit = await consumeAuthenticatedRateLimit(
+      context.value,
+      "payment_order",
+      input.applicationId,
+    );
+    if (!rateLimit.isSuccess) return rateLimit;
     const { data, error } = await context.value.supabase.rpc("create_coach_payment_order", {
       request_idempotency_key: input.idempotencyKey,
       target_application_id: input.applicationId,
@@ -57,6 +64,12 @@ export const supabasePaymentRepository: PaymentRepository = {
   async createProgramOrder(input) {
     const context = await actorContext();
     if (!context.isSuccess) return context;
+    const rateLimit = await consumeAuthenticatedRateLimit(
+      context.value,
+      "payment_order",
+      input.programId,
+    );
+    if (!rateLimit.isSuccess) return rateLimit;
     const { data, error } = await context.value.supabase.rpc("create_program_payment_order", {
       coach_qr_payload: input.coachQrPayload,
       request_idempotency_key: input.idempotencyKey,
@@ -102,6 +115,8 @@ export const supabasePaymentRepository: PaymentRepository = {
     if (!sanitized.isSuccess) return sanitized;
     const context = await actorContext();
     if (!context.isSuccess) return context;
+    const rateLimit = await consumeAuthenticatedRateLimit(context.value, "upload", input.orderId);
+    if (!rateLimit.isSuccess) return rateLimit;
     const { data: prepared, error: prepareError } = await context.value.supabase.rpc(
       "prepare_payment_evidence_attempt",
       { request_idempotency_key: input.idempotencyKey, target_order_id: input.orderId },
@@ -151,6 +166,12 @@ export const supabasePaymentRepository: PaymentRepository = {
   async listAdminQueue(filters = {}) {
     const context = await actorContext();
     if (!context.isSuccess) return context;
+    const rateLimit = await consumeAuthenticatedRateLimit(
+      context.value,
+      "admin_search",
+      JSON.stringify(filters),
+    );
+    if (!rateLimit.isSuccess) return rateLimit;
     let query = context.value.supabase
       .from("payment_orders")
       .select(adminOrderSelect)
@@ -202,6 +223,12 @@ export const supabasePaymentRepository: PaymentRepository = {
   async approve(input) {
     const context = await actorContext();
     if (!context.isSuccess) return context;
+    const rateLimit = await consumeAuthenticatedRateLimit(
+      context.value,
+      "payment_review",
+      input.orderId,
+    );
+    if (!rateLimit.isSuccess) return rateLimit;
     const { data, error } = await context.value.supabase.rpc("approve_payment_order", {
       destination_matches: input.destinationMatches,
       expected_version: input.version,
@@ -217,6 +244,12 @@ export const supabasePaymentRepository: PaymentRepository = {
   async reject(input) {
     const context = await actorContext();
     if (!context.isSuccess) return context;
+    const rateLimit = await consumeAuthenticatedRateLimit(
+      context.value,
+      "payment_review",
+      input.orderId,
+    );
+    if (!rateLimit.isSuccess) return rateLimit;
     const { data, error } = await context.value.supabase.rpc("reject_payment_evidence", {
       expected_version: input.version,
       rejection_reason: input.reason,

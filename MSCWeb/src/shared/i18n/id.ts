@@ -30,9 +30,9 @@ export const copy = {
         "Ikuti program harian, unggah progres, dan dapatkan pendampingan Coach—langsung dari ponselmu.",
       viewPrograms: "Lihat program",
       trust: "Gratis dipasang • Tanpa App Store",
-      previewLabel: "Pratinjau aplikasi",
-      previewTitle: "Aktivitas harian dalam satu tempat",
-      previewSummary: "Tampilan contoh tanpa data pribadi atau hasil yang dijanjikan.",
+      previewLabel: "PWA versi kandidat rilis",
+      previewAlt:
+        "Tampilan papan peringkat Peserta pada PWA MSC dengan data fixture tanpa identitas pribadi",
     },
     benefits: {
       eyebrow: "Manfaat utama",
@@ -84,6 +84,9 @@ export const copy = {
         "Jalani langkah harian, kirim progres, dan lihat statusmu dalam satu aplikasi.",
       coachTitle: "Untuk Coach",
       coachSummary: "Pantau peserta yang ditugaskan dan periksa aktivitas sesuai kewenanganmu.",
+      coachPreviewCaption: "Dashboard Coach pada PWA versi kandidat rilis",
+      coachPreviewAlt:
+        "Dashboard Coach MSC dengan ringkasan peserta, program aktif, dan papan peringkat menggunakan data fixture",
     },
     programs: {
       title: "Program yang dapat dipilih",

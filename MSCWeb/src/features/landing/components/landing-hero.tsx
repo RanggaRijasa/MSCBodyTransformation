@@ -1,23 +1,21 @@
+import Image from "next/image";
+
 import { InstallCta } from "@/features/pwa-install";
 import { copy } from "@/shared/i18n/id";
 
-function ProductPreviewPlaceholder() {
+function ProductPreview() {
   return (
-    <figure className="product-preview" aria-label={copy.landing.hero.previewLabel}>
+    <figure className="product-preview">
+      <Image
+        alt={copy.landing.hero.previewAlt}
+        className="product-preview__image"
+        height={1010}
+        priority
+        sizes="(max-width: 48rem) 88vw, 27rem"
+        src="/images/pwa-participant-rc-v1.jpg"
+        width={358}
+      />
       <figcaption>{copy.landing.hero.previewLabel}</figcaption>
-      <div className="product-preview__screen">
-        <div aria-hidden="true" className="product-preview__status" />
-        <strong>{copy.landing.hero.previewTitle}</strong>
-        <p>{copy.landing.hero.previewSummary}</p>
-        <div aria-hidden="true" className="product-preview__progress">
-          <span />
-        </div>
-        <div aria-hidden="true" className="product-preview__rows">
-          <span />
-          <span />
-          <span />
-        </div>
-      </div>
     </figure>
   );
 }
@@ -37,7 +35,7 @@ export function LandingHero() {
         </div>
         <p className="landing-hero__trust">{copy.landing.hero.trust}</p>
       </div>
-      <ProductPreviewPlaceholder />
+      <ProductPreview />
     </section>
   );
 }

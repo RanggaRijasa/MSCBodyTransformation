@@ -6,6 +6,7 @@ import { requireVerifiedProfile } from "@/features/auth/server/session-routing";
 import { CoachAccessState, CoachPublicProfileForm } from "@/features/coach";
 import { copy } from "@/shared/i18n/id";
 import { StateMessage } from "@/shared/ui";
+import { PushNotificationSettings } from "@/features/push";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: copy.shell.coach.profileTitle };
@@ -32,6 +33,7 @@ export default async function CoachProfilePage() {
         <>
           <ProfileLifecycle participantContext={null} profile={profile} />
           <CoachPublicProfileForm context={context.value} />
+          <PushNotificationSettings />
         </>
       ) : (
         <CoachAccessState context={context.value} />

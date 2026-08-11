@@ -13,6 +13,7 @@ import type {
 import { safeAuditKind } from "@/domain/admin/admin-operations";
 import { failure, success, type Result } from "@/domain/result";
 import { getVerifiedSupabaseContext } from "@/infrastructure/supabase/auth/get-verified-actor";
+import { consumeAuthenticatedRateLimit } from "@/application/security/authenticated-rate-limit";
 
 type UnknownRow = Record<string, unknown>;
 
@@ -109,6 +110,12 @@ export async function listAdminPeople(
 ): Promise<Result<readonly AdminPerson[], AppError>> {
   const verified = await context();
   if (!verified.isSuccess) return verified;
+  const rateLimit = await consumeAuthenticatedRateLimit(
+    verified.value,
+    "admin_search",
+    `${role ?? "all"}:${search?.trim().slice(0, 80) ?? ""}`,
+  );
+  if (!rateLimit.isSuccess) return rateLimit;
   let query = verified.value.supabase
     .from("profiles")
     .select("user_id,display_name,role,member_level")

@@ -16,7 +16,7 @@ Status awal seluruh implementation phase adalah `BELUM DIMULAI`.
 | 10 | 08 | `09_PHASE_08_COACH_EXPERIENCE.md` | 03–07 | Selesai lokal |
 | 11 | 09 | `10_PHASE_09_ADMIN_CMS_AND_OPERATIONS.md` | 03–08 | Selesai lokal |
 | 12 | 10 | `11_PHASE_10_SCORING_LEADERBOARD_AND_CLOSURE.md` | 07–09 | Selesai lokal |
-| 13 | 11 | `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md` | 02A–10 | Belum dimulai |
+| 13 | 11 | `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md` | 02A–10 | Selesai lokal |
 | 14 | 12 | `13_PHASE_12_HOSTING_DOMAIN_AND_PRODUCTION.md` | 11 | Belum dimulai |
 | 15 | 13 | `14_PHASE_13_PARITY_UAT_AND_CUTOVER.md` | 12 | Belum dimulai |
 
@@ -40,3 +40,6 @@ Status awal seluruh implementation phase adalah `BELUM DIMULAI`.
 - `../docs/decisions/PHASE_00_MANUAL_COMMERCE_DECISIONS.md`
 - `../docs/design/LANDING_PAGE_DESIGN_AND_CONTENT.md`
 - `../docs/operations/HOSTING_DOMAIN_AND_ENVIRONMENTS.md`
+- `../docs/progress/PHASE_11_DOD_AUDIT.md`
+- `../docs/security/PHASE_11_THREAT_MODEL.md`
+- `../docs/testing/PHASE_11_BROWSER_DEVICE_EVIDENCE.md`

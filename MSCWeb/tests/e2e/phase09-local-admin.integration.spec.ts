@@ -324,6 +324,7 @@ test("non-Admin gagal tertutup tanpa melihat resource Admin", async ({ context, 
   await expect(page).toHaveURL(/\/hari-ini$/);
   await expect(page.getByRole("heading", { name: "Dashboard Admin" })).toHaveCount(0);
   const upload = await page.request.post("/api/admin/content/posters", {
+    headers: { Origin: new URL(page.url()).origin },
     multipart: { operation: "add" },
   });
   expect(upload.status()).toBe(403);

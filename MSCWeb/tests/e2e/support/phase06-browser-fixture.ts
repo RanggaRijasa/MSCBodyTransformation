@@ -84,14 +84,30 @@ export function paymentCleanupSql(
     commit;`;
 }
 
+function currentJakartaCalendarDate() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+  })
+    .formatToParts(new Date())
+    .reduce<Record<string, string>>((result, part) => {
+      result[part.type] = part.value;
+      return result;
+    }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 export async function assertCoachQueueFilters(page: Page) {
+  const calendarDate = currentJakartaCalendarDate();
   await page.goto(
-    "/admin/pembayaran?jenis=coach_access&status=under_review&dari=2026-08-10&sampai=2026-08-10",
+    `/admin/pembayaran?jenis=coach_access&status=under_review&dari=${calendarDate}&sampai=${calendarDate}`,
   );
   await expect(page.getByLabel("Jenis pembayaran")).toHaveValue("coach_access");
   await expect(page.getByLabel("Status")).toHaveValue("under_review");
-  await expect(page.getByLabel("Dari tanggal")).toHaveValue("2026-08-10");
-  await expect(page.getByLabel("Sampai tanggal")).toHaveValue("2026-08-10");
+  await expect(page.getByLabel("Dari tanggal")).toHaveValue(calendarDate);
+  await expect(page.getByLabel("Sampai tanggal")).toHaveValue(calendarDate);
   await expect(
     page.getByLabel("Antrean pembayaran").getByRole("heading", {
       name: "Calon Coach Payment Browser",

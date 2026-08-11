@@ -3,6 +3,7 @@ export * from "./forms/form-controls";
 export * from "./identity/avatar";
 export * from "./icons/app-icon";
 export * from "./media/media-surface";
+export * from "./feedback/route-error-boundary";
 export * from "./overlays/filter-controls";
 export * from "./overlays/modal-dialog";
 export * from "./program/program-activity-renderer";

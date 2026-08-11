@@ -18,6 +18,7 @@ export function getInstallPresentation(kind: InstallStateKind): InstallPresentat
       return { action: "guidance", label: copy.landing.install.manualGuidance };
     case "standalone":
       return { action: "navigate", label: copy.landing.install.openApp };
+    case "dismissed":
     case "unsupported":
     case "not-ready":
       return { action: "navigate", label: copy.landing.install.useBrowser };
