@@ -9,7 +9,9 @@ import { ImageAcquisition, QrScannerDialog } from "@/features/device-media";
 import type { ProcessedBrowserImage } from "@/infrastructure/browser-media/browser-image-processor";
 import { AppButton } from "@/shared/ui/controls/actions";
 import { TextField } from "@/shared/ui/forms/form-controls";
-import { Avatar, StatusBadge, Surface } from "@/shared/ui";
+import { Avatar } from "@/shared/ui/identity/avatar";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 const deletionMessages: Readonly<Record<string, string>> = {
   account_relationships_require_transfer:

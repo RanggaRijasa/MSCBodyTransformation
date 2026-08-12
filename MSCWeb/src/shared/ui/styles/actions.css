@@ -1,0 +1,97 @@
+.app-action {
+  display: inline-flex;
+  min-width: var(--control-min);
+  min-height: var(--control-min);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 0.7rem 1.1rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+}
+
+.app-action:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.app-action:disabled,
+.app-action[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.app-action--primary {
+  background: var(--color-brand-primary);
+  color: var(--color-on-primary);
+}
+
+.app-action--primary:hover:not(:disabled) {
+  background: var(--color-brand-primary-pressed);
+}
+
+.app-action--secondary {
+  border-color: var(--color-brand-text);
+  background: var(--color-surface);
+  color: var(--color-brand-text);
+}
+
+.app-action--accent {
+  background: var(--color-brand-accent);
+  color: var(--color-on-accent);
+}
+
+.app-action--destructive {
+  background: var(--color-destructive);
+  color: var(--color-on-primary);
+}
+
+.app-action__icon,
+.icon-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+}
+
+.icon-button {
+  display: inline-grid;
+  width: var(--control-min);
+  min-width: var(--control-min);
+  height: var(--control-min);
+  min-height: var(--control-min);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-round);
+  place-items: center;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.app-spinner {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  animation: app-spin 700ms linear infinite;
+}
+
+@keyframes app-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-action {
+    transition:
+      background var(--motion-fast) ease,
+      border-color var(--motion-fast) ease,
+      transform var(--motion-fast) ease;
+  }
+}

@@ -3,7 +3,7 @@ import type { AdminProgramListItem } from "@/domain/admin/admin-program";
 import { AdminDashboard } from "@/features/admin/components/admin-dashboard";
 import { AdminProgramList } from "@/features/admin/components/admin-program-list";
 
-const dashboard: AdminDashboardSnapshot = {
+export const adminSimulatorDashboard: AdminDashboardSnapshot = {
   activePrograms: 3,
   closureBlockers: 1,
   coachApplications: 4,
@@ -29,7 +29,7 @@ const dashboard: AdminDashboardSnapshot = {
   systemAttention: 5,
 };
 
-const programs: AdminProgramListItem[] = [
+export const adminSimulatorPrograms: AdminProgramListItem[] = [
   {
     desiredPrice: "250000",
     endsOn: "2026-08-31",
@@ -69,10 +69,10 @@ export function AdminGallery() {
   return (
     <div className="state-gallery__stack">
       <div data-testid="admin-dashboard-gallery">
-        <AdminDashboard snapshot={dashboard} />
+        <AdminDashboard snapshot={adminSimulatorDashboard} />
       </div>
       <div data-testid="admin-program-gallery">
-        <AdminProgramList items={programs} query="" status="" />
+        <AdminProgramList items={adminSimulatorPrograms} query="" status="" />
       </div>
     </div>
   );

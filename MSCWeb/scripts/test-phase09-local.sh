@@ -29,7 +29,7 @@ fi
 
 DO_NOT_TRACK=1 supabase db lint --local --level warning
 DO_NOT_TRACK=1 supabase test db --local \
-  supabase/tests/database/011_phase11_admin_operations.test.sql \
+  MSCWeb/supabase/tests/database/phase09_program_authoring_compatibility.test.sql \
   MSCWeb/supabase/tests/database/phase09_admin_operations.test.sql
 
 cd "$web_root"

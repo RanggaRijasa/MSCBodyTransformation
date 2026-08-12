@@ -252,7 +252,8 @@ export async function listCoachApplications(): Promise<
 export async function listWinnerPosters(): Promise<Result<readonly AdminWinnerPoster[], AppError>> {
   const verified = await context();
   if (!verified.isSuccess) return verified;
-  const { data, error } = await verified.value.supabase
+  const client = verified.value.supabase;
+  const { data, error } = await client
     .from("winner_posters")
     .select("id,program_id,winner_snapshot_id,media_path,alt_text,is_published,published_at")
     .is("deleted_at", null)
@@ -286,10 +287,20 @@ export async function listWinnerPosters(): Promise<Result<readonly AdminWinnerPo
     const programId = text(row?.program_id);
     const snapshotId = text(row?.winner_snapshot_id);
     const mediaPath = text(row?.media_path);
-    if (!id || !programId || !snapshotId || !mediaPath) continue;
+    if (
+      !id ||
+      !programId ||
+      !snapshotId ||
+      !mediaPath ||
+      mediaPath.includes("..") ||
+      mediaPath.includes("://")
+    ) {
+      return failure(new AppError("validation_failed", "Data poster pemenang tidak valid."));
+    }
     posters.push({
       alternativeText: text(row?.alt_text) ?? "Poster pemenang program",
       id,
+      imageUrl: client.storage.from("public-media").getPublicUrl(mediaPath).data.publicUrl,
       isPublished: row?.is_published === true,
       mediaPath,
       programId,

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { listAdminAuditOperation } from "@/application/admin/load-admin-experience";
 import { requireRole } from "@/features/auth/server/session-routing";
-import { AdminSettings } from "@/features/admin";
+import { AdminSettings } from "@/features/admin/components/admin-settings";
 import { copy } from "@/shared/i18n/id";
 import { StateMessage } from "@/shared/ui";
 import { PushNotificationSettings } from "@/features/push";

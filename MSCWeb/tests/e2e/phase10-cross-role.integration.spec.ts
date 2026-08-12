@@ -369,9 +369,12 @@ test("journey Admin → Peserta → Coach → scoring → closure → winner →
   await page.goto("/admin/orang");
   await page.getByText("Operasi koreksi terkontrol").click();
   await page.getByLabel("Enrollment").selectOption(enrollmentId);
-  await page.getByPlaceholder("Poin +/-").fill("5");
-  await page.getByPlaceholder("Alasan penyesuaian").fill("Koreksi hasil rekonsiliasi final.");
+  await page.getByRole("spinbutton", { name: "Perubahan poin" }).fill("5");
+  await page
+    .getByRole("textbox", { name: "Alasan penyesuaian poin" })
+    .fill("Koreksi hasil rekonsiliasi final.");
   await page.getByRole("button", { name: "Sesuaikan poin" }).click();
+  await page.waitForLoadState("networkidle");
   await expect
     .poll(
       async () =>
@@ -389,11 +392,15 @@ test("journey Admin → Peserta → Coach → scoring → closure → winner →
   await expect(
     page.getByRole("region", { name: "Prasyarat penutupan" }).getByText("Siap ditutup"),
   ).toBeVisible();
-  await page
+  const completeButton = page.getByRole("button", { name: "Selesaikan program" });
+  const completeForm = page.locator("form").filter({ has: completeButton });
+  await completeForm
     .getByLabel("Alasan penyelesaian")
-    .first()
     .fill("Seluruh prasyarat journey sudah selesai.");
-  await page.getByRole("button", { name: "Selesaikan program" }).click();
+  await completeButton.focus();
+  await expect(completeButton).toBeFocused();
+  await completeButton.press("Enter");
+  await page.waitForLoadState("networkidle");
   await expect
     .poll(
       async () =>

@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { saveProgramDraftAction } from "@/application/admin/admin-mutations";
 import type { AdminProgramDraft } from "@/domain/admin/admin-program";
 import { copyDayContent, validateProgramDraft } from "@/domain/admin/admin-program";
 import { ProgramContentEditor } from "@/features/admin/components/program-content-editor";
 import { ProgramSettingsEditor } from "@/features/admin/components/program-settings-editor";
-import { AppButton, FormErrorSummary, Surface } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { FormErrorSummary } from "@/shared/ui/forms/form-controls";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 export function AdminProgramEditor({
   initialDraft,
@@ -15,8 +17,20 @@ export function AdminProgramEditor({
   const [draft, setDraft] = useState(initialDraft);
   const [tab, setTab] = useState<"content" | "settings">("settings");
   const [sourceDayId, setSourceDayId] = useState(initialDraft.days[0]?.id ?? "");
+  const settingsTab = useRef<HTMLButtonElement>(null);
+  const contentTab = useRef<HTMLButtonElement>(null);
   const issues = useMemo(() => validateProgramDraft(draft), [draft]);
   const makeId = () => crypto.randomUUID();
+  const selectTab = (nextTab: "content" | "settings") => {
+    setTab(nextTab);
+    (nextTab === "settings" ? settingsTab : contentTab).current?.focus();
+  };
+  const handleTabKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    if (event.key === "Home" || event.key === "ArrowLeft") selectTab("settings");
+    else selectTab("content");
+  };
   const copyToOtherDays = () => {
     const source = draft.days.find((day) => day.id === sourceDayId);
     if (!source || !window.confirm("Konten target akan ditimpa dengan ID baru. Lanjutkan?")) return;
@@ -39,28 +53,50 @@ export function AdminProgramEditor({
       </header>
       <div className="admin-segmented" role="tablist" aria-label="Bagian editor">
         <button
+          aria-controls="admin-editor-settings-panel"
           aria-selected={tab === "settings"}
+          id="admin-editor-settings-tab"
+          onKeyDown={handleTabKey}
           onClick={() => setTab("settings")}
+          ref={settingsTab}
           role="tab"
+          tabIndex={tab === "settings" ? 0 : -1}
           type="button"
         >
           Pengaturan
         </button>
         <button
+          aria-controls="admin-editor-content-panel"
           aria-selected={tab === "content"}
+          id="admin-editor-content-tab"
+          onKeyDown={handleTabKey}
           onClick={() => setTab("content")}
+          ref={contentTab}
           role="tab"
+          tabIndex={tab === "content" ? 0 : -1}
           type="button"
         >
           Hari dan konten
         </button>
       </div>
       {tab === "settings" ? (
-        <Surface>
-          <ProgramSettingsEditor draft={draft} onChange={setDraft} />
-        </Surface>
+        <div
+          aria-labelledby="admin-editor-settings-tab"
+          className="admin-editor-panel"
+          id="admin-editor-settings-panel"
+          role="tabpanel"
+        >
+          <Surface>
+            <ProgramSettingsEditor draft={draft} onChange={setDraft} />
+          </Surface>
+        </div>
       ) : (
-        <>
+        <div
+          aria-labelledby="admin-editor-content-tab"
+          className="admin-editor-panel admin-editor-panel--content"
+          id="admin-editor-content-panel"
+          role="tabpanel"
+        >
           <Surface className="admin-copy-day">
             <label>
               Salin dari hari
@@ -81,7 +117,7 @@ export function AdminProgramEditor({
             </AppButton>
           </Surface>
           <ProgramContentEditor draft={draft} makeId={makeId} onChange={setDraft} />
-        </>
+        </div>
       )}
       {issues.length ? (
         <FormErrorSummary title="Periksa draft sebelum menyimpan">

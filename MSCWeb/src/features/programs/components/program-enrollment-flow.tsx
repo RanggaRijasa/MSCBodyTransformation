@@ -7,7 +7,9 @@ import type { CoachPreflight, EnrollmentAvailability } from "@/domain/programs/e
 import type { OpaqueCoachQrPayload } from "@/domain/media/qr-payload";
 import { QrScannerDialog } from "@/features/device-media";
 import type { QrDecoder } from "@/infrastructure/qr/browser-qr-decoder";
-import { AppButton, StatusBadge, Surface } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 type FlowState = "ready" | "checking" | "coach_confirm" | "submitting" | "complete" | "error";
 

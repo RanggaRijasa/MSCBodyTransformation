@@ -13,13 +13,11 @@ import {
   validateParticipantAnswers,
   type ParticipantAnswerDrafts,
 } from "@/features/participant/model/participant-answer-state";
-import {
-  AppButton,
-  FormErrorSummary,
-  ProgramContentPreview,
-  StatusBadge,
-  Surface,
-} from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { FormErrorSummary } from "@/shared/ui/forms/form-controls";
+import { ProgramContentPreview } from "@/shared/ui/program/program-content-preview";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 type SubmissionResult = Readonly<{
   quizResult: Readonly<{

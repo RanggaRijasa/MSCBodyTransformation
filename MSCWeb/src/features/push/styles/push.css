@@ -1,6 +1,8 @@
 .push-settings {
   display: grid;
   gap: var(--space-md);
+  border-color: var(--color-border);
+  background: var(--color-surface);
 }
 
 .push-settings__heading {
@@ -16,8 +18,27 @@
   color: var(--color-text-secondary);
 }
 
+.push-settings__heading h2 {
+  margin-block: 0 var(--space-xs);
+  font-size: var(--text-section-title);
+}
+
+.push-settings > .app-action {
+  justify-self: start;
+}
+
 @media (max-width: 30rem) {
   .push-settings__heading {
     display: grid;
+  }
+
+  .push-settings > .app-action {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .push-settings {
+    border-color: CanvasText;
   }
 }

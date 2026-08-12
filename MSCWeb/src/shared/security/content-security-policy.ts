@@ -5,6 +5,13 @@ type CspInput = Readonly<{
   supabaseUrl?: string | undefined;
 }>;
 
+export const coachQrSvgContentSecurityPolicy =
+  "default-src 'none'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
+
+export function selectResponseContentSecurityPolicy(pathname: string, defaultPolicy: string) {
+  return pathname === "/api/coach/qr-image" ? coachQrSvgContentSecurityPolicy : defaultPolicy;
+}
+
 function providerSources(value?: string) {
   if (!value) return [];
   try {

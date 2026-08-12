@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { loadAdminProgramOperation } from "@/application/admin/load-admin-experience";
 import { requireRole } from "@/features/auth/server/session-routing";
-import { AdminProgramEditor } from "@/features/admin";
+import { AdminProgramEditor } from "@/features/admin/components/admin-program-editor";
 import { StateMessage } from "@/shared/ui";
 
 export const metadata: Metadata = { title: "Edit draft program" };

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { exchangeAuthorizationCode } from "@/application/auth/server-auth-operations";
 import {
@@ -10,11 +10,10 @@ import {
 } from "@/features/auth/model/auth-flow";
 import { readAuthServerEnvironment } from "@/features/auth/server/auth-environment";
 import { unsealCookie } from "@/features/auth/server/sealed-cookie";
+import { relativeRedirect } from "@/shared/security/relative-redirect";
 
-function failureRedirect(request: NextRequest, reason: string) {
-  const url = new URL("/masuk", request.nextUrl.origin);
-  url.searchParams.set("error", reason);
-  return NextResponse.redirect(url);
+function failureRedirect(reason: string) {
+  return relativeRedirect(`/masuk?${new URLSearchParams({ error: reason }).toString()}`);
 }
 
 export async function GET(request: NextRequest) {
@@ -27,11 +26,11 @@ export async function GET(request: NextRequest) {
     const providerError = request.nextUrl.searchParams.get("error");
     if (providerError) {
       clearAttempt();
-      return failureRedirect(request, providerError === "access_denied" ? "cancelled" : "provider");
+      return failureRedirect(providerError === "access_denied" ? "cancelled" : "provider");
     }
     if (!code || !state) {
       clearAttempt();
-      return failureRedirect(request, "callback");
+      return failureRedirect("callback");
     }
 
     const serverEnvironment = readAuthServerEnvironment();
@@ -48,21 +47,21 @@ export async function GET(request: NextRequest) {
       })
     ) {
       clearAttempt();
-      return failureRedirect(request, "state");
+      return failureRedirect("state");
     }
 
     const didExchange = await exchangeAuthorizationCode(code);
     clearAttempt();
     if (!didExchange) {
-      return failureRedirect(request, "exchange");
+      return failureRedirect("exchange");
     }
 
     if (attempt.mode === "register") {
-      return NextResponse.redirect(new URL("/onboarding", request.nextUrl.origin));
+      return relativeRedirect("/onboarding");
     }
-    return NextResponse.redirect(new URL(safeReturnTo(attempt.returnTo), request.nextUrl.origin));
+    return relativeRedirect(safeReturnTo(attempt.returnTo));
   } catch {
     clearAttempt();
-    return failureRedirect(request, "callback");
+    return failureRedirect("callback");
   }
 }

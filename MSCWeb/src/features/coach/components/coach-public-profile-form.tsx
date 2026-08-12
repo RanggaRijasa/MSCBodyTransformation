@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { CoachContext } from "@/domain/coach/coach-experience";
-import { AppButton, TextareaField, TextField } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { TextareaField, TextField } from "@/shared/ui/forms/form-controls";
 
 export function CoachPublicProfileForm({ context }: Readonly<{ context: CoachContext }>) {
   const router = useRouter();

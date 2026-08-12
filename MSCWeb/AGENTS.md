@@ -7,9 +7,10 @@ produk terbaru di workplan web.
 ## Konteks produk
 
 MSC Web adalah PWA Bahasa Indonesia dengan Guest dan tiga role terautentikasi:
-Peserta, Coach, dan Admin. Peserta serta Coach memakai shell yang terasa
-seperti aplikasi mobile. Admin memakai layout responsif yang mengutamakan
-desktop.
+Peserta, Coach, dan Admin. Pada viewport ponsel, seluruh actor mengikuti
+aplikasi iPhone sebagai reference dan harus terasa seperti aplikasi mobile
+nyata. Admin desktop/tablet adalah responsive expansion dari bahasa visual
+yang sama, bukan aplikasi visual lain.
 
 PWA menggantikan distribusi App Store. Sign in with Apple dan StoreKit tidak
 menjadi bagian runtime web. Pembayaran program serta akses Coach menggunakan
@@ -48,10 +49,18 @@ server-authoritative.
    sebelum membuat atau mengubah UI.
 7. Implementasi dan test iOS terdekat sebagai referensi perilaku, bukan
    sebagai source yang harus diterjemahkan baris demi baris.
+8. Untuk Phase 11A, baca
+   `docs/design/PHASE_11A_DESIGN_SYSTEM_AND_IOS_PARITY.md`,
+   `docs/testing/PHASE_11A_VISUAL_ACCEPTANCE_MATRIX.md`, dan
+   `docs/operations/PHASE_11A_MULTI_AGENT_EXECUTION.md`.
 
 ## Batas platform
 
 - Jangan mengubah source iOS kecuali pengguna secara eksplisit meminta.
+- Phase 11A secara eksplisit mengizinkan menjalankan aplikasi iOS pada
+  Simulator, membaca Debug scenario/test, dan mengambil screenshot reference
+  yang bebas data sensitif. Izin ini tidak mencakup perubahan source, scheme,
+  signing, asset, Xcode project, atau hosted backend iOS.
 - Jangan mengedit `project.pbxproj`.
 - Jangan menghapus adapter Apple atau StoreKit selama masa parity.
 - Selama transisi, `../supabase` dan `../Contracts` tetap satu-satunya source
@@ -137,7 +146,45 @@ Route/Page
   Supabase, PWA/service-worker, QR, media, atau testing packages.
 - Dependency QR/PWA/media baru memerlukan spike kecil dan alasan mengapa Web
   Platform API saja tidak cukup.
-- Jangan menambah library UI besar hanya untuk beberapa komponen.
+- Tailwind CSS dan shadcn/ui disetujui sebagai fondasi system-wide khusus
+  redesign Phase 11A. Ini adalah pengecualian eksplisit terhadap larangan
+  library UI besar untuk kebutuhan kecil.
+- Jalankan compatibility spike, inspection CLI/documentation, dan preview diff
+  sebelum instalasi/config shadcn. Tambahkan hanya primitive yang dipakai.
+- Library UI besar lain, icon pack besar, animation library, chart, state
+  library, atau theme kit tetap memerlukan approval terpisah.
+- Jangan mempertahankan dua design system production paralel setelah migration
+  slice terkait selesai.
+
+## Workflow multi-agent Phase 11A
+
+- Gunakan PM/orchestrator untuk membekukan scope, file ownership, acceptance,
+  dan integration result.
+- Implementer hanya mengubah bounded file set yang tidak overlap serta wajib
+  menyerahkan focused test dan rendered evidence.
+- Reviewer utama harus independen, read-only terhadap slice yang dinilai,
+  membaca diff, dan membandingkan iPhone reference, accepted concept, serta
+  PWA aktual. Perbaikan dikembalikan kepada implementer pemilik.
+- Shared tokens, primitives, lockfile, global CSS, app shell, dan snapshot
+  baseline memiliki satu writer pada satu waktu.
+- Laporan subagent bukan completion evidence. Orchestrator tetap harus
+  memeriksa diff, screenshot, command, dan full regression akhir.
+- Protocol lengkap berada di
+  `docs/operations/PHASE_11A_MULTI_AGENT_EXECUTION.md`.
+
+## Functional freeze Phase 11A
+
+- Redesign tidak boleh mengubah `src/domain`, `src/application`,
+  `src/infrastructure`, `src/app/api`, Auth route handler, proxy, shared
+  security/config, local Supabase contract, root Supabase, atau Contracts.
+- Service worker, install/runtime state, cache/no-store policy, manifest
+  semantics, route/href, payload, callback, retry, dan mutation ordering tetap
+  hard-frozen secara perilaku.
+- Jika presentation membutuhkan perubahan path/boundary tersebut, hentikan
+  slice dan minta approval scope terpisah.
+- Menjalankan `test:phase11:local` saja tidak cukup untuk total redesign.
+  Closure juga menjalankan Phase 03–10 local suite serta full gallery sesuai
+  Phase 11A.
 
 ## Testing dan penyelesaian phase
 

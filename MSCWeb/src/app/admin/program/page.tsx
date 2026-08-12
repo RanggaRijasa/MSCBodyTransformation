@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { listAdminProgramsOperation } from "@/application/admin/load-admin-experience";
 import { requireRole } from "@/features/auth/server/session-routing";
-import { AdminProgramList } from "@/features/admin";
+import { AdminProgramList } from "@/features/admin/components/admin-program-list";
 import { copy } from "@/shared/i18n/id";
 import { StateMessage } from "@/shared/ui";
 

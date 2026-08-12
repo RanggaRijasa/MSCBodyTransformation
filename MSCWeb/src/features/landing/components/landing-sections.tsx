@@ -1,8 +1,8 @@
 import Image from "next/image";
 
 import { InstallCta } from "@/features/pwa-install";
-import { AppIcon, type AppIconName } from "@/shared/ui";
 import { copy } from "@/shared/i18n/id";
+import { AppIcon, type AppIconName } from "@/shared/ui/icons/app-icon";
 
 const benefitIcons: readonly AppIconName[] = ["program", "coach", "ranking"];
 const stepIcons: readonly AppIconName[] = ["dashboard", "coach", "payment", "check"];
@@ -14,7 +14,8 @@ export function BenefitsSection() {
     <section className="landing-section landing-benefits" aria-labelledby="benefits-title">
       <p className="landing-eyebrow">{copy.landing.benefits.eyebrow}</p>
       <h2 id="benefits-title">
-        {copy.landing.benefits.titleLead} <span>{copy.landing.benefits.titleAccent}</span>
+        {copy.landing.benefits.titleLead} <span>{copy.landing.benefits.titleAccent}</span>{" "}
+        {copy.landing.benefits.titleTail}
       </h2>
       <div className="landing-benefits__items">
         {copy.landing.benefits.items.map((item, index) => (
@@ -85,7 +86,6 @@ export function AudienceSection() {
       </h2>
       <div className="landing-audiences__panels">
         <article>
-          <p className="landing-eyebrow">{copy.landing.audiences.participantEyebrow}</p>
           <h3>{copy.landing.audiences.participantTitle}</h3>
           <p>{copy.landing.audiences.participantSummary}</p>
           <CapabilityList
@@ -94,10 +94,9 @@ export function AudienceSection() {
           />
         </article>
         <div className="landing-audiences__mark" aria-hidden="true">
-          <Image alt="" height={84} loading="eager" src="/icons/app-icon-192.png" width={84} />
+          <Image alt="" height={84} src="/icons/app-icon-192.png" width={84} />
         </div>
         <article id="untuk-coach" tabIndex={-1}>
-          <p className="landing-eyebrow">{copy.landing.audiences.coachEyebrow}</p>
           <h3>{copy.landing.audiences.coachTitle}</h3>
           <p>{copy.landing.audiences.coachSummary}</p>
           <CapabilityList icons={coachIcons} items={copy.landing.audiences.coachCapabilities} />
@@ -122,10 +121,10 @@ export function InstallCallout() {
           <path d="m132 44 12 8-12 9" />
         </svg>
       </span>
-      <div className="landing-install-callout__action">
+      <div className="landing-install-callout__action" id="install-callout-anchor">
         <InstallCta />
         <div>
-          <Image alt="" height={80} loading="eager" src="/icons/app-icon-192.png" width={80} />
+          <Image alt="" height={80} src="/icons/app-icon-192.png" width={80} />
           <strong>MSC</strong>
           <span>Body Transformation</span>
         </div>

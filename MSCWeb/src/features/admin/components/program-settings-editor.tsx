@@ -1,5 +1,5 @@
 import type { AdminProgramDraft } from "@/domain/admin/admin-program";
-import { SelectField, TextareaField, TextField } from "@/shared/ui";
+import { SelectField, TextareaField, TextField } from "@/shared/ui/forms/form-controls";
 
 export function ProgramSettingsEditor({
   draft,

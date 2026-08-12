@@ -1,5 +1,10 @@
 # Phase 09: Admin CMS and Operations
 
+> Presentation amendment: functional implementation phase ini tetap baseline,
+> tetapi keputusan visual desktop-first lama digantikan Phase 11A. Admin mobile
+> mengikuti aplikasi iPhone; desktop/tablet menjadi responsive expansion dari
+> sistem visual yang sama.
+
 > Status: SELESAI LOKAL
 
 ## Tujuan

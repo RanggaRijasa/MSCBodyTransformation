@@ -10,12 +10,45 @@
     inset-inline: 0;
     display: flex;
     justify-content: center;
-    padding: var(--space-xs) var(--space-md) max(var(--space-xs), env(safe-area-inset-bottom));
+    padding: var(--space-sm) max(var(--space-md), env(safe-area-inset-right))
+      max(var(--space-sm), env(safe-area-inset-bottom))
+      max(var(--space-md), env(safe-area-inset-left));
     border-block-start: 1px solid var(--color-border);
-    background: var(--color-surface-elevated);
+    background: var(--glass-surface-opaque);
+    box-shadow: var(--glass-shadow);
   }
 
   .sticky-install__action {
     width: min(100%, 30rem);
+  }
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  @media (max-width: 52rem) {
+    .sticky-install[data-visible="true"] {
+      background: var(--glass-background);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    }
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .sticky-install[data-visible="true"] {
+    border-color: var(--color-border-strong);
+    background: var(--glass-surface-opaque);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .sticky-install[data-visible="true"] {
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }

@@ -1,23 +1,58 @@
+@theme inline {
+  --color-background: var(--msc-color-background);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-surface-elevated);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-brand-primary);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary: var(--color-background-secondary);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--status-neutral-background);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent: var(--color-brand-accent);
+  --color-accent-foreground: var(--color-on-accent);
+  --color-achievement: var(--color-brand-accent);
+  --color-achievement-foreground: var(--color-on-accent);
+  --color-destructive: var(--msc-color-destructive);
+  --color-destructive-foreground: var(--color-on-primary);
+  --color-border: var(--msc-color-border);
+  --color-input: var(--msc-color-border);
+  --color-ring: var(--color-brand-accent);
+  --color-chart-1: var(--color-brand-primary);
+  --color-chart-2: var(--color-brand-accent);
+  --color-chart-3: var(--color-info);
+  --color-chart-4: var(--color-success);
+  --color-chart-5: var(--color-warning);
+  --radius-control: var(--radius-md);
+  --shadow-control: var(--shadow-sm);
+  --font-app: var(--font-app-stack);
+}
+
 :root {
   color-scheme: light dark;
 
+  --msc-color-background: #f7f7f8;
+  --msc-color-border: #dadce0;
+  --msc-color-destructive: #c62828;
   --color-brand-primary: #d92d20;
   --color-brand-primary-pressed: #b42318;
   --color-brand-text: #b42318;
   --color-brand-secondary: #111111;
   --color-brand-accent: #f5c542;
-  --color-background: #f7f7f8;
+  --color-background: var(--msc-color-background);
   --color-background-secondary: #ffffff;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
   --color-text-primary: #111111;
   --color-text-secondary: #5f6368;
-  --color-border: #dadce0;
+  --color-border: var(--msc-color-border);
   --color-border-strong: #9aa0a6;
   --color-identity-surface: #111111;
   --color-identity-on-surface: #ffffff;
   --color-surface-subtle: var(--color-background-secondary);
-  --color-destructive: #c62828;
+  --color-destructive: var(--msc-color-destructive);
   --color-success: #18794e;
   --color-warning: #8a5a00;
   --color-info: #2457a6;
@@ -37,6 +72,37 @@
   --status-info-background: #eaf1fb;
   --status-neutral-background: #eceef0;
 
+  /* One-way legacy-to-semantic bridge for Tailwind and source-owned primitives. */
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-surface-elevated);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-brand-primary);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary: var(--color-background-secondary);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--status-neutral-background);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent: var(--color-brand-accent);
+  --color-accent-foreground: var(--color-on-accent);
+  --color-destructive-foreground: var(--color-on-primary);
+  --color-input: var(--color-border);
+  --color-ring: var(--color-brand-accent);
+  --color-achievement: var(--color-brand-accent);
+  --color-achievement-foreground: var(--color-on-accent);
+  --color-chart-1: var(--color-brand-primary);
+  --color-chart-2: var(--color-brand-accent);
+  --color-chart-3: var(--color-info);
+  --color-chart-4: var(--color-success);
+  --color-chart-5: var(--color-warning);
+
+  /* Compatibility aliases remain downstream of the established token source. */
+  --color-focus: var(--color-brand-accent);
+  --color-surface-muted: var(--color-background-secondary);
+  --color-surface-secondary: var(--color-background-secondary);
+  --status-error-text: var(--color-destructive);
+
   --space-xxs: 0.25rem;
   --space-xs: 0.5rem;
   --space-sm: 0.75rem;
@@ -44,6 +110,11 @@
   --space-lg: 1.5rem;
   --space-xl: 2rem;
   --space-xxl: 3rem;
+  --space-1: var(--space-xxs);
+  --space-2: var(--space-xs);
+  --space-3: var(--space-sm);
+  --space-4: var(--space-md);
+  --space-5: var(--space-lg);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -52,6 +123,7 @@
   --radius-round: 999px;
   --radius-xl: var(--radius-prominent);
   --radius-pill: var(--radius-round);
+  --radius: var(--radius-md);
 
   --text-caption: clamp(0.78rem, 0.75rem + 0.15vw, 0.875rem);
   --text-secondary: clamp(0.9rem, 0.85rem + 0.2vw, 1rem);
@@ -61,10 +133,15 @@
   --text-section-title: clamp(1.4rem, 1.2rem + 1vw, 2rem);
   --text-screen-title: clamp(2rem, 1.55rem + 2.4vw, 3.5rem);
   --text-metric: clamp(1.75rem, 1.45rem + 1.5vw, 2.75rem);
+  --font-size-sm: var(--text-secondary);
+  --text-subheading: var(--text-card-title);
 
   --line-tight: 1.15;
   --line-body: 1.55;
+  --font-app-stack:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --shadow-elevated: 0 0.75rem 2rem rgb(17 17 17 / 10%);
+  --shadow-sm: 0 0.25rem 0.75rem rgb(17 17 17 / 8%);
   --elevation-medium: var(--shadow-elevated);
   --elevation-high: 0 1.5rem 4rem rgb(17 17 17 / 18%);
   --focus-ring: 0 0 0 0.2rem var(--color-brand-accent);
@@ -75,19 +152,29 @@
   --sidebar-width: 17rem;
   --motion-fast: 140ms;
   --motion-standard: 220ms;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --glass-background: rgb(255 255 255 / 78%);
+  --glass-surface-opaque: #ffffff;
+  --glass-border: rgb(17 17 17 / 14%);
+  --glass-shadow: 0 -0.5rem 1.75rem rgb(17 17 17 / 10%);
+  --glass-blur: 1.25rem;
+  --glass-saturation: 150%;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --msc-color-background: #0d0d0f;
+    --msc-color-border: #3a3a3c;
     --color-brand-secondary: #f5f5f5;
     --color-brand-text: #ff8a80;
-    --color-background: #0d0d0f;
     --color-background-secondary: #151517;
     --color-surface: #1c1c1e;
     --color-surface-elevated: #242426;
     --color-text-primary: #f5f5f5;
     --color-text-secondary: #b0b0b5;
-    --color-border: #3a3a3c;
     --color-border-strong: #74777c;
     --color-success: #5ed39a;
     --color-warning: #ffd166;
@@ -99,21 +186,26 @@
     --status-info-background: #172f56;
     --status-neutral-background: #303034;
     --shadow-elevated: 0 0.75rem 2rem rgb(0 0 0 / 35%);
+    --shadow-sm: 0 0.25rem 0.75rem rgb(0 0 0 / 28%);
     --elevation-high: 0 1.5rem 4rem rgb(0 0 0 / 45%);
+    --glass-background: rgb(28 28 30 / 78%);
+    --glass-surface-opaque: #1c1c1e;
+    --glass-border: rgb(245 245 245 / 20%);
+    --glass-shadow: 0 -0.5rem 1.75rem rgb(0 0 0 / 35%);
   }
 }
 
 [data-color-scheme="dark"] {
   color-scheme: dark;
+  --msc-color-background: #0d0d0f;
+  --msc-color-border: #3a3a3c;
   --color-brand-secondary: #f5f5f5;
   --color-brand-text: #ff8a80;
-  --color-background: #0d0d0f;
   --color-background-secondary: #151517;
   --color-surface: #1c1c1e;
   --color-surface-elevated: #242426;
   --color-text-primary: #f5f5f5;
   --color-text-secondary: #b0b0b5;
-  --color-border: #3a3a3c;
   --color-success: #5ed39a;
   --color-warning: #ffd166;
   --color-info: #78a9ff;
@@ -122,11 +214,32 @@
   --status-error-background: #4b2020;
   --status-info-background: #172f56;
   --status-neutral-background: #303034;
+  --shadow-sm: 0 0.25rem 0.75rem rgb(0 0 0 / 28%);
+  --glass-background: rgb(28 28 30 / 78%);
+  --glass-surface-opaque: #1c1c1e;
+  --glass-border: rgb(245 245 245 / 20%);
+  --glass-shadow: 0 -0.5rem 1.75rem rgb(0 0 0 / 35%);
 }
 
 @media (prefers-contrast: more) {
   :root {
-    --color-border: currentColor;
+    --msc-color-border: currentColor;
     --focus-ring: 0 0 0 0.25rem var(--color-brand-accent);
+    --glass-background: var(--glass-surface-opaque);
+    --glass-border: currentColor;
+    --glass-shadow: none;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --msc-color-border: CanvasText;
+    --color-border-strong: CanvasText;
+    --color-ring: Highlight;
+    --focus-ring: 0 0 0 0.25rem Highlight;
+    --glass-background: Canvas;
+    --glass-surface-opaque: Canvas;
+    --glass-border: CanvasText;
+    --glass-shadow: none;
   }
 }

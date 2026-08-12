@@ -17,8 +17,9 @@ Status awal seluruh implementation phase adalah `BELUM DIMULAI`.
 | 11 | 09 | `10_PHASE_09_ADMIN_CMS_AND_OPERATIONS.md` | 03–08 | Selesai lokal |
 | 12 | 10 | `11_PHASE_10_SCORING_LEADERBOARD_AND_CLOSURE.md` | 07–09 | Selesai lokal |
 | 13 | 11 | `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md` | 02A–10 | Selesai lokal |
-| 14 | 12 | `13_PHASE_12_HOSTING_DOMAIN_AND_PRODUCTION.md` | 11 | Belum dimulai |
-| 15 | 13 | `14_PHASE_13_PARITY_UAT_AND_CUTOVER.md` | 12 | Belum dimulai |
+| 14 | 11A | `12A_PHASE_11A_TOTAL_UI_REDESIGN_AND_IOS_VISUAL_PARITY.md` | 11 | Selesai lokal |
+| 15 | 12 | `13_PHASE_12_HOSTING_DOMAIN_AND_PRODUCTION.md` | 11A | Belum dimulai |
+| 16 | 13 | `14_PHASE_13_PARITY_UAT_AND_CUTOVER.md` | 12 | Belum dimulai |
 
 ## Status vocabulary
 
@@ -43,3 +44,6 @@ Status awal seluruh implementation phase adalah `BELUM DIMULAI`.
 - `../docs/progress/PHASE_11_DOD_AUDIT.md`
 - `../docs/security/PHASE_11_THREAT_MODEL.md`
 - `../docs/testing/PHASE_11_BROWSER_DEVICE_EVIDENCE.md`
+- `../docs/design/PHASE_11A_DESIGN_SYSTEM_AND_IOS_PARITY.md`
+- `../docs/testing/PHASE_11A_VISUAL_ACCEPTANCE_MATRIX.md`
+- `../docs/operations/PHASE_11A_MULTI_AGENT_EXECUTION.md`

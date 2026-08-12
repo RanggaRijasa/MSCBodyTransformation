@@ -45,10 +45,11 @@ operation. Admin adalah surface berbeda, bukan backend berbeda.
 
 ### Admin
 
-- Desktop-first dengan sidebar, header, tabel/list responsif, editor berkolom,
-  dan detail panel bila ruang cukup.
-- Pada mobile berubah menjadi single-column navigation dan sheet/dialog yang
-  dapat dioperasikan, bukan versi desktop yang diperkecil.
+- Pada mobile mengikuti hierarchy, navigation, dan visual aplikasi iPhone.
+- Pada desktop/tablet memperluas sistem yang sama dengan sidebar, header,
+  tabel/list responsif, editor berkolom, dan detail panel bila ruang cukup.
+- Responsive expansion tidak boleh menjadi dashboard template visual lain,
+  mengubah action hierarchy, atau menghilangkan guard mobile.
 - Route utama tetap `/admin/...` pada origin yang sama agar Auth, cookie, CSP,
   deployment, dan audit lebih sederhana.
 
@@ -168,3 +169,12 @@ vertical slice terkait:
 - [Target Manual Commerce Contract](./TARGET_MANUAL_COMMERCE_CONTRACT.md).
 - [Forward-only Migration and Decommission Plan](./FORWARD_ONLY_MIGRATION_AND_DECOMMISSION.md).
 - [iOS to Web Test Mapping](../testing/IOS_TO_WEB_TEST_MAPPING.md).
+
+## Phase 11A presentation contract
+
+- Tailwind CSS dan shadcn/ui menjadi fondasi UI yang disetujui.
+- Source iOS boleh dijalankan read-only pada Simulator untuk reference.
+- Design, acceptance, dan execution rules berada di:
+  - [Design System and iOS Parity](../design/PHASE_11A_DESIGN_SYSTEM_AND_IOS_PARITY.md).
+  - [Visual Acceptance Matrix](../testing/PHASE_11A_VISUAL_ACCEPTANCE_MATRIX.md).
+  - [Multi-Agent Execution](../operations/PHASE_11A_MULTI_AGENT_EXECUTION.md).

@@ -8,12 +8,21 @@
   gap: var(--space-md);
 }
 
+.qr-scanner,
+.camera-capture,
+.image-acquisition,
+.program-video,
+.coach-qr-panel {
+  color: var(--color-text-primary);
+}
+
 .qr-scanner__preview,
 .camera-capture video {
   position: relative;
   overflow: hidden;
   width: 100%;
   min-height: 16rem;
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
   background: var(--color-identity-surface);
 }
@@ -36,6 +45,28 @@
   translate: -50% -50%;
 }
 
+.qr-scanner__frame::before,
+.qr-scanner__frame::after {
+  position: absolute;
+  width: 2.5rem;
+  height: 2.5rem;
+  content: "";
+}
+
+.qr-scanner__frame::before {
+  inset: -0.25rem auto auto -0.25rem;
+  border-block-start: 0.45rem solid var(--color-brand-accent);
+  border-inline-start: 0.45rem solid var(--color-brand-accent);
+  border-start-start-radius: var(--radius-md);
+}
+
+.qr-scanner__frame::after {
+  inset: auto -0.25rem -0.25rem auto;
+  border-inline-end: 0.45rem solid var(--color-brand-accent);
+  border-block-end: 0.45rem solid var(--color-brand-accent);
+  border-end-end-radius: var(--radius-md);
+}
+
 .qr-scanner__status,
 .program-video__status,
 .program-video__alternative,
@@ -51,6 +82,20 @@
   position: relative;
   overflow: hidden;
   cursor: pointer;
+}
+
+.qr-scanner__file-action:focus-within,
+.image-acquisition label.app-action:focus-within {
+  border-radius: var(--radius-sm);
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+.qr-scanner > .app-action,
+.camera-capture .app-action,
+.image-acquisition .app-action,
+.safe-share .app-action {
+  min-height: 44px;
 }
 
 .qr-scanner__file-action input,
@@ -74,7 +119,7 @@
   width: min(100%, 22rem);
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-lg);
   place-items: center;
   background: var(--color-background-secondary);
@@ -85,16 +130,24 @@
   object-fit: contain;
 }
 
+.image-acquisition__preview {
+  border-style: solid;
+  background: var(--color-surface);
+}
+
 .program-video video {
   width: 100%;
   min-height: 14rem;
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-strong);
   background: var(--color-identity-surface);
 }
 
 .program-video__authority,
 .coach-qr-panel__privacy {
   padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-inline-start: 0.3rem solid var(--color-info);
   border-radius: var(--radius-md);
   background: var(--status-info-background);
 }
@@ -103,6 +156,9 @@
   width: min(100%, 42rem);
   margin-inline: auto;
   padding: clamp(var(--space-md), 4vw, var(--space-xl));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
 }
 
 .coach-qr-panel header {
@@ -122,6 +178,65 @@
   border-radius: var(--radius-lg);
   place-items: center;
   background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.safe-share {
+  justify-items: start;
+}
+
+@media (max-width: 35rem) {
+  .qr-scanner__preview,
+  .qr-scanner__preview video,
+  .camera-capture video {
+    min-height: 13rem;
+  }
+
+  .media-action-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .media-action-row > .app-action,
+  .image-acquisition label.app-action,
+  .qr-scanner__file-action,
+  .qr-scanner > .app-action,
+  .safe-share .app-action {
+    width: 100%;
+  }
+
+  .image-acquisition__preview,
+  .image-acquisition__empty,
+  .coach-qr-panel__image {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .qr-scanner__file-action:focus-within,
+  .image-acquisition label.app-action:focus-within {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  .qr-scanner__preview,
+  .camera-capture video,
+  .image-acquisition__preview,
+  .image-acquisition__empty,
+  .program-video video,
+  .program-video__authority,
+  .coach-qr-panel,
+  .coach-qr-panel__image,
+  .coach-qr-panel__privacy {
+    border-color: CanvasText;
+  }
+
+  .qr-scanner__frame,
+  .qr-scanner__frame::before,
+  .qr-scanner__frame::after {
+    border-color: Highlight;
+  }
 }
 
 .coach-qr-panel__image img {

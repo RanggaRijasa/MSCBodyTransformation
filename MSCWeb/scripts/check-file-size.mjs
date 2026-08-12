@@ -14,7 +14,7 @@ async function collectFiles(directory) {
     const entryPath = path.join(directory, entry.name);
     if (entry.isDirectory()) {
       files.push(...(await collectFiles(entryPath)));
-    } else if (/\.(?:mjs|ts|tsx)$/.test(entry.name)) {
+    } else if (/\.(?:css|mjs|ts|tsx)$/.test(entry.name)) {
       files.push(entryPath);
     }
   }
@@ -25,7 +25,9 @@ async function collectFiles(directory) {
 for (const sourceRoot of sourceRoots) {
   const files = await collectFiles(path.join(projectRoot, sourceRoot));
   for (const file of files) {
-    const lineCount = (await readFile(file, "utf8")).split("\n").length;
+    const lines = (await readFile(file, "utf8")).split(/\r?\n/);
+    if (lines.at(-1) === "") lines.pop();
+    const lineCount = lines.length;
     const relativePath = path.relative(projectRoot, file);
 
     if (lineCount > 500) {

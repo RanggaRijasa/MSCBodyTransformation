@@ -94,12 +94,18 @@ test("hero, FAQ, section navigation, dan sticky CTA tetap keyboard-friendly", as
   await expect(menu).toBeFocused();
   await menu.click();
   await expect(page.locator(".marketing-menu")).toHaveJSProperty("open", true);
-  await expect(page.getByRole("navigation", { name: "Navigasi utama mobile" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Navigasi utama seluler" })).toBeVisible();
   await expect(
-    page.getByRole("navigation", { name: "Navigasi utama mobile" }).getByRole("link", {
+    page.getByRole("navigation", { name: "Navigasi utama seluler" }).getByRole("link", {
       name: "Program",
     }),
   ).toHaveAttribute("href", "/program");
+  await page
+    .getByRole("navigation", { name: "Navigasi utama seluler" })
+    .getByRole("link", { name: "Cara kerja" })
+    .click();
+  await expect(page.locator(".marketing-menu")).toHaveJSProperty("open", false);
+  await expect(page.locator("#cara-kerja")).toBeFocused();
 
   const faq = page.getByText("Apa itu MSC Body Transformation?");
   await faq.click();
@@ -110,6 +116,11 @@ test("hero, FAQ, section navigation, dan sticky CTA tetap keyboard-friendly", as
       .getByText(/bukan pengganti diagnosis/i),
   ).toBeVisible();
 
+  const installCallout = page.locator("#install-callout-anchor");
+  await installCallout.scrollIntoViewIfNeeded();
+  await expect(installCallout.locator("a, button")).toBeVisible();
+  await expect(page.locator(".sticky-install")).toHaveAttribute("data-visible", "false");
+
   await page.locator("#cara-kerja").scrollIntoViewIfNeeded();
   const stickyBar = page.locator('.sticky-install[data-visible="true"]');
   await expect(stickyBar).toBeVisible();
@@ -118,6 +129,9 @@ test("hero, FAQ, section navigation, dan sticky CTA tetap keyboard-friendly", as
   await expect(stickyAction).toHaveText(
     /Unduh MSC|Cara memasang(?: di iPhone)?|Gunakan di browser|Buka aplikasi/,
   );
+
+  await page.goto("/#cara-kerja");
+  await expect(page.locator("#cara-kerja")).toBeFocused();
 });
 
 for (const outcome of ["accepted", "dismissed"] as const) {
@@ -178,7 +192,7 @@ test("landing responsif pada mobile, tablet, dan desktop tanpa overflow", async 
     await page.setViewportSize(viewport);
     await page.goto("/");
     await expect(
-      page.getByRole("figure", { name: /Pratinjau placeholder antarmuka PWA/i }),
+      page.getByRole("figure", { name: "Pratinjau aplikasi", exact: true }),
     ).toBeVisible();
     const dimensions = await page.evaluate(() => ({
       page: document.documentElement.scrollWidth,

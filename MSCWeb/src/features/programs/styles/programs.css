@@ -1,7 +1,9 @@
 .program-page,
 .program-detail {
   display: grid;
+  width: min(100%, var(--content-max));
   gap: var(--space-xl);
+  margin-inline: auto;
 }
 
 .program-page__header,
@@ -9,6 +11,19 @@
   display: grid;
   max-width: var(--reading-max);
   gap: var(--space-sm);
+}
+
+.program-page__header > p:last-child,
+.program-detail__hero > div > p:not(.program-eyebrow) {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.program-page > section > h2,
+.program-detail > section > h2,
+.program-detail__columns h2 {
+  margin-block: 0 var(--space-sm);
+  font-size: var(--text-section-title);
 }
 
 .program-page__header h1,
@@ -32,7 +47,9 @@
 .program-detail__closed,
 .program-detail__notice {
   padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
   border-inline-start: 0.3rem solid var(--color-warning);
+  border-radius: var(--radius-md);
   background: var(--status-warning-background);
 }
 
@@ -47,6 +64,11 @@
   display: grid;
   overflow: hidden;
   padding: 0;
+  border-color: var(--color-border);
+}
+
+.program-card > .media-surface {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .program-card__body {
@@ -72,12 +94,21 @@
 
 .program-card__period,
 .program-section-empty {
+  margin: 0;
   color: var(--color-text-secondary);
+}
+
+.program-card .app-action {
+  width: 100%;
 }
 
 .program-detail__hero {
   display: grid;
   gap: var(--space-lg);
+}
+
+.program-detail__hero > .media-surface {
+  border: 1px solid var(--color-border);
 }
 
 .program-detail__metrics {
@@ -102,12 +133,15 @@
 
 .program-detail__wellness {
   max-width: var(--reading-max);
+  border-inline-start: 0.3rem solid var(--color-info);
+  background: var(--status-info-background);
 }
 
 .program-enrollment-flow {
   display: grid;
   max-width: var(--reading-max);
   gap: var(--space-lg);
+  margin-inline: auto;
 }
 
 .program-enrollment-flow > header {
@@ -127,14 +161,58 @@
   gap: var(--space-sm);
 }
 
+.program-enrollment-state {
+  display: grid;
+  max-width: var(--reading-max);
+  gap: var(--space-sm);
+  margin-inline: auto;
+}
+
 .program-enrollment-coach .status-badge {
   justify-self: start;
 }
 
 .program-enrollment-reservation {
   padding: var(--space-md);
+  border: 1px solid var(--color-border);
   border-inline-start: 0.3rem solid var(--color-info);
+  border-radius: var(--radius-md);
   background: var(--status-info-background);
+}
+
+@media (max-width: 35rem) {
+  .program-page,
+  .program-detail {
+    gap: var(--space-lg);
+  }
+
+  .program-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .program-card__body {
+    gap: var(--space-sm);
+  }
+
+  .program-detail__metrics {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .program-enrollment-flow > .app-action,
+  .program-enrollment-coach .app-action {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .program-network-status,
+  .program-detail__closed,
+  .program-detail__notice,
+  .program-detail__wellness,
+  .program-enrollment-reservation {
+    border-color: CanvasText;
+  }
 }
 
 @media (min-width: 48rem) {

@@ -67,6 +67,8 @@ MSCWeb/
 │   │   └── telemetry/
 │   ├── shared/
 │   │   ├── ui/
+│   │   │   ├── primitives/
+│   │   │   └── components/
 │   │   ├── layout/
 │   │   ├── hooks/
 │   │   ├── i18n/
@@ -76,6 +78,8 @@ MSCWeb/
 │   │   └── types/
 │   ├── styles/
 │   │   ├── tokens.css
+│   │   ├── glass.css
+│   │   ├── motion.css
 │   │   └── globals.css
 │   └── proxy.ts
 ├── tests/
@@ -119,6 +123,10 @@ features/payments/
 - `use-cases`: orkestrasi domain dan repository interface.
 - `server`: composition khusus server; harus memakai `server-only` boundary.
 - `index.ts`: public API kecil. Jangan mengekspor seluruh internal tree.
+
+Untuk Phase 11A, `shared/ui/primitives` menampung source primitive shadcn yang
+dimiliki project. `shared/ui/components` menampung komposisi MSC yang reusable.
+Feature tidak menyalin primitive atau membuat token system sendiri.
 
 ## Aturan route
 

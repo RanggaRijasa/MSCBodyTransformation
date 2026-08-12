@@ -7,7 +7,11 @@ function ProductPreview() {
   const preview = copy.landing.hero.preview;
 
   return (
-    <figure className="product-preview" aria-label={copy.landing.hero.previewAlt}>
+    <figure
+      className="product-preview"
+      aria-describedby="hero-preview-description"
+      aria-labelledby="hero-preview-label"
+    >
       <div className="product-preview__orbit" aria-hidden="true" />
       <div className="product-preview__phone" aria-hidden="true">
         <span className="product-preview__speaker" />
@@ -37,7 +41,10 @@ function ProductPreview() {
         <strong>{preview.scoreValue}</strong>
         <small>{preview.scoreDetail}</small>
       </div>
-      <figcaption>{copy.landing.hero.previewLabel}</figcaption>
+      <figcaption id="hero-preview-label">{copy.landing.hero.previewLabel}</figcaption>
+      <span className="visually-hidden" id="hero-preview-description">
+        {copy.landing.hero.previewAlt}
+      </span>
     </figure>
   );
 }

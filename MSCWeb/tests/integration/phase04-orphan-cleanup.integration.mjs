@@ -16,10 +16,16 @@ function requireEnvironment(name) {
 }
 
 async function request({ body, headers = {}, method = "POST" } = {}) {
+  const serializedBody = body === undefined ? undefined : JSON.stringify(body);
   return fetch(endpoint, {
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: serializedBody,
     headers: {
-      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      ...(serializedBody === undefined
+        ? {}
+        : {
+            "Content-Length": String(Buffer.byteLength(serializedBody)),
+            "Content-Type": "application/json",
+          }),
       ...headers,
     },
     method,
@@ -53,5 +59,10 @@ const oversized = await request({
   headers: { apikey: secretKey },
 });
 assert.equal(oversized.status, 422, "request cleanup oversized ditolak");
+assert.equal(
+  (await oversized.json()).code,
+  "request_invalid",
+  "request cleanup oversized ditolak pada batas pembacaan body",
+);
 
-console.log("PASS Phase 04 orphan cleanup boundary (4 assertions, 0 object deleted)");
+console.log("PASS Phase 04 orphan cleanup boundary (5 assertions, 0 object deleted)");

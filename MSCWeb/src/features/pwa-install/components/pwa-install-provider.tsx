@@ -18,7 +18,7 @@ import {
   type InstallState,
 } from "@/features/pwa-install/model/install-state";
 import { copy } from "@/shared/i18n/id";
-import { ModalDialog, ToastLiveRegion } from "@/shared/ui";
+import { ModalDialog, ToastLiveRegion } from "@/shared/ui/overlays/modal-dialog";
 
 type InstallChoice = Readonly<{ outcome: "accepted" | "dismissed"; platform: string }>;
 
@@ -111,6 +111,21 @@ export function PwaInstallProvider({ actorDestination, children }: PwaInstallPro
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.dataset.pwaInstallState = state.kind;
+    return () => {
+      if (document.documentElement.dataset.pwaInstallState === state.kind) {
+        delete document.documentElement.dataset.pwaInstallState;
+      }
+    };
+  }, [state.kind]);
+
+  useEffect(() => {
+    if (!announcement) return;
+    const clearAnnouncement = window.setTimeout(() => setAnnouncement(undefined), 5_000);
+    return () => window.clearTimeout(clearAnnouncement);
+  }, [announcement]);
+
   const requestInstall = useCallback(async () => {
     const prompt = promptReference.current;
     if (!prompt) return;
@@ -148,11 +163,7 @@ export function PwaInstallProvider({ actorDestination, children }: PwaInstallPro
         title={copy.landing.install.sheetTitle}
         variant="sheet"
       >
-        <p>
-          {state.kind === "ios-guidance"
-            ? copy.landing.install.iosSteps
-            : copy.landing.install.manualSteps}
-        </p>
+        {null}
       </ModalDialog>
       <ToastLiveRegion message={announcement} />
     </PwaInstallContext.Provider>

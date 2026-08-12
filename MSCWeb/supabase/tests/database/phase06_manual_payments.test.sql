@@ -147,7 +147,15 @@ select extensions.lives_ok(
   $$ select public.create_payment_destination('BCA', 'Bank Central Asia', 'MSC Lokal', '1234567890', statement_timestamp()) $$,
   'Admin can create versioned destination'
 );
-select extensions.is((select count(*)::bigint from public.payment_destinations), 1::bigint, 'one destination created');
+select extensions.is(
+  (
+    select count(*)::bigint
+    from public.payment_destinations
+    where created_by = 'b6000000-0000-0000-0000-000000000001'
+  ),
+  1::bigint,
+  'one fixture destination created without assuming an empty local table'
+);
 
 set local "request.jwt.claims" =
   '{"sub":"b6000000-0000-0000-0000-000000000011","role":"authenticated"}';

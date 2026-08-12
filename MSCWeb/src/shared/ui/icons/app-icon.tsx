@@ -59,9 +59,12 @@ const stroked = new Set<AppIconName>([
   "back",
   "check",
   "close",
+  "content",
   "error",
   "filter",
   "info",
+  "payment",
+  "program",
   "warning",
 ]);
 

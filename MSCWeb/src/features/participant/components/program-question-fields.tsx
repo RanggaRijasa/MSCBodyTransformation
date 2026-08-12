@@ -8,7 +8,8 @@ import type {
   ParticipantAnswerDraft,
   ParticipantAnswerDrafts,
 } from "@/features/participant/model/participant-answer-state";
-import { ChoiceField, MediaSurface, TextareaField, TextField } from "@/shared/ui";
+import { ChoiceField, TextareaField, TextField } from "@/shared/ui/forms/form-controls";
+import { MediaSurface } from "@/shared/ui/media/media-surface";
 
 type QuestionFieldsProperties = Readonly<{
   drafts: ParticipantAnswerDrafts;

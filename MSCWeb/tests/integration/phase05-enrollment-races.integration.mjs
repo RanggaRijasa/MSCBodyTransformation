@@ -253,7 +253,11 @@ try {
   const publicPrograms = await expectOk(
     await request("/rest/v1/rpc/list_public_programs", {
       apiKey: anonKey,
-      body: { result_limit: 50, result_offset: 0, target_program_id: null },
+      body: {
+        result_limit: 50,
+        result_offset: 0,
+        target_program_id: createdPrograms[0],
+      },
       method: "POST",
       token: anonKey,
     }),

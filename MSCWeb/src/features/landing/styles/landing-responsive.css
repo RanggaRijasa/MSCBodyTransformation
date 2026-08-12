@@ -15,8 +15,8 @@
     min-height: 29rem;
   }
 
-  .landing-leaderboard {
-    grid-template-columns: 1fr;
+  .landing-previews__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -146,28 +146,8 @@
     height: 4.5rem;
   }
 
-  .landing-leaderboard__visual {
+  .landing-previews__grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .landing-leaderboard__table-wrap {
-    border-radius: var(--radius-lg);
-  }
-
-  .landing-podium {
-    min-height: 14rem;
-  }
-
-  .landing-podium [data-rank="1"] {
-    height: 13rem;
-  }
-
-  .landing-podium [data-rank="2"] {
-    height: 9rem;
-  }
-
-  .landing-podium [data-rank="3"] {
-    height: 7rem;
   }
 
   .landing-install-callout__route {
@@ -223,10 +203,6 @@
     grid-template-columns: 1fr;
   }
 
-  .landing-leaderboard__table-wrap {
-    margin-inline: 12px;
-  }
-
   .landing-install-callout__action {
     grid-template-columns: 1fr;
   }
@@ -242,199 +218,5 @@
     grid-row: 1 / span 2;
     width: 3.5rem;
     height: 3.5rem;
-  }
-}
-
-@media (max-width: 22rem) {
-  .marketing-header__inner {
-    gap: 0.5rem;
-    padding-inline: 0.5rem;
-  }
-
-  .marketing-wordmark strong {
-    display: none;
-  }
-
-  .marketing-wordmark__icon,
-  .marketing-menu summary {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-  }
-
-  .marketing-menu summary {
-    padding-inline: 8px;
-    font-size: 0;
-    white-space: nowrap;
-  }
-
-  .marketing-menu summary::before {
-    content: "☰";
-    font-size: 24px;
-    line-height: 1;
-  }
-
-  .marketing-menu nav {
-    width: calc(100vw - 32px);
-    min-width: 0;
-  }
-
-  .landing-hero,
-  .landing-section,
-  .landing-install-callout,
-  .marketing-footer {
-    width: calc(100% - 32px);
-  }
-
-  .landing-hero > *,
-  .landing-benefits__items > *,
-  .landing-steps > *,
-  .landing-audiences > *,
-  .landing-leaderboard > * {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .landing-audiences {
-    width: 100%;
-    padding-inline: 16px;
-  }
-
-  .landing-steps {
-    gap: 32px;
-  }
-
-  .landing-steps::before {
-    inset-block: 22px;
-    inset-inline-start: 21px;
-    width: 3px;
-  }
-
-  .landing-steps li {
-    min-height: 0;
-    grid-template-columns: 44px minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .landing-step__number {
-    width: 44px;
-    height: 44px;
-    font-size: 16px;
-  }
-
-  .landing-step__icon {
-    display: none;
-  }
-
-  .landing-steps h3,
-  .landing-steps p,
-  .landing-audiences h3,
-  .landing-audiences p,
-  .landing-audiences li {
-    overflow-wrap: normal;
-    word-break: normal;
-  }
-
-  .landing-audiences h3 {
-    font-size: clamp(32px, 12vw, 44px);
-  }
-
-  .landing-audiences article:first-child {
-    padding-block-end: 72px;
-  }
-
-  .landing-audiences article:last-child {
-    padding-block-start: 72px;
-  }
-
-  .landing-audiences__mark {
-    width: 72px;
-    height: 72px;
-    border-width: 8px;
-  }
-
-  .landing-audiences__mark img {
-    width: 56px;
-    height: 56px;
-  }
-
-  .landing-audiences li {
-    align-items: flex-start;
-  }
-
-  .landing-hero h1 {
-    font-size: 42px;
-  }
-
-  .landing-section > h2,
-  .landing-section__heading h2,
-  .landing-install-callout h2,
-  .landing-leaderboard h2 {
-    font-size: 38px;
-  }
-
-  .product-preview {
-    min-height: 25rem;
-  }
-
-  .product-preview__phone {
-    min-height: 24rem;
-    padding-inline: 0.7rem;
-  }
-
-  .product-preview__progress {
-    width: 6.5rem;
-    height: 6.5rem;
-    margin-block: 1.2rem;
-  }
-
-  .product-preview__rank,
-  .product-preview__score {
-    min-width: 7rem;
-    font-size: 0.75rem;
-  }
-
-  .product-preview__rank strong,
-  .product-preview__score strong {
-    font-size: 1.4rem;
-  }
-
-  .landing-benefits__items article,
-  .landing-audiences article,
-  .landing-install-callout__action {
-    padding: 16px;
-  }
-
-  .landing-benefits__items article {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .landing-hero__actions,
-  .landing-install-callout__action {
-    align-items: stretch;
-  }
-
-  .landing-hero__actions > * {
-    width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-page *,
-  .landing-page *::before,
-  .landing-page *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-@media (prefers-contrast: more) {
-  .landing-page {
-    --landing-border: currentColor;
-    --landing-muted: var(--color-identity-on-surface);
   }
 }

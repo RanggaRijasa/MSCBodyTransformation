@@ -113,6 +113,42 @@ test.describe("Supabase Auth lokal", () => {
     "Memerlukan credential runtime Supabase lokal.",
   );
 
+  test("onboarding terautentikasi memuat pemindai QR lengkap tanpa overflow", async ({
+    browserName,
+    context,
+    page,
+  }) => {
+    const email = `phase03-onboarding-media-${browserName}@local.invalid`;
+    const identity = await createLocalIdentity(context, email);
+    try {
+      await page.setViewportSize({ height: 844, width: 320 });
+      await page.goto("/onboarding");
+      await page.getByRole("button", { name: "Pindai QR Coach" }).click();
+
+      const scanner = page.getByRole("dialog", { name: "Pindai QR Coach" });
+      await expect(scanner.getByLabel("Pratinjau kamera QR")).toBeVisible();
+      await expect(scanner.locator(".qr-scanner__frame")).toBeVisible();
+      const fileInput = scanner.locator('input[type="file"]');
+      const fileAction = scanner.locator(".qr-scanner__file-action");
+      await expect(fileAction).toContainText("Pilih gambar QR");
+
+      await expect(scanner.getByRole("button", { exact: true, name: "Tutup" })).toBeFocused();
+      await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab");
+      await expect(fileInput).toBeFocused();
+      expect(
+        await fileAction.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return style.boxShadow !== "none" || style.outlineStyle !== "none";
+        }),
+      ).toBe(true);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+    } finally {
+      await identity.admin.auth.admin.deleteUser(identity.user.id);
+    }
+  });
+
   test("onboarding Coach tetap Participant lalu logout membatalkan sesi di tab lain", async ({
     context,
     page,

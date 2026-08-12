@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 
-import { navigationByKind, type ShellKind } from "@/features/app-shell/model/navigation-items";
+import {
+  adminMobileNavigation,
+  navigationByKind,
+  type ShellKind,
+} from "@/features/app-shell/model/navigation-items";
 import { RouteBehavior } from "@/features/app-shell/components/route-behavior";
 import { mainContentId } from "@/features/app-shell/model/shell-constants";
 import { ShellNavigation } from "@/features/app-shell/components/shell-navigation";
@@ -39,13 +43,11 @@ export function AppShell({ children, kind, label }: AppShellProperties) {
         />
       </aside>
       <main id={mainContentId}>{children}</main>
-      {kind === "admin" ? null : (
-        <ShellNavigation
-          items={navigationByKind[kind]}
-          kind={kind}
-          label={navigationLabels[kind]}
-        />
-      )}
+      <ShellNavigation
+        items={kind === "admin" ? adminMobileNavigation : navigationByKind[kind]}
+        kind={kind}
+        label={navigationLabels[kind]}
+      />
       <RouteBehavior />
     </div>
   );

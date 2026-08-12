@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 import type { ShellKind, ShellNavigationItem } from "@/features/app-shell/model/navigation-items";
 import { saveShellScrollPosition } from "@/features/app-shell/components/route-behavior";
-import { AppIcon } from "@/shared/ui";
+import { AppIcon } from "@/shared/ui/icons/app-icon";
 
 type ShellNavigationProperties = Readonly<{
   items: readonly ShellNavigationItem[];

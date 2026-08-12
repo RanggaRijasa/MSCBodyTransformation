@@ -1,6 +1,6 @@
 /* MSC PWA service worker: only public, non-personal assets may enter Cache Storage. */
 
-const BUILD_VERSION = "phase11-20260811-1";
+const BUILD_VERSION = "phase11a-20260812-2";
 const STATIC_CACHE = `msc-pwa-static-${BUILD_VERSION}`;
 const CACHE_PREFIXES = ["msc-pwa-static-", "msc-pwa-runtime-"];
 const OFFLINE_URL = "/offline.html";
@@ -76,9 +76,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const hasContentFingerprint = /(?:^|[-.])[a-f0-9]{8,}(?=\.|-)/i.test(url.pathname);
   const isFingerprintedNextAsset =
     url.search === "" &&
     url.pathname.startsWith("/_next/static/") &&
+    hasContentFingerprint &&
     ["font", "script", "style", "worker"].includes(request.destination);
   const isAllowlistedPublicAsset = url.search === "" && PUBLIC_ASSETS.has(url.pathname);
   if (isFingerprintedNextAsset || isAllowlistedPublicAsset) {

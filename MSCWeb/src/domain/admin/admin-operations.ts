@@ -31,6 +31,7 @@ export type AdminPerson = Readonly<{
 export type AdminWinnerPoster = Readonly<{
   alternativeText: string;
   id: string;
+  imageUrl: string;
   isPublished: boolean;
   mediaPath: string;
   programId: string;

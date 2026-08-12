@@ -8,7 +8,7 @@ import {
 } from "@/application/admin/load-admin-experience";
 import type { AdminPerson } from "@/domain/admin/admin-operations";
 import { requireRole } from "@/features/auth/server/session-routing";
-import { AdminPeople } from "@/features/admin";
+import { AdminPeople } from "@/features/admin/components/admin-people";
 import { copy } from "@/shared/i18n/id";
 import { StateMessage } from "@/shared/ui";
 

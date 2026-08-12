@@ -230,12 +230,24 @@ test.afterAll(async () => {
 });
 
 test("Guest melihat katalog publik, closed detail, dan intent login HttpOnly", async ({ page }) => {
+  await page.setViewportSize({ height: 900, width: 320 });
   await page.goto("/program");
   await expect(page.getByRole("heading", { name: "Temukan program transformasimu" })).toBeVisible();
   await expect(page.getByText("Program Browser Gratis")).toBeVisible();
   await page.goto(`/program/${ids.programs[2]}`);
   await expect(page.getByText("Pendaftaran program ini sudah ditutup.")).toBeVisible();
   await expect(page.getByRole("button", { name: /daftar/i })).toHaveCount(0);
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "400%";
+  });
+  const metricDimensions = await page.locator(".program-detail__metrics").evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(metricDimensions.scrollWidth).toBeLessThanOrEqual(metricDimensions.clientWidth);
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "";
+  });
 
   await page.goto(`/program/${ids.programs[0]}`);
   await page.getByRole("button", { name: "Masuk untuk mendaftar" }).click();
@@ -267,7 +279,8 @@ test("Peserta memindai QR visual, enroll gratis idempoten, dan mode berubah ke a
   await expect(page.getByRole("heading", { name: "Coach Browser 1" })).toBeVisible();
   await page.getByRole("button", { name: "Konfirmasi pendaftaran" }).click();
   await expect(page).toHaveURL(new RegExp(`/program/${ids.programs[0]}$`));
-  await expect(page.getByRole("link", { name: "Buka aktivitas program" })).toBeVisible();
+  await expect(page.getByText("Aktivitas program", { exact: true })).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: "Progres program" })).toBeVisible();
 
   const duplicate = await context.request.post(`/api/programs/${ids.programs[0]}/enroll/free`, {
     data: { coachQrPayload: coachQr[0] },

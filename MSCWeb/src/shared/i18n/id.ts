@@ -32,7 +32,7 @@ export const copy = {
         "Ikuti program harian, unggah progres, dan dapatkan pendampingan Coach—langsung dari ponselmu.",
       viewPrograms: "Lihat program",
       previewLabel: "Pratinjau aplikasi",
-      previewAlt: "Pratinjau placeholder antarmuka PWA MSC dengan progres dan tugas harian fiktif",
+      previewAlt: "Ilustrasi antarmuka PWA MSC dengan progres dan tugas harian fiktif",
       preview: {
         greeting: "Halo, Peserta!",
         program: "Program MSC Demo",
@@ -50,8 +50,9 @@ export const copy = {
     },
     benefits: {
       eyebrow: "Manfaat utama",
-      titleLead: "Hasil lebih terarah.",
-      titleAccent: "Konsisten lebih mudah.",
+      titleLead: "Hasil",
+      titleAccent: "lebih",
+      titleTail: "terarah. Konsisten lebih mudah.",
       items: [
         {
           title: "Program terstruktur",
@@ -70,7 +71,7 @@ export const copy = {
       ],
     },
     steps: {
-      eyebrow: "Cara mulai",
+      eyebrow: "Empat langkah",
       title: "Empat langkah menuju program aktif",
       items: [
         {
@@ -107,6 +108,20 @@ export const copy = {
       coachPreviewAlt:
         "Dashboard Coach MSC dengan ringkasan peserta, program aktif, dan papan peringkat menggunakan data fixture",
     },
+    previews: {
+      eyebrow: "Pratinjau aplikasi",
+      title: "Pratinjau aplikasi MSC untuk Peserta, Coach, dan Admin",
+      roles: {
+        participant: "Peserta",
+        coach: "Coach",
+        admin: "Admin",
+      },
+      imageAlt: {
+        participant: "Pratinjau PWA Peserta dengan program aktif dan fokus hari ini",
+        coach: "Pratinjau PWA Coach dengan tindakan cepat dan ringkasan pendampingan",
+        admin: "Pratinjau PWA Admin dengan antrean tindakan operasional",
+      },
+    },
     programs: {
       title: "Program yang dapat dipilih",
       empty: "Daftar program publik akan tampil setelah jadwal dan ketentuannya diterbitkan.",
@@ -120,7 +135,7 @@ export const copy = {
       manualGuidance: "Cara memasang",
       openApp: "Buka aplikasi",
       useBrowser: "Gunakan di browser",
-      eyebrow: "Unduh aplikasi",
+      eyebrow: "Pasang aplikasi",
       calloutTitle: "Pasang MSC di layar utama",
       calloutSummary: "Akses lebih cepat langsung dari layar utama.",
       availability: "Pemasangan menyesuaikan kemampuan browser yang digunakan.",
@@ -153,7 +168,7 @@ export const copy = {
       ],
     },
     faq: {
-      eyebrow: "Pertanyaan umum",
+      eyebrow: "Hal yang perlu diketahui",
       title: "Hal yang perlu diketahui",
       items: [
         {
@@ -183,6 +198,9 @@ export const copy = {
     },
     footer: {
       navigationLabel: "Informasi hukum dan bantuan",
+      productNavigationLabel: "Tautan produk",
+      productTitle: "Tautan",
+      policyTitle: "Kebijakan",
       summary:
         "Program wellness terstruktur dengan pendampingan Coach dan batas privasi yang jelas.",
       privacy: "Privasi",
@@ -217,7 +235,7 @@ export const copy = {
   navigation: {
     skipToContent: "Lewati ke konten utama",
     participant: {
-      today: "Hari ini",
+      today: "Beranda",
       program: "Program",
       ranking: "Peringkat",
       coach: "Coach",

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { loadCoachQrSvgOperation } from "@/application/media/coach-qr-image";
+import { coachQrSvgContentSecurityPolicy } from "@/shared/security/content-security-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export async function GET() {
     headers: {
       "Cache-Control": "private, no-store",
       "Content-Disposition": 'inline; filename="qr-coach-msc.svg"',
-      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
+      "Content-Security-Policy": coachQrSvgContentSecurityPolicy,
       "Content-Type": "image/svg+xml; charset=utf-8",
       "X-Content-Type-Options": "nosniff",
     },

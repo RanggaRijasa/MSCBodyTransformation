@@ -157,7 +157,7 @@ test("Admin membuat draft, menyusun konten, menerbitkan, menutup, dan mengelola 
 }) => {
   await session(context, administrator);
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: "Dashboard Admin" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await page.getByRole("link", { name: "Buat program" }).click();
   await page.getByLabel("Judul").fill(title);
   await page.getByRole("tab", { name: "Hari dan konten" }).click();
@@ -212,9 +212,12 @@ test("Admin membuat draft, menyusun konten, menerbitkan, menutup, dan mengelola 
   await page.goto("/admin/orang");
   await page.getByText("Operasi koreksi terkontrol").click();
   await page.getByLabel("Enrollment").selectOption(ids.enrollment);
-  await page.getByPlaceholder("Poin +/-").fill("7");
-  await page.getByPlaceholder("Alasan penyesuaian").fill("Koreksi hasil verifikasi operasional.");
+  await page.getByRole("spinbutton", { name: "Perubahan poin" }).fill("7");
+  await page
+    .getByRole("textbox", { name: "Alasan penyesuaian poin" })
+    .fill("Koreksi hasil verifikasi operasional.");
   await page.getByRole("button", { name: "Sesuaikan poin" }).click();
+  await page.waitForLoadState("networkidle");
   await expect
     .poll(
       async () =>
@@ -229,8 +232,13 @@ test("Admin membuat draft, menyusun konten, menerbitkan, menutup, dan mengelola 
     .toBe(7);
 
   await page.goto(`/admin/program/${programId}`);
-  await page.getByLabel("Alasan penyelesaian").fill("Seluruh kegiatan program telah berakhir.");
-  await page.getByRole("button", { name: "Selesaikan program" }).click();
+  const completeButton = page.getByRole("button", { name: "Selesaikan program" });
+  const completeForm = page.locator("form").filter({ has: completeButton });
+  await completeForm
+    .getByLabel("Alasan penyelesaian")
+    .fill("Seluruh kegiatan program telah berakhir.");
+  await completeButton.click();
+  await page.waitForLoadState("networkidle");
   await waitForProgramStatus("completed");
   await page.reload();
   await page.getByRole("button", { name: "Kunci pemenang" }).click();
@@ -296,10 +304,15 @@ test("Admin memutus pengajuan dan melihat pembayaran versi aman", async ({ conte
   await session(context, administrator);
   await page.goto("/admin/orang?bagian=pengajuan");
   const applications = page.locator("#pengajuan");
-  await expect(
-    applications.getByRole("heading", { name: "Calon Coach Browser Phase 09" }),
-  ).toBeVisible();
-  await applications.getByRole("button", { name: "Terima kelayakan" }).click();
+  const applicationCard = applications
+    .getByRole("heading", { name: "Calon Coach Browser Phase 09" })
+    .locator("..");
+  await expect(applicationCard).toBeVisible();
+  await applicationCard
+    .getByLabel("Alasan keputusan")
+    .fill("Kelayakan dan dokumen pelatihan telah diperiksa.");
+  await applicationCard.getByRole("button", { name: "Terima kelayakan" }).click();
+  await page.waitForLoadState("networkidle");
   await expect
     .poll(
       async () =>
@@ -322,7 +335,7 @@ test("non-Admin gagal tertutup tanpa melihat resource Admin", async ({ context, 
   await session(context, participant);
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/hari-ini$/);
-  await expect(page.getByRole("heading", { name: "Dashboard Admin" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toHaveCount(0);
   const upload = await page.request.post("/api/admin/content/posters", {
     headers: { Origin: new URL(page.url()).origin },
     multipart: { operation: "add" },

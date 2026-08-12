@@ -3,7 +3,7 @@ import type { PublicProgram } from "@/domain/programs/program";
 import { ParticipantHome, ProgramActivity } from "@/features/participant";
 import { ProgramContentPreview } from "@/shared/ui";
 
-const program: PublicProgram = {
+export const participantSimulatorProgram: PublicProgram = {
   category: "Transformasi kebiasaan",
   coverAlternativeText: null,
   coverImageUrl: null,
@@ -53,7 +53,7 @@ const program: PublicProgram = {
   wellnessDisclaimer: "Program kebugaran non-diagnostik.",
 };
 
-const participantProgram: ParticipantProgram = {
+export const participantSimulatorEnrollment: ParticipantProgram = {
   access: [
     {
       accessState: "available",
@@ -61,12 +61,12 @@ const participantProgram: ParticipantProgram = {
       enrollmentId: "gallery-enrollment",
       isCurrentDay: true,
       programDayId: "gallery-day",
-      programId: program.id,
+      programId: participantSimulatorProgram.id,
     },
   ],
   enrollmentId: "gallery-enrollment",
   enrollmentStatus: "active",
-  program,
+  program: participantSimulatorProgram,
   quizResults: [],
   score: {
     activityPoints: 30,
@@ -98,16 +98,16 @@ export function ParticipantGallery() {
             },
           ]}
           displayName="Rani"
-          programs={[participantProgram]}
+          programs={[participantSimulatorEnrollment]}
           publicPrograms={[]}
-          selectedProgram={participantProgram}
+          selectedProgram={participantSimulatorEnrollment}
           topFive={[
             {
               id: "score-1",
               isCurrentParticipant: false,
               participantDisplayName: "Dewi",
               participantId: "participant-1",
-              programId: program.id,
+              programId: participantSimulatorProgram.id,
               progressPercentage: 90,
               rank: 1,
               totalPoints: 450,
@@ -117,7 +117,7 @@ export function ParticipantGallery() {
               isCurrentParticipant: true,
               participantDisplayName: "Rani",
               participantId: "participant-2",
-              programId: program.id,
+              programId: participantSimulatorProgram.id,
               progressPercentage: 60,
               rank: 4,
               totalPoints: 240,
@@ -128,10 +128,13 @@ export function ParticipantGallery() {
         />
       </div>
       <div data-testid="participant-activity-gallery">
-        <ProgramActivity participantProgram={participantProgram} />
+        <ProgramActivity participantProgram={participantSimulatorEnrollment} />
       </div>
       <div data-testid="coach-content-preview-gallery">
-        <ProgramContentPreview audience="coach" step={program.days[0]!.steps[0]!} />
+        <ProgramContentPreview
+          audience="coach"
+          step={participantSimulatorProgram.days[0]!.steps[0]!}
+        />
       </div>
     </div>
   );

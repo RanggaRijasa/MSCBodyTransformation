@@ -292,6 +292,22 @@ test("upload offline retry lalu Admin approve mengaktifkan program", async ({ br
   const adminContext = await browser.newContext();
   await addSession(adminContext, administrator.email ?? "");
   const adminPage = await adminContext.newPage();
+  await adminPage.setViewportSize({ height: 900, width: 320 });
+  await adminPage.goto("/admin/pembayaran");
+  await adminPage.getByText("Tujuan pembayaran", { exact: true }).click();
+  await adminPage.evaluate(() => {
+    document.documentElement.style.fontSize = "400%";
+  });
+  for (const selector of [".payment-metrics", ".payment-destination-grid"]) {
+    const dimensions = await adminPage.locator(selector).evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }));
+    expect(dimensions.scrollWidth, selector).toBeLessThanOrEqual(dimensions.clientWidth);
+  }
+  await adminPage.evaluate(() => {
+    document.documentElement.style.fontSize = "";
+  });
   await adminPage.goto(`/admin/pembayaran/${orderId}`);
   await expect(adminPage.getByRole("img", { name: "Bukti transfer privat" })).toBeVisible();
   const adminDecision = adminPage.locator(".payment-decision:visible");

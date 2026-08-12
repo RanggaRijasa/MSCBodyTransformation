@@ -1,0 +1,187 @@
+.admin-filter-bar {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.admin-filter-bar form {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) auto auto;
+  align-items: end;
+  gap: var(--space-sm);
+}
+
+.admin-role-segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xxs);
+  padding: var(--space-xxs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--status-neutral-background);
+}
+
+.admin-role-segments a {
+  display: inline-flex;
+  min-height: var(--control-min);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-role-segments a[aria-current="page"] {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text-primary);
+}
+
+.admin-filter-bar label,
+.admin-operation-panel label,
+.admin-copy-day label,
+.admin-decision-form label,
+.admin-poster-form label,
+.admin-operation-forms label {
+  display: grid;
+  gap: var(--space-xs);
+  font-weight: 700;
+}
+
+.admin-filter-bar input,
+.admin-filter-bar select,
+.admin-operation-panel input,
+.admin-operation-panel textarea,
+.admin-copy-day select,
+.admin-decision-form textarea,
+.admin-operation-forms input,
+.admin-operation-forms select,
+.admin-operation-forms textarea,
+.admin-poster-form input,
+.admin-poster-form select,
+.admin-poster-form textarea {
+  width: 100%;
+  min-height: var(--control-min);
+}
+
+.admin-program-grid,
+.admin-poster-grid,
+.admin-person-list,
+.admin-application-list {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.admin-program-grid,
+.admin-poster-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+}
+
+.admin-program-card,
+.admin-person-card,
+.admin-poster-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-md);
+}
+
+.admin-program-card__identity,
+.admin-program-card__metrics,
+.admin-settings-grid dl {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.admin-program-card__metrics,
+.admin-settings-grid dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.admin-program-card dt,
+.admin-settings-grid dt {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.admin-program-card dd,
+.admin-settings-grid dd {
+  margin: var(--space-xxs) 0 0;
+  font-weight: 750;
+}
+
+.admin-program-card__action {
+  margin-block-start: auto;
+}
+
+.admin-restriction {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+
+.admin-restriction {
+  padding: var(--space-sm);
+  border-inline-start: 3px solid var(--color-warning);
+  background: var(--status-warning-background);
+  color: var(--color-warning);
+}
+
+.admin-pagination,
+.admin-inline-actions,
+.admin-decision-form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.admin-pagination {
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 64rem) {
+  .admin-program-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    overflow: hidden;
+  }
+
+  .admin-program-card {
+    grid-template-columns: minmax(16rem, 2fr) minmax(18rem, 1.25fr) auto;
+    align-items: center;
+    border: 0;
+    border-block-end: 1px solid var(--color-border);
+    border-radius: 0;
+  }
+
+  .admin-program-card:last-child {
+    border-block-end: 0;
+  }
+
+  .admin-program-card__metrics {
+    grid-template-columns: repeat(2, minmax(8rem, 1fr));
+  }
+}
+
+@media (max-width: 52rem) {
+  .admin-filter-bar form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (forced-colors: active) {
+  .admin-role-segments a[aria-current="page"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .admin-restriction {
+    border: 1px solid CanvasText;
+  }
+}

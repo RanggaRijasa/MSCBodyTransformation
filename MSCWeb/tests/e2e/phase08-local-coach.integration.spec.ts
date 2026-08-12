@@ -339,7 +339,8 @@ test("dashboard → roster → detail → approve → score → activity → QR 
   });
   await session(context, coachA);
   await page.goto("/coach-area");
-  await expect(page.getByRole("heading", { name: "Halo, Coach Browser A" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Coach Browser A" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Peserta saya/ })).toBeVisible();
   await page.goto("/coach-area/peserta?perhatian=not_started&urut=progress");
   await expect(page.getByRole("heading", { name: "Peserta Coach Browser" })).toBeVisible();
@@ -349,7 +350,7 @@ test("dashboard → roster → detail → approve → score → activity → QR 
   await expect(page.getByText("Menjaga konsistensi.")).toBeVisible();
   await page.goto("/coach-area/pemeriksaan");
   await expect(page.getByRole("heading", { name: "Peserta Coach Browser" })).toBeVisible();
-  await expect(page.getByText("Kunci jawaban")).toBeVisible();
+  await expect(page.getByText("Kunci jawaban")).toHaveCount(1);
   await expect(page.getByText("Menjaga konsistensi.", { exact: true })).toHaveCount(2);
   await page.getByRole("button", { name: "Setujui" }).click();
   await expect(page.getByText(/Skor direkonsiliasi/)).toBeVisible();
@@ -386,7 +387,8 @@ test("dashboard → roster → detail → approve → score → activity → QR 
     .single();
   expect(coachProfile.data?.coach_biography).toBe("Bio Coach diperbarui melalui journey lokal.");
   await page.goto(`/hari-ini?program=${ids.program}`);
-  await expect(page.getByRole("heading", { name: "Halo, Coach Browser A" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Beranda" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Coach Browser A" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Program" })).toBeVisible();
   expect(
     reactWarnings,
@@ -470,5 +472,8 @@ test("expiry mempertahankan mode Peserta lalu renewal lokal memulihkan dashboard
     "renewal projection",
   );
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Halo, Coach Expired Browser" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Coach Expired Browser" }),
+  ).toBeVisible();
 });

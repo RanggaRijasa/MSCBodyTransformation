@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { AdminWinnerSnapshot } from "@/domain/admin/admin-operations";
 import type { ProcessedBrowserImage } from "@/infrastructure/browser-media/browser-image-processor";
 import { ImageAcquisition } from "@/features/device-media";
-import { AppButton } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
 
 export function AdminPosterUploader({
   mode,

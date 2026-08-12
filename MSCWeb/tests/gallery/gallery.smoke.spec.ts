@@ -1,5 +1,38 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+
+test("halaman role development tersedia tanpa login", async ({ page }) => {
+  const roles = [
+    { heading: "Beranda", marker: "guest-home-gallery", view: "guest" },
+    { heading: "Rani", marker: "participant-home-gallery", view: "participant" },
+    { heading: "Dashboard", marker: "coach-dashboard-gallery", view: "coach" },
+    { heading: "Dashboard", marker: "admin-dashboard-gallery", view: "admin" },
+  ] as const;
+
+  for (const role of roles) {
+    await page.goto(`/?view=${role.view}`);
+    await expect(page.locator("[data-development-view]")).toHaveAttribute(
+      "data-development-view",
+      role.view,
+    );
+    await expect(
+      page.getByRole("navigation", { name: "Halaman role development" }).getByRole("link", {
+        name:
+          role.view === "participant"
+            ? "Peserta"
+            : `${role.view[0]!.toUpperCase()}${role.view.slice(1)}`,
+      }),
+    ).toHaveAttribute("aria-current", "page");
+    await expect(page.getByTestId(role.marker)).toBeVisible();
+    await expect(
+      page.getByTestId(role.marker).getByRole("heading", { name: role.heading }),
+    ).toBeVisible();
+  }
+
+  await page.getByRole("link", { name: "Guest", exact: true }).click();
+  await expect(page).toHaveURL(/\?view=guest$/);
+  await expect(page.getByTestId("guest-home-gallery")).toBeVisible();
+});
 import { renderSVG } from "uqr";
 
 test("gallery development-only membuka dialog dengan history dan lulus axe", async ({ page }) => {
@@ -175,7 +208,13 @@ test("gallery Home Peserta mobile lulus axe, zoom, mode gelap, dan visual", asyn
     element.style.fontSize = "125%";
   });
   const home = page.getByTestId("participant-home-gallery");
-  await expect(home.getByRole("heading", { name: "Halo, Rani" })).toBeVisible();
+  await expect(home.getByRole("heading", { name: "Rani" })).toBeVisible();
+  await expect(
+    home.getByRole("img", {
+      name: /Aktivitas hari ini \d+ dari \d+ langkah selesai\. Progres program 60 persen\./,
+    }),
+  ).toBeVisible();
+  await expect(home.getByText("Diikuti")).toBeVisible();
   await expect(home.getByText("Coach-mu")).toBeVisible();
   const results = await new AxeBuilder({ page })
     .include('[data-testid="participant-home-gallery"]')
@@ -196,7 +235,13 @@ test("gallery dashboard Coach desktop lulus axe, keyboard, dan visual", async ({
   await page.setViewportSize({ height: 900, width: 1280 });
   await page.goto("/");
   const dashboard = page.getByTestId("coach-dashboard-gallery");
-  await expect(dashboard.getByRole("heading", { name: "Halo, Coach Ayu" })).toBeVisible();
+  await expect(dashboard.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+  await expect(
+    dashboard.getByRole("navigation", { name: "Tindakan cepat Coach" }).getByRole("link"),
+  ).toHaveCount(6);
+  await expect(
+    dashboard.getByRole("link", { exact: true, name: "Aktivitas terbaru" }),
+  ).toHaveAttribute("href", "/coach-area/program#aktivitas");
   await dashboard.getByRole("link", { name: /Peserta saya/ }).focus();
   await expect(dashboard.getByRole("link", { name: /Peserta saya/ })).toBeFocused();
   const results = await new AxeBuilder({ page })
@@ -247,7 +292,7 @@ test("gallery dashboard Admin wide lulus axe, keyboard, dan visual", async ({ pa
   await page.setViewportSize({ height: 1000, width: 1440 });
   await page.goto("/");
   const dashboard = page.getByTestId("admin-dashboard-gallery");
-  await expect(dashboard.getByRole("heading", { name: "Dashboard Admin" })).toBeVisible();
+  await expect(dashboard.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await dashboard.getByRole("link", { name: "Buka antrean" }).focus();
   await expect(dashboard.getByRole("link", { name: "Buka antrean" })).toBeFocused();
   const results = await new AxeBuilder({ page })
@@ -310,7 +355,8 @@ test("capture marketing Coach tidak memuat field privat", async ({ page }, testI
   await page.setViewportSize({ height: 900, width: 1280 });
   await page.goto("/");
   const capture = page.getByTestId("marketing-coach-capture");
-  await expect(capture.getByRole("heading", { name: "Halo, Coach Demo" })).toBeVisible();
+  await expect(capture.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+  await expect(capture.getByRole("heading", { level: 2, name: "Coach Demo" })).toBeVisible();
   const text = await capture.textContent();
   expect(text).not.toMatch(/@|\+62|\bkg\b|bukti transfer|token|signed/i);
   const results = await new AxeBuilder({ page })

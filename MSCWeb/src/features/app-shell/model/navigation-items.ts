@@ -1,5 +1,5 @@
-import type { AppIconName } from "@/shared/ui";
 import { copy } from "@/shared/i18n/id";
+import type { AppIconName } from "@/shared/ui/icons/app-icon";
 
 export type ShellKind = "participant" | "coach" | "admin";
 
@@ -32,6 +32,14 @@ export const adminNavigation: readonly ShellNavigationItem[] = [
   { href: "/admin/konten", icon: "content", label: copy.navigation.admin.content },
   { href: "/admin/pengaturan", icon: "settings", label: copy.navigation.admin.settings },
 ];
+
+export const adminMobileNavigation: readonly ShellNavigationItem[] = [
+  adminNavigation[0],
+  adminNavigation[2],
+  adminNavigation[3],
+  adminNavigation[4],
+  adminNavigation[5],
+].filter((item): item is ShellNavigationItem => item !== undefined);
 
 export const navigationByKind: Readonly<Record<ShellKind, readonly ShellNavigationItem[]>> = {
   participant: participantNavigation,

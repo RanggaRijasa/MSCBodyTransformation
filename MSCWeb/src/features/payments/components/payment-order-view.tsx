@@ -13,7 +13,8 @@ import {
   formatCurrencyIDR,
   programTimezoneLabel,
 } from "@/shared/formatting/indonesian-formatters";
-import { AppButton, Surface } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 function deadline(order: PaymentOrder): string | null {
   const value = order.correctionExpiresAt ?? order.reservationExpiresAt;

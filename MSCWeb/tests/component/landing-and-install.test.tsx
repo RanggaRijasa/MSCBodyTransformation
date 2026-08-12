@@ -69,7 +69,12 @@ describe("landing dan install CTA", () => {
     render(<LandingPage actor={{ kind: "anonymous" }} />);
 
     expect(screen.getByRole("link", { name: "Lihat program" })).toHaveAttribute("href", "/program");
-    const productPreview = screen.getByLabelText(/Pratinjau placeholder antarmuka PWA MSC/i);
+    expect(
+      within(screen.getByRole("banner")).queryByText(
+        /Unduh MSC|Cara memasang(?: di iPhone)?|Gunakan di browser|Buka aplikasi/,
+      ),
+    ).toBeNull();
+    const productPreview = screen.getByRole("figure", { name: "Pratinjau aplikasi" });
     expect(productPreview).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Program yang dapat dipilih" })).toBeNull();
     expect(screen.queryByText(/Selengkapnya|Lihat semua peringkat/i)).toBeNull();
@@ -80,11 +85,21 @@ describe("landing dan install CTA", () => {
     expect(stepsSection).not.toBeNull();
     expect(within(stepsSection as HTMLElement).getAllByRole("listitem")).toHaveLength(4);
 
-    const leaderboardSection = screen
-      .getByRole("heading", { name: "Papan peringkat peserta" })
+    const previewSection = screen
+      .getByRole("heading", { name: "Pratinjau aplikasi MSC untuk Peserta, Coach, dan Admin" })
       .closest("section");
-    expect(leaderboardSection).not.toBeNull();
-    expect(within(leaderboardSection as HTMLElement).queryByRole("link")).toBeNull();
-    expect(within(leaderboardSection as HTMLElement).queryByRole("button")).toBeNull();
+    expect(previewSection).not.toBeNull();
+    expect(within(previewSection as HTMLElement).getAllByRole("figure")).toHaveLength(3);
+    expect(within(previewSection as HTMLElement).getByText("Peserta")).toBeVisible();
+    expect(within(previewSection as HTMLElement).getByText("Coach")).toBeVisible();
+    expect(within(previewSection as HTMLElement).getByText("Admin")).toBeVisible();
+    expect(
+      within(previewSection as HTMLElement).getByRole("img", {
+        name: "Pratinjau PWA Peserta dengan program aktif dan fokus hari ini",
+      }),
+    ).toHaveAttribute("src", expect.stringContaining("landing-participant-v1.jpg"));
+    expect(within(previewSection as HTMLElement).getAllByRole("img")).toHaveLength(3);
+    expect(within(previewSection as HTMLElement).queryByRole("link")).toBeNull();
+    expect(within(previewSection as HTMLElement).queryByRole("button")).toBeNull();
   });
 });

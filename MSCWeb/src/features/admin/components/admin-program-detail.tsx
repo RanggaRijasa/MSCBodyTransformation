@@ -10,8 +10,11 @@ import {
   reopenQuizAttemptAction,
 } from "@/application/admin/admin-mutations";
 import type { AdminProgramClosure } from "@/domain/admin/admin-operations";
+import { adminProgramStatusLabels } from "@/features/admin/components/admin-presentation-labels";
 import { ProgramContentPreview } from "@/shared/ui/program/program-content-preview";
-import { AppButton, AppLink, StatusBadge, Surface } from "@/shared/ui";
+import { AppButton, AppLink } from "@/shared/ui/controls/actions";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 export function AdminProgramDetail({
   closure,
@@ -24,7 +27,7 @@ export function AdminProgramDetail({
     <div className="admin-page">
       <header className="admin-page__header admin-page__header--action">
         <div>
-          <p className="admin-eyebrow">Program {draft.status}</p>
+          <p className="admin-eyebrow">Program {adminProgramStatusLabels[draft.status]}</p>
           <h1>{draft.title}</h1>
           <p>{draft.summary || "Belum ada ringkasan."}</p>
         </div>
@@ -161,7 +164,7 @@ function ClosurePreflight({ closure }: Readonly<{ closure: AdminProgramClosure }
       <div>
         <h2 id="closure-preflight-title">Prasyarat penutupan</h2>
         <StatusBadge tone={blockerCount === 0 ? "success" : "warning"}>
-          {blockerCount === 0 ? "Siap ditutup" : `${blockerCount} blocker`}
+          {blockerCount === 0 ? "Siap ditutup" : `${blockerCount} hambatan`}
         </StatusBadge>
       </div>
       <dl>

@@ -1,6 +1,6 @@
 .payment-page {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-xl);
   max-width: 60rem;
   margin-inline: auto;
 }
@@ -13,11 +13,38 @@
 .payment-page__header p {
   margin: 0;
 }
+.payment-page__header h1 {
+  font-size: var(--text-screen-title);
+  line-height: var(--line-tight);
+}
+.payment-page__header > p:last-child {
+  max-width: var(--reading-max);
+  color: var(--color-text-secondary);
+}
+.payment-page .app-surface > h2:first-child,
+.payment-decision > h2:first-child {
+  margin-block-start: 0;
+  font-size: var(--text-section-title);
+}
+.payment-instructions {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+}
 .payment-instructions dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
   margin: 0 0 var(--space-4);
+}
+.payment-instructions dl div:first-child {
+  grid-column: 1 / -1;
+  padding-block-end: var(--space-md);
+  border-block-end: 1px solid var(--color-border);
+}
+.payment-instructions dl div:first-child dd {
+  color: var(--color-brand-text);
+  font-size: var(--text-metric);
+  line-height: var(--line-tight);
 }
 .payment-instructions dl div {
   display: grid;
@@ -38,6 +65,17 @@
   display: grid;
   gap: var(--space-4);
 }
+.payment-upload,
+.payment-correction,
+.payment-decision,
+.payment-destinations .app-surface,
+.payment-reversal {
+  background: var(--color-surface);
+}
+.payment-correction {
+  border-inline-start: 0.3rem solid var(--color-destructive);
+  background: var(--status-error-background);
+}
 .payment-upload h2,
 .payment-upload p,
 .payment-correction h2,
@@ -51,7 +89,7 @@
 .payment-metrics,
 .payment-destination-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   gap: var(--space-3);
 }
 .payment-destinations {
@@ -59,7 +97,9 @@
   gap: var(--space-4);
 }
 .payment-destinations summary {
+  display: flex;
   min-height: 44px;
+  align-items: center;
   cursor: pointer;
   font-size: var(--text-subheading);
   font-weight: 800;
@@ -98,6 +138,7 @@
 .payment-filters select,
 .payment-filters input {
   width: 100%;
+  min-height: 44px;
 }
 .payment-filters .media-action-row {
   grid-column: 1 / -1;
@@ -107,6 +148,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+}
+.payment-queue__item > div {
+  min-width: 0;
 }
 .payment-queue__item h2 {
   margin-block: var(--space-2) var(--space-1);
@@ -125,8 +169,14 @@
   width: 100%;
 }
 .payment-decision__check {
+  min-height: 44px;
   grid-template-columns: auto 1fr;
   align-items: start;
+}
+.payment-decision__check input {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-block-start: 0.1rem;
 }
 .payment-confirmation {
   display: grid;
@@ -134,7 +184,8 @@
   padding: var(--space-4);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
-  background: var(--color-surface-muted);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 .payment-confirmation h3,
 .payment-confirmation p {
@@ -145,7 +196,8 @@
   overflow: hidden;
   max-width: 40rem;
   border-radius: var(--radius-lg);
-  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 .payment-evidence-viewer img {
   display: block;
@@ -161,6 +213,8 @@
   width: min(100%, 20rem);
   height: auto;
   border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: #fff;
 }
 @media (max-width: 42rem) {
   .payment-instructions dl {
@@ -175,5 +229,26 @@
   }
   .payment-filters .media-action-row {
     grid-column: auto;
+  }
+  .payment-page {
+    gap: var(--space-lg);
+  }
+  .payment-instructions dl div:first-child {
+    grid-column: auto;
+  }
+  .payment-upload > .app-action,
+  .payment-decision .media-action-row > .app-action,
+  .payment-confirmation .app-action,
+  .payment-queue__item > .app-action {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .payment-correction,
+  .payment-confirmation,
+  .payment-evidence-viewer,
+  .payment-qris img {
+    border-color: CanvasText;
   }
 }

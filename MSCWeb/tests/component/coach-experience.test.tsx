@@ -4,10 +4,18 @@ import { describe, expect, it, vi } from "vitest";
 
 import type {
   CoachContext,
+  CoachProgramHub,
   CoachReviewItem,
   CoachRosterEntry,
 } from "@/domain/coach/coach-experience";
-import { CoachAccessState, CoachDashboard, CoachReviewQueue, CoachRoster } from "@/features/coach";
+import type { PublicProgram } from "@/domain/programs/program";
+import {
+  CoachAccessState,
+  CoachDashboard,
+  CoachProgramHubView,
+  CoachReviewQueue,
+  CoachRoster,
+} from "@/features/coach";
 
 const context: CoachContext = {
   accessEndsAt: "2026-11-10T00:00:00Z",
@@ -58,6 +66,30 @@ const review: CoachReviewItem = {
   submittedAt: "2026-08-10T02:00:00Z",
 };
 
+const program: PublicProgram = {
+  category: "Transformasi kebiasaan",
+  coverAlternativeText: null,
+  coverImageUrl: null,
+  days: [],
+  desiredPrice: null,
+  endsOn: "2026-08-31",
+  futureStepPolicy: "locked",
+  id: "program-a",
+  participantLimit: 50,
+  pastStepPolicy: "read_only",
+  pointsPerActivity: 10,
+  pointsPerWeightKilogram: "100.00",
+  pricingMode: "free",
+  quizPassingPercentage: 70,
+  registrationClosesAt: null,
+  startsOn: "2026-08-01",
+  status: "active",
+  summary: "Program kebugaran terarah bersama Coach.",
+  timezone: "Asia/Makassar",
+  title: "Program A",
+  wellnessDisclaimer: "Program kebugaran non-diagnostik.",
+};
+
 describe("pengalaman Coach", () => {
   it("dashboard tidak membuat quick action Peserta saya ganda", () => {
     render(
@@ -75,6 +107,62 @@ describe("pengalaman Coach", () => {
       "href",
       "/hari-ini",
     );
+    expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+    const quickActions = screen.getByRole("navigation", { name: "Tindakan cepat Coach" });
+    expect(quickActions.querySelectorAll("a")).toHaveLength(6);
+    expect(screen.getByRole("link", { name: "Aktivitas terbaru" })).toHaveAttribute(
+      "href",
+      "/coach-area/program#aktivitas",
+    );
+    expect(screen.getByRole("link", { name: "Peringkat" })).toHaveAttribute(
+      "href",
+      "/coach-area/program#peringkat",
+    );
+    expect(
+      Array.from(quickActions.querySelectorAll("a")).map(
+        (link) => link.querySelector("strong")?.textContent,
+      ),
+    ).toEqual([
+      "Periksa bukti",
+      "Peserta saya",
+      "Aktivitas terbaru",
+      "Peringkat",
+      "Program saya",
+      "QR pendaftaran",
+    ]);
+    expect(screen.getByRole("link", { name: /Coach Uji/ })).toHaveAttribute(
+      "href",
+      "/coach-area/profil",
+    );
+    expect(screen.getByRole("heading", { name: "Ringkasan pendampingan" })).toBeVisible();
+    expect(
+      screen
+        .getByRole("region", { name: "Ringkasan pendampingan" })
+        .querySelectorAll(".coach-metrics > div"),
+    ).toHaveLength(3);
+  });
+
+  it("menempatkan aktivitas dan peringkat pada anchor kanonis di hub Program", () => {
+    const hub: CoachProgramHub = {
+      activity: [],
+      assignedPublicProfileIds: new Set(),
+      leaderboard: [],
+      programs: [program],
+      selectedProgram: program,
+      winners: [],
+    };
+    const { container } = render(<CoachProgramHubView context={context} hub={hub} range="7" />);
+    expect(screen.getByRole("heading", { name: "Aktivitas" })).toHaveAttribute("id", "aktivitas");
+    expect(screen.getByRole("heading", { name: "Papan peringkat" })).toHaveAttribute(
+      "id",
+      "peringkat",
+    );
+    expect(container.querySelector(".coach-program-strip")).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        ".participant-program-strip, .participant-program-chip, .participant-ranking-list",
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it("roster membedakan Belum terdaftar tanpa membocorkan berat atau bukti", () => {

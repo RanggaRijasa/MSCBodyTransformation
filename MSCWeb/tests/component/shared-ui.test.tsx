@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { shellProgramFixture } from "@/features/app-shell/fixtures/shell-fixtures";
 import { AppButton, Avatar, ModalDialog, ProgramActivityRenderer, TextField } from "@/shared/ui";
+import { AppIcon } from "@/shared/ui/icons/app-icon";
 
 function DialogHarness() {
   const [isOpen, setOpen] = useState(false);
@@ -26,6 +27,8 @@ describe("shared UI", () => {
     const button = screen.getByRole("button", { name: "Menyimpan" });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toHaveAttribute("data-slot", "button");
+    expect(button).toHaveClass("min-h-11", "min-w-11");
   });
 
   it("menghubungkan inline error ke field", () => {
@@ -34,6 +37,8 @@ describe("shared UI", () => {
     const field = screen.getByRole("textbox", { name: "Nama tampilan" });
     expect(field).toHaveAttribute("aria-invalid", "true");
     expect(field).toHaveAccessibleDescription("Nama perlu diisi.");
+    expect(field).toHaveAttribute("data-slot", "input");
+    expect(field).toHaveClass("min-h-11");
   });
 
   it("memakai ikon orang kosong tanpa inisial sebagai fallback avatar", () => {
@@ -43,6 +48,18 @@ describe("shared UI", () => {
     expect(container.querySelector("svg")).not.toBeNull();
     expect(screen.queryByText("FR")).not.toBeInTheDocument();
   });
+
+  it.each(["content", "payment", "program"] as const)(
+    "merender ikon %s sebagai garis bermakna, bukan bidang solid",
+    (name) => {
+      const { container } = render(<AppIcon name={name} />);
+      const icon = container.querySelector("svg");
+
+      expect(icon).toHaveAttribute("fill", "none");
+      expect(icon).toHaveAttribute("stroke", "currentColor");
+      expect(icon).toHaveAttribute("stroke-width", "2");
+    },
+  );
 
   it("membuka dialog, memindahkan fokus, dan menutup melalui history", async () => {
     const user = userEvent.setup();

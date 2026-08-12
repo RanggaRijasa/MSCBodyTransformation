@@ -30,6 +30,12 @@
 | WEB-024 | Late transfer dipulihkan hanya bila kursi ada; jika penuh ditolak dan dana dikembalikan | Final |
 | WEB-025 | Exceptional reversal untuk rejected funds/duplicate/excess/provider failure selesai ≤7 hari kerja | Final |
 | WEB-026 | Bukti pembayaran Coach dihapus 30 hari setelah access period berakhir | Final |
+| WEB-027 | Tailwind CSS dan shadcn/ui menjadi fondasi UI MSCWeb | Final |
+| WEB-028 | Seluruh visual lama diganti; fungsi dan backend Phase 11 dibekukan | Final |
+| WEB-029 | Mobile Guest/Peserta/Coach/Admin mengikuti iPhone; Admin desktop memperluas sistem yang sama | Final |
+| WEB-030 | Simulator iOS boleh dijalankan read-only untuk reference dan screenshot | Final |
+| WEB-031 | Phase 11A memakai PM/orchestrator, implementer, dan reviewer independen bila task dapat dibagi aman | Final |
+| WEB-032 | Phase 12 diblokir sampai Phase 11A dan full regression Phase 11 lulus ulang | Final |
 
 ## Gate yang belum diputuskan
 
@@ -52,6 +58,8 @@
 | GATE-015 | Final wordmark/logo dan hero production asset | Phase 02A |
 | GATE-016 | Install analytics dipasang atau tidak | Phase 02A/11 |
 | GATE-017 | Pilihan screenshot PWA final untuk mengganti placeholder | Phase 11 |
+| GATE-018 | Approval concept serta reference set iPhone Phase 11A | Sebelum coding visual Phase 11A |
+| GATE-019 | Pilihan screenshot PWA hasil redesign untuk landing | Sebelum closure Phase 11A |
 
 ## Cara merekam keputusan
 
@@ -136,3 +144,28 @@
   vendor ditambahkan tanpa approval.
 - Dampak hanya berada di `MSCWeb/`; hosted Supabase, DNS, domain, Contracts,
   source iOS, dan backend root tidak diubah.
+
+## Amendment 11 Agustus 2026 — Phase 11A total UI redesign
+
+- Owner menyetujui Tailwind CSS dan shadcn/ui sebagai fondasi UI MSCWeb.
+- Visual landing, Guest, Peserta, Coach, dan Admin di-reset total. Visual lama
+  tidak perlu dipertahankan, tetapi seluruh fungsi, state, route, backend,
+  authorization, privacy, cache, dan PWA contract yang telah lulus dibekukan.
+- Mobile untuk seluruh actor, termasuk Admin, menggunakan aplikasi iPhone
+  aktual sebagai acceptance reference. Admin desktop/tablet boleh diperluas
+  responsif, tetapi tetap satu bahasa visual dan interaction family.
+- Liquid Glass diadaptasi selektif sesuai capability browser, performance,
+  contrast, reduced motion, dan reduced transparency; bukan blur universal.
+- Simulator iOS, Debug fixture, dan screenshot reference boleh dipakai tanpa
+  mengubah source/project iOS atau mengakses data production.
+- Workflow agent dipisah menjadi PM/orchestrator, implementer, dan reviewer.
+  File ownership tidak boleh overlap dan reviewer utama tidak menjadi author
+  utama slice yang sama.
+- GATE-017 tetap menjadi catatan keputusan kandidat Phase 11 lama. Karena UI
+  final berubah material, GATE-019 ditambahkan untuk replacement screenshot
+  hasil redesign; placeholder berlabel tetap diizinkan selama pengerjaan.
+- Phase 12 memiliki prasyarat baru Phase 11A. Seluruh Phase 10 cross-role dan
+  Phase 11 local regression wajib lulus ulang setelah redesign.
+- Detail authoritative berada di
+  `12A_PHASE_11A_TOTAL_UI_REDESIGN_AND_IOS_VISUAL_PARITY.md` dan tiga companion
+  document Phase 11A.

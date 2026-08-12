@@ -5,7 +5,7 @@ import {
   listWinnerSnapshotsOperation,
 } from "@/application/admin/load-admin-experience";
 import { requireRole } from "@/features/auth/server/session-routing";
-import { AdminContent } from "@/features/admin";
+import { AdminContent } from "@/features/admin/components/admin-content";
 import { copy } from "@/shared/i18n/id";
 import { StateMessage } from "@/shared/ui";
 

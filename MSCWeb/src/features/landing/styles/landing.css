@@ -1,7 +1,7 @@
 .landing-page {
-  --color-brand-primary: #e1271f;
-  --color-brand-primary-pressed: #b91c16;
-  --color-brand-accent: #ffca28;
+  --color-brand-primary: #d92d20;
+  --color-brand-primary-pressed: #b42318;
+  --color-brand-accent: #f5c542;
   --landing-background: #000;
   --landing-panel: #19191b;
   --landing-panel-strong: #242427;
@@ -28,6 +28,7 @@
   position: sticky;
   z-index: 300;
   inset-block-start: 0;
+  padding-block-start: env(safe-area-inset-top);
   border-block-end: 1px solid var(--landing-border);
   background: rgb(9 9 10 / 88%);
   backdrop-filter: blur(1.25rem) saturate(140%);
@@ -89,10 +90,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-}
-
-.marketing-header__install {
-  white-space: nowrap;
 }
 
 .marketing-menu {
@@ -179,9 +176,12 @@
   word-break: normal;
 }
 
-.landing-hero h1 span,
 .landing-benefits h2 span {
   color: var(--color-brand-primary);
+}
+
+.landing-hero h1 span {
+  color: inherit;
 }
 
 .landing-hero__summary {

@@ -1,19 +1,22 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("manifest, placeholder landing, dan header hardening konsisten", async ({ page, request }) => {
+test("manifest, pratinjau PWA final, dan header hardening konsisten", async ({ page, request }) => {
   const response = await page.goto("/");
   expect(response?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
   expect(response?.headers()["strict-transport-security"]).toContain("max-age=63072000");
   expect(response?.headers()["x-content-type-options"]).toBe("nosniff");
   expect(response?.headers()["x-correlation-id"]).toMatch(/^[0-9a-f-]{36}$/i);
   expect(response?.headers()["cache-control"]).toContain("no-store");
+  await expect(page.getByRole("figure", { name: "Pratinjau aplikasi", exact: true })).toBeVisible();
+  await expect(page.locator('img[src*="landing-participant-v1"]')).toHaveCount(1);
+  await expect(page.locator('img[src*="landing-coach-v1"]')).toHaveCount(1);
+  await expect(page.locator('img[src*="landing-admin-v1"]')).toHaveCount(1);
   await expect(
-    page.getByRole("figure", { name: /Pratinjau placeholder antarmuka PWA MSC/i }),
+    page.getByRole("heading", {
+      name: "Pratinjau aplikasi MSC untuk Peserta, Coach, dan Admin",
+    }),
   ).toBeVisible();
-  expect(await page.locator('img[src*="pwa-participant-rc-v1"]').count()).toBe(0);
-  expect(await page.locator('img[src*="pwa-coach-rc-v1"]').count()).toBe(0);
-  await expect(page.getByText("Pratinjau aplikasi", { exact: true })).toBeVisible();
 
   const manifestResponse = await request.get("/manifest.webmanifest");
   const manifest = (await manifestResponse.json()) as {
@@ -31,6 +34,105 @@ test("manifest, placeholder landing, dan header hardening konsisten", async ({ p
       expect.objectContaining({ form_factor: "wide", src: "/images/pwa-coach-rc-v1.jpg" }),
     ]),
   );
+});
+
+test("install dan runtime memakai chrome transient yang compact dan actionable", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-pwa-install-state",
+    /^(ios-guidance|manual-guidance|prompt-ready|standalone|unsupported)$/,
+  );
+  const sticky = page.locator(".sticky-install");
+  await sticky.evaluate((element) => {
+    element.setAttribute("aria-hidden", "false");
+    element.setAttribute("data-visible", "true");
+  });
+  await expect(sticky).toBeVisible();
+  const installAction = sticky.locator(".sticky-install__action");
+  await expect(installAction).toBeVisible();
+  expect((await installAction.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(sticky).toHaveCSS("position", "fixed");
+
+  await page.setViewportSize({ height: 390, width: 844 });
+  await context.setOffline(true);
+  const runtime = page.locator(".pwa-runtime-banner--offline");
+  await expect(runtime).toContainText("Kamu sedang offline");
+  expect(
+    (await runtime.getByRole("button", { name: "Coba lagi" }).boundingBox())?.height,
+  ).toBeGreaterThanOrEqual(44);
+  const runtimeBox = await runtime.boundingBox();
+  expect(runtimeBox?.x).toBeGreaterThanOrEqual(0);
+  expect((runtimeBox?.x ?? 0) + (runtimeBox?.width ?? 0)).toBeLessThanOrEqual(844);
+  await context.setOffline(false);
+
+  const updateChannelSupported = await page.evaluate(() => "BroadcastChannel" in window);
+  test.skip(!updateChannelSupported, "BroadcastChannel tidak tersedia pada engine ini.");
+  await page.evaluate(() => {
+    const channel = new BroadcastChannel("msc-pwa-runtime");
+    channel.postMessage({ type: "update-ready" });
+    channel.close();
+  });
+  const update = page.locator(".pwa-runtime-banner--update");
+  await expect(update).toContainText("Pembaruan MSC tersedia");
+  await expect(update).toContainText("Muat versi baru setelah pekerjaanmu saat ini selesai.");
+  expect(
+    (await update.getByRole("button", { name: "Muat versi baru" }).boundingBox())?.height,
+  ).toBeGreaterThanOrEqual(44);
+  const updateBox = await update.boundingBox();
+  expect(updateBox?.x).toBeGreaterThanOrEqual(0);
+  expect((updateBox?.x ?? 0) + (updateBox?.width ?? 0)).toBeLessThanOrEqual(844);
+});
+
+test("forced colors mempertahankan outline keyboard pada aksi dan proxy file", async ({
+  browserName,
+  page,
+}) => {
+  await page.emulateMedia({ forcedColors: "active" });
+  await page.goto("/hari-ini");
+  await expect(page.locator("main")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await page.locator("body").evaluate((body) => {
+    const fixture = document.createElement("div");
+    fixture.id = "forced-colors-focus-fixture";
+    fixture.innerHTML = `
+      <a href="#focus-target">Tautan fokus</a>
+      <button type="button">Tombol fokus</button>
+      <label class="app-action app-action--secondary qr-scanner__file-action">
+        <span>Pilih gambar uji</span>
+        <input type="file" />
+      </label>
+    `;
+    body.prepend(fixture);
+  });
+
+  const tabKey = browserName === "webkit" ? "Alt+Tab" : "Tab";
+
+  for (const target of [
+    page.getByRole("link", { name: "Tautan fokus" }),
+    page.getByRole("button", { name: "Tombol fokus" }),
+  ]) {
+    await page.keyboard.press(tabKey);
+    await expect(target).toBeFocused();
+    await expect(target).not.toHaveCSS("outline-style", "none");
+    expect(
+      Number.parseFloat(await target.evaluate((element) => getComputedStyle(element).outlineWidth)),
+    ).toBeGreaterThanOrEqual(2);
+  }
+
+  const fileInput = page.locator('#forced-colors-focus-fixture input[type="file"]');
+  await page.keyboard.press(tabKey);
+  await expect(fileInput).toBeFocused();
+  const fileLabel = page.getByText("Pilih gambar uji").locator("..");
+  await expect(fileLabel).not.toHaveCSS("outline-style", "none");
+  expect(
+    Number.parseFloat(
+      await fileLabel.evaluate((element) => getComputedStyle(element).outlineWidth),
+    ),
+  ).toBeGreaterThanOrEqual(2);
 });
 
 test("service worker hanya menyimpan aset publik dan fallback navigasi generik", async ({

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
 import type {
   ParticipantProgram,
@@ -17,7 +18,12 @@ import {
   formatProgramDate,
   programTimezoneLabel,
 } from "@/shared/formatting/indonesian-formatters";
-import { AppLink, Avatar, MediaSurface, Progress, StatusBadge, Surface } from "@/shared/ui";
+import { AppLink } from "@/shared/ui/controls/actions";
+import { Avatar } from "@/shared/ui/identity/avatar";
+import { AppIcon } from "@/shared/ui/icons/app-icon";
+import { MediaSurface } from "@/shared/ui/media/media-surface";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 import { ProgramNetworkStatus } from "@/features/programs";
 
 type ParticipantHomeProperties = Readonly<{
@@ -41,12 +47,13 @@ function ProgramSection({
   const visiblePrograms =
     actor === "participant" ? programs.map(({ program }) => program) : publicPrograms;
   return (
-    <section aria-labelledby="home-program-title">
+    <section aria-labelledby="home-program-title" className="participant-program-section">
       <div className="participant-section-heading">
         <h2 id="home-program-title">Program</h2>
-        <AppLink href="/program" variant="secondary">
+        <Link className="participant-section-link" href="/program">
           Lihat semua
-        </AppLink>
+          <AppIcon name="chevron" variant="outline" />
+        </Link>
       </div>
       {visiblePrograms.length ? (
         <div className="participant-program-strip">
@@ -61,10 +68,20 @@ function ProgramSection({
               }
               key={program.id}
             >
+              <span className="participant-program-chip__status">
+                {selectedProgram?.program.id === program.id ? <AppIcon name="check" /> : null}
+                {actor === "participant" ? "Diikuti" : "Tersedia"}
+              </span>
+              <AppIcon
+                className="participant-program-chip__chevron"
+                name="chevron"
+                variant="outline"
+              />
               <strong>{program.title}</strong>
-              <span>
-                {formatProgramDate(program.startsOn, program.timezone)} ·{" "}
-                {programTimezoneLabel(program.timezone)}
+              <span className="participant-program-chip__meta">
+                {program.days.length
+                  ? `${formatNumber.format(program.days.length)} hari`
+                  : `${formatProgramDate(program.startsOn, program.timezone)} · ${programTimezoneLabel(program.timezone)}`}
               </span>
             </Link>
           ))}
@@ -86,22 +103,47 @@ function FocusSection({
   const firstAvailable = day?.steps.find(
     (step) => presentParticipantStep(step, focused?.accessState ?? "locked", selectedProgram!).href,
   );
+  const completedStepIds = new Set([
+    ...(selectedProgram?.submissions
+      .filter(({ status }) => status === "approved")
+      .map(({ stepId }) => stepId) ?? []),
+    ...(selectedProgram?.weighedStepIds ?? []),
+  ]);
+  const completedStepCount = day?.steps.filter(({ id }) => completedStepIds.has(id)).length ?? 0;
+  const totalStepCount = day?.steps.length ?? 0;
+  const stepProgressPercentage = totalStepCount
+    ? Math.round((completedStepCount / totalStepCount) * 100)
+    : 0;
   return (
     <section aria-labelledby="home-focus-title">
-      <h2 id="home-focus-title">Fokus</h2>
+      <h2 id="home-focus-title">Fokus hari ini</h2>
       {selectedProgram && focused && day ? (
         <Surface className="participant-focus-card">
-          <div>
+          <div
+            aria-label={`Aktivitas hari ini ${formatNumber.format(completedStepCount)} dari ${formatNumber.format(totalStepCount)} langkah selesai. Progres program ${formatNumber.format(selectedProgram.score.progressPercentage)} persen.`}
+            className="participant-focus-card__progress"
+            role="img"
+            style={
+              {
+                "--participant-progress": `${stepProgressPercentage}%`,
+              } as CSSProperties
+            }
+          >
+            <strong>
+              {formatNumber.format(completedStepCount)}/{formatNumber.format(totalStepCount)}
+            </strong>
+            <span>langkah</span>
+          </div>
+          <div className="participant-focus-card__copy">
             <p className="participant-eyebrow">
               {focused.isCurrentDay ? "Hari ini" : `Hari ${formatNumber.format(day.dayNumber)}`}
             </p>
             <h3>{day.title}</h3>
             <p>{day.summary || "Lanjutkan langkah program yang tersedia untukmu."}</p>
-            <Progress label="Progres program" value={selectedProgram.score.progressPercentage} />
           </div>
           {firstAvailable ? (
             <AppLink href={`/program/${selectedProgram.program.id}/langkah/${firstAvailable.id}`}>
-              Buka langkah berikutnya
+              Lanjutkan
             </AppLink>
           ) : (
             <StatusBadge tone="info">Tidak ada tindakan saat ini</StatusBadge>
@@ -114,6 +156,25 @@ function FocusSection({
           <AppLink href="/program">Pilih program</AppLink>
         </Surface>
       )}
+    </section>
+  );
+}
+
+function GuestFocusSection() {
+  return (
+    <section aria-labelledby="home-focus-title">
+      <h2 id="home-focus-title">Fokus</h2>
+      <Surface className="participant-focus-card">
+        <div>
+          <p className="participant-eyebrow">Area pribadi</p>
+          <h3>Fokus pribadi terkunci</h3>
+          <p>
+            Pilih program publik terlebih dahulu. Setelah masuk, aktivitas dan progres hanya tampil
+            untuk akunmu.
+          </p>
+        </div>
+        <AppLink href="/program">Pilih program</AppLink>
+      </Surface>
     </section>
   );
 }
@@ -176,7 +237,10 @@ function WinnerSection({
   );
 }
 
-function CoachSection({ coaches }: Readonly<{ coaches: readonly PublicCoach[] }>) {
+function CoachSection({
+  coaches,
+  showAssignment = true,
+}: Readonly<{ coaches: readonly PublicCoach[]; showAssignment?: boolean }>) {
   return (
     <section aria-labelledby="home-coach-title">
       <div className="participant-section-heading">
@@ -195,9 +259,13 @@ function CoachSection({ coaches }: Readonly<{ coaches: readonly PublicCoach[] }>
               />
               <div>
                 <h3>{coach.displayName}</h3>
-                <p>{coach.city || "Lokasi belum dicantumkan"}</p>
+                <p className="participant-coach-card__location">
+                  {coach.city || "Lokasi belum dicantumkan"}
+                </p>
               </div>
-              {coach.isAssigned ? <StatusBadge tone="success">Coach-mu</StatusBadge> : null}
+              {showAssignment && coach.isAssigned ? (
+                <StatusBadge tone="success">Coach-mu</StatusBadge>
+              ) : null}
             </Surface>
           ))}
         </div>
@@ -209,26 +277,59 @@ function CoachSection({ coaches }: Readonly<{ coaches: readonly PublicCoach[] }>
 }
 
 export function ParticipantHome(properties: ParticipantHomeProperties) {
+  if (properties.actor === "guest") {
+    const publicRanking = properties.topFive.map((entry) => ({
+      ...entry,
+      isCurrentParticipant: false,
+    }));
+    const publicCoaches = properties.coaches.map((coach) => ({ ...coach, isAssigned: false }));
+
+    return (
+      <div className="participant-home">
+        <header className="participant-home__header">
+          <div>
+            <p className="participant-eyebrow">MSC Body Transformation</p>
+            <h1>Beranda</h1>
+            <p>Jelajahi program, peringkat, pemenang, dan Coach.</p>
+          </div>
+        </header>
+        <Surface className="participant-focus-card">
+          <div>
+            <p className="participant-eyebrow">Area akun</p>
+            <h2>Siap memulai perjalananmu?</h2>
+            <p>Masuk untuk mengikuti program dan melihat progres pribadimu.</p>
+          </div>
+          <AppLink href="/masuk?returnTo=%2Fhari-ini">Masuk</AppLink>
+        </Surface>
+        <ProgramNetworkStatus />
+        <ProgramSection
+          actor="guest"
+          programs={[]}
+          publicPrograms={properties.publicPrograms}
+          selectedProgram={null}
+        />
+        <GuestFocusSection />
+        <RankingSection entries={publicRanking} />
+        <WinnerSection posters={properties.winnerPosters} winners={properties.winners} />
+        <CoachSection coaches={publicCoaches} showAssignment={false} />
+      </div>
+    );
+  }
+
   return (
     <div className="participant-home">
       <header className="participant-home__header">
-        <div>
-          <p className="participant-eyebrow">MSC Body Transformation</p>
-          <h1>
-            {properties.actor === "participant"
-              ? `Halo, ${properties.displayName}`
-              : "Mulai perjalananmu"}
-          </h1>
-          <p>
-            {properties.actor === "participant"
-              ? "Fokus pada langkah yang tersedia hari ini."
-              : "Masuk untuk mengikuti program, mengirim progres, dan melihat status pribadimu."}
-          </p>
-        </div>
-        {properties.actor === "guest" ? (
-          <AppLink href="/masuk?returnTo=%2Fhari-ini">Masuk atau daftar</AppLink>
-        ) : null}
+        <h1>Beranda</h1>
       </header>
+      <Link className="participant-identity-card" href="/profil">
+        <Avatar name={properties.displayName} size={64} />
+        <div>
+          <p>Selamat datang</p>
+          <h2>{properties.displayName}</h2>
+        </div>
+        <span className="participant-identity-card__role">MSC Peserta</span>
+        <AppIcon className="participant-identity-card__chevron" name="chevron" variant="outline" />
+      </Link>
       <ProgramNetworkStatus />
       <ProgramSection {...properties} />
       <FocusSection selectedProgram={properties.selectedProgram} />

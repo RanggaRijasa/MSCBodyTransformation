@@ -4,7 +4,13 @@ import type {
   AdminProgramStep,
 } from "@/domain/admin/admin-program";
 import type { ProgramContentKind, ProgramQuestionKind } from "@/domain/programs/program";
-import { AppButton, SelectField, Surface, TextareaField, TextField } from "@/shared/ui";
+import {
+  programContentKindLabels,
+  programQuestionKindLabels,
+} from "@/features/admin/components/admin-presentation-labels";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { SelectField, TextareaField, TextField } from "@/shared/ui/forms/form-controls";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 const contentKinds: readonly ProgramContentKind[] = [
   "article",
@@ -154,7 +160,7 @@ export function ProgramContentEditor({
                   >
                     {contentKinds.map((kind) => (
                       <option key={kind} value={kind}>
-                        {kind}
+                        {programContentKindLabels[kind]}
                       </option>
                     ))}
                   </SelectField>
@@ -204,7 +210,7 @@ export function ProgramContentEditor({
                       >
                         {questionKinds.map((kind) => (
                           <option key={kind} value={kind}>
-                            {kind}
+                            {programQuestionKindLabels[kind]}
                           </option>
                         ))}
                       </SelectField>

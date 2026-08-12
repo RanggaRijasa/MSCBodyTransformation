@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 import { createBlankProgramDraft } from "@/domain/admin/admin-program";
 import { requireRole } from "@/features/auth/server/session-routing";
-import { AdminProgramEditor } from "@/features/admin";
+import { AdminProgramEditor } from "@/features/admin/components/admin-program-editor";
 
 export const metadata: Metadata = { title: "Buat program" };
 

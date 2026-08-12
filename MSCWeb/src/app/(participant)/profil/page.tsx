@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   const profile = await requireVerifiedProfile("/profil");
   const participantContext = await loadParticipantProfileContextOperation();
   return (
-    <div className="shell-page">
+    <div className="shell-page participant-profile-page">
       <header className="shell-page__header">
         <h1>{copy.shell.participant.profileTitle}</h1>
         <p>{copy.shell.participant.profileSummary}</p>

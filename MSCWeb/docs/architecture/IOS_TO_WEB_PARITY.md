@@ -15,7 +15,7 @@ Pemetaan test berada di
 | `Features/Auth` | Auth routes + Supabase SSR | Apple dihapus |
 | `Features/Participant` | participant features/routes | hierarchy dan copy dipertahankan |
 | `Features/Coach` | coach features/routes | privacy berat/foto dipertahankan |
-| `Features/Admin` | desktop-responsive Admin features | renderer preview dipakai ulang |
+| `Features/Admin` | iPhone-parity mobile + responsive desktop expansion | renderer preview dipakai ulang |
 | `Features/Commerce` | manual payment feature | tidak memakai StoreKit |
 | `Features/Media` | browser media/QR adapter | wajib device testing |
 | `Domain` | TypeScript domain | port behavior, bukan syntax |
@@ -75,3 +75,7 @@ Satu capability dinyatakan parity bila:
 4. Unit/integration/E2E terkait lulus.
 5. Perbedaan platform dicatat sebagai deliberate adaptation, bukan fitur yang
    diam-diam hilang.
+
+Untuk redesign pasca-Phase 11, visual parity row per state dan screenshot
+evidence wajib mengikuti
+[Phase 11A Visual Acceptance Matrix](../testing/PHASE_11A_VISUAL_ACCEPTANCE_MATRIX.md).

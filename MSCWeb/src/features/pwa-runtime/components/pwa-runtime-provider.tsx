@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { AppButton } from "@/shared/ui";
+import { clearDevelopmentPwaState } from "@/features/pwa-runtime/lib/clear-development-pwa-state";
+import { AppButton } from "@/shared/ui/controls/actions";
 
 const runtimeChannelName = "msc-pwa-runtime";
+const developmentResetMarker = "msc.dev-pwa-reset-v1";
 
 export function PwaRuntimeProvider({ children }: Readonly<{ children: ReactNode }>) {
   const router = useRouter();
@@ -18,6 +20,27 @@ export function PwaRuntimeProvider({ children }: Readonly<{ children: ReactNode 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
     let disposed = false;
+
+    if (process.env.NODE_ENV !== "production") {
+      void clearDevelopmentPwaState(
+        navigator.serviceWorker,
+        "caches" in window ? window.caches : undefined,
+      ).then((wasControlled) => {
+        if (disposed) return;
+        delete document.documentElement.dataset.pwaServiceWorker;
+        if (wasControlled && sessionStorage.getItem(developmentResetMarker) !== "complete") {
+          sessionStorage.setItem(developmentResetMarker, "complete");
+          window.location.reload();
+          return;
+        }
+        sessionStorage.removeItem(developmentResetMarker);
+      });
+
+      return () => {
+        disposed = true;
+      };
+    }
+
     let channel: BroadcastChannel | null = null;
     try {
       channel = "BroadcastChannel" in window ? new BroadcastChannel(runtimeChannelName) : null;

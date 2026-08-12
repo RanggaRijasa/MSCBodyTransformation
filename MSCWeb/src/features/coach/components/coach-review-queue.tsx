@@ -5,7 +5,10 @@ import { useState } from "react";
 import type { CoachContext, CoachReviewItem } from "@/domain/coach/coach-experience";
 import type { PublicProgram } from "@/domain/programs/program";
 import { createProgramDateTimeFormatter } from "@/shared/formatting/indonesian-formatters";
-import { AppButton, FilterForm, SelectField, Surface, TextField } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { SelectField, TextField } from "@/shared/ui/forms/form-controls";
+import { FilterForm } from "@/shared/ui/overlays/filter-controls";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 import { CoachAccessState } from "./coach-access-state";
 import { CoachAnswer } from "./coach-participant-detail";
 

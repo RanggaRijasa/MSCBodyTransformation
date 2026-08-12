@@ -5,6 +5,10 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 
+import { Input } from "@/shared/ui/primitives/input";
+import { Label } from "@/shared/ui/primitives/label";
+import { Textarea } from "@/shared/ui/primitives/textarea";
+
 type FieldShellProperties = Readonly<{
   children: ReactNode;
   description?: string | undefined;
@@ -18,7 +22,7 @@ export function FieldShell({ children, description, error, htmlFor, label }: Fie
   const errorId = error ? `${htmlFor}-error` : undefined;
   return (
     <div className="form-field">
-      <label htmlFor={htmlFor}>{label}</label>
+      <Label htmlFor={htmlFor}>{label}</Label>
       <div>{children}</div>
       {description ? (
         <p className="form-field__description" id={descriptionId}>
@@ -55,7 +59,7 @@ export function TextField({ description, error, id, label, ...properties }: Text
 
   return (
     <FieldShell description={description} error={error} htmlFor={id} label={label}>
-      <input
+      <Input
         {...properties}
         aria-describedby={describedBy || undefined}
         aria-invalid={Boolean(error)}
@@ -132,7 +136,7 @@ export function TextareaField({
     .join(" ");
   return (
     <FieldShell description={description} error={error} htmlFor={id} label={label}>
-      <textarea
+      <Textarea
         {...properties}
         aria-describedby={describedBy || undefined}
         aria-invalid={Boolean(error)}

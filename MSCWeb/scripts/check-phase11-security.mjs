@@ -15,6 +15,10 @@ assert(
   "Navigasi SW wajib network/no-store.",
 );
 assert(worker.includes("PUBLIC_ASSETS.has(url.pathname)"), "Aset publik SW wajib exact allowlist.");
+assert(
+  worker.includes("hasContentFingerprint &&"),
+  "Chunk Next tanpa content fingerprint tidak boleh masuk cache service worker.",
+);
 assert(!worker.includes("ignoreSearch: true"), "SW tidak boleh mengabaikan query cache.");
 assert(!/PUBLIC_ASSETS[\s\S]{0,800}\/api\//.test(worker), "API tidak boleh masuk allowlist SW.");
 

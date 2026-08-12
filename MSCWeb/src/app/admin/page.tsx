@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { loadAdminDashboardOperation } from "@/application/admin/load-admin-experience";
 import { requireRole } from "@/features/auth/server/session-routing";
-import { AdminDashboard } from "@/features/admin";
+import { AdminDashboard } from "@/features/admin/components/admin-dashboard";
 import { copy } from "@/shared/i18n/id";
 import { StateMessage } from "@/shared/ui";
 

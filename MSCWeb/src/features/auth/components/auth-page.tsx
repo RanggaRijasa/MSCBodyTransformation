@@ -1,47 +1,61 @@
 import Link from "next/link";
 
+import { AuthCloseControl } from "@/features/auth/components/auth-close-control";
+import { AuthRouteFocus } from "@/features/auth/components/auth-route-focus";
 import { GoogleAuthButton } from "@/features/auth/components/google-auth-button";
+import { AppIcon } from "@/shared/ui/icons/app-icon";
 
 type AuthPageProperties = Readonly<{
   description: string;
   mode: "login" | "register";
   notice?: string | undefined;
+  noticeTone?: "error" | "status" | undefined;
   returnTo?: string | undefined;
   title: string;
 }>;
 
-export function AuthPage({ description, mode, notice, returnTo, title }: AuthPageProperties) {
+export function AuthPage({
+  description,
+  mode,
+  notice,
+  noticeTone = "status",
+  returnTo,
+  title,
+}: AuthPageProperties) {
   const isLogin = mode === "login";
+  const switchHref = `${isLogin ? "/daftar" : "/masuk"}${
+    returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""
+  }`;
   return (
     <main className="auth-page" id="konten-utama">
       <section aria-labelledby="auth-title" className="auth-card">
-        <Link className="auth-wordmark" href="/">
-          MSC <span>Body Transformation</span>
-        </Link>
+        <header className="auth-card__topbar">
+          <span className="auth-route-title">{isLogin ? "Masuk" : "Daftar"}</span>
+          <AuthCloseControl />
+        </header>
         <div className="auth-card__heading">
-          <p className="auth-eyebrow">Akun Peserta</p>
-          <h1 id="auth-title">{title}</h1>
+          <span aria-hidden="true" className="auth-icon">
+            <AppIcon name="person" />
+          </span>
+          <h1 id="auth-title" tabIndex={-1}>
+            {title}
+          </h1>
+          <AuthRouteFocus focusKey={`${mode}:${title}`} headingId="auth-title" />
           <p>{description}</p>
         </div>
         {notice ? (
-          <p className="auth-notice" role="status">
+          <p
+            className={`auth-notice auth-notice--${noticeTone}`}
+            role={noticeTone === "error" ? "alert" : "status"}
+          >
             {notice}
           </p>
         ) : null}
         <GoogleAuthButton mode={mode} returnTo={returnTo} />
-        <p className="auth-provider-note">
-          Akun baru selalu dibuat sebagai Peserta. Pengajuan Coach dilakukan setelah profil selesai.
-        </p>
-        <div aria-label="Metode lain" className="auth-divider">
-          <span>atau</span>
-        </div>
-        <p className="auth-feature-gate">
-          Masuk dengan email dan pemulihan password belum diaktifkan pada lingkungan ini.
-        </p>
-        <p className="auth-switch">
+        <footer className="auth-switch">
           {isLogin ? "Belum punya akun?" : "Sudah punya akun?"}{" "}
-          <Link href={isLogin ? "/daftar" : "/masuk"}>{isLogin ? "Daftar" : "Masuk"}</Link>
-        </p>
+          <Link href={switchHref}>{isLogin ? "Daftar" : "Masuk"}</Link>
+        </footer>
       </section>
     </main>
   );

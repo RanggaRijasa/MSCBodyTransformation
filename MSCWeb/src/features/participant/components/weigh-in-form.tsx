@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 
 import type { ProgramContentKind } from "@/domain/programs/program";
 import { canonicalIndonesianWeight } from "@/domain/services/participant-program";
-import { AppButton, FormErrorSummary, TextField } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { FormErrorSummary, TextField } from "@/shared/ui/forms/form-controls";
 
 const kinds: Readonly<
   Record<

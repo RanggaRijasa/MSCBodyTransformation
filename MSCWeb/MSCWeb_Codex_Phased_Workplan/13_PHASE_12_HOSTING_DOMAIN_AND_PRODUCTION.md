@@ -2,12 +2,18 @@
 
 > Status: BELUM DIMULAI
 
+> Prasyarat: Phase 11A selesai lokal, full Phase 10/11 regression pasca-redesign
+> lulus, dan tidak ada unresolved Critical/High finding.
+
 ## Tujuan
 
 Menyediakan production web pada domain milik pengguna, terhubung aman ke
 hosted Supabase main, dengan OAuth, forward-only migration, backup, monitoring,
 spend control, smoke test, dan rollback. Tidak ada purchase/deploy tanpa
 persetujuan eksplisit.
+
+Phase ini tetap diblokir selama Phase 11A masih berjalan. Evidence Phase 11
+sebelum redesign tidak memenuhi prasyarat deployment.
 
 ## Rekomendasi default
 

@@ -64,5 +64,9 @@ export function ProgramActivity({
     progress: participantProgram.score.progressPercentage,
     title: participantProgram.program.title,
   };
-  return <ProgramActivityRenderer audience="participant" model={model} />;
+  return (
+    <div className="participant-activity">
+      <ProgramActivityRenderer audience="participant" model={model} />
+    </div>
+  );
 }

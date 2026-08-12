@@ -33,11 +33,11 @@ export function CoachProgramHubView({
         <h1>Pendampingan program</h1>
         <p>Feed dan papan peringkat tidak menampilkan berat badan atau foto bukti.</p>
       </header>
-      <nav aria-label="Pilih program" className="participant-program-strip">
+      <nav aria-label="Pilih program" className="coach-program-strip">
         {hub.programs.map((program) => (
           <Link
             aria-current={program.id === hub.selectedProgram?.id ? "page" : undefined}
-            className="participant-program-chip"
+            className="coach-program-chip"
             href={`/coach-area/program?program=${program.id}&rentang=${range}`}
             key={program.id}
           >
@@ -65,8 +65,8 @@ export function CoachProgramHubView({
           30 hari
         </Link>
       </nav>
-      <section aria-labelledby="coach-activity-feed">
-        <h2 id="coach-activity-feed">Aktivitas</h2>
+      <section aria-labelledby="aktivitas">
+        <h2 id="aktivitas">Aktivitas</h2>
         <div className="coach-activity-feed">
           {hub.activity.map((item) => (
             <Surface key={item.id}>
@@ -95,10 +95,10 @@ export function CoachProgramHubView({
           ) : null}
         </div>
       </section>
-      <section aria-labelledby="coach-leaderboard">
-        <h2 id="coach-leaderboard">Papan peringkat</h2>
+      <section aria-labelledby="peringkat">
+        <h2 id="peringkat">Papan peringkat</h2>
         {hub.winners.length ? <p>Hasil final telah dikunci server.</p> : null}
-        <ol className="participant-ranking-list participant-ranking-list--full">
+        <ol className="coach-ranking-list coach-ranking-list--full">
           {hub.leaderboard.map((entry) => (
             <li key={entry.id}>
               <strong>{formatNumber.format(entry.rank)}</strong>

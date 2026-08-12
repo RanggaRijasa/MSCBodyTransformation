@@ -2,7 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { emitSafeOperationalEvent } from "@/application/observability/safe-operational-event";
 import { updateSupabaseSession } from "@/infrastructure/supabase/session/update-session";
-import { buildContentSecurityPolicy } from "@/shared/security/content-security-policy";
+import {
+  buildContentSecurityPolicy,
+  selectResponseContentSecurityPolicy,
+} from "@/shared/security/content-security-policy";
 import { hasTrustedMutationOrigin } from "@/shared/security/mutation-origin";
 
 const unsafeMethods = new Set(["DELETE", "PATCH", "POST", "PUT"]);
@@ -38,7 +41,10 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("x-msc-correlation-id", correlationId);
   const response = await updateSupabaseSession(request, requestHeaders);
-  response.headers.set("Content-Security-Policy", policy);
+  response.headers.set(
+    "Content-Security-Policy",
+    selectResponseContentSecurityPolicy(request.nextUrl.pathname, policy),
+  );
   response.headers.set("X-Correlation-ID", correlationId);
   return response;
 }

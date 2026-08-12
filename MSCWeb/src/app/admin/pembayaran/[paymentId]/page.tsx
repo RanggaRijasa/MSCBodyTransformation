@@ -6,6 +6,7 @@ import {
   loadAdminPaymentHistoryOperation,
   loadAdminPaymentOrderOperation,
 } from "@/application/payments/payment-operations";
+import type { PaymentEvidenceAttempt } from "@/domain/payments/payment";
 import { requireRole } from "@/features/auth/server/session-routing";
 import { AdminPaymentDecision, PaymentStatus } from "@/features/payments";
 import { AdminPaymentHistory } from "@/features/payments/components/admin-payment-history";
@@ -18,14 +19,24 @@ import { Surface } from "@/shared/ui";
 
 export const metadata: Metadata = { title: "Periksa pembayaran" };
 
+const evidenceAttemptStatusLabels: Readonly<Record<PaymentEvidenceAttempt["status"], string>> = {
+  approved: "Disetujui",
+  deleted: "Dihapus sesuai retensi",
+  prepared: "Disiapkan",
+  rejected: "Ditolak",
+  submitted: "Dikirim",
+};
+
 export default async function AdminPaymentDetailPage({
   params,
 }: Readonly<{ params: Promise<{ paymentId: string }> }>) {
   const { paymentId } = await params;
   await requireRole("admin", `/admin/pembayaran/${paymentId}`);
-  const order = await loadAdminPaymentOrderOperation(paymentId);
+  const [order, history] = await Promise.all([
+    loadAdminPaymentOrderOperation(paymentId),
+    loadAdminPaymentHistoryOperation(paymentId),
+  ]);
   if (!order.isSuccess) notFound();
-  const history = await loadAdminPaymentHistoryOperation(paymentId);
   const hasEvidence = order.value.evidenceAttempts.some((attempt) => attempt.submittedAt);
   return (
     <div className="payment-page">
@@ -92,11 +103,11 @@ export default async function AdminPaymentDetailPage({
               width={800}
             />
           </div>
-          <h3>Riwayat attempt</h3>
+          <h3>Riwayat percobaan</h3>
           <ol>
             {order.value.evidenceAttempts.map((attempt) => (
               <li key={attempt.id}>
-                Attempt {attempt.attemptNumber}: {attempt.status}
+                Percobaan {attempt.attemptNumber}: {evidenceAttemptStatusLabels[attempt.status]}
                 {attempt.submittedAt
                   ? ` — ${createProgramDateTimeFormatter(order.value.timezone).format(new Date(attempt.submittedAt))} ${programTimezoneLabel(order.value.timezone)}`
                   : ""}

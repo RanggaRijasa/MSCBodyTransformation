@@ -3,9 +3,11 @@
 
 ## Status
 
-Workplan dibuat pada 10 Agustus 2026. Phase 00 baseline dan contract freeze
-selesai pada tanggal yang sama; implementasi executable web belum dimulai dan
-Phase 01 adalah phase berikutnya.
+Workplan dibuat pada 10 Agustus 2026. Phase 00 sampai Phase 11A telah selesai
+lokal. Visual reset berbasis Tailwind CSS dan primitive shadcn terpilih,
+iPhone/PWA representative parity, serta regression penuh Phase 03–11 ditutup
+pada 12 Agustus 2026. Phase 12 menjadi phase berikutnya; deployment dan
+konfigurasi production tetap memerlukan approval terpisah.
 
 Source iOS sudah mencapai Phase 13.1 dan tetap menjadi behavioral/design
 reference. Hosted Supabase `main` sudah memiliki 20 migration, sembilan Edge
@@ -33,8 +35,11 @@ Hasil Phase 00:
 - Fitur produk dipertahankan kecuali Sign in with Apple dan StoreKit.
 - Pembayaran menggunakan transfer manual, upload bukti privat, pemeriksaan
   Admin, dan aktivasi server-authoritative.
-- Guest/Peserta dan Coach menggunakan mobile app-like UI.
-- Admin menggunakan desktop-first responsive UI.
+- Guest, Peserta, Coach, dan Admin pada mobile mengikuti aplikasi iPhone dan
+  harus terasa seperti aplikasi mobile nyata.
+- Admin desktop merupakan responsive expansion dari sistem visual yang sama,
+  bukan produk atau template dashboard yang terpisah.
+- Tailwind CSS dan shadcn/ui disetujui sebagai fondasi UI redesign Phase 11A.
 - Supabase tetap backend bersama.
 
 ## Rekomendasi teknis
@@ -42,7 +47,8 @@ Hasil Phase 00:
 - Next.js App Router dan TypeScript strict.
 - pnpm dengan lockfile serta Node active LTS yang dipin saat Phase 01.
 - Supabase SSR dengan browser/server client terpisah.
-- CSS semantic design tokens; jangan port hard-coded styling per View.
+- Tailwind CSS + shadcn/ui di atas semantic design tokens; jangan port
+  hard-coded styling per View atau menerima tema default tanpa adaptasi MSC.
 - Unit/component/integration/contract tests dan Playwright E2E.
 - PWA manifest serta service worker dengan private-data no-cache policy.
 - Cloudflare Workers Paid sebagai hosting production cost-first melalui
@@ -59,7 +65,8 @@ changelog, support matrix, dan security advisory saat scaffold dilakukan.
 | Area | Source authoritative |
 |---|---|
 | Perilaku produk | remediation workplan, contract matrix, test dan source iOS |
-| Visual/terminology | iOS `UI_REFERENCE_SHEET.md` |
+| Visual/terminology mobile | aplikasi iPhone, `UI_REFERENCE_SHEET.md`, dan Phase 11A parity ledger |
+| Adaptasi web/desktop | concept owner-approved dan Phase 11A design contract |
 | Backend schema/RLS/RPC/functions | `../../supabase` |
 | API contract | `../../Contracts` |
 | Web architecture | `../docs/architecture` |
@@ -111,6 +118,8 @@ Jika menyentuh data, Auth, payment, role, media privat, atau Supabase:
 
 - Phase 11: PWA install/offline/update, accessibility, performance, security,
   dan reliability.
+- Phase 11A: total visual redesign, iPhone parity seluruh role, Tailwind,
+  shadcn/ui, dan pengulangan penuh regression Phase 11.
 - Phase 12: hosting, domain, environments, OAuth production, dan deployment.
 - Phase 13: parity UAT, decommission bertahap, ownership transfer, dan cutover.
 
@@ -123,10 +132,12 @@ Jika menyentuh data, Auth, payment, role, media privat, atau Supabase:
 - Jangan membuat mutation hosted hanya karena local tests lulus.
 - Checkbox baru dicentang setelah command verifikasi dicatat.
 - Semua perbedaan iOS/web harus menjadi keputusan adaptasi eksplisit.
-- Perubahan frontend landing setelah Phase 11 wajib memakai regression gate di
-  `12_PHASE_11_PWA_QUALITY_SECURITY_AND_RELIABILITY.md`; evidence visual,
-  accessibility, PWA, privacy, performance, dan build harus diperbarui sesuai
-  luas perubahan sebelum Phase 12.
+- Redesign total setelah Phase 11 wajib dikerjakan sebagai Phase 11A. Evidence
+  Phase 11 lama hanya baseline pra-redesign; visual, accessibility, PWA,
+  privacy, performance, security, dan build wajib diverifikasi ulang sebelum
+  Phase 12.
+- Phase 11A mengizinkan Simulator iOS dan screenshot read-only sebagai
+  reference. Ia tidak mengizinkan perubahan source atau project iOS.
 - Phase 13 tidak menghapus source lama secara otomatis; archive/pemindahan repo
   adalah manual gate pengguna.
 

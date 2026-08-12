@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("media routes memakai camera policy dan Guest gagal tertutup", async ({ page, request }) => {
   const landing = await request.get("/");
   expect(landing.headers()["permissions-policy"]).toBe(
-    "camera=(self), microphone=(), geolocation=()",
+    "camera=(self), microphone=(), geolocation=(), payment=(), usb=()",
   );
 
   const qrImage = await request.get("/api/coach/qr-image");

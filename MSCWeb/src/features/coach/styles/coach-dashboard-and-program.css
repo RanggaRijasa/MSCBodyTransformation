@@ -1,0 +1,342 @@
+.coach-identity-card {
+  display: grid;
+  min-width: 0;
+  min-height: var(--control-min);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.coach-identity-card h2,
+.coach-identity-card p {
+  margin: 0;
+  color: inherit;
+}
+
+.coach-identity-card > div {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-xxs);
+}
+
+.coach-identity-card > div > p:first-child {
+  color: var(--color-text-secondary);
+}
+
+.coach-identity-card__role {
+  display: inline-flex;
+  grid-column: 2;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-xxs);
+  padding: var(--space-xxs) var(--space-xs);
+  border-radius: var(--radius-round);
+  background: color-mix(in srgb, var(--color-brand-primary) 12%, var(--color-surface));
+  color: var(--color-brand-text);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+.coach-identity-card__chevron {
+  width: 1.25rem;
+  height: 1.25rem;
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+.coach-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-md);
+}
+
+.coach-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+.coach-summary {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.coach-metrics > div {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  text-align: center;
+}
+
+.coach-metrics > div + div {
+  border-inline-start: 1px solid var(--color-border);
+}
+
+.coach-metrics svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-brand-primary);
+}
+
+.coach-metrics strong {
+  font-size: var(--text-metric);
+  font-variant-numeric: tabular-nums;
+}
+
+.coach-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.coach-quick-actions a {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 8.5rem;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-xs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-sm);
+  color: var(--color-text-primary);
+  font-size: var(--text-secondary);
+  font-weight: 750;
+  hyphens: none;
+  line-height: 1.2;
+  overflow-wrap: normal;
+  text-align: center;
+  text-decoration: none;
+  word-break: normal;
+}
+
+.coach-quick-actions svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.coach-quick-actions a::after {
+  width: 2.5rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: var(--color-brand-primary);
+  content: "";
+}
+
+.coach-quick-actions__badge {
+  position: absolute;
+  inset-block-start: var(--space-xs);
+  inset-inline-end: var(--space-xs);
+  min-width: 1.5rem;
+  padding: var(--space-xxs) var(--space-xs);
+  border-radius: var(--radius-round);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  text-align: center;
+}
+
+.coach-quick-actions__badge--review {
+  background: var(--color-brand-accent);
+  color: var(--color-on-accent);
+}
+
+.coach-quick-actions__badge--attention {
+  background: var(--color-brand-primary);
+  color: var(--color-on-primary);
+}
+
+.coach-participant-entry {
+  display: inline-flex;
+  min-height: var(--control-min);
+  align-items: center;
+  justify-self: start;
+  color: var(--color-brand-text);
+  font-weight: 750;
+}
+
+.coach-range-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.coach-range-filter a {
+  min-height: var(--control-min);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.coach-program-strip {
+  display: flex;
+  min-width: 0;
+  gap: var(--space-sm);
+  padding-block-end: var(--space-xs);
+  overflow-x: auto;
+  scroll-snap-type: inline mandatory;
+}
+
+.coach-program-chip {
+  display: grid;
+  min-width: min(18rem, 78vw);
+  min-height: var(--control-min);
+  align-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-md);
+  color: var(--color-text-primary);
+  scroll-snap-align: start;
+  text-decoration: none;
+}
+
+.coach-program-chip[aria-current] {
+  border-color: var(--color-brand-primary);
+  box-shadow: inset 0 0 0 1px var(--color-brand-primary);
+}
+
+.coach-ranking-list {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-xs);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.coach-ranking-list > li {
+  display: grid;
+  min-width: 0;
+  min-height: var(--control-min);
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.coach-ranking-list > li > strong,
+.coach-ranking-list > li > span:last-child {
+  font-variant-numeric: tabular-nums;
+}
+
+.coach-ranking-list--full > li {
+  grid-template-columns: 2.5rem minmax(8rem, 1fr) auto auto;
+}
+
+.coach-ranking-list--full .app-progress {
+  margin-block-start: var(--space-xs);
+}
+
+.coach-activity-feed .app-surface {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.coach-participant-mode {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-sm);
+  background: var(--color-surface);
+}
+
+#aktivitas,
+#peringkat {
+  scroll-margin-block-start: calc(var(--safe-area-top) + var(--space-lg));
+}
+
+@media (max-width: 48rem) {
+  .coach-activity-feed .app-surface {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-ranking-list--full > li {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+  }
+
+  .coach-ranking-list--full .status-badge {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 22rem) {
+  .coach-program-hub {
+    padding-inline: 0;
+  }
+
+  .coach-identity-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .coach-identity-card__role {
+    grid-column: 1;
+  }
+
+  .coach-identity-card__chevron {
+    display: none;
+  }
+
+  .coach-quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .coach-ranking-list--full > li {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: hidden;
+  }
+
+  .coach-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .coach-metrics > div + div {
+    border-block-start: 1px solid var(--color-border);
+    border-inline-start: 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-shell--coach > .shell-navigation a[aria-current="page"] {
+    color: var(--color-text-primary);
+  }
+}
+
+@media (forced-colors: active) {
+  .coach-identity-card,
+  .coach-quick-actions a,
+  .coach-program-chip,
+  .coach-ranking-list > li {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .coach-quick-actions a::after {
+    background: Highlight;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-program-strip {
+    scroll-behavior: auto;
+  }
+}

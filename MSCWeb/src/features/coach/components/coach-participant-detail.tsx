@@ -33,11 +33,11 @@ export function CoachParticipantDetailView({
         </div>
       </header>
       {detail.enrollments.length > 1 ? (
-        <nav aria-label="Pilih riwayat program" className="participant-program-strip">
+        <nav aria-label="Pilih riwayat program" className="coach-program-strip">
           {detail.enrollments.map((enrollment) => (
             <Link
               aria-current={enrollment.id === detail.enrollmentId ? "page" : undefined}
-              className="participant-program-chip"
+              className="coach-program-chip"
               href={`/coach-area/peserta/${detail.participantId}?program=${enrollment.programId}`}
               key={enrollment.id}
             >

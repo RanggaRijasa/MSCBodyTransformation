@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { PaymentOrder } from "@/domain/payments/payment";
-import { AppButton, Surface } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 export function AdminPaymentDecision({ order }: Readonly<{ order: PaymentOrder }>) {
   const router = useRouter();

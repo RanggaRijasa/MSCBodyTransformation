@@ -8,7 +8,7 @@ import {
   InstallCallout,
   StepsSection,
 } from "@/features/landing/components/landing-sections";
-import { LeaderboardSection } from "@/features/landing/components/landing-leaderboard";
+import { PreviewSection } from "@/features/landing/components/landing-previews";
 import { MarketingFooter } from "@/features/landing/components/marketing-footer";
 import { MarketingHeader } from "@/features/landing/components/marketing-header";
 import { MarketingRouteBehavior } from "@/features/landing/components/marketing-route-behavior";
@@ -34,7 +34,7 @@ export function LandingPage({ actor }: LandingPageProperties) {
             <StepsSection />
           </div>
           <AudienceSection />
-          <LeaderboardSection />
+          <PreviewSection />
           <InstallCallout />
           <FaqSection />
         </main>

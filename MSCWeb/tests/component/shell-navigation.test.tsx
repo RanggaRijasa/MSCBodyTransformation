@@ -2,7 +2,11 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ShellNavigation, isNavigationItemActive } from "@/features/app-shell";
-import { adminNavigation } from "@/features/app-shell/model/navigation-items";
+import {
+  adminMobileNavigation,
+  adminNavigation,
+  participantNavigation,
+} from "@/features/app-shell/model/navigation-items";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/program",
@@ -24,5 +28,27 @@ describe("ShellNavigation", () => {
 
     expect(isNavigationItemActive("/admin", dashboard)).toBe(true);
     expect(isNavigationItemActive("/admin/program", dashboard)).toBe(false);
+  });
+
+  it("menjaga lima destination mobile dan enam destination desktop Admin", () => {
+    expect(adminMobileNavigation.map(({ href }) => href)).toEqual([
+      "/admin",
+      "/admin/program",
+      "/admin/orang",
+      "/admin/konten",
+      "/admin/pengaturan",
+    ]);
+    expect(adminNavigation.map(({ href }) => href)).toEqual([
+      "/admin",
+      "/admin/pembayaran",
+      "/admin/program",
+      "/admin/orang",
+      "/admin/konten",
+      "/admin/pengaturan",
+    ]);
+  });
+
+  it("memakai Beranda sebagai label tab utama Peserta tanpa mengubah route", () => {
+    expect(participantNavigation[0]).toMatchObject({ href: "/hari-ini", label: "Beranda" });
   });
 });

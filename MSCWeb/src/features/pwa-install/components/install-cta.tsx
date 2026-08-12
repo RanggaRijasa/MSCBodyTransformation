@@ -3,7 +3,7 @@
 import { getInstallPresentation } from "@/features/pwa-install/model/install-presentation";
 import type { InstallStateKind } from "@/features/pwa-install/model/install-state";
 import { usePwaInstall } from "@/features/pwa-install/components/pwa-install-provider";
-import { AppButton, AppLink, type ActionVariant } from "@/shared/ui";
+import { AppButton, AppLink, type ActionVariant } from "@/shared/ui/controls/actions";
 
 type InstallCtaPresentationProperties = Readonly<{
   actorDestination: string;

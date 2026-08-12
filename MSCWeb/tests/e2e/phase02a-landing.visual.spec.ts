@@ -20,10 +20,26 @@ async function waitForLandingReady(page: import("@playwright/test").Page) {
   await expect(
     page.locator("#hero-install-anchor").getByRole("button", { name: "Unduh MSC" }),
   ).toBeVisible();
+  const previewImages = page.locator(".landing-preview-card img");
+  await expect(previewImages).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) {
+    const previewImage = previewImages.nth(index);
+    await previewImage.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        previewImage.evaluate((image) => {
+          const loadedImage = image as HTMLImageElement;
+          return loadedImage.complete && loadedImage.naturalWidth > 0;
+        }),
+      )
+      .toBe(true);
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const images = page.locator("img");
   await expect
     .poll(() =>
-      page.locator("img").evaluateAll((images) =>
-        images.every((image) => {
+      images.evaluateAll((elements) =>
+        elements.every((image) => {
           const loadedImage = image as HTMLImageElement;
           return loadedImage.complete && loadedImage.naturalWidth > 0;
         }),

@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { subscribeToAuthClientEvents } from "@/application/auth/client-auth-events";
-
 const channelName = "msc-auth-session";
 
 function clearAccountScopedBrowserState() {
@@ -21,6 +19,7 @@ export function SessionSynchronizer() {
   const router = useRouter();
 
   useEffect(() => {
+    let isActive = true;
     let channel: BroadcastChannel | null = null;
     try {
       channel = "BroadcastChannel" in window ? new BroadcastChannel(channelName) : null;
@@ -34,21 +33,25 @@ export function SessionSynchronizer() {
     }
 
     let unsubscribe: (() => void) | undefined;
-    try {
-      unsubscribe = subscribeToAuthClientEvents((event) => {
-        if (event === "SIGNED_IN" || event === "SIGNED_OUT") clearAccountScopedBrowserState();
-        channel?.postMessage({ event });
-        router.refresh();
+    void import("@/application/auth/client-auth-events")
+      .then(({ subscribeToAuthClientEvents }) => {
+        if (!isActive) return;
+        unsubscribe = subscribeToAuthClientEvents((event) => {
+          if (event === "SIGNED_IN" || event === "SIGNED_OUT") clearAccountScopedBrowserState();
+          channel?.postMessage({ event });
+          router.refresh();
+        });
+      })
+      .catch(() => {
+        // Public pages remain usable when local service configuration is absent.
       });
-    } catch {
-      // Public pages remain usable when local service configuration is absent.
-    }
 
     const refreshVisibleSession = () => {
       if (document.visibilityState === "visible") router.refresh();
     };
     document.addEventListener("visibilitychange", refreshVisibleSession);
     return () => {
+      isActive = false;
       document.removeEventListener("visibilitychange", refreshVisibleSession);
       unsubscribe?.();
       channel?.close();

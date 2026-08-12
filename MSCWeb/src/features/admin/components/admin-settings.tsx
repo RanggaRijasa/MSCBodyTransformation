@@ -1,6 +1,7 @@
 import type { AdminAuditItem } from "@/domain/admin/admin-operations";
 import { createProgramDateTimeFormatter } from "@/shared/formatting/indonesian-formatters";
-import { ListRow, SectionHeading, StatusBadge, Surface } from "@/shared/ui";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { ListRow, SectionHeading, Surface } from "@/shared/ui/surfaces/surfaces";
 
 export function AdminSettings({
   audit,

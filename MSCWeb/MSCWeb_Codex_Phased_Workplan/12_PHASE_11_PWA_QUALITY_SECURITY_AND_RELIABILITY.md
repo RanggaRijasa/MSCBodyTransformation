@@ -232,6 +232,17 @@ selesai hanya karena desain terlihat benar pada satu browser atau viewport.
 - Remaining blockers: tidak ada blocker lokal Phase 11. Konfigurasi produksi
   dan checklist perangkat owner didokumentasikan untuk follow-up.
 
+## Handoff ke Phase 11A
+
+Owner menyetujui redesign total setelah closure Phase 11. Seluruh evidence di
+phase ini menjadi baseline pra-redesign dan tidak boleh dipakai untuk mengklaim
+build baru masih lulus. Phase 11A wajib menjalankan ulang full local gate phase
+ini, memperbarui evidence seluruh role, dan menutup checklist perangkat yang
+ditetapkan Phase 11A sebelum Phase 12.
+
+Source authoritative redesign:
+`12A_PHASE_11A_TOTAL_UI_REDESIGN_AND_IOS_VISUAL_PARITY.md`.
+
 ## Progress log regresi landing v3 — 11 Agustus 2026
 
 - Files changed: komposisi dan styling landing, copy Indonesia, placeholder

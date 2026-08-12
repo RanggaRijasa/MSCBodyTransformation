@@ -8,6 +8,7 @@ import {
 } from "@/features/auth/model/auth-flow";
 import { readAuthServerEnvironment } from "@/features/auth/server/auth-environment";
 import { sealCookie } from "@/features/auth/server/sealed-cookie";
+import { relativeRedirect } from "@/shared/security/relative-redirect";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
@@ -36,9 +37,8 @@ export async function POST(request: NextRequest) {
         secure: request.nextUrl.protocol === "https:",
       },
     );
-    const login = new URL("/masuk", request.nextUrl.origin);
-    login.searchParams.set("returnTo", `/program/${programId}`);
-    return NextResponse.redirect(login, 303);
+    const query = new URLSearchParams({ returnTo: `/program/${programId}` });
+    return relativeRedirect(`/masuk?${query.toString()}`, 303);
   } catch {
     return NextResponse.json({ code: "authentication_configuration_missing" }, { status: 503 });
   }

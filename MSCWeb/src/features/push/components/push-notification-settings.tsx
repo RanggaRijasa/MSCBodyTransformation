@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import { AppButton, StatusBadge, Surface } from "@/shared/ui";
+import { AppButton } from "@/shared/ui/controls/actions";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 type PushState =
   "active" | "configuration-missing" | "denied" | "disabled" | "enabling" | "error" | "unsupported";

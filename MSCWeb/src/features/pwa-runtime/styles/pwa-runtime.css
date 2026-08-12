@@ -4,7 +4,8 @@
   inset-inline: max(var(--space-md), env(safe-area-inset-left))
     max(var(--space-md), env(safe-area-inset-right));
   display: flex;
-  width: min(calc(100% - (2 * var(--space-md))), 46rem);
+  width: auto;
+  max-width: 46rem;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
@@ -12,8 +13,8 @@
   padding: var(--space-sm);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
-  background: var(--color-surface-elevated);
-  box-shadow: var(--elevation-high);
+  background: var(--glass-surface-opaque);
+  box-shadow: var(--glass-shadow);
 }
 
 .pwa-runtime-banner > div {
@@ -28,15 +29,45 @@
 
 .pwa-runtime-banner--offline {
   inset-block-start: max(var(--space-md), env(safe-area-inset-top));
+  border-inline-start: 0.3rem solid var(--color-warning);
 }
 
 .pwa-runtime-banner--update {
   inset-block-end: max(var(--space-md), env(safe-area-inset-bottom));
+  border-inline-start: 0.3rem solid var(--color-info);
 }
 
 @media (max-width: 34rem) {
   .pwa-runtime-banner {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pwa-runtime-banner {
+    background: var(--glass-background);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .pwa-runtime-banner {
+    border-color: var(--color-border-strong);
+    background: var(--glass-surface-opaque);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .pwa-runtime-banner {
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }

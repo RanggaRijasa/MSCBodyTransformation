@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import { AppIcon, type AppIconName } from "@/shared/ui/icons/app-icon";
+import { cn } from "@/shared/ui/lib/cn";
+import { Button, buttonVariants } from "@/shared/ui/primitives/button";
 
 export type ActionVariant = "primary" | "secondary" | "accent" | "destructive";
 
@@ -25,17 +27,18 @@ export function AppButton({
   ...properties
 }: AppButtonProperties) {
   return (
-    <button
+    <Button
       {...properties}
       aria-busy={isLoading || undefined}
-      className={`app-action app-action--${variant} ${className}`.trim()}
+      className={cn("app-action", `app-action--${variant}`, className)}
       disabled={disabled || isLoading}
       type={type}
+      variant={variant}
     >
       {isLoading ? <span aria-hidden="true" className="app-spinner" /> : null}
       {!isLoading && icon ? <AppIcon className="app-action__icon" name={icon} /> : null}
       <span>{children}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -55,7 +58,10 @@ export function AppLink({
   variant = "primary",
 }: AppLinkProperties) {
   return (
-    <Link className={`app-action app-action--${variant} ${className}`.trim()} href={href}>
+    <Link
+      className={cn(buttonVariants({ variant }), "app-action", `app-action--${variant}`, className)}
+      href={href}
+    >
       {icon ? <AppIcon className="app-action__icon" name={icon} /> : null}
       <span>{children}</span>
     </Link>
@@ -77,13 +83,15 @@ export function IconButton({
   ...properties
 }: IconButtonProperties) {
   return (
-    <button
+    <Button
       {...properties}
       aria-label={label}
-      className={`icon-button ${className}`.trim()}
+      className={cn("icon-button", className)}
+      size="icon"
       type={type}
+      variant="secondary"
     >
       <AppIcon name={icon} />
-    </button>
+    </Button>
   );
 }

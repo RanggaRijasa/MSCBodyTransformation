@@ -1,18 +1,13 @@
-import type { AdminProgramListItem, AdminProgramStatus } from "@/domain/admin/admin-program";
+import type { AdminProgramListItem } from "@/domain/admin/admin-program";
+import { adminProgramStatusLabels as statusLabels } from "@/features/admin/components/admin-presentation-labels";
 import {
   formatCurrencyIDR,
   formatNumber,
   formatProgramDate,
 } from "@/shared/formatting/indonesian-formatters";
-import { AppButton, AppLink, StatusBadge, Surface } from "@/shared/ui";
-
-const statusLabels: Record<AdminProgramStatus, string> = {
-  active: "Aktif",
-  archived: "Diarsipkan",
-  completed: "Selesai",
-  draft: "Draft",
-  scheduled: "Terjadwal",
-};
+import { AppButton, AppLink } from "@/shared/ui/controls/actions";
+import { StatusBadge } from "@/shared/ui/status/status";
+import { Surface } from "@/shared/ui/surfaces/surfaces";
 
 export function AdminProgramList({
   items,
@@ -74,11 +69,18 @@ export function AdminProgramList({
           </AppLink>
         </form>
       </Surface>
+      <div className="admin-section-intro">
+        <div>
+          <h2>Daftar program</h2>
+          <p>Hasil mengikuti pencarian dan status yang dipilih.</p>
+        </div>
+        <strong className="admin-result-count monospaced-numeric">{filtered.length}</strong>
+      </div>
       <div className="admin-program-grid" aria-label="Daftar program">
         {visible.length ? (
           visible.map((item) => (
             <Surface className="admin-program-card" key={item.id}>
-              <div>
+              <div className="admin-program-card__identity">
                 <StatusBadge
                   tone={
                     item.status === "active"
@@ -96,7 +98,7 @@ export function AdminProgramList({
                   {formatProgramDate(item.endsOn, "Asia/Makassar")}
                 </p>
               </div>
-              <dl>
+              <dl className="admin-program-card__metrics">
                 <div>
                   <dt>Peserta</dt>
                   <dd className="monospaced-numeric">
@@ -113,7 +115,11 @@ export function AdminProgramList({
                   </dd>
                 </div>
               </dl>
-              <AppLink href={`/admin/program/${item.id}`} variant="secondary">
+              <AppLink
+                className="admin-program-card__action"
+                href={`/admin/program/${item.id}`}
+                variant="secondary"
+              >
                 Buka program
               </AppLink>
             </Surface>

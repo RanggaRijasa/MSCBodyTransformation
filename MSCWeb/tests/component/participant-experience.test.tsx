@@ -111,32 +111,124 @@ afterEach(() => {
 
 describe("pengalaman Peserta", () => {
   it("menjaga urutan Home dan Guest state public-safe", () => {
+    const privateProgram = participantProgram();
     render(
       <ParticipantHome
         actor="guest"
-        coaches={[]}
-        displayName=""
-        programs={[]}
+        coaches={[
+          {
+            biography: "Profil publik.",
+            city: "Denpasar",
+            displayName: "Coach Publik",
+            id: "00000000-0000-4000-8000-000000000051",
+            isAssigned: true,
+            photoUrl: null,
+          },
+        ]}
+        displayName="Nama Privat"
+        programs={[privateProgram]}
         publicPrograms={[program()]}
-        selectedProgram={null}
+        selectedProgram={privateProgram}
+        topFive={[
+          {
+            id: "00000000-0000-4000-8000-000000000061",
+            isCurrentParticipant: true,
+            participantDisplayName: "Nama Peringkat Publik",
+            participantId: "00000000-0000-4000-8000-000000000062",
+            programId: program().id,
+            progressPercentage: 90,
+            rank: 1,
+            totalPoints: 100,
+          },
+        ]}
+        winnerPosters={[]}
+        winners={[]}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Beranda" })).toBeVisible();
+    const headings = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent);
+    expect(headings).toEqual([
+      "Siap memulai perjalananmu?",
+      "Program",
+      "Fokus",
+      "Top 5",
+      "Pemenang",
+      "Coach",
+    ]);
+    expect(screen.getByRole("link", { name: "Masuk" })).toHaveAttribute(
+      "href",
+      "/masuk?returnTo=%2Fhari-ini",
+    );
+    expect(screen.getByRole("link", { name: /Program Agustus/ })).toHaveAttribute(
+      "href",
+      `/program/${program().id}`,
+    );
+    expect(screen.getByRole("heading", { name: "Fokus pribadi terkunci" })).toBeVisible();
+    expect(screen.queryByText("Nama Privat")).not.toBeInTheDocument();
+    expect(screen.queryByText("Coach-mu")).not.toBeInTheDocument();
+    expect(screen.queryByText("Buka langkah berikutnya")).not.toBeInTheDocument();
+    expect(screen.getByText("Nama Peringkat Publik").closest("li")).not.toHaveClass("is-current");
+    expect(screen.queryByText(/berat/i)).not.toBeInTheDocument();
+  });
+
+  it("menjaga hierarki Beranda Peserta dan tujuan aksi yang sudah ada", () => {
+    const selected = participantProgram();
+    render(
+      <ParticipantHome
+        actor="participant"
+        coaches={[
+          {
+            biography: "Profil publik.",
+            city: "Denpasar",
+            displayName: "Coach Pendamping",
+            id: "00000000-0000-4000-8000-000000000051",
+            isAssigned: true,
+            photoUrl: null,
+          },
+        ]}
+        displayName="Peserta Uji"
+        programs={[selected]}
+        publicPrograms={[]}
+        selectedProgram={selected}
         topFive={[]}
         winnerPosters={[]}
         winners={[]}
       />,
     );
-    const headings = screen
-      .getAllByRole("heading", { level: 2 })
-      .map((heading) => heading.textContent);
-    expect(headings).toEqual(["Program", "Fokus", "Top 5", "Pemenang", "Coach"]);
-    expect(screen.getByRole("link", { name: "Masuk atau daftar" })).toHaveAttribute(
+
+    expect(screen.getByRole("heading", { level: 1, name: "Beranda" })).toBeVisible();
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(["Peserta Uji", "Program", "Fokus hari ini", "Top 5", "Pemenang", "Coach"]);
+    expect(screen.getByRole("link", { name: /Program Agustus/ })).toHaveAttribute(
       "href",
-      "/masuk?returnTo=%2Fhari-ini",
+      `/hari-ini?program=${selected.program.id}`,
     );
-    expect(screen.queryByText(/berat/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Peserta Uji.*MSC Peserta/ })).toHaveAttribute(
+      "href",
+      "/profil",
+    );
+    expect(screen.getByRole("link", { name: "Lanjutkan" })).toHaveAttribute(
+      "href",
+      `/program/${selected.program.id}/langkah/${selected.program.days[0]!.steps[0]!.id}`,
+    );
+    expect(
+      screen.getByRole("img", {
+        name: "Aktivitas hari ini 0 dari 1 langkah selesai. Progres program 25 persen.",
+      }),
+    ).toBeVisible();
+    expect(screen.getByText("0/1")).toBeVisible();
+    expect(screen.getByText("Diikuti")).toBeVisible();
+    expect(screen.getByText("Coach-mu")).toBeVisible();
+    expect(screen.getAllByText("Denpasar")).toHaveLength(1);
+    expect(screen.queryByText(/kg|nomor hp|bukti transfer/i)).not.toBeInTheDocument();
   });
 
   it("membuka satu hari server dan menampilkan status langkah", () => {
-    render(<ProgramActivity participantProgram={participantProgram()} />);
+    const { container } = render(<ProgramActivity participantProgram={participantProgram()} />);
+    expect(container.firstElementChild).toHaveClass("participant-activity");
     expect(screen.getByText(/Hari ini · Hari pertama/)).toBeVisible();
     expect(screen.getByRole("link", { name: /Panduan/ })).toHaveAttribute(
       "href",

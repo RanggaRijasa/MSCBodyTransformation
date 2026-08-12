@@ -1,0 +1,309 @@
+.admin-dashboard__grid,
+.admin-dashboard__primary,
+.admin-dashboard__secondary {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.admin-dashboard section {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.admin-action-list {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-action-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.admin-action-row:last-child {
+  border-block-end: 0;
+}
+
+.admin-action-row > div {
+  display: grid;
+  gap: var(--space-xxs);
+}
+
+.admin-action-row p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-secondary);
+}
+
+.admin-action-row__icon {
+  display: grid;
+  width: var(--control-min);
+  height: var(--control-min);
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--status-warning-background);
+  color: var(--color-warning);
+}
+
+.admin-action-row__icon--payment {
+  background: var(--status-error-background);
+  color: var(--color-brand-text);
+}
+
+.admin-action-row__icon svg,
+.admin-overview__note svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.admin-action-row__count {
+  display: inline-grid;
+  min-width: var(--control-min);
+  min-height: var(--control-min);
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-brand-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-card-title);
+}
+
+.admin-action-row > .app-action {
+  grid-column: 2 / -1;
+  justify-self: start;
+}
+
+.admin-action-row__link > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+}
+
+.admin-action-row__link svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.admin-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.admin-quick-actions .app-action {
+  min-height: 5.5rem;
+  flex-direction: column;
+  align-items: start;
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.admin-quick-actions .app-action__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.admin-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(6.75rem, 100%), 1fr));
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-overview .metric {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
+  border-inline-end: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.admin-overview .metric:nth-child(3) {
+  border-inline-end: 0;
+}
+
+.admin-overview .metric span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.admin-overview .metric strong {
+  font-size: var(--text-metric);
+  line-height: 1;
+}
+
+.admin-overview__note {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-block-start: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.admin-overview__note svg {
+  flex: 0 0 auto;
+  color: var(--color-info);
+}
+
+.admin-audit-preview {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-audit-preview > .section-heading,
+.admin-audit-preview > .admin-empty-copy {
+  padding: var(--space-md);
+}
+
+.admin-audit-preview .list-row__icon {
+  background: var(--status-neutral-background);
+  color: var(--color-text-primary);
+}
+
+@media (min-width: 64rem) {
+  .admin-dashboard__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(26rem, 1fr);
+    align-items: start;
+  }
+
+  .admin-action-row {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+
+  .admin-action-row > .app-action {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 40rem) {
+  .admin-action-row {
+    grid-template-columns: var(--control-min) var(--control-min) minmax(0, 1fr);
+    gap: var(--space-xxs);
+    padding: var(--space-xs);
+  }
+
+  .admin-action-row__icon {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .admin-action-row__count {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+
+  .admin-action-row > div {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .admin-action-row > .admin-action-row__link {
+    grid-column: 3;
+    grid-row: 2;
+    min-width: var(--control-min);
+    min-height: var(--control-min);
+    justify-content: start;
+    justify-self: start;
+    padding: var(--space-xxs) 0;
+    border-color: transparent;
+    background: transparent;
+    text-align: start;
+  }
+}
+
+@media (max-width: 22rem) {
+  .admin-action-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-action-row__icon {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+
+  .admin-action-row__count {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+
+  .admin-action-row > div {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .admin-action-row > .admin-action-row__link {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .admin-quick-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-quick-actions .app-action,
+  .admin-audit-preview .section-heading > .app-action {
+    width: 100%;
+  }
+
+  .admin-audit-preview .section-heading,
+  .admin-audit-preview .list-row {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-audit-preview .list-row__copy {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .app-shell--admin > .shell-navigation {
+    overflow-x: hidden;
+  }
+
+  .app-shell--admin > .shell-navigation ul {
+    display: flex;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .app-shell--admin > .shell-navigation li {
+    flex: 0 0 min(100%, var(--control-min));
+    min-width: 0;
+  }
+
+  .app-shell--admin > .shell-navigation a {
+    width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-dashboard .app-action--secondary {
+    color: var(--color-brand-text);
+  }
+
+  .app-shell--admin > .shell-navigation a[aria-current="page"] {
+    color: var(--color-text-primary);
+  }
+}
+
+@media (forced-colors: active) {
+  .admin-action-row__icon,
+  .admin-action-row__count {
+    border: 1px solid CanvasText;
+  }
+}

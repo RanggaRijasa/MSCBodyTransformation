@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { BrandMark } from "@/features/landing/components/brand-mark";
-import { InstallCta } from "@/features/pwa-install";
 import { copy } from "@/shared/i18n/id";
 
 export function MarketingHeader() {
@@ -9,7 +8,7 @@ export function MarketingHeader() {
     <header className="marketing-header">
       <div className="marketing-header__inner">
         <Link className="marketing-wordmark" href="/" aria-label="MSC Body Transformation">
-          <BrandMark />
+          <BrandMark eager />
         </Link>
         <nav aria-label={copy.landing.navigation.label} className="marketing-nav">
           <Link href="/program">{copy.landing.navigation.program}</Link>
@@ -20,11 +19,10 @@ export function MarketingHeader() {
           <Link className="marketing-sign-in" href="/masuk">
             {copy.landing.navigation.signIn}
           </Link>
-          <InstallCta className="marketing-header__install" />
         </div>
         <details className="marketing-menu">
           <summary tabIndex={0}>{copy.landing.navigation.menu}</summary>
-          <nav aria-label={`${copy.landing.navigation.label} mobile`}>
+          <nav aria-label={`${copy.landing.navigation.label} seluler`}>
             <Link href="/program">{copy.landing.navigation.program}</Link>
             <a href="#cara-kerja">{copy.landing.navigation.howItWorks}</a>
             <a href="#untuk-coach">{copy.landing.navigation.forCoach}</a>

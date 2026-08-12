@@ -1,7 +1,7 @@
 import type { PaymentOrder } from "@/domain/payments/payment";
 import { AdminPaymentDecision, AdminPaymentQueue, PaymentOrderView } from "@/features/payments";
 
-const payment: PaymentOrder = {
+export const simulatorPaymentOrder: PaymentOrder = {
   accountName: "MSC Body Transformation",
   accountReference: "1234567890",
   amountMinor: "250000",
@@ -25,14 +25,14 @@ export function PaymentGallery() {
   return (
     <div className="state-gallery__stack">
       <div data-testid="payment-owner-gallery">
-        <PaymentOrderView initialOrder={payment} />
+        <PaymentOrderView initialOrder={simulatorPaymentOrder} />
       </div>
       <div data-testid="payment-admin-gallery">
         <AdminPaymentQueue
           filters={{ status: "under_review" }}
           items={[
             {
-              ...payment,
+              ...simulatorPaymentOrder,
               ownerDisplayName: "Peserta Aman",
               ownerEmailHint: "Identitas privat",
               relatedLabel: "Program Transformasi Agustus",
@@ -41,7 +41,9 @@ export function PaymentGallery() {
             },
           ]}
         />
-        <AdminPaymentDecision order={{ ...payment, status: "under_review", version: 2 }} />
+        <AdminPaymentDecision
+          order={{ ...simulatorPaymentOrder, status: "under_review", version: 2 }}
+        />
       </div>
     </div>
   );

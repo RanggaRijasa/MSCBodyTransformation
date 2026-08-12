@@ -12,6 +12,18 @@ afterEach(() => {
 });
 
 describe("alur media browser", () => {
+  it("memindahkan fokus keyboard ke input file dan menampilkan proxy label", async () => {
+    const user = userEvent.setup();
+    render(<ImageAcquisition onProcessed={vi.fn()} />);
+    const label = screen.getByText("Pilih dari galeri").closest("label");
+    const input = label?.querySelector("input[type='file']");
+
+    await user.tab();
+
+    expect(input).toHaveFocus();
+    expect(label).toHaveClass("app-action", "app-action--secondary");
+  });
+
   it("memproses pilihan galeri dan mencabut object URL ketika foto dihapus", async () => {
     const user = userEvent.setup();
     const thumbnail = new Blob(["thumbnail"], { type: "image/jpeg" });

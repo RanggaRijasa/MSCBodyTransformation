@@ -13,6 +13,7 @@ import {
   consumeRequestLimit,
   opaqueRequestFingerprint,
 } from "@/shared/security/request-rate-limiter";
+import { relativeRedirect } from "@/shared/security/relative-redirect";
 
 export async function GET(request: NextRequest) {
   const requestLimit = consumeRequestLimit(
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     const authorizationUrl = await createGoogleAuthorizationUrl(callbackUrl.toString());
     if (!authorizationUrl) {
-      return NextResponse.redirect(new URL("/masuk?error=provider", request.url));
+      return relativeRedirect("/masuk?error=provider");
     }
 
     (await cookies()).set(
@@ -66,6 +67,6 @@ export async function GET(request: NextRequest) {
     );
     return NextResponse.redirect(authorizationUrl);
   } catch {
-    return NextResponse.redirect(new URL("/masuk?error=configuration", request.url));
+    return relativeRedirect("/masuk?error=configuration");
   }
 }

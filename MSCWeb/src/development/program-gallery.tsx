@@ -2,7 +2,7 @@ import type { PublicProgram } from "@/domain/programs/program";
 import { ProgramCatalog } from "@/features/programs/components/program-catalog";
 import { ProgramDetail } from "@/features/programs/components/program-detail";
 
-function galleryProgram(overrides: Partial<PublicProgram>): PublicProgram {
+export function galleryProgram(overrides: Partial<PublicProgram>): PublicProgram {
   return {
     category: "Transformasi kebiasaan",
     coverAlternativeText: null,

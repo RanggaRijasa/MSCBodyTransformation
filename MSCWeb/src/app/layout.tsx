@@ -1,18 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "./globals.css";
 import { SessionSynchronizer } from "@/features/auth/components/session-synchronizer";
+import { PwaRuntimeProvider } from "@/features/pwa-runtime/components/pwa-runtime-provider";
 import { getSiteOrigin } from "@/shared/config/site-url";
-import { PwaRuntimeProvider } from "@/features/pwa-runtime";
-
-const poppins = Poppins({
-  display: "swap",
-  subsets: ["latin"],
-  variable: "--font-poppins",
-  weight: ["400", "500", "600", "700", "800"],
-});
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),
@@ -55,7 +47,7 @@ type RootLayoutProperties = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProperties) {
   return (
-    <html className={poppins.variable} data-scroll-behavior="smooth" lang="id-ID">
+    <html data-scroll-behavior="smooth" lang="id-ID">
       <body>
         <PwaRuntimeProvider>
           {children}

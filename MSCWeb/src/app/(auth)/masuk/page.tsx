@@ -21,20 +21,26 @@ export default async function LoginPage({ searchParams }: PageProperties) {
   const returnTo = safeReturnTo(
     typeof parameters.returnTo === "string" ? parameters.returnTo : undefined,
   );
-  const notice =
+  const selectedNotice =
     status === "keluar"
-      ? "Anda sudah keluar dengan aman."
+      ? ({ copy: "Anda sudah keluar dengan aman.", tone: "status" } as const)
       : error
-        ? errorMessages[error]
+        ? ({
+            copy:
+              errorMessages[error] ??
+              "Proses masuk belum dapat diselesaikan. Mulai lagi dari halaman ini.",
+            tone: "error",
+          } as const)
         : undefined;
 
   return (
     <AuthPage
       description="Gunakan akun Google Anda untuk melanjutkan dengan aman."
       mode="login"
-      notice={notice}
+      notice={selectedNotice?.copy}
+      noticeTone={selectedNotice?.tone}
       returnTo={returnTo}
-      title="Masuk"
+      title="Selamat datang kembali"
     />
   );
 }

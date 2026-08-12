@@ -348,8 +348,9 @@ test("gabung → bayar → Admin verifikasi → aktivitas → Coach review → l
   enrollmentId = enrollment.data.id;
 
   await page.goto(`/hari-ini?program=${ids.program}`);
-  await expect(main.getByRole("heading", { name: "Halo, Peserta Phase 07" })).toBeVisible();
-  await expect(main.getByRole("heading", { name: "Fokus" })).toBeVisible();
+  await expect(main.getByRole("heading", { level: 1, name: "Beranda" })).toBeVisible();
+  await expect(main.getByRole("heading", { level: 2, name: "Peserta Phase 07" })).toBeVisible();
+  await expect(main.getByRole("heading", { name: "Fokus hari ini" })).toBeVisible();
 
   await page.goto(`/program/${ids.program}`);
   await expect(main.getByText("Hari ini · Hari verifikasi")).toBeVisible();
