@@ -56,9 +56,9 @@ export default function FeasibilityRoute() {
   }
 
   return (
-    <AppShell activeRoute="program" title="Uji fondasi">
+    <AppShell activeRoute="programs" title="Uji fondasi">
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Pemindai QR Coach</Text>
           <Text style={[styles.body, { color: colors.secondaryText }]}>
             Kamera hanya diminta saat pemindai dibuka. Tidak ada kolom kode manual.
@@ -83,14 +83,14 @@ export default function FeasibilityRoute() {
           )}
         </View>
 
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Normalisasi gambar</Text>
           <Text style={[styles.body, { color: colors.secondaryText }]}>Uji ini mendekode, mengecilkan, dan menulis ulang gambar sebagai JPEG tanpa metadata sumber.</Text>
           <Text accessibilityLiveRegion="polite" style={[styles.status, { color: colors.primaryText }]}>{imageStatus}</Text>
           <Button color={colors.primaryAction} title="Uji pipeline gambar" onPress={runImageProbe} />
         </View>
 
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Google OAuth lokal</Text>
           <Text style={[styles.body, { color: colors.secondaryText }]}>PKCE menyimpan verifier di browser ini dan hanya kembali ke route internal yang diizinkan.</Text>
           <Text accessibilityLiveRegion="polite" style={[styles.status, { color: colors.primaryText }]}>{oauthStatus}</Text>
@@ -138,9 +138,9 @@ async function createExifOrientationSixJpeg(): Promise<Blob> {
   const context = canvas.getContext('2d');
   if (context === null) throw new Error('canvas unavailable');
 
-  context.fillStyle = '#D92D20';
+  context.fillStyle = '#D71920';
   context.fillRect(0, 0, 1_600, 2_400);
-  context.fillStyle = '#F5C542';
+  context.fillStyle = '#FFD400';
   context.fillRect(1_600, 0, 1_600, 2_400);
 
   const source = await new Promise<Blob>((resolve, reject) => {

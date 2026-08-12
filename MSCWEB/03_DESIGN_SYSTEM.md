@@ -175,7 +175,7 @@ Liquid Glass adalah referensi rasa untuk compact interactive chrome pada iOS 26,
 
 Source yang disetujui:
 
-`../MSCBodyTransformation/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-Default.png`
+`assets/brand/AppIcon-Default.png` (salinan web mandiri dari aset native; provenance dicatat di `assets/brand/README.md`)
 
 Derivatives yang wajib dibuat saat implementasi:
 
@@ -203,4 +203,3 @@ Referensi: [web.dev — Adaptive icon support with maskable icons](https://web.d
 - Tidak boleh ada placeholder icon generik, gradient default, excessive rounded cards, atau nested cards tanpa hierarchy.
 - Copy Indonesia diuji untuk wrapping dan zoom besar.
 - Semua interactive state diuji keyboard dan pointer/coarse touch.
-

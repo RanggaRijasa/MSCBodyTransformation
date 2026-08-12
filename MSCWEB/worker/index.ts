@@ -8,8 +8,20 @@ type WorkerEnvironment = {
 
 const knownAppRoutes = new Set([
   '/app',
+  '/app/home',
+  '/app/programs',
+  '/app/leaderboard',
+  '/app/coaches',
   '/app/feasibility',
   '/app/profile',
+  '/coach',
+  '/coach/programs',
+  '/coach/profile',
+  '/admin',
+  '/admin/programs',
+  '/admin/people',
+  '/admin/content',
+  '/admin/settings',
   '/auth/callback',
 ]);
 

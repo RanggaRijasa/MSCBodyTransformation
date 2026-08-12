@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-source_icon="../MSCBodyTransformation/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-Default.png"
+source_icon="assets/brand/AppIcon-Default.png"
 output_directory="public/icons"
 maskable_source="/private/tmp/mscweb-maskable-source-512.png"
 

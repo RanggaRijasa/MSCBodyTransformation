@@ -1,10 +1,12 @@
 export const primitiveTokens = {
   color: {
-    red: '#D92D20',
-    redPressed: '#B42318',
-    yellow: '#F5C542',
-    nearBlack: '#111111',
+    red: '#D71920',
+    redPressed: '#A80F16',
+    yellow: '#FFD400',
+    nearBlack: '#090909',
+    black: '#000000',
     white: '#FFFFFF',
+    transparent: 'transparent',
   },
   space: {
     xxSmall: 4,
@@ -28,16 +30,20 @@ export const primitiveTokens = {
     normal: 200,
     slow: 320,
   },
+  easing: {
+    standard: 'cubic-bezier(0.2, 0, 0, 1)',
+    emphasized: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+  },
 } as const;
 
 export const lightSemanticTokens = {
-  background: '#F7F7F8',
-  secondaryBackground: '#FFFFFF',
+  background: '#FFFFFF',
+  secondaryBackground: '#F2F2F2',
   surface: '#FFFFFF',
   elevatedSurface: '#FFFFFF',
-  primaryText: '#111111',
-  secondaryText: '#5F6368',
-  border: '#DADCE0',
+  primaryText: '#000000',
+  secondaryText: '#3F3F46',
+  border: '#A1A1AA',
   primaryAction: primitiveTokens.color.red,
   primaryActionPressed: primitiveTokens.color.redPressed,
   accent: primitiveTokens.color.yellow,
@@ -45,16 +51,19 @@ export const lightSemanticTokens = {
   success: '#18794E',
   warning: '#8A5A00',
   destructive: '#C62828',
+  info: '#2457A6',
+  overlay: 'rgba(17, 17, 17, 0.52)',
+  disabled: '#71717A',
 } as const;
 
 export const darkSemanticTokens = {
-  background: '#0D0D0F',
-  secondaryBackground: '#151517',
-  surface: '#1C1C1E',
-  elevatedSurface: '#242426',
-  primaryText: '#F5F5F5',
-  secondaryText: '#B0B0B5',
-  border: '#3A3A3C',
+  background: '#000000',
+  secondaryBackground: '#121212',
+  surface: '#1A1A1A',
+  elevatedSurface: '#222222',
+  primaryText: '#FFFFFF',
+  secondaryText: '#D4D4D8',
+  border: '#5A5A5A',
   primaryAction: primitiveTokens.color.red,
   primaryActionPressed: primitiveTokens.color.redPressed,
   accent: primitiveTokens.color.yellow,
@@ -62,16 +71,43 @@ export const darkSemanticTokens = {
   success: '#5ED39A',
   warning: '#FFD166',
   destructive: '#C62828',
+  info: '#78A9FF',
+  overlay: 'rgba(0, 0, 0, 0.72)',
+  disabled: '#8A8A8F',
 } as const;
 
 export const componentTokens = {
   minimumTouchTarget: 44,
   primaryButtonHeight: 50,
+  inputHeight: 50,
+  compactHeaderHeight: 64,
+  compactTabBarHeight: 64,
+  cardPadding: 24,
   compactGutter: 16,
   mediumGutter: 24,
   wideGutter: 32,
   navigationWidth: 220,
   contentMaxWidth: 960,
+  landingMaxWidth: 1200,
+  readingMaxWidth: 680,
+} as const;
+
+export const typographyTokens = {
+  display: { fontSize: 52, lineHeight: 56, fontWeight: '800' as const },
+  titleLarge: { fontSize: 36, lineHeight: 42, fontWeight: '800' as const },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: '700' as const },
+  headline: { fontSize: 20, lineHeight: 26, fontWeight: '700' as const },
+  body: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
+  bodyStrong: { fontSize: 16, lineHeight: 24, fontWeight: '700' as const },
+  callout: { fontSize: 15, lineHeight: 22, fontWeight: '500' as const },
+  label: { fontSize: 14, lineHeight: 20, fontWeight: '700' as const },
+  caption: { fontSize: 12, lineHeight: 16, fontWeight: '500' as const },
+  numericDisplay: {
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '800' as const,
+    fontVariant: ['tabular-nums'] as const,
+  },
 } as const;
 
 export const breakpointTokens = {

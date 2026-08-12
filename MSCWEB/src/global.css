@@ -13,7 +13,7 @@ html {
 
 body {
   overflow: hidden;
-  background: #f7f7f8;
+  background: #ffffff;
 }
 
 *:focus-visible {
@@ -23,7 +23,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
   body {
-    background: #0d0d0f;
+    background: #000000;
   }
 
   *:focus-visible {

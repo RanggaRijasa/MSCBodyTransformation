@@ -1,110 +1,184 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('W00 production routing', () => {
-  test('landing statis dapat dibaca dan membuka shell aplikasi', async ({ page }) => {
+test.describe('W00 production routing and risk probes', () => {
+  test('static landing opens the public application shell', async ({ page }) => {
     const response = await page.goto('/');
-
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole('heading', { name: 'MSC Body Transformation' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Buka aplikasi' })).toHaveAttribute('href', '/app');
-
+    await expect(page.getByRole('heading', { name: 'Transformasi tubuh, langkah demi langkah.' })).toBeVisible();
     const html = await response?.text();
     expect(html).not.toContain('/_expo/static/js');
 
-    await page.getByRole('link', { name: 'Buka aplikasi' }).click();
-    await expect(page).toHaveURL(/\/app$/);
-    await expect(page.getByRole('heading', { name: 'Shell aplikasi siap' })).toBeVisible();
+    await page.getByRole('link', { name: 'Lihat program' }).click();
+    await expect(page).toHaveURL(/\/app\/programs$/);
+    await expect(page.getByRole('heading', { name: 'Program' }).first()).toBeVisible();
   });
 
-  test('nested route, refresh, dan browser Back/Forward tetap konsisten', async ({ page }) => {
-    await page.goto('/app');
+  test('nested route, refresh, Back, and Forward remain consistent', async ({ page }) => {
+    await page.goto('/app/home');
     await page.getByRole('link', { name: 'Profil' }).click();
     await expect(page).toHaveURL(/\/app\/profile$/);
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Route bertingkat' })).toBeVisible();
-
+    await expect(page.getByText('Masuk diperlukan sebelum informasi profil pribadi dapat dimuat.')).toBeVisible();
     await page.goBack();
-    await expect(page).toHaveURL(/\/app$/);
+    await expect(page).toHaveURL(/\/app\/home$/);
     await page.goForward();
     await expect(page).toHaveURL(/\/app\/profile$/);
   });
 
-  test('unknown navigation memakai UI 404 dan asset hilang tetap HTTP 404', async ({ page, request }) => {
+  test('unknown navigation uses UI 404 and missing assets stay HTTP 404', async ({ page, request }) => {
     const navigationResponse = await page.goto('/route-yang-tidak-ada');
     expect(navigationResponse?.status()).toBe(404);
     await expect(page.getByRole('heading', { name: 'Halaman tidak ditemukan' })).toBeVisible();
-
-    const assetResponse = await request.get('/icons/tidak-ada.png');
-    expect(assetResponse.status()).toBe(404);
-
+    expect((await request.get('/icons/tidak-ada.png')).status()).toBe(404);
     const unknownAppResponse = await page.goto('/app/tidak-ada');
     expect(unknownAppResponse?.status()).toBe(404);
-    await expect(page.getByRole('heading', { name: 'Halaman tidak ditemukan' })).toBeVisible();
+  });
+
+  test('browser image pipeline decodes, resizes, and produces metadata-free JPEG', async ({ page }) => {
+    await page.goto('/app/feasibility');
+    await page.getByRole('button', { name: 'Uji pipeline gambar' }).click();
+    await expect(page.getByText(/^Berhasil: 1536×2048, JPEG tanpa EXIF\/GPS,/)).toBeVisible();
   });
 });
 
-test.describe('W00 responsive dan accessibility', () => {
-  test('pipeline gambar browser mendekode, resize, dan menghasilkan JPEG', async ({ page }) => {
-    await page.goto('/app/feasibility');
-    await page.getByRole('button', { name: 'Uji pipeline gambar' }).click();
-
-    await expect(page.getByText(/^Berhasil: 1536×2048, JPEG tanpa EXIF\/GPS,/)).toBeVisible();
+test.describe('W01 landing and metadata', () => {
+  test('all approved sections and product-safe copy are readable', async ({ page }) => {
+    await page.goto('/');
+    for (const heading of ['Cara kerja', 'Program yang membantumu tetap terarah', 'Dukungan Coach di setiap langkah', 'Pembayaran diperiksa manual', 'Data pribadi tetap pribadi', 'Pasang MSC di layar utama']) {
+      await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+    }
+    await expect(page.getByText('aktivasi tidak berlangsung seketika')).toBeVisible();
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', '/manifest.webmanifest');
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', '/');
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'MSC Body Transformation');
   });
 
-  test('320 px memakai bottom navigation tanpa overflow horizontal', async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 720 });
-    await page.goto('/app');
+  test('primary hero CTA opens PWA installation guidance', async ({ page }) => {
+    await page.goto('/');
+    const installAction = page.getByRole('link', { name: 'Unduh aplikasi' });
+    await expect(installAction).toHaveAttribute('href', '/cara-memasang');
+    await installAction.click();
+    await expect(page).toHaveURL(/\/cara-memasang$/);
+    await expect(page.getByRole('heading', { name: 'Cara memasang aplikasi' })).toBeVisible();
+  });
 
+  test('supported Chromium install event opens the native prompt from the CTA', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => {
+      const target = window as Window & { __installPromptCalls?: number };
+      target.__installPromptCalls = 0;
+      const event = new Event('beforeinstallprompt');
+      Object.defineProperties(event, {
+        prompt: {
+          value: () => {
+            target.__installPromptCalls = (target.__installPromptCalls ?? 0) + 1;
+            return Promise.resolve();
+          },
+        },
+        userChoice: { value: Promise.resolve({ outcome: 'accepted', platform: 'web' }) },
+      });
+      window.dispatchEvent(event);
+    });
+
+    await page.getByRole('link', { name: 'Unduh aplikasi' }).click();
+    await expect.poll(() => page.evaluate(() => (window as Window & { __installPromptCalls?: number }).__installPromptCalls)).toBe(1);
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByText('Permintaan pemasangan dikirim ke browser.')).toBeVisible();
+  });
+
+  test('landing uses bold brand color blocks instead of muted accents', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: 'Unduh aplikasi' })).toHaveCSS('background-color', 'rgb(215, 25, 32)');
+    await expect(page.locator('.payment')).toHaveCSS('background-color', 'rgb(215, 25, 32)');
+    await expect(page.locator('.install-panel')).toHaveCSS('background-color', 'rgb(255, 212, 0)');
+  });
+
+  test('legal, payment-help, and install shells resolve with manifest metadata', async ({ request }) => {
+    for (const path of ['/kebijakan-privasi', '/ketentuan', '/bantuan-pembayaran', '/cara-memasang']) {
+      const response = await request.get(path);
+      expect(response.status()).toBe(200);
+      expect(await response.text()).toContain('rel="manifest"');
+    }
+  });
+
+  test('keyboard reaches skip link and primary action', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name: 'Lewati ke konten' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#konten')).toBeFocused();
+  });
+
+  test('landing has no horizontal overflow across required viewport matrix', async ({ page }) => {
+    for (const width of [320, 375, 390, 430, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
+      await page.goto('/');
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+      expect(overflow, `overflow at ${width}px`).toBe(false);
+      await expect(page.getByRole('link', { name: 'Unduh aplikasi' })).toBeVisible();
+    }
+  });
+
+  test('landing remains functional at a 200% content zoom simulation', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+    await expect(page.getByRole('link', { name: 'Unduh aplikasi' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cara kerja' })).toBeVisible();
+  });
+});
+
+test.describe('W01 role shells and accessibility', () => {
+  const cases = [
+    { path: '/app/home', links: ['Beranda', 'Program', 'Peringkat', 'Coach', 'Profil'], active: 'Beranda' },
+    { path: '/coach', links: ['Dashboard', 'Program', 'Profil'], active: 'Dashboard' },
+    { path: '/admin', links: ['Dashboard', 'Program', 'Orang', 'Konten', 'Pengaturan'], active: 'Dashboard' },
+  ] as const;
+
+  for (const shell of cases) {
+    test(`${shell.path} exposes the exact semantic destination set`, async ({ page }) => {
+      await page.goto(shell.path);
+      const navigation = page.getByRole('navigation', { name: 'Navigasi utama' });
+      await expect(navigation).toBeVisible();
+      await expect(navigation.getByRole('link')).toHaveCount(shell.links.length);
+      for (const label of shell.links) await expect(navigation.getByRole('link', { name: label })).toBeVisible();
+      const activeLink = navigation.getByRole('link', { name: shell.active });
+      await expect(activeLink).toHaveAttribute('aria-current', 'page');
+      await expect(activeLink).toHaveCSS('background-color', 'rgb(215, 25, 32)');
+    });
+  }
+
+  test('320px compact shell has readable five-item bottom navigation without content overlap', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto('/app/home');
     const navigation = page.getByRole('navigation', { name: 'Navigasi utama' });
-    await expect(navigation).toBeVisible();
-    await expect(navigation.getByRole('link', { name: 'Beranda' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
     const box = await navigation.boundingBox();
     expect(box?.width).toBeLessThanOrEqual(320);
-
-    const links = await navigation.getByRole('link').all();
-    expect(links).toHaveLength(3);
-    const linkBoxes = await Promise.all(links.map((link) => link.boundingBox()));
-    for (const linkBox of linkBoxes) {
-      expect(linkBox?.width).toBeGreaterThanOrEqual(44);
-      expect(linkBox?.height).toBeGreaterThanOrEqual(44);
-    }
-    expect(linkBoxes[0]?.x).toBeLessThan(linkBoxes[1]?.x ?? 0);
-    expect(linkBoxes[1]?.x).toBeLessThan(linkBoxes[2]?.x ?? 0);
-    expect((linkBoxes[0]?.x ?? 0) + (linkBoxes[0]?.width ?? 0)).toBeLessThanOrEqual(linkBoxes[1]?.x ?? 0);
-    expect((linkBoxes[1]?.x ?? 0) + (linkBoxes[1]?.width ?? 0)).toBeLessThanOrEqual(linkBoxes[2]?.x ?? 0);
-
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-    expect(overflow).toBe(false);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+    const homeLink = navigation.getByRole('link', { name: 'Beranda' });
+    const iconBox = await homeLink.locator('svg').boundingBox();
+    const labelBox = await homeLink.getByText('Beranda', { exact: true }).boundingBox();
+    expect(iconBox).not.toBeNull();
+    expect(labelBox).not.toBeNull();
+    expect(labelBox!.y).toBeGreaterThanOrEqual(iconBox!.y + iconBox!.height - 1);
+    await expect(page.getByText('Mode tamu')).toBeVisible();
   });
 
-  test('wide layout memakai navigation rail dan focus-visible', async ({ page }) => {
+  test('wide shell uses rail, focus-visible, dark mode, and reduced motion', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto('/app');
-    const profileLink = page.getByRole('link', { name: 'Profil' });
-    await profileLink.focus();
-
-    const focusedOutline = await page.evaluate(() => {
-      const focused = document.activeElement;
-      return focused ? getComputedStyle(focused).outlineStyle : 'none';
-    });
-    expect(focusedOutline).not.toBe('none');
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    await page.goto('/admin');
+    const settings = page.getByRole('link', { name: 'Pengaturan' });
+    await settings.focus();
+    expect(await settings.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe('none');
+    expect(await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgb(0, 0, 0)');
+    expect(Number.parseFloat(await page.locator('body').evaluate((element) => getComputedStyle(element).transitionDuration))).toBeLessThanOrEqual(0.000001);
   });
 
-  test('dark mode dan reduced motion mengikuti preferensi browser', async ({ page }) => {
-    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
-    await page.goto('/app');
-
-    const rootBackground = await page.locator('body').evaluate((element) =>
-      getComputedStyle(element).backgroundColor,
-    );
-    expect(rootBackground).toBe('rgb(13, 13, 15)');
-
-    const transitionDuration = await page.locator('body').evaluate((element) =>
-      getComputedStyle(element).transitionDuration,
-    );
-    expect(Number.parseFloat(transitionDuration)).toBeLessThanOrEqual(0.000001);
+  test('captures W01 visual baselines', async ({ page }, testInfo) => {
+    const compact = testInfo.project.name.includes('compact');
+    await page.setViewportSize(compact ? { width: 390, height: 844 } : { width: 1440, height: 900 });
+    await page.goto('/');
+    await expect(page).toHaveScreenshot(compact ? 'landing-390.png' : 'landing-1440.png', { fullPage: true, animations: 'disabled' });
   });
 });

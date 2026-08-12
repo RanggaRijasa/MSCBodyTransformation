@@ -15,6 +15,7 @@ const contentTypes = new Map([
   ['.html', 'text/html; charset=utf-8'],
   ['.ico', 'image/x-icon'],
   ['.js', 'text/javascript; charset=utf-8'],
+  ['.jpg', 'image/jpeg'],
   ['.json', 'application/json; charset=utf-8'],
   ['.png', 'image/png'],
   ['.svg', 'image/svg+xml'],
@@ -85,8 +86,20 @@ const server = createServer((request, response) => {
 
   const isKnownAppRoute = new Set([
     '/app',
+    '/app/home',
+    '/app/programs',
+    '/app/leaderboard',
+    '/app/coaches',
     '/app/feasibility',
     '/app/profile',
+    '/coach',
+    '/coach/programs',
+    '/coach/profile',
+    '/admin',
+    '/admin/programs',
+    '/admin/people',
+    '/admin/content',
+    '/admin/settings',
     '/auth/callback',
   ]).has(requestURL.pathname);
   sendFile(

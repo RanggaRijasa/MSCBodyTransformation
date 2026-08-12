@@ -8,7 +8,7 @@ Generator: built-in ImageGen (`gpt-image-2` path)
 
 - `landing-desktop-concept-v1.png` — full-page desktop composition reference.
 - `landing-mobile-concept-v1.png` — compact mobile landing composition reference.
-- Source brand reference: `../../../MSCBodyTransformation/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-Default.png`.
+- Source brand reference: `../../assets/brand/AppIcon-Default.png`; asal aset native dan hak distribusi dicatat di `../../assets/brand/README.md`.
 
 ![Desktop landing concept](./landing-desktop-concept-v1.png)
 
@@ -70,4 +70,3 @@ Before Phase 01 is complete:
 3. Verify copy against Product and legal decisions.
 4. Compare compact app preview/navigation to the current iOS Simulator.
 5. Obtain user visual sign-off before treating the landing design as final production direction.
-

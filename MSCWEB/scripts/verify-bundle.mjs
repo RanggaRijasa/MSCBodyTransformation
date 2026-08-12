@@ -26,4 +26,12 @@ for (const forbiddenSecretMarker of ['service_role', 'SUPABASE_AUTH_EXTERNAL_GOO
   }
 }
 
+const sourceFiles = walk('src').filter((file) => file.endsWith('.ts') || file.endsWith('.tsx'));
+for (const file of sourceFiles) {
+  if (file.endsWith('src/shared/icons/MSCIcon.tsx')) continue;
+  if (readFileSync(file, 'utf8').includes('phosphor-react-native')) {
+    throw new Error(`Import Phosphor langsung di luar MSCIcon: ${file}`);
+  }
+}
+
 process.stdout.write(`Bundle split valid: ${javascriptFiles.length} berkas JavaScript.\n`);
