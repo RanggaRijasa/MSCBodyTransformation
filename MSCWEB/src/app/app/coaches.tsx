@@ -1,5 +1,23 @@
-import { RoleShellScreen } from '@/shared/navigation/RoleShellScreen';
+import { ScrollView, View } from 'react-native';
+
+import { CoachCard, publicScreenStyles, Section } from '@/features/public/PublicComponents';
+import { useCoaches } from '@/features/public/public-queries';
+import { useAuth } from '@/shared/auth/AuthProvider';
+import { AppShell } from '@/shared/navigation/AppShell';
+import { Button, InlineMessage, StateView } from '@/shared/ui/primitives';
 
 export default function PublicCoachesRoute() {
-  return <RoleShellScreen role="guest" activeRoute="coaches" title="Coach" description="Profil Coach yang memang dipublikasikan akan tersedia pada fase berikutnya." />;
+  const coaches = useCoaches();
+  const { state } = useAuth();
+  const role = state.status === 'authenticated' ? state.account.role : 'guest';
+  return (
+    <AppShell role={role} activeRoute="coaches" title="Coach" subtitle="Direktori profil publik">
+      <ScrollView contentContainerStyle={publicScreenStyles.content}>
+        <InlineMessage title="Profil publik terverifikasi" message="Hanya Coach aktif yang memilih profil publik yang muncul. Kode QR dan hubungan peserta tidak pernah ditampilkan." />
+        <Section title="Temukan Coach">
+          {coaches.isPending ? <StateView kind="loading" /> : coaches.isError ? <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void coaches.refetch()} />} /> : coaches.data?.length ? <View style={publicScreenStyles.grid}>{coaches.data.map((coach) => <View key={coach.id} style={publicScreenStyles.gridItem}><CoachCard coach={coach} /></View>)}</View> : <StateView kind="empty" />}
+        </Section>
+      </ScrollView>
+    </AppShell>
+  );
 }

@@ -22,6 +22,31 @@ const contentTypes = new Map([
   ['.webmanifest', 'application/manifest+json; charset=utf-8'],
 ]);
 
+const knownAppRoutes = new Set([
+  '/app',
+  '/app/home',
+  '/app/programs',
+  '/app/leaderboard',
+  '/app/coaches',
+  '/app/feasibility',
+  '/app/profile',
+  '/coach',
+  '/coach/programs',
+  '/coach/profile',
+  '/admin',
+  '/admin/programs',
+  '/admin/people',
+  '/admin/content',
+  '/admin/settings',
+  '/login',
+  '/auth/callback',
+]);
+
+function isKnownAppRoute(pathname) {
+  if (knownAppRoutes.has(pathname)) return true;
+  return /^\/app\/(programs|coaches)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pathname);
+}
+
 function resolveStaticPath(pathname) {
   const decoded = decodeURIComponent(pathname);
   const normalizedPath = normalize(decoded).replace(/^(\.\.(\/|\\|$))+/, '');
@@ -84,29 +109,12 @@ const server = createServer((request, response) => {
     return;
   }
 
-  const isKnownAppRoute = new Set([
-    '/app',
-    '/app/home',
-    '/app/programs',
-    '/app/leaderboard',
-    '/app/coaches',
-    '/app/feasibility',
-    '/app/profile',
-    '/coach',
-    '/coach/programs',
-    '/coach/profile',
-    '/admin',
-    '/admin/programs',
-    '/admin/people',
-    '/admin/content',
-    '/admin/settings',
-    '/auth/callback',
-  ]).has(requestURL.pathname);
+  const knownRoute = isKnownAppRoute(requestURL.pathname);
   sendFile(
     request,
     response,
-    join(root, isKnownAppRoute ? 'app.html' : '404.html'),
-    isKnownAppRoute ? 200 : 404,
+    join(root, knownRoute ? 'app.html' : '404.html'),
+    knownRoute ? 200 : 404,
   );
 });
 

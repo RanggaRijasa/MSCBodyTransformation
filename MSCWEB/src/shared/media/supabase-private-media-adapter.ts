@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { registerPrivateSignedUrl } from '@/shared/auth/private-cache';
+
 export const DEFAULT_SIGNED_MEDIA_TTL_SECONDS = 60;
 
 // W00 intentionally exposes only the private bucket that exists in the local
@@ -118,6 +120,7 @@ export class SupabasePrivateMediaAdapter {
       throw new PrivateMediaError('signedUrlRejected');
     }
 
+    registerPrivateSignedUrl(response.data.signedUrl);
     return {
       url: response.data.signedUrl,
       expiresAt: new Date(this.now().getTime() + DEFAULT_SIGNED_MEDIA_TTL_SECONDS * 1_000),

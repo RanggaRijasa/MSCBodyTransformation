@@ -33,8 +33,10 @@ export function AppShell({ activeRoute, role = 'guest', title, subtitle, childre
         isMedium && styles.mediumRail,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.primaryAction,
-          paddingBottom: isCompact ? Math.max(insets.bottom, primitiveTokens.space.xSmall) : 0,
+          borderColor: isCompact ? colors.border : colors.primaryAction,
+          bottom: isCompact
+            ? Math.max(insets.bottom, componentTokens.compactTabBarBottomGap)
+            : undefined,
         },
       ]}
     >
@@ -45,6 +47,13 @@ export function AppShell({ activeRoute, role = 'guest', title, subtitle, childre
       ) : null}
       {routes.map((route) => {
         const isActive = route.id === activeRoute;
+        const foregroundColor = isActive
+          ? isCompact
+            ? colors.primaryAction
+            : primitiveTokens.color.white
+          : isCompact
+            ? colors.primaryText
+            : colors.secondaryText;
         return (
           <Link
             key={route.id}
@@ -54,24 +63,38 @@ export function AppShell({ activeRoute, role = 'guest', title, subtitle, childre
               styles.navigationItem,
               isCompact && styles.compactNavigationItem,
               !isCompact && styles.railItem,
-              isActive && { backgroundColor: colors.primaryAction },
+              isActive && {
+                backgroundColor: isCompact
+                  ? colors.navigationSelectedSurface
+                  : colors.primaryAction,
+              },
             ]}
           >
-            <MSCIcon
-              name={route.icon}
-              color={isActive ? primitiveTokens.color.white : colors.secondaryText}
-              weight={isActive ? 'fill' : 'regular'}
-            />
-            <Text
-              numberOfLines={1}
+            <View
               style={[
-                styles.navigationLabel,
-                { color: isActive ? primitiveTokens.color.white : colors.secondaryText },
-                isActive && styles.navigationLabelActive,
+                styles.navigationItemContent,
+                isCompact
+                  ? styles.compactNavigationItemContent
+                  : styles.railItemContent,
               ]}
             >
-              {route.label}
-            </Text>
+              <MSCIcon
+                name={route.icon}
+                size={isCompact ? 'large' : 'medium'}
+                color={foregroundColor}
+                weight={isActive ? 'fill' : 'regular'}
+              />
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.navigationLabel,
+                  { color: foregroundColor },
+                  isActive && styles.navigationLabelActive,
+                ]}
+              >
+                {route.label}
+              </Text>
+            </View>
           </Link>
         );
       })}
@@ -104,16 +127,57 @@ const styles = StyleSheet.create({
   mediumRail: { width: 112, paddingHorizontal: primitiveTokens.space.xSmall },
   brandMark: { width: 56, height: 56, borderRadius: primitiveTokens.radius.large, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: primitiveTokens.space.large },
   brandInitials: { fontSize: 18, lineHeight: 22, fontWeight: '900', fontStyle: 'italic' },
-  bottomNavigation: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 10, minHeight: componentTokens.compactTabBarHeight, flexDirection: 'row', borderTopWidth: 3, paddingTop: primitiveTokens.space.xSmall, paddingHorizontal: primitiveTokens.space.xxSmall },
-  navigationItem: { minHeight: componentTokens.minimumTouchTarget, alignItems: 'center', justifyContent: 'center', gap: primitiveTokens.space.xxSmall, borderRadius: primitiveTokens.radius.medium },
+  bottomNavigation: {
+    position: 'absolute',
+    left: componentTokens.compactTabBarHorizontalInset,
+    right: componentTokens.compactTabBarHorizontalInset,
+    zIndex: 10,
+    height: componentTokens.compactTabBarHeight,
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: primitiveTokens.radius.capsule,
+    padding: primitiveTokens.space.xxSmall,
+    gap: primitiveTokens.space.xxSmall,
+    shadowColor: primitiveTokens.color.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  navigationItem: {
+    minHeight: componentTokens.minimumTouchTarget,
+    borderRadius: primitiveTokens.radius.medium,
+    textDecorationLine: 'none',
+  },
   compactNavigationItem: {
     flex: 1,
     minWidth: 0,
+    height: '100%',
+    borderRadius: primitiveTokens.radius.capsule,
+  },
+  railItem: { minHeight: 54 },
+  navigationItemContent: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactNavigationItemContent: {
     flexDirection: 'column',
     paddingHorizontal: primitiveTokens.space.xxSmall,
     paddingVertical: primitiveTokens.space.xxSmall,
+    gap: 0,
   },
-  railItem: { minHeight: 54, flexDirection: 'row', justifyContent: 'flex-start', paddingHorizontal: primitiveTokens.space.medium, gap: primitiveTokens.space.small },
-  navigationLabel: { ...typographyTokens.caption, textAlign: 'center' },
-  navigationLabelActive: { fontWeight: '800' },
+  railItemContent: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingHorizontal: primitiveTokens.space.medium,
+    gap: primitiveTokens.space.small,
+  },
+  navigationLabel: {
+    ...typographyTokens.caption,
+    minHeight: typographyTokens.caption.lineHeight,
+    textAlign: 'center',
+  },
+  navigationLabelActive: { fontWeight: '700' },
 });

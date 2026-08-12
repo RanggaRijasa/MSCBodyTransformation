@@ -1,8 +1,10 @@
 import { createClient, type SupabaseClient, type SupabaseClientOptions } from '@supabase/supabase-js';
 
+import type { Database } from '@/shared/supabase/database.types';
+
 declare const pkceClientBrand: unique symbol;
 
-export type PkceSupabaseClient = SupabaseClient & {
+export type PkceSupabaseClient = SupabaseClient<Database> & {
   readonly [pkceClientBrand]: true;
 };
 
@@ -30,7 +32,7 @@ export function createPkceSupabaseClient(
 ): PkceSupabaseClient {
   validateBrowserConfiguration(configuration);
 
-  return createClient(configuration.url, configuration.publishableKey, {
+  return createClient<Database>(configuration.url, configuration.publishableKey, {
     auth: PKCE_AUTH_OPTIONS,
   }) as PkceSupabaseClient;
 }

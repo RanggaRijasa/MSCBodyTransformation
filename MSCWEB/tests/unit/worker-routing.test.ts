@@ -22,6 +22,8 @@ describe('Cloudflare Worker routing contract', () => {
 
     await expect(worker.fetch(new Request('https://msc.invalid/'), env).then((r) => r.text())).resolves.toBe('landing');
     await expect(worker.fetch(new Request('https://msc.invalid/app/profile'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/login?returnTo=%2Fapp'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/app/programs/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ url: 'https://msc.invalid/app.html' }));
   });
 
@@ -36,6 +38,8 @@ describe('Cloudflare Worker routing contract', () => {
 
     const unknownAppNavigation = await worker.fetch(new Request('https://msc.invalid/app/unknown'), env);
     expect(unknownAppNavigation.status).toBe(404);
+    const malformedEntityNavigation = await worker.fetch(new Request('https://msc.invalid/app/programs/not-a-uuid'), env);
+    expect(malformedEntityNavigation.status).toBe(404);
   });
 
   it('rejects mutation methods at the static edge', async () => {

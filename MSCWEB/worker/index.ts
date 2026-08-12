@@ -22,8 +22,14 @@ const knownAppRoutes = new Set([
   '/admin/people',
   '/admin/content',
   '/admin/settings',
+  '/login',
   '/auth/callback',
 ]);
+
+function isKnownAppRoute(pathname: string): boolean {
+  if (knownAppRoutes.has(pathname)) return true;
+  return /^\/app\/(programs|coaches)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pathname);
+}
 
 const assetRequest = (request: Request, pathname: string) => {
   const url = new URL(request.url);
@@ -49,7 +55,7 @@ export const worker = {
       return new Response('Berkas tidak ditemukan.', { status: 404 });
     }
 
-    if (knownAppRoutes.has(url.pathname)) {
+    if (isKnownAppRoute(url.pathname)) {
       return env.ASSETS.fetch(assetRequest(request, '/app.html'));
     }
 

@@ -100,19 +100,19 @@ describe('safe OAuth return route', () => {
 describe('session OAuth return-route storage', () => {
   it('falls back safely when browser storage is unavailable', () => {
     const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+    const originalLocalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    const blockedStorage = {
+      getItem() { throw new DOMException('Storage is blocked'); },
+      removeItem() { throw new DOMException('Storage is blocked'); },
+      setItem() { throw new DOMException('Storage is blocked'); },
+    };
     Object.defineProperty(globalThis, 'sessionStorage', {
       configurable: true,
-      value: {
-        getItem() {
-          throw new DOMException('Storage is blocked');
-        },
-        removeItem() {
-          throw new DOMException('Storage is blocked');
-        },
-        setItem() {
-          throw new DOMException('Storage is blocked');
-        },
-      },
+      value: blockedStorage,
+    });
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: blockedStorage,
     });
 
     try {
@@ -125,6 +125,37 @@ describe('session OAuth return-route storage', () => {
       } else {
         Object.defineProperty(globalThis, 'sessionStorage', originalDescriptor);
       }
+      if (originalLocalDescriptor === undefined) {
+        Reflect.deleteProperty(globalThis, 'localStorage');
+      } else {
+        Object.defineProperty(globalThis, 'localStorage', originalLocalDescriptor);
+      }
+    }
+  });
+
+  it('uses origin-scoped storage when an OAuth provider returns in a different tab context', () => {
+    const values = new Map<string, string>();
+    const originalSessionDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+    const originalLocalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: undefined });
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+        removeItem: (key: string) => values.delete(key),
+      },
+    });
+    try {
+      const store = new SessionOAuthReturnRouteStore();
+      store.save('/app/profile');
+      expect(store.consume()).toBe('/app/profile');
+      expect(store.consume()).toBeNull();
+    } finally {
+      if (originalSessionDescriptor === undefined) Reflect.deleteProperty(globalThis, 'sessionStorage');
+      else Object.defineProperty(globalThis, 'sessionStorage', originalSessionDescriptor);
+      if (originalLocalDescriptor === undefined) Reflect.deleteProperty(globalThis, 'localStorage');
+      else Object.defineProperty(globalThis, 'localStorage', originalLocalDescriptor);
     }
   });
 });
@@ -144,7 +175,7 @@ describe('Supabase Google OAuth adapter', () => {
     expect(store.saved).toBe('/app');
     expect(signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: 'http://localhost:8081/auth/callback' },
+      options: { redirectTo: 'http://localhost:8081/auth/callback?returnTo=%2Fapp#returnTo=%2Fapp' },
     });
   });
 
@@ -174,6 +205,33 @@ describe('Supabase Google OAuth adapter', () => {
     expect(exchangeCodeForSession).toHaveBeenCalledWith('authorization-code');
     expect(store.saved).toBeNull();
   });
+
+  it('restores a sanitized callback intent when browser session storage was lost', async () => {
+    const adapter = new SupabaseGoogleOAuthAdapter(
+      makeClient(),
+      'http://localhost:8081/auth/callback',
+      makeRouteStore(),
+    );
+
+    await expect(
+      adapter.exchangeCallback('http://localhost:8081/auth/callback?code=authorization-code&returnTo=%2Fapp%2Fprofile'),
+    ).resolves.toMatchObject({ returnRoute: '/app/profile' });
+    await expect(
+      adapter.exchangeCallback('http://localhost:8081/auth/callback?code=authorization-code&returnTo=https%3A%2F%2Fevil.example'),
+    ).resolves.toMatchObject({ returnRoute: '/app' });
+  });
+
+  it('restores intent from the browser-only callback fragment', async () => {
+    const adapter = new SupabaseGoogleOAuthAdapter(
+      makeClient(),
+      'http://localhost:8081/auth/callback',
+      makeRouteStore(),
+    );
+    await expect(
+      adapter.exchangeCallback('http://localhost:8081/auth/callback?code=authorization-code#returnTo=%2Fapp%2Fprograms%2Fprogram-1'),
+    ).resolves.toMatchObject({ returnRoute: '/app/programs/program-1' });
+  });
+
 
   it('maps provider cancellation without exchanging a code', async () => {
     const exchangeCodeForSession = vi.fn();

@@ -18,7 +18,7 @@ test.describe('W00 production routing and risk probes', () => {
     await page.getByRole('link', { name: 'Profil' }).click();
     await expect(page).toHaveURL(/\/app\/profile$/);
     await page.reload();
-    await expect(page.getByText('Masuk diperlukan sebelum informasi profil pribadi dapat dimuat.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Jelajahi sebagai Tamu' })).toBeVisible();
     await page.goBack();
     await expect(page).toHaveURL(/\/app\/home$/);
     await page.goForward();
@@ -144,7 +144,17 @@ test.describe('W01 role shells and accessibility', () => {
       for (const label of shell.links) await expect(navigation.getByRole('link', { name: label })).toBeVisible();
       const activeLink = navigation.getByRole('link', { name: shell.active });
       await expect(activeLink).toHaveAttribute('aria-current', 'page');
-      await expect(activeLink).toHaveCSS('background-color', 'rgb(215, 25, 32)');
+      const compact = (page.viewportSize()?.width ?? 0) < 768;
+      await expect(activeLink).toHaveCSS(
+        'background-color',
+        compact ? 'rgb(242, 242, 242)' : 'rgb(215, 25, 32)',
+      );
+      if (compact) {
+        await expect(activeLink.getByText(shell.active, { exact: true })).toHaveCSS(
+          'color',
+          'rgb(215, 25, 32)',
+        );
+      }
     });
   }
 
@@ -153,15 +163,52 @@ test.describe('W01 role shells and accessibility', () => {
     await page.goto('/app/home');
     const navigation = page.getByRole('navigation', { name: 'Navigasi utama' });
     const box = await navigation.boundingBox();
-    expect(box?.width).toBeLessThanOrEqual(320);
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(11);
+    expect(320 - box!.x - box!.width).toBeGreaterThanOrEqual(11);
+    expect(box!.height).toBe(64);
+    expect(Number.parseFloat(await navigation.evaluate((element) => getComputedStyle(element).borderRadius))).toBeGreaterThanOrEqual(30);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+    const linkBoxes = await navigation.getByRole('link').evaluateAll((links) =>
+      links.map((link) => link.getBoundingClientRect().width),
+    );
+    expect(Math.max(...linkBoxes) - Math.min(...linkBoxes)).toBeLessThanOrEqual(1);
     const homeLink = navigation.getByRole('link', { name: 'Beranda' });
     const iconBox = await homeLink.locator('svg').boundingBox();
     const labelBox = await homeLink.getByText('Beranda', { exact: true }).boundingBox();
     expect(iconBox).not.toBeNull();
     expect(labelBox).not.toBeNull();
     expect(labelBox!.y).toBeGreaterThanOrEqual(iconBox!.y + iconBox!.height - 1);
-    await expect(page.getByText('Mode tamu')).toBeVisible();
+    expect(Math.abs(
+      (iconBox!.x + iconBox!.width / 2) - (labelBox!.x + labelBox!.width / 2),
+    )).toBeLessThanOrEqual(1);
+    await expect(page.getByRole('button', { name: 'Jelajahi program' })).toBeVisible();
+
+    await navigation.getByRole('link', { name: 'Program' }).click();
+    await expect(page).toHaveURL(/\/app\/programs$/);
+    await expect(navigation.getByRole('link', { name: 'Program' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    const selectedBox = await navigation.boundingBox();
+    expect(selectedBox).not.toBeNull();
+    expect(selectedBox!.x).toBe(box!.x);
+    expect(selectedBox!.width).toBe(box!.width);
+    expect(selectedBox!.height).toBe(box!.height);
+  });
+
+  test('compact dark navigation keeps a lighter selected pill with bold red emphasis', async ({ page }) => {
+    await page.setViewportSize({ width: 368, height: 800 });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/app/home');
+    const navigation = page.getByRole('navigation', { name: 'Navigasi utama' });
+    const activeLink = navigation.getByRole('link', { name: 'Beranda' });
+    await expect(navigation).toHaveCSS('background-color', 'rgb(26, 26, 26)');
+    await expect(activeLink).toHaveCSS('background-color', 'rgb(58, 58, 60)');
+    await expect(activeLink.getByText('Beranda', { exact: true })).toHaveCSS(
+      'color',
+      'rgb(215, 25, 32)',
+    );
   });
 
   test('wide shell uses rail, focus-visible, dark mode, and reduced motion', async ({ page }) => {

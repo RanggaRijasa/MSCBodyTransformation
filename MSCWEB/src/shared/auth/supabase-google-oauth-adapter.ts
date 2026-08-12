@@ -5,6 +5,7 @@ import {
 import type { PkceSupabaseClient } from './create-pkce-supabase-client';
 
 const RETURN_ROUTE_STORAGE_KEY = 'msc.oauth.return-route';
+const RETURN_ROUTE_COOKIE_MAX_AGE_SECONDS = 300;
 
 export type OAuthAdapterErrorCode =
   | 'cancelled'
@@ -39,18 +40,48 @@ export class SessionOAuthReturnRouteStore implements OAuthReturnRouteStore {
     try {
       globalThis.sessionStorage?.setItem(RETURN_ROUTE_STORAGE_KEY, route);
     } catch {
+      // Continue with origin-scoped persistent storage below.
+    }
+    try {
+      globalThis.localStorage?.setItem(RETURN_ROUTE_STORAGE_KEY, route);
+    } catch {
+      // Continue with the short-lived first-party cookie below.
+    }
+    try {
+      const secure = globalThis.location?.protocol === 'https:' ? '; Secure' : '';
+      globalThis.document.cookie = `${RETURN_ROUTE_STORAGE_KEY}=${encodeURIComponent(route)}; Max-Age=${RETURN_ROUTE_COOKIE_MAX_AGE_SECONDS}; Path=/auth/callback; SameSite=Lax${secure}`;
+    } catch {
       // OAuth can continue safely; the callback falls back to the app home route.
     }
   }
 
   consume(): string | null {
+    let route: string | null = null;
     try {
-      const route = globalThis.sessionStorage?.getItem(RETURN_ROUTE_STORAGE_KEY) ?? null;
+      route = globalThis.sessionStorage?.getItem(RETURN_ROUTE_STORAGE_KEY) ?? null;
       globalThis.sessionStorage?.removeItem(RETURN_ROUTE_STORAGE_KEY);
-      return route;
     } catch {
-      return null;
+      // Try the origin-scoped fallback below.
     }
+    try {
+      route ??= globalThis.localStorage?.getItem(RETURN_ROUTE_STORAGE_KEY) ?? null;
+      globalThis.localStorage?.removeItem(RETURN_ROUTE_STORAGE_KEY);
+    } catch {
+      // A blocked storage surface does not expose a raw browser error.
+    }
+    try {
+      const cookiePrefix = `${RETURN_ROUTE_STORAGE_KEY}=`;
+      const cookieValue = globalThis.document.cookie
+        .split(';')
+        .map((value) => value.trim())
+        .find((value) => value.startsWith(cookiePrefix))
+        ?.slice(cookiePrefix.length);
+      route ??= cookieValue === undefined ? null : decodeURIComponent(cookieValue);
+      globalThis.document.cookie = `${RETURN_ROUTE_STORAGE_KEY}=; Max-Age=0; Path=/auth/callback; SameSite=Lax`;
+    } catch {
+      // A blocked cookie surface does not expose a raw browser error.
+    }
+    return route;
   }
 }
 
@@ -74,13 +105,16 @@ export class SupabaseGoogleOAuthAdapter {
   async signIn(returnRoute: string = DEFAULT_AUTH_RETURN_ROUTE): Promise<void> {
     const safeReturnRoute = sanitizeInternalReturnRoute(returnRoute);
     this.returnRouteStore.save(safeReturnRoute);
+    const callbackWithIntent = new URL(this.callbackUrl);
+    callbackWithIntent.searchParams.set('returnTo', safeReturnRoute);
+    callbackWithIntent.hash = new URLSearchParams({ returnTo: safeReturnRoute }).toString();
 
     let error: unknown;
     try {
       ({ error } = await this.client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: this.callbackUrl,
+          redirectTo: callbackWithIntent.toString(),
         },
       }));
     } catch {
@@ -119,7 +153,11 @@ export class SupabaseGoogleOAuthAdapter {
       this.returnRouteStore.consume();
       throw new OAuthAdapterError('sessionExchangeFailed');
     }
-    const safeReturnRoute = sanitizeInternalReturnRoute(this.returnRouteStore.consume());
+    const storedReturnRoute = this.returnRouteStore.consume();
+    const fragmentReturnRoute = new URLSearchParams(url.hash.slice(1)).get('returnTo');
+    const safeReturnRoute = sanitizeInternalReturnRoute(
+      fragmentReturnRoute ?? url.searchParams.get('returnTo') ?? storedReturnRoute,
+    );
 
     if (
       response.error !== null ||
