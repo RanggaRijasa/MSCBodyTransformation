@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id-ID">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#111111" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0D0D0F" />
+    <meta
+      name="description"
+      content="Ikuti program MSC Body Transformation dengan langkah yang jelas dan dukungan Coach."
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png" />
+    <title>MSC Body Transformation</title>
+    <style id="expo-reset">
+      html,
+      body,
+      #root {
+        display: flex;
+        min-height: 100%;
+        width: 100%;
+        margin: 0;
+        flex: 1;
+      }
+    </style>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {
+            // App remains usable online when registration is unavailable.
+          });
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <noscript>
+      MSC Body Transformation memerlukan JavaScript untuk membuka aplikasi. Aktifkan JavaScript, lalu muat ulang halaman ini.
+    </noscript>
+    <div id="root"></div>
+  </body>
+</html>

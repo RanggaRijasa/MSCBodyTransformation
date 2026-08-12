@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "MSC Body Transformation",
+    "slug": "msc-body-transformation-web",
+    "version": "0.1.0",
+    "orientation": "default",
+    "scheme": "mscbodytransformationweb",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": true,
+            "default": false
+          }
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Izinkan MSC Body Transformation menggunakan kamera untuk memindai QR Coach.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./public/icons/favicon-48.png"
+    }
+  }
+}
