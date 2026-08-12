@@ -1,6 +1,6 @@
 # MSCWEB W04 — Evidence, review, and authoritative scoring
 
-Status: `Not started`  
+Status: `Completed`
 Autonomy: `A` against local Supabase; device picker/camera check is `B`  
 Depends on: W03 activity renderers and Participant state models
 
@@ -28,36 +28,36 @@ Implement private program evidence upload, typed answer submission, Coach-scoped
 
 ## Mandatory simulator gate
 
-- [ ] Inspect Participant evidence picker/submission/pending/rejected/approved states.
-- [ ] Inspect Coach queue filters, row context, detail media, sticky `Tolak`/`Setujui`, and reject-reason behavior.
-- [ ] Inspect error/offline/permission-denied paths where scenarios exist.
-- [ ] Record current behavior before each UI slice.
+- [x] Inspect Participant evidence picker/submission/pending/rejected/approved states.
+- [x] Inspect Coach queue filters, row context, detail media, sticky `Tolak`/`Setujui`, and reject-reason behavior.
+- [x] Inspect error/offline/permission-denied paths where scenarios exist.
+- [x] Record current behavior before each UI slice.
 
 ## Checklist
 
 ### Media pipeline
 
-- [ ] Use actual picker/camera path; no demo upload button.
-- [ ] Decode, normalize orientation, resize off main UI path, strip unnecessary metadata, output JPEG.
-- [ ] Validate signature/MIME/dimensions/8 MiB at client and server/storage boundary.
-- [ ] Unique non-overwrite path and orphan cleanup strategy.
-- [ ] Revoke object URLs and purge private cached media on logout.
+- [x] Use actual picker/camera path; no demo upload button.
+- [x] Decode, normalize orientation, resize off main UI path, strip unnecessary metadata, output JPEG.
+- [x] Validate signature/MIME/dimensions/8 MiB at client and server/storage boundary.
+- [x] Unique non-overwrite path and orphan cleanup strategy.
+- [x] Revoke object URLs and purge private cached media on logout.
 
 ### Security and authority
 
-- [ ] Owner-only create/read status policies; Coach access only through assigned scope; authorized Admin access.
-- [ ] Short-lived signed/authenticated media access without logging URL/path.
-- [ ] Submission transition checks required answers/evidence and prevents duplicates.
-- [ ] Review operation locks state, is idempotent, and requires reason on rejection.
-- [ ] Approved evidence creates authoritative step points once; pending/rejected receives none.
-- [ ] Weight calculation uses Decimal/numeric server semantics and never negative loss points.
+- [x] Owner-only create/read status policies; Coach access only through assigned scope; authorized Admin access.
+- [x] Short-lived signed/authenticated media access without logging URL/path.
+- [x] Submission transition checks required answers/evidence and prevents duplicates.
+- [x] Review operation locks state, is idempotent, and requires reason on rejection.
+- [x] Approved evidence creates authoritative step points once; pending/rejected receives none.
+- [x] Weight calculation uses Decimal/numeric server semantics and never negative loss points.
 
 ### UI
 
-- [ ] Participant upload, preview, progress, retry, validation, confirmation, pending/rejected/approved states.
-- [ ] Coach queue `Perlu tindakan`/`Semua bukti`, filters, context, detail, zoom, and decision actions.
-- [ ] Accessible file input, progress announcements, focus return, and no color-only status.
-- [ ] Concurrent/already-reviewed conflict refetches and explains state.
+- [x] Participant upload, preview, progress, retry, validation, confirmation, pending/rejected/approved states.
+- [x] Coach queue `Perlu tindakan`/`Semua bukti`, filters, context, detail, zoom, and decision actions.
+- [x] Accessible file input, progress announcements, focus return, and no color-only status.
+- [x] Concurrent/already-reviewed conflict refetches and explains state.
 
 ## Sub-agent plan
 
@@ -93,3 +93,65 @@ Primary agent owns migration order, authority operation signatures, and shared m
 
 Append migration/function IDs, media fixtures, simulator evidence, security/concurrency tests, commands/results, and next item.
 
+### 2026-08-12 — W04 completed
+
+- Requirement IDs: `PROD-001`, `PROD-004`, `PROD-006`, `PROD-007`,
+  `PROD-PTC-005`, `PROD-CCH-004`, `PROD-CCH-005`, `PROD-PRG-003`,
+  `PROD-PRG-005`, `PROD-LDB-001`, `PROD-LDB-002`, `PROD-OPS-002`,
+  `SEC-001`–`SEC-005`, `SEC-AUTHZ-001`, `SEC-AUTHZ-003`,
+  `SEC-STO-001`–`SEC-STO-005`, `SEC-OP-001`–`SEC-OP-004`,
+  `SEC-PRV-001`–`SEC-PRV-003`, `QA-001`–`QA-003`, `QA-JRN-006`, dan
+  `QA-JRN-007`.
+- Files changed: browser image/private-media adapters; Participant mutation
+  repository/query/form and activity renderer; Coach review models,
+  repository/query, queue/detail routes and dashboard entry; production/Worker
+  route allowlist; focused unit, integration-facing, and Playwright tests.
+- Backend contract reused without migration changes: existing private bucket
+  `question-photos`; `prepare_step_submission(uuid,uuid,text)`,
+  `submit_step_answers(uuid,jsonb,text)`,
+  `review_step_submission(uuid,text,text,text)`, dan
+  `submit_weigh_in(uuid,uuid,text,numeric,text)`. Path remains
+  `participant/enrollment/submission/question/random.jpg`; scheduled orphan
+  cleanup remains `cleanup-orphan-question-photos`.
+- Assumptions: `program-evidence` in this workplan names the product media
+  category; the authoritative shared backend contract deliberately calls the
+  bucket `question-photos`. Web does not duplicate scoring, review, Storage
+  policy, audit, or numeric weight rules.
+- Media fixtures: existing rotated/metadata browser probe, corrupt and
+  oversized unit fixtures, real PNG visual fixture normalized to JPEG during
+  the W04 end-to-end upload.
+- Native evidence: iPhone 17 Pro/iOS Simulator build-run passed for
+  `participant_active` and `coach_review_queue`; focused UI tests
+  `testCoachCompletesCriticalLocalJourney`,
+  `testCoachRejectionUsesSingleSheetNavigationFlow`, dan
+  `testOfflineAndPermissionScenariosAreExplicit` passed 3/3. Native runtime
+  established the segmented queue, scoped context, media viewer, sticky
+  actions, mandatory rejection reason, pending/rejected copy, and explicit
+  offline/permission states before the web slices were closed.
+- Build commands: `npm run typecheck`, `npm run lint`, and `npm run build` —
+  passed. `npm run verify:bundle` — 30 JavaScript files valid;
+  `npm run verify:pwa` — passed.
+- Test commands: `npm test` — 74 passed, 3 environment-gated skipped;
+  `npx playwright test` with local Supabase variables — 58 passed across
+  desktop Chrome and Pixel 7 emulation; final focused Worker-pipeline rerun —
+  4/4 passed. `private_media_storage.mjs` — 16 assertions passed;
+  `submission_review_races.mjs` — 15 assertions passed.
+- Security result: cross-user/cross-Coach Storage access, non-overwrite upload,
+  signed media access, orphan selection, duplicate submit/review, audit count,
+  pending/rejected zero points, one-time approval points, numeric weight gain,
+  and redacted browser output are covered by the focused integration suites.
+  No local secret values were found in `dist`; W04 source adds no console
+  logging of URL, path, answer, or weight values.
+- Additional database-suite observation: `supabase test db` was also run but
+  is not counted as a W04 pass. It reported 53/400 failures because that global
+  pgTAP suite assumes an empty database and the shared local stack already
+  contains persistent fixtures/audit rows; several later Phase 11/12 assertions
+  are also order-sensitive. No local reset was authorized or performed. The
+  isolated W04 Storage/race suites above passed and clean up their own actors.
+- Device smoke: Chrome camera/file behavior is covered by real browser file
+  input plus Pixel emulation. No Android Emulator window or physical-iPhone
+  browser connector was available for a fresh OS permission dialog; physical
+  Safari/Android camera permission remains a non-blocking field-device smoke,
+  not an authority or implementation deferral.
+- Remaining blockers: none for W04 exit criteria. Next phase item is W05 manual
+  payment and Coach application, without production deployment.

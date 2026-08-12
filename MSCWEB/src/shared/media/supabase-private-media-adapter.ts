@@ -18,6 +18,7 @@ export type PrivateMediaErrorCode =
   | 'invalidReference'
   | 'uploadRejected'
   | 'downloadRejected'
+  | 'deleteRejected'
   | 'signedUrlRejected';
 
 const PRIVATE_MEDIA_ERROR_MESSAGES: Record<PrivateMediaErrorCode, string> = {
@@ -25,6 +26,7 @@ const PRIVATE_MEDIA_ERROR_MESSAGES: Record<PrivateMediaErrorCode, string> = {
   invalidReference: 'Referensi media tidak valid. Muat ulang halaman lalu coba lagi.',
   uploadRejected: 'Foto tidak dapat diunggah. Periksa koneksi lalu coba lagi.',
   downloadRejected: 'Foto tidak dapat dimuat. Periksa koneksi lalu coba lagi.',
+  deleteRejected: 'Foto sementara tidak dapat dibersihkan. Coba lagi.',
   signedUrlRejected: 'Akses foto tidak dapat dibuat. Muat ulang halaman lalu coba lagi.',
 };
 
@@ -125,6 +127,17 @@ export class SupabasePrivateMediaAdapter {
       url: response.data.signedUrl,
       expiresAt: new Date(this.now().getTime() + DEFAULT_SIGNED_MEDIA_TTL_SECONDS * 1_000),
     };
+  }
+
+  async remove(reference: PrivateMediaObjectReference): Promise<void> {
+    validateObjectReference(reference);
+    await this.requireAuthenticatedUser();
+    try {
+      const response = await this.client.storage.from(reference.bucket).remove([reference.objectPath]);
+      if (response.error !== null) throw response.error;
+    } catch {
+      throw new PrivateMediaError('deleteRejected');
+    }
   }
 
   private async requireAuthenticatedUser(): Promise<void> {

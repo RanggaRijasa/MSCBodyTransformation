@@ -76,16 +76,19 @@ describe('W03 Participant program policy', () => {
 
   it('keeps all shared renderers and explicit states in one activity boundary', () => {
     const source = readFileSync('src/features/participant/ParticipantProgramComponents.tsx', 'utf8');
-    for (const renderer of ['ArticleRenderer', 'VideoRenderer', 'QuestionRenderer', 'WeightRenderer']) {
+    const submissionSource = readFileSync('src/features/participant/ParticipantSubmissionForm.tsx', 'utf8');
+    const policySource = readFileSync('src/features/participant/participant-program-policy.ts', 'utf8');
+    for (const renderer of ['ArticleRenderer', 'VideoRenderer']) {
       expect(source).toContain(`function ${renderer}`);
     }
     for (const copy of ['Aktivitas belum tersedia', 'Menunggu tinjauan', 'Perlu diperbaiki', 'Satu kesempatan']) {
-      expect(source).toContain(copy);
+      expect(source + submissionSource + policySource).toContain(copy);
     }
     expect(source).toContain('access.access_state');
     expect(source).toContain('scrollIntoView');
-    expect(source).toContain('useSafeAreaInsets');
-    expect(source).toContain('componentTokens.compactTabBarHeight');
+    expect(source).toContain('ParticipantSubmissionForm');
+    expect(submissionSource).toContain('type="file"');
+    expect(submissionSource).toContain('capture="environment"');
     expect(source).not.toContain('new Date().getDate');
   });
 });

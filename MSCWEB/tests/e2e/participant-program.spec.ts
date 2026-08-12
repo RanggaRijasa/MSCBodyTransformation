@@ -82,7 +82,7 @@ test.describe('W03 Participant program experience', () => {
 
   test('offer stays readable at 320/390/430 in light and dark appearance', async ({ page }) => {
     await page.goto('/app/programs?segment=available');
-    const programLink = page.getByRole('link').filter({ hasText: 'Program Integration Storage' });
+    const programLink = page.getByRole('link').filter({ hasText: 'Program Integration Storage' }).first();
     await expect(programLink).toBeVisible();
     await programLink.click();
 
@@ -129,9 +129,9 @@ test.describe('W03 Participant program experience', () => {
     await expect(step).toBeVisible();
     await step.click();
     await expect(page.getByTestId('participant.step.renderer')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Formulir' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Jawaban aktivitas' })).toBeVisible();
     await expect(page.getByText('Unggah foto jawaban')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Pilih foto' })).toBeDisabled();
+    await expect(page.getByLabel('Ambil atau pilih foto')).toBeEnabled();
     expect(await page.locator('body').innerText()).not.toContain('coach_qr_identifier');
     expect(await page.locator('body').innerText()).not.toContain('Berat awal');
 

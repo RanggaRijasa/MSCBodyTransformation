@@ -1,6 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getParticipantRepository } from './participant-repository';
+import {
+  getParticipantRepository,
+  type ParticipantAnswerSubmissionCommand,
+  type ParticipantWeighInCommand,
+} from './participant-repository';
 
 export const participantQueryKeys = {
   profile: ['private', 'participant', 'profile'] as const,
@@ -33,4 +37,30 @@ export function useParticipantScores(enabled: boolean) {
 
 export function useParticipantAssignedCoach(enabled: boolean) {
   return useQuery({ queryKey: participantQueryKeys.coach, queryFn: () => getParticipantRepository().getAssignedCoach(), enabled });
+}
+
+export function useSubmitParticipantAnswers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (command: ParticipantAnswerSubmissionCommand) => getParticipantRepository().submitAnswers(command),
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: participantQueryKeys.submissions }),
+        queryClient.invalidateQueries({ queryKey: participantQueryKeys.scores }),
+      ]);
+    },
+  });
+}
+
+export function useSubmitParticipantWeighIn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (command: ParticipantWeighInCommand) => getParticipantRepository().submitWeighIn(command),
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: participantQueryKeys.submissions }),
+        queryClient.invalidateQueries({ queryKey: participantQueryKeys.scores }),
+      ]);
+    },
+  });
 }

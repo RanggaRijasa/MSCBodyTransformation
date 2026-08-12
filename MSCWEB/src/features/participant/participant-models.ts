@@ -25,7 +25,7 @@ export const submissionSchema = z.object({
   attempt_sequence: z.number().int().positive(),
   status: z.enum(['draft', 'pending', 'approved', 'rejected', 'superseded']),
   review_note: z.string().nullable(),
-  submitted_at: z.string(),
+  submitted_at: z.string().nullable(),
 });
 
 export const scoreSchema = z.object({

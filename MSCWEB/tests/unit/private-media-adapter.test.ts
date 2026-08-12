@@ -18,7 +18,8 @@ function makeClient(options: { authenticated?: boolean } = {}) {
     data: { signedUrl: 'http://localhost:54321/storage/v1/object/sign/private' },
     error: null,
   }));
-  const from = vi.fn(() => ({ upload, download, createSignedUrl }));
+  const remove = vi.fn(async () => ({ data: [], error: null }));
+  const from = vi.fn(() => ({ upload, download, createSignedUrl, remove }));
   const getUser = vi.fn(async () => ({
     data: { user: options.authenticated === false ? null : { id: 'user-1' } },
     error: null,
@@ -26,7 +27,7 @@ function makeClient(options: { authenticated?: boolean } = {}) {
 
   return {
     client: { auth: { getUser }, storage: { from } } as unknown as SupabaseClient,
-    spies: { getUser, from, upload, download, createSignedUrl },
+    spies: { getUser, from, upload, download, createSignedUrl, remove },
   };
 }
 
@@ -62,6 +63,12 @@ describe('Supabase private media adapter', () => {
     await adapter.download(REFERENCE);
 
     expect(spies.download).toHaveBeenCalledWith(REFERENCE.objectPath, {}, { cache: 'no-store' });
+  });
+
+  it('deletes only the explicit temporary object path', async () => {
+    const { client, spies } = makeClient();
+    await new SupabasePrivateMediaAdapter(client).remove(REFERENCE);
+    expect(spies.remove).toHaveBeenCalledWith([REFERENCE.objectPath]);
   });
 
   it('creates a short-lived URL with an injected expiry clock', async () => {

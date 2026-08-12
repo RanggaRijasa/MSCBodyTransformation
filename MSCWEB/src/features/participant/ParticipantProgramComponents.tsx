@@ -4,18 +4,17 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { PublicProgram, PublicProgramQuestion, PublicProgramStep } from '@/features/public/public-models';
+import type { PublicProgram, PublicProgramStep } from '@/features/public/public-models';
 import type {
   ParticipantDayAccess,
   ParticipantEnrollment,
   ParticipantScore,
   ParticipantSubmission,
 } from './participant-models';
+import { ParticipantSubmissionForm } from './ParticipantSubmissionForm';
 import {
   latestSubmissionForStep,
   relevantDayAccess,
@@ -25,7 +24,6 @@ import {
 import { dateFormatter, numberFormatter, rupiahFormatter } from '@/shared/design/formatters';
 import { componentTokens, primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
-import { useResponsiveLayout } from '@/shared/design/useResponsiveLayout';
 import { MSCIcon } from '@/shared/icons/MSCIcon';
 import { Button, Card, InlineMessage, ProgressBar, StatusBadge } from '@/shared/ui/primitives';
 
@@ -128,6 +126,7 @@ export function ProgramActivity({
     return (
       <StepRenderer
         step={selectedStep}
+        enrollment={enrollment}
         access={selectedAccess}
         submission={latestSubmissionForStep(submissions, selectedStep.id)}
         onBack={onCloseStep}
@@ -242,19 +241,18 @@ function StepRow({
 
 export function StepRenderer({
   step,
+  enrollment,
   access,
   submission,
   onBack,
 }: {
   step: PublicProgramStep;
+  enrollment: ParticipantEnrollment;
   access?: ParticipantDayAccess;
   submission?: ParticipantSubmission;
   onBack: () => void;
 }) {
   const { colors } = useAppTheme();
-  const insets = useSafeAreaInsets();
-  const layout = useResponsiveLayout();
-  const [noticeVisible, setNoticeVisible] = useState(false);
   const presentation = submissionPresentation(submission?.status);
   const readOnly = access?.access_state === 'read_only';
   const locked = access?.access_state === 'locked' || access === undefined;
@@ -275,44 +273,28 @@ export function StepRenderer({
       </Card>
 
       {locked ? <InlineMessage title="Aktivitas belum tersedia" message="Langkah ini belum dibuka oleh jadwal server program." tone="warning" /> : (
-        <StepContent step={step} disabled={readOnly || submission?.status === 'pending' || submission?.status === 'approved'} />
-      )}
-
-      {!locked ? (
-        <View style={[styles.stickyAction, {
-          backgroundColor: colors.background,
-          borderColor: colors.border,
-          bottom: layout === 'compact'
-            ? componentTokens.compactTabBarHeight + Math.max(insets.bottom, componentTokens.compactTabBarBottomGap) + primitiveTokens.space.medium
-            : primitiveTokens.space.medium,
-        }]}>
-          {noticeVisible ? <InlineMessage title="Jawaban belum dikirim" message="Pengiriman jawaban dan bukti pribadi diaktifkan pada alur bukti peserta." /> : null}
-          <Button
-            label={readOnly ? 'Aktivitas hanya dapat dilihat' : submission?.status === 'pending' ? 'Menunggu tinjauan' : submission?.status === 'approved' ? 'Sudah selesai' : 'Kirim jawaban'}
+        <View style={styles.stack}>
+          {step.content_kind === 'article' || step.content_kind === 'video' ? <StepContent step={step} /> : null}
+          <ParticipantSubmissionForm
+            step={step}
+            enrollment={enrollment}
+            submission={submission}
             disabled={readOnly || submission?.status === 'pending' || submission?.status === 'approved'}
-            onPress={() => setNoticeVisible(true)}
           />
         </View>
-      ) : null}
+      )}
     </View>
   );
 }
 
-function StepContent({ step, disabled }: { step: PublicProgramStep; disabled: boolean }) {
+function StepContent({ step }: { step: PublicProgramStep }) {
   switch (step.content_kind) {
     case 'article':
       return <ArticleRenderer step={step} />;
     case 'video':
       return <VideoRenderer step={step} />;
-    case 'form':
-    case 'quiz':
-      return <QuestionRenderer step={step} disabled={disabled} isQuiz={step.content_kind === 'quiz'} />;
-    case 'initial_weigh_in':
-    case 'daily_weigh_in':
-    case 'final_weigh_in':
-      return <WeightRenderer disabled={disabled} kind={step.content_kind} />;
     default:
-      return <ArticleRenderer step={step} />;
+      return null;
   }
 }
 
@@ -336,85 +318,6 @@ function VideoRenderer({ step }: { step: PublicProgramStep }) {
         <Text style={[styles.cardTitle, { color: primitiveTokens.color.white }]}>Video program</Text>
       </View>
       {step.video_required ? <InlineMessage title="Wajib ditonton" message={`Tonton minimal ${numberFormatter.format(step.video_threshold)}% sebelum mengirim aktivitas.`} /> : null}
-    </Card>
-  );
-}
-
-function QuestionRenderer({ step, disabled, isQuiz }: { step: PublicProgramStep; disabled: boolean; isQuiz: boolean }) {
-  const { colors } = useAppTheme();
-  return (
-    <Card>
-      <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>{isQuiz ? 'Kuis' : 'Formulir'}</Text>
-      {isQuiz ? <InlineMessage title="Satu kesempatan" message="Jawaban kuis hanya dapat dikirim sekali. Periksa kembali sebelum mengirim." tone="warning" /> : null}
-      {step.program_questions.map((question) => <QuestionField key={question.id} question={question} disabled={disabled} />)}
-    </Card>
-  );
-}
-
-function QuestionField({ question, disabled }: { question: PublicProgramQuestion; disabled: boolean }) {
-  const { colors } = useAppTheme();
-  const [selected, setSelected] = useState<string[]>([]);
-  if (question.kind === 'photo_upload') {
-    return (
-      <View style={styles.questionGroup} accessibilityLabel={question.prompt}>
-        <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{question.prompt}</Text>
-        <InlineMessage title="Bukti foto diperlukan" message="Pemilihan, normalisasi, dan pengiriman bukti foto dilanjutkan pada alur bukti peserta." />
-        <Button label="Pilih foto" icon="camera" disabled onPress={() => undefined} />
-      </View>
-    );
-  }
-  if (question.program_question_options.length > 0) {
-    return (
-      <View style={styles.questionGroup}>
-        <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{question.prompt}</Text>
-        {question.program_question_options.map((option) => {
-          const checked = selected.includes(option.id);
-          return (
-            <Pressable
-              key={option.id}
-              accessibilityRole={question.kind === 'multiple_choice' ? 'radio' : 'checkbox'}
-              accessibilityState={{ checked, disabled }}
-              disabled={disabled}
-              onPress={() => setSelected(question.kind === 'multiple_choice' ? [option.id] : checked ? selected.filter((id) => id !== option.id) : [...selected, option.id])}
-              style={[styles.option, { borderColor: checked ? colors.primaryAction : colors.border, backgroundColor: checked ? colors.secondaryBackground : colors.surface }]}
-            >
-              <Text style={[styles.body, { color: colors.primaryText }]}>{option.title}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    );
-  }
-  return (
-    <View style={styles.questionGroup}>
-      <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{question.prompt}</Text>
-      <TextInput
-        accessibilityLabel={question.prompt}
-        editable={!disabled}
-        multiline
-        placeholder="Tulis jawaban"
-        placeholderTextColor={colors.secondaryText}
-        style={[styles.answerField, { color: colors.primaryText, backgroundColor: colors.surface, borderColor: colors.border }]}
-      />
-    </View>
-  );
-}
-
-function WeightRenderer({ disabled, kind }: { disabled: boolean; kind: string }) {
-  const { colors } = useAppTheme();
-  const label = stepKindLabel(kind);
-  return (
-    <Card>
-      <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>{label}</Text>
-      <TextInput
-        accessibilityLabel="Berat dalam kilogram"
-        editable={!disabled}
-        inputMode="decimal"
-        placeholder="Berat (kg)"
-        placeholderTextColor={colors.secondaryText}
-        style={[styles.answerField, { color: colors.primaryText, backgroundColor: colors.surface, borderColor: colors.border }]}
-      />
-      <Text style={[styles.caption, { color: colors.secondaryText }]}>Gunakan kilogram, misalnya 72,5. Berat badan bersifat pribadi dan tidak pernah tampil di leaderboard publik.</Text>
     </Card>
   );
 }

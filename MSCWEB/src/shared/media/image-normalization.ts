@@ -19,6 +19,8 @@ export type ImageNormalizationErrorCode =
   | 'canvasUnavailable'
   | 'encodeFailed';
 
+const JPEG_START_OF_IMAGE = [0xff, 0xd8, 0xff] as const;
+
 const ERROR_MESSAGES: Record<ImageNormalizationErrorCode, string> = {
   fileTooLarge: 'Ukuran foto terlalu besar. Pilih foto berukuran maksimal 8 MB.',
   unsupportedType: 'Format foto tidak didukung. Pilih foto JPEG, PNG, WebP, HEIC, atau HEIF.',
@@ -138,6 +140,9 @@ export async function normalizeBrowserImage(
     if (blob.type !== 'image/jpeg') {
       throw new ImageNormalizationError('encodeFailed');
     }
+    if (!(await hasJpegSignature(blob))) {
+      throw new ImageNormalizationError('encodeFailed');
+    }
     if (blob.size > MAX_IMAGE_INPUT_BYTES) {
       throw new ImageNormalizationError('fileTooLarge');
     }
@@ -157,6 +162,83 @@ export async function normalizeBrowserImage(
   } finally {
     decoded.close?.();
   }
+}
+
+export async function normalizeBrowserImageOffMainThread(
+  input: Blob,
+  options: ImageNormalizationOptions = {},
+): Promise<NormalizedImage> {
+  validateImageInput(input);
+  if (
+    typeof Worker === 'undefined'
+    || typeof OffscreenCanvas === 'undefined'
+    || typeof URL.createObjectURL !== 'function'
+  ) {
+    return normalizeBrowserImage(input, options);
+  }
+
+  const maxWidth = options.maxWidth ?? DEFAULT_IMAGE_MAX_WIDTH;
+  const maxHeight = options.maxHeight ?? DEFAULT_IMAGE_MAX_HEIGHT;
+  const quality = options.quality ?? DEFAULT_JPEG_QUALITY;
+  if (!Number.isFinite(quality) || quality <= 0 || quality > 1) {
+    throw new ImageNormalizationError('encodeFailed');
+  }
+
+  const source = `self.onmessage = async ({ data }) => {
+    try {
+      const bitmap = await createImageBitmap(data.input, { imageOrientation: 'from-image' });
+      const scale = Math.min(1, data.maxWidth / bitmap.width, data.maxHeight / bitmap.height);
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = new OffscreenCanvas(width, height);
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('canvas_unavailable');
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(bitmap, 0, 0, width, height);
+      bitmap.close();
+      const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: data.quality });
+      self.postMessage({ ok: true, blob, width, height });
+    } catch {
+      self.postMessage({ ok: false });
+    }
+  };`;
+  const workerUrl = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+  const worker = new Worker(workerUrl);
+  try {
+    const result = await new Promise<{ blob: Blob; width: number; height: number }>((resolve, reject) => {
+      worker.onmessage = (event: MessageEvent<{ ok: boolean; blob?: Blob; width?: number; height?: number }>) => {
+        const { data } = event;
+        if (!data.ok || !data.blob || !data.width || !data.height) {
+          reject(new ImageNormalizationError('decodeFailed'));
+          return;
+        }
+        resolve({ blob: data.blob, width: data.width, height: data.height });
+      };
+      worker.onerror = () => reject(new ImageNormalizationError('decodeFailed'));
+      worker.postMessage({ input, maxWidth, maxHeight, quality });
+    });
+    if (result.blob.type !== 'image/jpeg' || !(await hasJpegSignature(result.blob))) {
+      throw new ImageNormalizationError('encodeFailed');
+    }
+    if (result.blob.size > MAX_IMAGE_INPUT_BYTES) throw new ImageNormalizationError('fileTooLarge');
+    return {
+      blob: result.blob,
+      mimeType: 'image/jpeg',
+      width: result.width,
+      height: result.height,
+      byteSize: result.blob.size,
+    };
+  } finally {
+    worker.terminate();
+    URL.revokeObjectURL(workerUrl);
+  }
+}
+
+export async function hasJpegSignature(input: Blob): Promise<boolean> {
+  if (input.size < JPEG_START_OF_IMAGE.length) return false;
+  const signature = new Uint8Array(await input.slice(0, JPEG_START_OF_IMAGE.length).arrayBuffer());
+  return JPEG_START_OF_IMAGE.every((byte, index) => signature[index] === byte);
 }
 
 export const browserImageNormalizationRuntime: ImageNormalizationRuntime = {

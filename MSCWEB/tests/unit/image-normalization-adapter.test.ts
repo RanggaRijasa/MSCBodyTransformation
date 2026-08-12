@@ -4,6 +4,7 @@ import {
   browserImageNormalizationRuntime,
   calculateContainSize,
   ImageNormalizationError,
+  hasJpegSignature,
   MAX_IMAGE_INPUT_BYTES,
   normalizeBrowserImage,
   validateImageInput,
@@ -36,7 +37,7 @@ describe('image normalization adapter', () => {
 
   it('normalizes through the injected decoder and JPEG renderer, then releases the bitmap', async () => {
     const close = vi.fn();
-    const renderJpeg = vi.fn(async () => new Blob(['jpeg'], { type: 'image/jpeg' }));
+    const renderJpeg = vi.fn(async () => jpegBlob());
     const runtime: ImageNormalizationRuntime = {
       decode: vi.fn(async () => ({
         width: 4_000,
@@ -83,6 +84,15 @@ describe('image normalization adapter', () => {
     ).rejects.toMatchObject({ code: 'decodeFailed' });
   });
 
+  it('rejects a spoofed JPEG MIME type without a JPEG signature', async () => {
+    expect(await hasJpegSignature(new Blob(['not-jpeg'], { type: 'image/jpeg' }))).toBe(false);
+    const runtime: ImageNormalizationRuntime = {
+      decode: vi.fn(async () => ({ width: 100, height: 100, source: {} as CanvasImageSource })),
+      renderJpeg: vi.fn(async () => new Blob(['not-jpeg'], { type: 'image/jpeg' })),
+    };
+    await expect(normalizeBrowserImage(jpegBlob(), {}, runtime)).rejects.toMatchObject({ code: 'encodeFailed' });
+  });
+
   it('rejects a normalized output that still exceeds 8 MiB', async () => {
     const runtime: ImageNormalizationRuntime = {
       decode: vi.fn(async () => ({
@@ -91,7 +101,7 @@ describe('image normalization adapter', () => {
         source: {} as CanvasImageSource,
       })),
       renderJpeg: vi.fn(async () =>
-        new Blob([new Uint8Array(MAX_IMAGE_INPUT_BYTES + 1)], { type: 'image/jpeg' }),
+        new Blob([new Uint8Array([0xff, 0xd8, 0xff]), new Uint8Array(MAX_IMAGE_INPUT_BYTES)], { type: 'image/jpeg' }),
       ),
     };
 
@@ -100,3 +110,7 @@ describe('image normalization adapter', () => {
     ).rejects.toMatchObject({ code: 'fileTooLarge' });
   });
 });
+
+function jpegBlob(): Blob {
+  return new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: 'image/jpeg' });
+}
