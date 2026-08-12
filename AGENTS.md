@@ -25,6 +25,24 @@ Primary technical direction:
 - Supabase, OAuth, and production StoreKit integration are deferred to their assigned phases.
 - Android will be implemented later with Kotlin and Jetpack Compose using the same backend contract.
 
+## Web and PWA Work Boundary
+
+All work that belongs to the web application or PWA must be created and maintained inside the repository's `MSCWEB/` folder.
+
+This includes:
+
+- web application source code and routes;
+- landing-page code and visual assets;
+- web-specific design tokens, components, icons, and PWA assets;
+- web tests, fixtures, scripts, generated types, and build output configuration;
+- Cloudflare configuration and deployment documentation;
+- web-specific Supabase migrations, Edge Functions, Storage policies, seeds, and backend adapters;
+- web specifications, ADRs, workplans, progress logs, and reference images.
+
+Do not place web/PWA implementation files in the native iOS source folders or elsewhere at the repository root. If a web task appears to require changing a file outside `MSCWEB/`, stop and request explicit user authorization before making that change.
+
+Exceptions are limited to repository-wide governance or Codex configuration that the user explicitly requests, such as the root `AGENTS.md`, `.gitignore`, or project `.codex/` files, and an explicitly authorized shared-backend contract change.
+
 ## Required Reading Before Work
 
 Before changing code:
