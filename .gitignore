@@ -105,7 +105,15 @@ fastlane/test_output/
 *.iml
 supabase/.branches/
 
-# Codex or agent scratch output
-.codex/
+# Codex project configuration is tracked; any unlisted local Codex files remain ignored.
+.codex/*
+!.codex/config.toml
+!.codex/agents/
+.codex/agents/*
+!.codex/agents/msc_explorer.toml
+!.codex/agents/msc_implementer.toml
+!.codex/agents/msc_reviewer.toml
+
+# Agent scratch output
 .agent-cache/
 .agent-scratch/
