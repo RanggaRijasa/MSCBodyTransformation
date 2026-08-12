@@ -1,47 +1,83 @@
-import { useLocalSearchParams, router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { publicScreenStyles, Section } from '@/features/public/PublicComponents';
+import { publicScreenStyles } from '@/features/public/PublicComponents';
 import { useProgram } from '@/features/public/public-queries';
+import { ProgramActivity, ProgramOffer } from '@/features/participant/ParticipantProgramComponents';
+import {
+  useParticipantAssignedCoach,
+  useParticipantDayAccess,
+  useParticipantEnrollments,
+  useParticipantScores,
+  useParticipantSubmissions,
+} from '@/features/participant/participant-queries';
 import { useAuth } from '@/shared/auth/AuthProvider';
-import { dateFormatter } from '@/shared/design/formatters';
 import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { AppShell } from '@/shared/navigation/AppShell';
-import { Button, Card, InlineMessage, StateView, StatusBadge } from '@/shared/ui/primitives';
+import { Button, Card, InlineMessage, StateView, UserAvatar } from '@/shared/ui/primitives';
 
 export default function ProgramDetailRoute() {
-  const params = useLocalSearchParams<{ programId?: string }>();
+  const params = useLocalSearchParams<{ programId?: string; step?: string; join?: string }>();
   const programId = typeof params.programId === 'string' ? params.programId : '';
+  const selectedStepId = typeof params.step === 'string' ? params.step : undefined;
   const program = useProgram(programId);
   const { colors } = useAppTheme();
   const { state, requireAuthentication } = useAuth();
-  const [joinNotice, setJoinNotice] = useState(false);
+  const isParticipant = state.status === 'authenticated' && state.account.role === 'participant';
+  const enrollments = useParticipantEnrollments(isParticipant);
+  const dayAccess = useParticipantDayAccess(isParticipant);
+  const submissions = useParticipantSubmissions(isParticipant);
+  const scores = useParticipantScores(isParticipant);
+  const assignedCoach = useParticipantAssignedCoach(isParticipant);
   const role = state.status === 'authenticated' ? state.account.role : 'guest';
+  const enrollment = enrollments.data?.find((candidate) => candidate.program_id === programId);
+  const activeExperience = enrollment?.status === 'active' || enrollment?.status === 'completed';
+  const privatePending = isParticipant && [enrollments, dayAccess, submissions, scores].some((query) => query.isPending);
+  const privateError = isParticipant && [enrollments, dayAccess, submissions, scores].some((query) => query.isError);
 
   return (
-    <AppShell role={role} activeRoute="programs" title={program.data?.title ?? 'Detail program'} subtitle="Informasi program publik">
-      <ScrollView contentContainerStyle={publicScreenStyles.content}>
-        <Button label="Kembali ke Program" tone="secondary" onPress={() => router.back()} />
-        {program.isPending ? <StateView kind="loading" /> : program.isError ? <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void program.refetch()} />} /> : !program.data ? <StateView kind="empty" /> : (
+    <AppShell role={role} activeRoute="programs" title={selectedStepId ? 'Detail langkah' : program.data?.title ?? 'Detail program'}>
+      <ScrollView contentContainerStyle={publicScreenStyles.content} keyboardShouldPersistTaps="handled">
+        {!selectedStepId ? <Button label="Kembali ke Program" tone="secondary" icon="back" onPress={() => router.back()} /> : null}
+        {program.isPending || privatePending ? <StateView kind="loading" /> : program.isError || privateError ? (
+          <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void Promise.all([program.refetch(), enrollments.refetch(), dayAccess.refetch(), submissions.refetch(), scores.refetch()])} />} />
+        ) : !program.data ? <StateView kind="empty" /> : activeExperience && enrollment ? (
+          <ProgramActivity
+            program={program.data}
+            enrollment={enrollment}
+            accesses={dayAccess.data?.filter((access) => access.program_id === programId) ?? []}
+            submissions={submissions.data?.filter((submission) => submission.enrollment_id === enrollment.id) ?? []}
+            score={scores.data?.find((score) => score.enrollment_id === enrollment.id)}
+            selectedStepId={selectedStepId}
+            onOpenStep={(stepId) => router.push(`/app/programs/${programId}?step=${stepId}` as never)}
+            onCloseStep={() => router.back()}
+          />
+        ) : (
           <>
-            <Card>
-              <StatusBadge label={program.data.status === 'active' ? 'Aktif' : program.data.status === 'scheduled' ? 'Segera hadir' : 'Selesai'} tone={program.data.status === 'active' ? 'success' : 'info'} />
-              <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>{program.data.title}</Text>
-              <Text style={[styles.body, { color: colors.secondaryText }]}>{program.data.summary || 'Program transformasi dengan langkah harian yang terarah.'}</Text>
-              <Text style={[styles.label, { color: colors.primaryText }]}>Mulai {dateFormatter.format(new Date(`${program.data.starts_on}T12:00:00Z`))} · Zona waktu {program.data.timezone}</Text>
-              <Button label="Gabung program" onPress={() => {
+            <ProgramOffer
+              program={program.data}
+              enrollment={enrollment}
+              onPrimaryAction={() => {
+                if (enrollment?.status === 'pending') return;
                 if (requireAuthentication(`/app/programs/${programId}`)) {
-                  setJoinNotice(true);
+                  router.push(`/app/programs/${programId}?join=ready` as never);
                 }
-              }} />
-              {joinNotice ? <InlineMessage title="Siap untuk tahap pendaftaran" message="Sesi dan pilihan program sudah aman. Pemindaian QR Coach dilanjutkan pada fase pendaftaran program." tone="success" /> : null}
-            </Card>
-            <InlineMessage title="Untuk kebugaran dan wellness" message={program.data.wellness_disclaimer || 'Program ini bukan diagnosis atau pengganti saran tenaga kesehatan.'} />
-            <Section title="Rangkaian program" intro={`${program.data.program_days.length} hari yang disusun bertahap.`}>
-              <View style={publicScreenStyles.stack}>{program.data.program_days.map((day) => <Card key={day.id}><Text style={[styles.cardTitle, { color: colors.primaryText }]}>Hari {day.day_number} · {day.title}</Text>{day.summary ? <Text style={[styles.body, { color: colors.secondaryText }]}>{day.summary}</Text> : null}<Text style={[styles.label, { color: colors.secondaryText }]}>{day.program_steps.length} langkah</Text></Card>)}</View>
-            </Section>
+              }}
+            />
+            {isParticipant && assignedCoach.data ? (
+              <Card>
+                <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>Coach pendamping</Text>
+                <View style={styles.coachRow}>
+                  <UserAvatar uri={assignedCoach.data.provider_avatar_url ?? undefined} label={assignedCoach.data.display_name} />
+                  <View style={styles.flexCopy}>
+                    <Text style={[styles.heading, { color: colors.primaryText }]}>{assignedCoach.data.display_name}</Text>
+                    <Text style={[styles.body, { color: colors.secondaryText }]}>{assignedCoach.data.city || 'Lokasi belum dicantumkan'}</Text>
+                  </View>
+                </View>
+              </Card>
+            ) : null}
+            {params.join === 'ready' ? <InlineMessage title="Program dipilih" message="Lanjutkan dengan memindai QR Coach pada alur pendaftaran. Tidak ada kode manual." tone="success" /> : null}
           </>
         )}
       </ScrollView>
@@ -49,4 +85,9 @@ export default function ProgramDetailRoute() {
   );
 }
 
-const styles = StyleSheet.create({ title: typographyTokens.titleLarge, cardTitle: typographyTokens.headline, body: typographyTokens.body, label: typographyTokens.label, actionRow: { gap: primitiveTokens.space.small } });
+const styles = StyleSheet.create({
+  heading: typographyTokens.headline,
+  body: typographyTokens.body,
+  coachRow: { flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium },
+  flexCopy: { flex: 1, minWidth: 0, gap: primitiveTokens.space.xxSmall },
+});

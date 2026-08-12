@@ -1,6 +1,7 @@
 import { ScrollView, View } from 'react-native';
 
 import { ProgramCard, publicScreenStyles, RankingRow, Section } from '@/features/public/PublicComponents';
+import { useParticipantProfile } from '@/features/participant/participant-queries';
 import { useLeaderboard, usePrograms, useWinners } from '@/features/public/public-queries';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { AppShell } from '@/shared/navigation/AppShell';
@@ -13,6 +14,7 @@ export default function PublicLeaderboardRoute() {
   const winners = useWinners(selected?.id);
   const { state } = useAuth();
   const role = state.status === 'authenticated' ? state.account.role : 'guest';
+  const profile = useParticipantProfile(role === 'participant');
 
   return (
     <AppShell role={role} activeRoute="leaderboard" title="Peringkat" subtitle={selected?.title ?? 'Hasil program publik'}>
@@ -22,7 +24,7 @@ export default function PublicLeaderboardRoute() {
           <>
             <Section title="Program terpilih"><ProgramCard program={selected} /></Section>
             <Section title="Papan peringkat" intro="Urutan menggunakan hasil publik yang diterbitkan program.">
-              {leaderboard.isPending ? <StateView kind="loading" /> : leaderboard.isError ? <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void leaderboard.refetch()} />} /> : leaderboard.data?.length ? <View style={publicScreenStyles.stack}>{leaderboard.data.map((row) => <RankingRow key={row.id} row={row} winner={winners.data?.find((winner) => winner.participant_id === row.participant_id)} />)}</View> : <StateView kind="empty" />}
+              {leaderboard.isPending ? <StateView kind="loading" /> : leaderboard.isError ? <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void leaderboard.refetch()} />} /> : leaderboard.data?.length ? <View style={publicScreenStyles.stack}>{leaderboard.data.map((row) => <RankingRow key={row.id} row={row} isCurrent={row.participant_id === profile.data?.public_profile_id} winner={winners.data?.find((winner) => winner.participant_id === row.participant_id)} />)}</View> : <StateView kind="empty" />}
             </Section>
           </>
         )}

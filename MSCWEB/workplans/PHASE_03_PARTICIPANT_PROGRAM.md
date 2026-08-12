@@ -1,6 +1,6 @@
 # MSCWEB W03 — Participant program experience
 
-Status: `Not started`  
+Status: `Complete`
 Autonomy: `A` against local Supabase  
 Depends on: W02 session, public data, and role guards
 
@@ -28,41 +28,41 @@ Deliver Participant Home, catalog, program detail, day/activity navigation, cont
 
 ## Mandatory simulator gate per screen
 
-- [ ] Launch exact Participant scenario and navigate to the corresponding screen.
-- [ ] Capture current hierarchy, scroll behavior, selected tab, header/menu, sheet, enabled/disabled, loading/empty/error/locked state.
-- [ ] Repeat for Home, catalog, offer/detail, activity accordion, and at least one step renderer.
-- [ ] Complete the parity sign-off template for each vertical slice.
+- [x] Launch exact Participant scenario and navigate to the corresponding screen.
+- [x] Capture current hierarchy, scroll behavior, selected tab, header/menu, sheet, enabled/disabled, loading/empty/error/locked state.
+- [x] Repeat for Home, catalog, offer/detail, activity accordion, and at least one step renderer.
+- [x] Complete the parity sign-off template for each vertical slice.
 
 ## Checklist
 
 ### Domain/data
 
-- [ ] Map portable program/activity/day/step/status models.
-- [ ] Implement repositories and query keys without Supabase types in domain.
-- [ ] Enforce published visibility/timezone and avoid client-authoritative unlock/scoring.
-- [ ] Model loading/empty/error/offline/forbidden/session-expired states.
+- [x] Map portable program/activity/day/step/status models.
+- [x] Implement repositories and query keys without Supabase types in domain.
+- [x] Enforce published visibility/timezone and avoid client-authoritative unlock/scoring.
+- [x] Model loading/empty/error/offline/forbidden/session-expired states.
 
 ### Home and catalog
 
-- [ ] Home order: Program, Fokus, Top 5, Pemenang, Coach.
-- [ ] Compact horizontal program cards have pointer, keyboard, and screen-reader alternatives.
-- [ ] Catalog segments preserve route/filter/scroll state.
-- [ ] Program detail shows poster, schedule/timezone, price/status, Coach context, and state-aware CTA.
+- [x] Home order: Program, Fokus, Top 5, Pemenang, Coach.
+- [x] Compact horizontal program cards have pointer, keyboard, and screen-reader alternatives.
+- [x] Catalog segments preserve route/filter/scroll state.
+- [x] Program detail shows poster, schedule/timezone, price/status, Coach context, and state-aware CTA.
 
 ### Activity flow
 
-- [ ] Compact progress header and day accordions.
-- [ ] Relevant day opens and scrolls without violating reduced motion.
-- [ ] Locked/hidden/pending/rejected state has label/icon/copy, not color alone.
-- [ ] Article/video/form/quiz/weight renderer uses shared published definition.
-- [ ] Quiz one-attempt and required-answer UI mirror authoritative policy; client validation is only UX.
-- [ ] Sticky CTA survives bottom nav, safe area, and virtual keyboard.
+- [x] Compact progress header and day accordions.
+- [x] Relevant day opens and scrolls without violating reduced motion.
+- [x] Locked/hidden/pending/rejected state has label/icon/copy, not color alone.
+- [x] Article/video/form/quiz/weight renderer uses shared published definition.
+- [x] Quiz one-attempt and required-answer UI mirror authoritative policy; client validation is only UX.
+- [x] Sticky CTA survives bottom nav, safe area, and virtual keyboard.
 
 ### Profile/progress
 
-- [ ] Participant profile uses neutral blank-person fallback.
-- [ ] Points/rank/weight/date formatting uses `id-ID` and tabular numerals.
-- [ ] Private weight never appears in public leaderboard or telemetry.
+- [x] Participant profile uses neutral blank-person fallback.
+- [x] Points/rank/weight/date formatting uses `id-ID` and tabular numerals.
+- [x] Private weight never appears in public leaderboard or telemetry.
 
 ## Sub-agent plan
 
@@ -97,3 +97,58 @@ Do not split edits to shared activity renderer, navigation root, or design token
 
 Append requirement IDs, simulator scenario/screens, files, tests, visual/accessibility evidence, adaptive differences, and next item.
 
+### 2026-08-12 — W03 complete
+
+- Requirement IDs: `PROD-PTC-005`, `PROD-PRG-001`–`PROD-PRG-004`,
+  `PROD-LDB-001`–`PROD-LDB-003`, `UX-HOME-001`–`UX-HOME-004`, and
+  `UX-PRG-001`–`UX-PRG-004`. `PROD-PRG-005` remains assigned to W04;
+  enrollment and payment mutations remain assigned to W05.
+- Files changed: portable public/Participant schemas, RLS-backed read repository,
+  private query keys, program policy, shared program/activity/step renderers,
+  Participant Home/Program/detail/Profile/Peringkat routes, semantic segmented
+  control state, focused unit/local-integration/Playwright coverage, and parity
+  evidence under `references/simulator/w03/`.
+- Backend assumption: repository-root local Supabase migrations remain the
+  authoritative shared contract. W03 reuses published public RPCs plus existing
+  self-read RLS for profile, enrollment, submissions, scores, day access, and
+  assigned Coach. It adds no migration and performs no hosted-main mutation.
+- Authority boundary: published content, day access, enrollment status,
+  progress, points, rank, winner snapshots, and Coach assignment are rendered
+  from server values. The browser does not derive unlocks or authoritative
+  scores. Step controls are preview/read surfaces only; answer, weight, and
+  evidence mutations are deliberately not activated in W03.
+- Fresh iOS parity: Debug built on iPhone 17 Pro Simulator/iOS 26.4 and was
+  launched with Participant `participant_active` and `participant_mid_program`
+  scenarios. Home, all three catalog segments, offer, activity accordions,
+  locked days, initial weigh-in renderer, sticky action, selected Program tab,
+  browser/native Back outcome, and Indonesian fallback under an English device
+  locale were inspected. Detailed sign-off is in
+  `references/simulator/w03/README.md`.
+- Native automation note: the existing focused UI test navigated successfully
+  through catalog, offer/join, Back, active detail, and the opened current day,
+  then failed its native-only assertion at
+  `MSCBodyTransformationUITests.swift:968` because the static text query for
+  `Hari ini` was not exposed. No iOS source/test/project file was changed; the
+  runtime hierarchy was inspected directly and the W03 web acceptance suite is
+  unaffected.
+- Web verification: `npm run typecheck` passed; `npm run lint` passed;
+  `npm test` passed 71/71 including the local Supabase integration;
+  `npm run build` passed with 27 route bundles; `npx playwright test` passed
+  54/54 across desktop and compact Chromium; `npm run verify:bundle` passed
+  for 28 JavaScript files; `npm run verify:pwa` passed; and
+  `scripts/check_localization_catalog.sh` passed.
+- Responsive/accessibility evidence: 320/390/430 light/dark offer matrices have
+  no horizontal overflow; Program segments expose tab semantics and selected
+  state; accordions expose expanded state and 44-point-equivalent targets;
+  current user and all locked/pending/rejected/read-only states have text/icon
+  labels; relevant-day positioning is nonanimated; sticky CTA accounts for the
+  compact navigation and safe-area inset; browser Back restores activity and
+  catalog state.
+- Adaptive differences: native sheets/edge-back map to browser routes and
+  history; compact bottom navigation becomes a rail at wider breakpoints;
+  web adds explicit carousel previous/next controls and URL-backed catalog
+  segments; no custom edge gesture or Liquid Glass imitation was introduced.
+- Sub-agents: none. Remaining blockers: none for W03. No package, deployment,
+  production Supabase, Git, native source, or Xcode project mutation occurred.
+  Next unchecked workplan: W04 private evidence, Coach review, and
+  authoritative scoring operations.

@@ -58,21 +58,23 @@ export function CoachCard({ coach }: { coach: PublicCoach }) {
   );
 }
 
-export function RankingRow({ row, winner }: { row: PublicLeaderboardRow; winner?: PublicWinner }) {
+export function RankingRow({ row, winner, isCurrent = false }: { row: PublicLeaderboardRow; winner?: PublicWinner; isCurrent?: boolean }) {
   const { colors } = useAppTheme();
   return (
-    <Card>
-      <View style={styles.rankingRow}>
-        <View style={[styles.rank, { backgroundColor: row.rank <= 3 ? colors.accent : colors.secondaryBackground }]}>
-          <Text style={[styles.rankText, { color: primitiveTokens.color.black }]}>{numberFormatter.format(row.rank)}</Text>
+    <View accessibilityLabel={isCurrent ? `${row.participant_display_name}, kamu` : undefined} style={isCurrent ? [styles.currentRanking, { borderColor: colors.primaryAction }] : undefined}>
+      <Card>
+        <View style={styles.rankingRow}>
+          <View style={[styles.rank, { backgroundColor: row.rank <= 3 ? colors.accent : colors.secondaryBackground }]}>
+            <Text style={[styles.rankText, { color: primitiveTokens.color.black }]}>{numberFormatter.format(row.rank)}</Text>
+          </View>
+          <View style={styles.flexCopy}>
+            <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{row.participant_display_name}{isCurrent ? ' · Kamu' : ''}</Text>
+            <Text style={[styles.body, { color: colors.secondaryText }]}>{numberFormatter.format(row.total_points)} poin{winner ? ' · Pemenang resmi' : ''}</Text>
+          </View>
         </View>
-        <View style={styles.flexCopy}>
-          <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{row.participant_display_name}</Text>
-          <Text style={[styles.body, { color: colors.secondaryText }]}>{numberFormatter.format(row.total_points)} poin{winner ? ' · Pemenang resmi' : ''}</Text>
-        </View>
-      </View>
-      <ProgressBar label={`Progres ${row.participant_display_name}`} value={row.progress_percentage / 100} />
-    </Card>
+        <ProgressBar label={`Progres ${row.participant_display_name}`} value={row.progress_percentage / 100} />
+      </Card>
+    </View>
   );
 }
 
@@ -113,6 +115,7 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: primitiveTokens.space.small },
   identityRow: { flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium },
   rankingRow: { flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium },
+  currentRanking: { borderWidth: 2, borderRadius: primitiveTokens.radius.large },
   flexCopy: { flex: 1, minWidth: 0, gap: primitiveTokens.space.xxSmall },
   rank: { width: 48, height: 48, borderRadius: primitiveTokens.radius.capsule, alignItems: 'center', justifyContent: 'center' },
   rankText: { ...typographyTokens.headline, fontVariant: ['tabular-nums'] },

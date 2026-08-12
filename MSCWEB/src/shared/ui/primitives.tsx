@@ -154,6 +154,7 @@ export function SegmentedControl<T extends string>({
             key={option.value}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
+            aria-selected={selected}
             onPress={() => onChange(option.value)}
             style={[styles.segment, selected && { backgroundColor: colors.surface, borderColor: colors.border }]}
           >

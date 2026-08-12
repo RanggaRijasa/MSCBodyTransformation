@@ -2,7 +2,23 @@ import { z } from 'zod';
 
 const nullableText = z.string().nullable().optional();
 
-const publicProgramStepSchema = z.object({
+const publicProgramQuestionOptionSchema = z.object({
+  id: z.string().uuid(),
+  option_order: z.number().int(),
+  title: z.string(),
+  media_path: nullableText,
+  media_alt_text: nullableText,
+}).passthrough();
+
+const publicProgramQuestionSchema = z.object({
+  id: z.string().uuid(),
+  question_order: z.number().int(),
+  kind: z.string(),
+  prompt: z.string(),
+  program_question_options: z.array(publicProgramQuestionOptionSchema).default([]),
+}).passthrough();
+
+export const publicProgramStepSchema = z.object({
   id: z.string().uuid(),
   step_order: z.number().int(),
   title: z.string(),
@@ -10,6 +26,12 @@ const publicProgramStepSchema = z.object({
   content_kind: z.string(),
   completion_policy: z.string(),
   verification_mode: z.string(),
+  media_path: nullableText,
+  media_alt_text: nullableText,
+  video_required: z.boolean().nullable().optional().transform((value) => value ?? false),
+  video_threshold: z.number().int().min(0).max(100).nullable().optional().transform((value) => value ?? 100),
+  video_autoplay: z.boolean().nullable().optional().transform((value) => value ?? false),
+  program_questions: z.array(publicProgramQuestionSchema).default([]),
 }).passthrough();
 
 const publicProgramDaySchema = z.object({
@@ -32,7 +54,14 @@ export const publicProgramSchema = z.object({
   timezone: z.string(),
   participant_limit: z.number().int().nullable().optional(),
   registration_closes_at: nullableText,
+  cover_path: nullableText,
+  cover_alt_text: nullableText,
+  past_step_policy: z.string().optional(),
+  future_step_policy: z.string().optional(),
   wellness_disclaimer: nullableText,
+  points_per_activity: z.number().int().optional().default(0),
+  points_per_weight_kg: z.number().optional().default(0),
+  quiz_passing_percentage: z.number().int().optional().default(0),
   pricing_mode: z.string(),
   desired_price: z.number().nullable().optional(),
   program_days: z.array(publicProgramDaySchema).default([]),
@@ -75,6 +104,9 @@ export const publicWinnerPosterSchema = z.object({
 }).passthrough();
 
 export type PublicProgram = z.infer<typeof publicProgramSchema>;
+export type PublicProgramDay = PublicProgram['program_days'][number];
+export type PublicProgramStep = PublicProgramDay['program_steps'][number];
+export type PublicProgramQuestion = PublicProgramStep['program_questions'][number];
 export type PublicCoach = z.infer<typeof publicCoachSchema>;
 export type PublicLeaderboardRow = z.infer<typeof publicLeaderboardRowSchema>;
 export type PublicWinner = z.infer<typeof publicWinnerSchema>;
