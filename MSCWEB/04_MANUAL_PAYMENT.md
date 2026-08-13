@@ -2,7 +2,7 @@
 
 ## 1. Tujuan dan batas
 
-Web mengganti pembelian StoreKit dengan transfer bank atau QRIS statis. Pengguna mengunggah foto bukti. Admin memeriksa visual dan mengambil keputusan. Sistem tidak mengklaim dapat memverifikasi keaslian transfer secara otomatis.
+Web mengganti pembelian StoreKit dengan tujuan pembayaran manual yang dapat menampilkan rekening bank dan QRIS statis secara bersamaan. Keduanya adalah alternatif dari satu tujuan pembayaran, bukan pilihan metode yang harus ditetapkan Participant. Pengguna mengunggah foto bukti. Admin memeriksa visual dan mengambil keputusan. Sistem tidak mengklaim dapat memverifikasi keaslian transfer secara otomatis.
 
 Pembayaran manual berlaku untuk:
 
@@ -44,7 +44,7 @@ Admin-authorized configuration menyimpan:
 - version dan updated-by audit.
 
 - `PAY-DST-001` Data rekening/QRIS MUST NOT hardcoded di component atau environment variable frontend.
-- `PAY-DST-002` Hanya satu destination default aktif per payment method/context kecuali routing rule eksplisit ditambahkan lewat ADR.
+- `PAY-DST-002` Hanya satu destination default aktif per payment context kecuali routing rule eksplisit ditambahkan lewat ADR. Destination dapat memuat rekening bank dan QRIS sekaligus.
 - `PAY-DST-003` Perubahan destination MUST tidak mengubah request lama karena request menyimpan snapshot.
 - `PAY-DST-004` QRIS image boleh public hanya jika secara bisnis memang poster pembayaran publik; baseline lebih aman adalah authenticated/read-controlled asset.
 
@@ -81,7 +81,7 @@ Pilih program
   → Scan QR Coach
   → server validasi program + Coach + capacity + duplicate
   → program gratis: enrollment atomik
-  → program berbayar: buat payment request
+  → program berbayar: server langsung membuat payment request
   → tampilkan nominal + rekening + QRIS
   → upload dan konfirmasi bukti
   → pending review
@@ -96,6 +96,7 @@ Pilih program
 - `PAY-PTC-004` Approval MUST membuat entitlement/enrollment exactly once dalam satu transaction authority boundary.
 - `PAY-PTC-005` Bila atomic operation gagal, status tidak boleh menjadi `approved` secara parsial.
 - `PAY-PTC-006` Setelah approval, query payment, entitlement, program catalog, home focus, dan Coach relationship MUST di-invalidasi/refetch.
+- `PAY-PTC-007` Setelah QR Coach valid untuk program berbayar, client MUST langsung membuka payment request yang dibuat server. Participant MUST NOT diminta mengonfirmasi Coach, memilih transfer/QRIS, atau menekan aksi pembuatan request tambahan.
 
 ## 6. Coach application flow
 
@@ -163,3 +164,36 @@ Detail minimum:
 
 Visual review dapat salah dan screenshot dapat dipalsukan. Sebelum production, owner bisnis MUST menetapkan SOP rekonsiliasi mutasi rekening, reviewer responsibility, dispute/refund path, waktu layanan, expiry, serta retention/deletion period. Ini adalah launch blocker operasional, bukan fitur yang boleh diasumsikan oleh developer.
 
+## 10. Keputusan operasional produksi — 2026-08-13
+
+Keputusan owner bisnis berikut menggantikan nilai feasibility lokal yang sebelumnya belum final:
+
+- satu tujuan pembayaran aktif dan berversi, menggunakan rekening BCA yang diberikan owner bisnis dan QRIS gambar statis;
+- nominal memakai harga IDR biasa tanpa nominal unik;
+- reservasi kursi berlaku 24 jam;
+- bukti yang dikirim sebelum reservasi berakhir mempertahankan kursi selama pemeriksaan;
+- penolakan Admin wajib memuat alasan dan instruksi perbaikan;
+- maksimal tiga percobaan unggah bukti;
+- format input dan output mengikuti kontrak `PAY-UPL-001…007`;
+- tidak ada tombol atau alur pengajuan refund oleh Participant;
+- pembayaran yang sudah disetujui final terhadap pembatalan sukarela Participant;
+- tidak ada janji SLA tertentu, tetapi pembayaran program terjadwal harus diperiksa sebelum program dimulai;
+- akses Coach berlaku tiga bulan dan tidak diperpanjang otomatis.
+
+Transfer setelah reservasi berakhir ditangani sebagai pengecualian Admin:
+
+1. bila kursi masih tersedia, Admin dapat memulihkan order untuk diperiksa;
+2. bila program sudah penuh dan dana telah masuk, pembayaran ditolak dan dana dikembalikan.
+
+`No refund` hanya berlaku untuk pembatalan sukarela setelah pembayaran disetujui. Exceptional reversal yang hanya dapat diproses Admin, wajib diaudit, dan ditargetkan selesai dalam tujuh hari kerja berlaku untuk:
+
+- pembayaran ditolak tetapi dana telah masuk;
+- transfer ganda;
+- kelebihan transfer, sebesar selisihnya;
+- program dibatalkan MSC atau tidak dapat disediakan.
+
+Kebijakan exceptional reversal ini tetap memerlukan pemeriksaan legal sebelum production. UI Participant tidak menyediakan menu refund.
+
+Owner bisnis menetapkan bukti pembayaran Participant dan Coach dihapus 30 hari setelah unggah. Implementasi production MUST membedakan penghapusan file gambar privat dari pemeliharaan metadata transaksi/audit non-gambar. Catatan order, nominal, keputusan, alasan, ledger, dan event audit tidak boleh ikut dihapus tanpa kebijakan retensi transaksi dan legal yang terpisah. File yang masih `under_review` pada hari ke-30 dipertahankan sampai keputusan Admin, lalu segera dihapus setelah keputusan tercatat.
+
+Cleanup berjalan otomatis sekali sehari pukul `02.00 WITA`. Admin web tidak memiliki tombol penghapusan. Tujuh eksekusi produksi pertama menggunakan dry-run; setelah hasilnya diperiksa, job server dapat beralih ke mode delete. Eksekusi manual hanya merupakan prosedur darurat operator teknis melalui Supabase dan tetap wajib memakai secret server, pemeriksaan kandidat, serta audit.

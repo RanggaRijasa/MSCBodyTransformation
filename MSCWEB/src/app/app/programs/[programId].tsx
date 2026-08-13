@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { publicScreenStyles } from '@/features/public/PublicComponents';
 import { useProgram } from '@/features/public/public-queries';
 import { ProgramActivity, ProgramOffer } from '@/features/participant/ParticipantProgramComponents';
+import { isRepeatableLocalTestProgram } from '@/features/participant/participant-program-policy';
 import {
   useParticipantAssignedCoach,
   useParticipantDayAccess,
@@ -15,10 +16,10 @@ import { useAuth } from '@/shared/auth/AuthProvider';
 import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { AppShell } from '@/shared/navigation/AppShell';
-import { Button, Card, InlineMessage, StateView, UserAvatar } from '@/shared/ui/primitives';
+import { Button, Card, StateView, UserAvatar } from '@/shared/ui/primitives';
 
 export default function ProgramDetailRoute() {
-  const params = useLocalSearchParams<{ programId?: string; step?: string; join?: string }>();
+  const params = useLocalSearchParams<{ programId?: string; step?: string }>();
   const programId = typeof params.programId === 'string' ? params.programId : '';
   const selectedStepId = typeof params.step === 'string' ? params.step : undefined;
   const program = useProgram(programId);
@@ -32,7 +33,9 @@ export default function ProgramDetailRoute() {
   const assignedCoach = useParticipantAssignedCoach(isParticipant);
   const role = state.status === 'authenticated' ? state.account.role : 'guest';
   const enrollment = enrollments.data?.find((candidate) => candidate.program_id === programId);
-  const activeExperience = enrollment?.status === 'active' || enrollment?.status === 'completed';
+  const isRepeatableFixture = program.data ? isRepeatableLocalTestProgram(program.data) : false;
+  const visibleEnrollment = isRepeatableFixture ? undefined : enrollment;
+  const activeExperience = visibleEnrollment?.status === 'active' || visibleEnrollment?.status === 'completed';
   const privatePending = isParticipant && [enrollments, dayAccess, submissions, scores].some((query) => query.isPending);
   const privateError = isParticipant && [enrollments, dayAccess, submissions, scores].some((query) => query.isError);
 
@@ -42,13 +45,13 @@ export default function ProgramDetailRoute() {
         {!selectedStepId ? <Button label="Kembali ke Program" tone="secondary" icon="back" onPress={() => router.back()} /> : null}
         {program.isPending || privatePending ? <StateView kind="loading" /> : program.isError || privateError ? (
           <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void Promise.all([program.refetch(), enrollments.refetch(), dayAccess.refetch(), submissions.refetch(), scores.refetch()])} />} />
-        ) : !program.data ? <StateView kind="empty" /> : activeExperience && enrollment ? (
+        ) : !program.data ? <StateView kind="empty" /> : activeExperience && visibleEnrollment ? (
           <ProgramActivity
             program={program.data}
-            enrollment={enrollment}
+            enrollment={visibleEnrollment}
             accesses={dayAccess.data?.filter((access) => access.program_id === programId) ?? []}
-            submissions={submissions.data?.filter((submission) => submission.enrollment_id === enrollment.id) ?? []}
-            score={scores.data?.find((score) => score.enrollment_id === enrollment.id)}
+            submissions={submissions.data?.filter((submission) => submission.enrollment_id === visibleEnrollment.id) ?? []}
+            score={scores.data?.find((score) => score.enrollment_id === visibleEnrollment.id)}
             selectedStepId={selectedStepId}
             onOpenStep={(stepId) => router.push(`/app/programs/${programId}?step=${stepId}` as never)}
             onCloseStep={() => router.back()}
@@ -57,11 +60,11 @@ export default function ProgramDetailRoute() {
           <>
             <ProgramOffer
               program={program.data}
-              enrollment={enrollment}
+              enrollment={visibleEnrollment}
               onPrimaryAction={() => {
-                if (enrollment?.status === 'pending') return;
+                if (visibleEnrollment?.status === 'pending') return;
                 if (requireAuthentication(`/app/programs/${programId}`)) {
-                  router.push(`/app/programs/${programId}?join=ready` as never);
+                  router.push(`/app/payments/${programId}` as never);
                 }
               }}
             />
@@ -77,7 +80,6 @@ export default function ProgramDetailRoute() {
                 </View>
               </Card>
             ) : null}
-            {params.join === 'ready' ? <InlineMessage title="Program dipilih" message="Lanjutkan dengan memindai QR Coach pada alur pendaftaran. Tidak ada kode manual." tone="success" /> : null}
           </>
         )}
       </ScrollView>

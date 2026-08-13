@@ -23,6 +23,7 @@ const knownAppRoutes = new Set([
   '/admin/people',
   '/admin/content',
   '/admin/settings',
+  '/admin/payments',
   '/login',
   '/auth/callback',
 ]);
@@ -30,6 +31,8 @@ const knownAppRoutes = new Set([
 function isKnownAppRoute(pathname: string): boolean {
   if (knownAppRoutes.has(pathname)) return true;
   if (/^\/coach\/reviews\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pathname)) return true;
+  if (/^\/admin\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pathname)) return true;
+  if (/^\/app\/payments\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pathname)) return true;
   return /^\/app\/(programs|coaches)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pathname);
 }
 

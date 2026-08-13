@@ -21,6 +21,20 @@ body {
   outline-offset: 2px;
 }
 
+.payment-file-button:active,
+.payment-file-button:has(input:active) {
+  box-shadow: 0 1px 0 currentColor !important;
+  transform: translateY(3px) scale(0.98) !important;
+}
+
+.payment-native-file-input::file-selector-button {
+  box-sizing: border-box;
+  cursor: pointer;
+  height: 100%;
+  margin: 0;
+  width: 100%;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background: #000000;

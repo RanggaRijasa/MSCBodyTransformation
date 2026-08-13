@@ -7,6 +7,13 @@ import type {
 
 export type ProgramSegment = 'joined' | 'available' | 'history';
 
+export const repeatableLocalFixtureCategory = 'Pengujian lokal berulang';
+
+export function isRepeatableLocalTestProgram(program: PublicProgram): boolean {
+  return program.category === repeatableLocalFixtureCategory
+    && (program.title === 'Program uji lokal gratis' || program.title === 'Program uji lokal berbayar');
+}
+
 export function programsForSegment(
   programs: PublicProgram[],
   enrollments: ParticipantEnrollment[],
@@ -14,9 +21,16 @@ export function programsForSegment(
 ): PublicProgram[] {
   const enrollmentByProgram = new Map(enrollments.map((enrollment) => [enrollment.program_id, enrollment]));
   return programs.filter((program) => {
+    if (program.category === repeatableLocalFixtureCategory) {
+      return isRepeatableLocalTestProgram(program)
+        && segment === 'available'
+        && (program.status === 'active' || program.status === 'scheduled');
+    }
     const enrollment = enrollmentByProgram.get(program.id);
     if (segment === 'joined') {
-      return enrollment?.status === 'active' || enrollment?.status === 'pending';
+      return enrollment?.status === 'active'
+        || enrollment?.status === 'pending'
+        || enrollment?.status === 'waiting_for_payment';
     }
     if (segment === 'history') {
       return enrollment !== undefined && (

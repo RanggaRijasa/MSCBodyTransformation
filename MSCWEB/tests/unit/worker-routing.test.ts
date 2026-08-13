@@ -26,6 +26,8 @@ describe('Cloudflare Worker routing contract', () => {
     await expect(worker.fetch(new Request('https://msc.invalid/app/programs/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/coach/reviews'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/coach/reviews/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/app/payments/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/admin/payments/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ url: 'https://msc.invalid/app.html' }));
   });
 

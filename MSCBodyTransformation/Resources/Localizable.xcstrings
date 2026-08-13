@@ -4,456 +4,6 @@
     "" : {
 
     },
-    "coach.application.status.accepted_payment" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diterima, menunggu pembayaran"
-          }
-        }
-      }
-    },
-    "coach.application.status.active" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktif"
-          }
-        }
-      }
-    },
-    "coach.application.status.processing" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dalam proses"
-          }
-        }
-      }
-    },
-    "coach.eligibility.review_before_payment" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Admin meninjau pengajuan terlebih dahulu. Pembayaran baru tersedia setelah pengajuan diterima."
-          }
-        }
-      }
-    },
-    "coach.eligibility.submit_application" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kirim pengajuan Coach"
-          }
-        }
-      }
-    },
-    "coach.payment.after_approval_only" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembayaran Coach tersedia setelah pengajuan diterima Admin."
-          }
-        }
-      }
-    },
-    "coach.pending.application_submitted" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pengajuan sudah dikirim"
-          }
-        }
-      }
-    },
-    "coach.pending.live_message" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Admin perlu meninjau pengajuanmu. Jika diterima, pembayaran akses Coach akan tersedia di Profil."
-          }
-        }
-      }
-    },
-    "commerce.account.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembelian dan akses"
-          }
-        }
-      }
-    },
-    "commerce.coach.access_until" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Akses aktif sampai"
-          }
-        }
-      }
-    },
-    "commerce.coach.activate" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktifkan akses Coach"
-          }
-        }
-      }
-    },
-    "commerce.coach.activated" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Akses Coach berhasil diaktifkan."
-          }
-        }
-      }
-    },
-    "commerce.coach.activated_refresh_needed" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Akses Coach sudah aktif. Tutup lalu buka kembali aplikasi untuk memuat peran terbaru."
-          }
-        }
-      }
-    },
-    "commerce.coach.application_status" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Status pengajuan"
-          }
-        }
-      }
-    },
-    "commerce.coach.footer" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Perpanjangan dilakukan manual. Jika akses berakhir, fitur dan QR Coach dinonaktifkan sampai pembayaran berikutnya terverifikasi."
-          }
-        }
-      }
-    },
-    "commerce.coach.no_application" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Belum ada pengajuan Coach pada akun ini."
-          }
-        }
-      }
-    },
-    "commerce.coach.renew" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Perpanjang akses Coach"
-          }
-        }
-      }
-    },
-    "commerce.coach.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Akses Coach tiga bulan"
-          }
-        }
-      }
-    },
-    "commerce.coach.waiting_approval" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembayaran tersedia setelah pengajuan diterima Admin."
-          }
-        }
-      }
-    },
-    "commerce.error.approval" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Akses pembayaran belum diizinkan untuk akun ini."
-          }
-        }
-      }
-    },
-    "commerce.error.generic" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terjadi kendala. Coba lagi."
-          }
-        }
-      }
-    },
-    "commerce.error.offline" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tidak ada koneksi. Periksa internet lalu coba lagi."
-          }
-        }
-      }
-    },
-    "commerce.error.session" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sesi berakhir. Masuk kembali untuk melanjutkan."
-          }
-        }
-      }
-    },
-    "commerce.error.timeout" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permintaan terlalu lama. Coba lagi."
-          }
-        }
-      }
-    },
-    "commerce.history.empty" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Belum ada riwayat pembelian."
-          }
-        }
-      }
-    },
-    "commerce.history.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Riwayat pembelian"
-          }
-        }
-      }
-    },
-    "commerce.pending" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembelian menunggu persetujuan Apple."
-          }
-        }
-      }
-    },
-    "commerce.price" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Harga Apple"
-          }
-        }
-      }
-    },
-    "commerce.product_unavailable" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Produk App Store belum tersedia."
-          }
-        }
-      }
-    },
-    "commerce.purchase.action" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beli dengan Apple"
-          }
-        }
-      }
-    },
-    "commerce.restore.action" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pulihkan pembelian"
-          }
-        }
-      }
-    },
-    "commerce.restore.empty" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tidak ada pembelian aktif yang perlu dipulihkan."
-          }
-        }
-      }
-    },
-    "commerce.restore.footer" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gunakan jika pembelian lama belum muncul. Apple mungkin meminta autentikasi App Store."
-          }
-        }
-      }
-    },
-    "commerce.restore.success" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembelian berhasil direkonsiliasi."
-          }
-        }
-      }
-    },
-    "commerce.subject.coach" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Akses Coach"
-          }
-        }
-      }
-    },
-    "commerce.subject.program" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Program"
-          }
-        }
-      }
-    },
-    "commerce.unavailable" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembelian belum tersedia pada konfigurasi aplikasi ini."
-          }
-        }
-      }
-    },
-    "participant.join.continue_to_payment" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lanjutkan ke pembayaran"
-          }
-        }
-      }
-    },
-    "participant.join.free_action" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ikuti program gratis"
-          }
-        }
-      }
-    },
-    "participant.payment.apple_action" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beli dengan Apple"
-          }
-        }
-      }
-    },
-    "participant.payment.apple_notice" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembayaran diproses oleh Apple. Akses diberikan setelah transaksi diverifikasi server."
-          }
-        }
-      }
-    },
-    "status.expired" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Berakhir"
-          }
-        }
-      }
-    },
-    "status.refunded" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dikembalikan"
-          }
-        }
-      }
-    },
-    "status.revoked" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dicabut"
-          }
-        }
-      }
-    },
-    "status.verified" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terverifikasi"
-          }
-        }
-      }
-    },
     "%@ · %@ · %@" : {
       "comment" : "A label that shows the currently selected filter options.",
       "isCommentAutoGenerated" : true,
@@ -1180,6 +730,7 @@
       }
     },
     "action.scenario_information" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -1525,6 +1076,10 @@
       "comment" : "A message displayed when there are no Coach accounts.",
       "isCommentAutoGenerated" : true
     },
+    "Akun dan penegakan" : {
+      "comment" : "Section of the Terms of Service that deals with user accounts and enforcement.",
+      "isCommentAutoGenerated" : true
+    },
     "Akun peserta akan muncul di sini." : {
       "comment" : "A message displayed when there are no participants in the admin people view.",
       "isCommentAutoGenerated" : true
@@ -1563,8 +1118,16 @@
     "Ambil foto" : {
 
     },
+    "Anda dapat memperbarui profil, keluar, atau meminta penghapusan akun dari layar Profil. Pertanyaan privasi dapat dikirim melalui kanal dukungan yang tercantum pada halaman aplikasi di App Store." : {
+      "comment" : "Explanation of the user's privacy control rights.",
+      "isCommentAutoGenerated" : true
+    },
     "Angka" : {
       "comment" : "A label for a number question.",
+      "isCommentAutoGenerated" : true
+    },
+    "Aplikasi tidak menggunakan data untuk pelacakan lintas aplikasi atau situs dan tidak menjual data pribadi untuk periklanan." : {
+      "comment" : "Explanation of how the app does not track users or sell user data.",
       "isCommentAutoGenerated" : true
     },
     "app.subtitle" : {
@@ -1603,6 +1166,10 @@
     },
     "Aturan dan poin" : {
 
+    },
+    "Autentikasi dapat melibatkan Google atau Apple. Data aplikasi disimpan melalui Supabase. Pembelian diproses oleh Apple melalui StoreKit. MSC Body Transformation tidak menerima nomor kartu atau detail rekening pembayaran Anda." : {
+      "comment" : "Legal document content for the \"Privacy\" section.",
+      "isCommentAutoGenerated" : true
     },
     "auth.action.login" : {
       "localizations" : {
@@ -3248,6 +2815,26 @@
         }
       }
     },
+    "coach.application.status.accepted_payment" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diterima, menunggu pembayaran"
+          }
+        }
+      }
+    },
+    "coach.application.status.active" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktif"
+          }
+        }
+      }
+    },
     "coach.application.status.approved" : {
       "localizations" : {
         "id" : {
@@ -3314,6 +2901,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Menunggu persetujuan Admin"
+          }
+        }
+      }
+    },
+    "coach.application.status.processing" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dalam proses"
           }
         }
       }
@@ -3694,6 +3291,16 @@
         }
       }
     },
+    "coach.eligibility.review_before_payment" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin meninjau pengajuan terlebih dahulu. Pembayaran baru tersedia setelah pengajuan diterima."
+          }
+        }
+      }
+    },
     "coach.eligibility.satisfied" : {
       "localizations" : {
         "id" : {
@@ -3720,6 +3327,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Syarat kegiatan"
+          }
+        }
+      }
+    },
+    "coach.eligibility.submit_application" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirim pengajuan Coach"
           }
         }
       }
@@ -4987,6 +4604,16 @@
         }
       }
     },
+    "coach.payment.after_approval_only" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembayaran Coach tersedia setelah pengajuan diterima Admin."
+          }
+        }
+      }
+    },
     "coach.payment.cancelled.message" : {
       "comment" : "Message displayed when a coach payment is cancelled.",
       "extractionState" : "extracted_with_value",
@@ -5072,19 +4699,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Pembayaran demo gagal. Coba lagi."
-          }
-        }
-      }
-    },
-    "coach.payment.phase12_handoff" : {
-      "comment" : "Message explaining that real Coach payment continues in Phase 12.",
-      "extractionState" : "extracted_with_value",
-      "isCommentAutoGenerated" : false,
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pengajuan tersimpan. Pembayaran Coach akan tersedia pada Phase 12."
           }
         }
       }
@@ -5205,6 +4819,18 @@
         }
       }
     },
+    "coach.payment.phase12_handoff" : {
+      "comment" : "Message explaining that real Coach payment continues in Phase 12.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengajuan tersimpan. Pembayaran Coach akan tersedia pada Phase 12."
+          }
+        }
+      }
+    },
     "coach.payment.price" : {
       "localizations" : {
         "id" : {
@@ -5268,12 +4894,32 @@
         }
       }
     },
+    "coach.pending.application_submitted" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengajuan sudah dikirim"
+          }
+        }
+      }
+    },
     "coach.pending.finish" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kembali ke aplikasi"
+          }
+        }
+      }
+    },
+    "coach.pending.live_message" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin perlu meninjau pengajuanmu. Jika diterima, pembayaran akses Coach akan tersedia di Profil."
           }
         }
       }
@@ -6897,6 +6543,322 @@
     "Coba lagi" : {
 
     },
+    "commerce.account.open" : {
+      "comment" : "A button that opens a commerce account.",
+      "extractionState" : "extracted_with_value",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pembelian dan akses Coach"
+          }
+        }
+      }
+    },
+    "commerce.account.section" : {
+      "comment" : "A section title for the user's commerce account.",
+      "extractionState" : "extracted_with_value",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pembelian"
+          }
+        }
+      }
+    },
+    "commerce.account.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian dan akses"
+          }
+        }
+      }
+    },
+    "commerce.coach.access_until" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses aktif sampai"
+          }
+        }
+      }
+    },
+    "commerce.coach.activate" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktifkan akses Coach"
+          }
+        }
+      }
+    },
+    "commerce.coach.activated" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach berhasil diaktifkan."
+          }
+        }
+      }
+    },
+    "commerce.coach.activated_refresh_needed" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach sudah aktif. Tutup lalu buka kembali aplikasi untuk memuat peran terbaru."
+          }
+        }
+      }
+    },
+    "commerce.coach.application_status" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status pengajuan"
+          }
+        }
+      }
+    },
+    "commerce.coach.footer" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perpanjangan dilakukan manual. Jika akses berakhir, fitur dan QR Coach dinonaktifkan sampai pembayaran berikutnya terverifikasi."
+          }
+        }
+      }
+    },
+    "commerce.coach.no_application" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum ada pengajuan Coach pada akun ini."
+          }
+        }
+      }
+    },
+    "commerce.coach.renew" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perpanjang akses Coach"
+          }
+        }
+      }
+    },
+    "commerce.coach.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach tiga bulan"
+          }
+        }
+      }
+    },
+    "commerce.coach.waiting_approval" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembayaran tersedia setelah pengajuan diterima Admin."
+          }
+        }
+      }
+    },
+    "commerce.error.approval" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses pembayaran belum diizinkan untuk akun ini."
+          }
+        }
+      }
+    },
+    "commerce.error.generic" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terjadi kendala. Coba lagi."
+          }
+        }
+      }
+    },
+    "commerce.error.offline" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada koneksi. Periksa internet lalu coba lagi."
+          }
+        }
+      }
+    },
+    "commerce.error.session" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi berakhir. Masuk kembali untuk melanjutkan."
+          }
+        }
+      }
+    },
+    "commerce.error.timeout" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permintaan terlalu lama. Coba lagi."
+          }
+        }
+      }
+    },
+    "commerce.history.empty" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum ada riwayat pembelian."
+          }
+        }
+      }
+    },
+    "commerce.history.title" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riwayat pembelian"
+          }
+        }
+      }
+    },
+    "commerce.pending" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian menunggu persetujuan Apple."
+          }
+        }
+      }
+    },
+    "commerce.price" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harga Apple"
+          }
+        }
+      }
+    },
+    "commerce.product_unavailable" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Produk App Store belum tersedia."
+          }
+        }
+      }
+    },
+    "commerce.purchase.action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beli dengan Apple"
+          }
+        }
+      }
+    },
+    "commerce.restore.action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulihkan pembelian"
+          }
+        }
+      }
+    },
+    "commerce.restore.empty" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada pembelian aktif yang perlu dipulihkan."
+          }
+        }
+      }
+    },
+    "commerce.restore.footer" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan jika pembelian lama belum muncul. Apple mungkin meminta autentikasi App Store."
+          }
+        }
+      }
+    },
+    "commerce.restore.success" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian berhasil direkonsiliasi."
+          }
+        }
+      }
+    },
+    "commerce.subject.coach" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akses Coach"
+          }
+        }
+      }
+    },
+    "commerce.subject.program" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program"
+          }
+        }
+      }
+    },
+    "commerce.unavailable" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian belum tersedia pada konfigurasi aplikasi ini."
+          }
+        }
+      }
+    },
     "configuration.build.debug" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6940,6 +6902,18 @@
     },
     "Data demo lokal." : {
 
+    },
+    "Data digunakan untuk autentikasi, membuat profil, menghubungkan Participant dengan Coach, menjalankan program, menilai kiriman, menghitung skor, menampilkan peringkat, memproses akses berbayar, mencegah penyalahgunaan, dan memenuhi kewajiban keamanan." : {
+      "comment" : "Text displayed in a legal document section that describes the purpose of the data collected by the app.",
+      "isCommentAutoGenerated" : true
+    },
+    "Data disimpan selama akun atau kewajiban program, keamanan, audit, dan transaksi masih memerlukannya. Saat akun dihapus, akses dicabut dan data pribadi serta media dihapus. Catatan pemenang, audit, atau transaksi yang wajib dipertahankan dapat disimpan tanpa identitas pribadi." : {
+      "comment" : "Explanation of the retention and deletion policy for the app's data.",
+      "isCommentAutoGenerated" : true
+    },
+    "Data yang diproses" : {
+      "comment" : "Title of a section in the Privacy policy legal document.",
+      "isCommentAutoGenerated" : true
     },
     "demo.placeholder.description" : {
       "extractionState" : "stale",
@@ -7235,8 +7209,16 @@
         }
       }
     },
+    "Foto atau video bukti dan berat badan merupakan data pribadi yang sensitif. Media diproses untuk kebutuhan program, metadata yang tidak diperlukan dihapus sebelum unggah, dan akses dibatasi sesuai peran. Aplikasi ini tidak memberikan diagnosis atau saran medis." : {
+      "comment" : "Text displayed in a privacy policy section that describes how user media is collected, stored, and used.",
+      "isCommentAutoGenerated" : true
+    },
     "Foto siap dikirim" : {
       "comment" : "A label that indicates that a photo is ready to be submitted.",
+      "isCommentAutoGenerated" : true
+    },
+    "Foto, video, dan data wellness" : {
+      "comment" : "Title of a section in the Privacy policy legal document.",
       "isCommentAutoGenerated" : true
     },
     "Galeri masih kosong" : {
@@ -7342,6 +7324,9 @@
           }
         }
       }
+    },
+    "Gunakan aplikasi secara jujur, aman, dan sesuai program. Anda bertanggung jawab atas ketepatan data, jawaban, berat badan, dan media yang dikirim serta dilarang mengunggah konten milik orang lain tanpa izin." : {
+
     },
     "Gunakan kontrol pemutar untuk memulai." : {
       "comment" : "A hint for the video player.",
@@ -7492,6 +7477,10 @@
     "Jadwal program" : {
 
     },
+    "Jaga keamanan akun dan jangan membagikan akses. Kami dapat membatasi akun atau kiriman yang melanggar aturan, memalsukan bukti, menyalahgunakan pembayaran, mengganggu layanan, atau membahayakan pengguna lain." : {
+      "comment" : "Section of the Terms of Service that covers account security and user safety.",
+      "isCommentAutoGenerated" : true
+    },
     "Jawaban" : {
       "comment" : "A placeholder for a text field.",
       "isCommentAutoGenerated" : true
@@ -7530,6 +7519,10 @@
     },
     "Jumlah langkah" : {
 
+    },
+    "Kami memproses nama, email, nomor HP, ID akun, peran, profil, keikutsertaan program, jawaban, berat badan, foto atau video bukti, skor, riwayat pembelian, serta data operasional yang diperlukan untuk menjalankan layanan." : {
+      "comment" : "Privacy policy body text.",
+      "isCommentAutoGenerated" : true
     },
     "Kategori" : {
 
@@ -7573,6 +7566,10 @@
     "Konten tidak dapat disimpan" : {
 
     },
+    "Kontrol Anda" : {
+      "comment" : "Title of a section in the Privacy policy.",
+      "isCommentAutoGenerated" : true
+    },
     "Kuis" : {
       "comment" : "A section title for the quiz.",
       "isCommentAutoGenerated" : true
@@ -7601,6 +7598,366 @@
     },
     "Layanan pusat menjadi sumber resmi pada fase integrasi." : {
 
+    },
+    "legal.document.bundled_notice" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salinan ini tersedia di aplikasi agar tetap dapat dibaca saat koneksi bermasalah."
+          }
+        }
+      }
+    },
+    "legal.document.open_online" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka versi daring"
+          }
+        }
+      }
+    },
+    "legal.document.updated" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diperbarui 9 Agustus 2026"
+          }
+        }
+      }
+    },
+    "legal.privacy.control.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda dapat memperbarui profil, keluar, atau meminta penghapusan akun dari layar Profil. Pertanyaan privasi dapat dikirim melalui kanal dukungan yang tercantum pada halaman aplikasi di App Store."
+          }
+        }
+      }
+    },
+    "legal.privacy.control.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrol Anda"
+          }
+        }
+      }
+    },
+    "legal.privacy.media.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto atau video bukti dan berat badan merupakan data pribadi yang sensitif. Media diproses untuk kebutuhan program, metadata yang tidak diperlukan dihapus sebelum unggah, dan akses dibatasi sesuai peran. Aplikasi ini tidak memberikan diagnosis atau saran medis."
+          }
+        }
+      }
+    },
+    "legal.privacy.media.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto, video, dan data wellness"
+          }
+        }
+      }
+    },
+    "legal.privacy.providers.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autentikasi dapat melibatkan Google atau Apple. Data aplikasi disimpan melalui Supabase. Pembelian diproses oleh Apple melalui StoreKit. MSC Body Transformation tidak menerima nomor kartu atau detail rekening pembayaran Anda."
+          }
+        }
+      }
+    },
+    "legal.privacy.providers.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penyedia layanan"
+          }
+        }
+      }
+    },
+    "legal.privacy.purpose.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data digunakan untuk autentikasi, membuat profil, menghubungkan Participant dengan Coach, menjalankan program, menilai kiriman, menghitung skor, menampilkan peringkat, memproses akses berbayar, mencegah penyalahgunaan, dan memenuhi kewajiban keamanan."
+          }
+        }
+      }
+    },
+    "legal.privacy.purpose.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tujuan penggunaan"
+          }
+        }
+      }
+    },
+    "legal.privacy.retention.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data disimpan selama akun atau kewajiban program, keamanan, audit, dan transaksi masih memerlukannya. Saat akun dihapus, akses dicabut dan data pribadi serta media dihapus. Catatan pemenang, audit, atau transaksi yang wajib dipertahankan dapat disimpan tanpa identitas pribadi."
+          }
+        }
+      }
+    },
+    "legal.privacy.retention.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penyimpanan dan penghapusan"
+          }
+        }
+      }
+    },
+    "legal.privacy.scope.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kami memproses nama, email, nomor HP, ID akun, peran, profil, keikutsertaan program, jawaban, berat badan, foto atau video bukti, skor, riwayat pembelian, serta data operasional yang diperlukan untuk menjalankan layanan."
+          }
+        }
+      }
+    },
+    "legal.privacy.scope.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data yang diproses"
+          }
+        }
+      }
+    },
+    "legal.privacy.tracking.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikasi tidak menggunakan data untuk pelacakan lintas aplikasi atau situs dan tidak menjual data pribadi untuk periklanan."
+          }
+        }
+      }
+    },
+    "legal.privacy.tracking.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelacakan dan iklan"
+          }
+        }
+      }
+    },
+    "legal.terms.account.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaga keamanan akun dan jangan membagikan akses. Kami dapat membatasi akun atau kiriman yang melanggar aturan, memalsukan bukti, menyalahgunakan pembayaran, mengganggu layanan, atau membahayakan pengguna lain."
+          }
+        }
+      }
+    },
+    "legal.terms.account.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akun dan penegakan"
+          }
+        }
+      }
+    },
+    "legal.terms.changes.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perubahan penting akan dicantumkan pada versi terbaru dokumen. Penggunaan layanan setelah perubahan berlaku berarti Anda menerima ketentuan terbaru."
+          }
+        }
+      }
+    },
+    "legal.terms.changes.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perubahan ketentuan"
+          }
+        }
+      }
+    },
+    "legal.terms.coach.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengajuan Coach pertama harus memenuhi kelayakan dan diterima Admin sebelum pembayaran. Renewal dilakukan manual dan tidak memerlukan persetujuan ulang selama approval belum dicabut. Coach dengan Participant aktif tidak dapat menghapus akun sebelum pengalihan diselesaikan oleh Admin."
+          }
+        }
+      }
+    },
+    "legal.terms.coach.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengajuan Coach"
+          }
+        }
+      }
+    },
+    "legal.terms.enrollment.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendaftaran Participant memerlukan QR Coach yang aktif. Kapasitas, jadwal, cutoff, langkah, bukti, penilaian, dan aturan skor mengikuti program yang dipublikasikan. Akses Coach berlaku tiga bulan setelah pembayaran terverifikasi dan menjadi nonaktif saat masa akses berakhir."
+          }
+        }
+      }
+    },
+    "legal.terms.enrollment.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program dan Coach"
+          }
+        }
+      }
+    },
+    "legal.terms.purchase.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program berbayar dan akses Coach dibeli melalui Apple. Tidak tersedia pengembalian dana sukarela setelah pembelian. Hak pengembalian dana, pembatalan, atau pencabutan oleh Apple tetap berlaku dan dapat menyebabkan akses terkait dihentikan."
+          }
+        }
+      }
+    },
+    "legal.terms.purchase.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembelian dan pengembalian dana"
+          }
+        }
+      }
+    },
+    "legal.terms.ranking.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skor authoritative dihitung server dari kiriman yang disetujui, berat badan, dan penyesuaian yang teraudit. Keputusan pemenang mengikuti snapshot final yang dikunci Admin. Jika hadiah diumumkan untuk suatu program, syarat hadiah tersebut akan dicantumkan pada detail program."
+          }
+        }
+      }
+    },
+    "legal.terms.ranking.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peringkat dan pemenang"
+          }
+        }
+      }
+    },
+    "legal.terms.service.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gunakan aplikasi secara jujur, aman, dan sesuai program. Anda bertanggung jawab atas ketepatan data, jawaban, berat badan, dan media yang dikirim serta dilarang mengunggah konten milik orang lain tanpa izin."
+          }
+        }
+      }
+    },
+    "legal.terms.service.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Penggunaan layanan"
+          }
+        }
+      }
+    },
+    "legal.terms.wellness.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program berfokus pada kebiasaan dan wellness, bukan layanan medis, diagnosis, atau pengganti konsultasi profesional. Hentikan aktivitas dan cari bantuan profesional bila Anda merasa tidak aman atau mengalami keluhan kesehatan."
+          }
+        }
+      }
+    },
+    "legal.terms.wellness.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informasi wellness"
+          }
+        }
+      }
     },
     "Lengkapi pengaturan, konten, lalu tinjau sebelum diterbitkan." : {
       "comment" : "A description of the state of a program that is still in draft.",
@@ -8761,6 +9118,7 @@
       }
     },
     "participant.join.confirm_coach.action" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -8790,12 +9148,32 @@
         }
       }
     },
+    "participant.join.continue_to_payment" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lanjutkan ke pembayaran"
+          }
+        }
+      }
+    },
     "participant.join.flow.title" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gabung program"
+          }
+        }
+      }
+    },
+    "participant.join.free_action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikuti program gratis"
           }
         }
       }
@@ -9085,337 +9463,8 @@
         }
       }
     },
-    "legal.document.bundled_notice" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Salinan ini tersedia di aplikasi agar tetap dapat dibaca saat koneksi bermasalah."
-          }
-        }
-      }
-    },
-    "legal.document.open_online" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buka versi daring"
-          }
-        }
-      }
-    },
-    "legal.document.updated" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diperbarui 9 Agustus 2026"
-          }
-        }
-      }
-    },
-    "legal.privacy.control.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anda dapat memperbarui profil, keluar, atau meminta penghapusan akun dari layar Profil. Pertanyaan privasi dapat dikirim melalui kanal dukungan yang tercantum pada halaman aplikasi di App Store."
-          }
-        }
-      }
-    },
-    "legal.privacy.control.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrol Anda"
-          }
-        }
-      }
-    },
-    "legal.privacy.media.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foto atau video bukti dan berat badan merupakan data pribadi yang sensitif. Media diproses untuk kebutuhan program, metadata yang tidak diperlukan dihapus sebelum unggah, dan akses dibatasi sesuai peran. Aplikasi ini tidak memberikan diagnosis atau saran medis."
-          }
-        }
-      }
-    },
-    "legal.privacy.media.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Foto, video, dan data wellness"
-          }
-        }
-      }
-    },
-    "legal.privacy.providers.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autentikasi dapat melibatkan Google atau Apple. Data aplikasi disimpan melalui Supabase. Pembelian diproses oleh Apple melalui StoreKit. MSC Body Transformation tidak menerima nomor kartu atau detail rekening pembayaran Anda."
-          }
-        }
-      }
-    },
-    "legal.privacy.providers.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Penyedia layanan"
-          }
-        }
-      }
-    },
-    "legal.privacy.purpose.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data digunakan untuk autentikasi, membuat profil, menghubungkan Participant dengan Coach, menjalankan program, menilai kiriman, menghitung skor, menampilkan peringkat, memproses akses berbayar, mencegah penyalahgunaan, dan memenuhi kewajiban keamanan."
-          }
-        }
-      }
-    },
-    "legal.privacy.purpose.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tujuan penggunaan"
-          }
-        }
-      }
-    },
-    "legal.privacy.retention.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data disimpan selama akun atau kewajiban program, keamanan, audit, dan transaksi masih memerlukannya. Saat akun dihapus, akses dicabut dan data pribadi serta media dihapus. Catatan pemenang, audit, atau transaksi yang wajib dipertahankan dapat disimpan tanpa identitas pribadi."
-          }
-        }
-      }
-    },
-    "legal.privacy.retention.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Penyimpanan dan penghapusan"
-          }
-        }
-      }
-    },
-    "legal.privacy.scope.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kami memproses nama, email, nomor HP, ID akun, peran, profil, keikutsertaan program, jawaban, berat badan, foto atau video bukti, skor, riwayat pembelian, serta data operasional yang diperlukan untuk menjalankan layanan."
-          }
-        }
-      }
-    },
-    "legal.privacy.scope.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data yang diproses"
-          }
-        }
-      }
-    },
-    "legal.privacy.tracking.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikasi tidak menggunakan data untuk pelacakan lintas aplikasi atau situs dan tidak menjual data pribadi untuk periklanan."
-          }
-        }
-      }
-    },
-    "legal.privacy.tracking.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pelacakan dan iklan"
-          }
-        }
-      }
-    },
-    "legal.terms.account.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jaga keamanan akun dan jangan membagikan akses. Kami dapat membatasi akun atau kiriman yang melanggar aturan, memalsukan bukti, menyalahgunakan pembayaran, mengganggu layanan, atau membahayakan pengguna lain."
-          }
-        }
-      }
-    },
-    "legal.terms.account.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Akun dan penegakan"
-          }
-        }
-      }
-    },
-    "legal.terms.changes.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Perubahan penting akan dicantumkan pada versi terbaru dokumen. Penggunaan layanan setelah perubahan berlaku berarti Anda menerima ketentuan terbaru."
-          }
-        }
-      }
-    },
-    "legal.terms.changes.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Perubahan ketentuan"
-          }
-        }
-      }
-    },
-    "legal.terms.coach.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pengajuan Coach pertama harus memenuhi kelayakan dan diterima Admin sebelum pembayaran. Renewal dilakukan manual dan tidak memerlukan persetujuan ulang selama approval belum dicabut. Coach dengan Participant aktif tidak dapat menghapus akun sebelum pengalihan diselesaikan oleh Admin."
-          }
-        }
-      }
-    },
-    "legal.terms.coach.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pengajuan Coach"
-          }
-        }
-      }
-    },
-    "legal.terms.enrollment.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pendaftaran Participant memerlukan QR Coach yang aktif. Kapasitas, jadwal, cutoff, langkah, bukti, penilaian, dan aturan skor mengikuti program yang dipublikasikan. Akses Coach berlaku tiga bulan setelah pembayaran terverifikasi dan menjadi nonaktif saat masa akses berakhir."
-          }
-        }
-      }
-    },
-    "legal.terms.enrollment.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Program dan Coach"
-          }
-        }
-      }
-    },
-    "legal.terms.purchase.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Program berbayar dan akses Coach dibeli melalui Apple. Tidak tersedia pengembalian dana sukarela setelah pembelian. Hak pengembalian dana, pembatalan, atau pencabutan oleh Apple tetap berlaku dan dapat menyebabkan akses terkait dihentikan."
-          }
-        }
-      }
-    },
-    "legal.terms.purchase.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pembelian dan pengembalian dana"
-          }
-        }
-      }
-    },
-    "legal.terms.ranking.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Skor authoritative dihitung server dari kiriman yang disetujui, berat badan, dan penyesuaian yang teraudit. Keputusan pemenang mengikuti snapshot final yang dikunci Admin. Jika hadiah diumumkan untuk suatu program, syarat hadiah tersebut akan dicantumkan pada detail program."
-          }
-        }
-      }
-    },
-    "legal.terms.ranking.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Peringkat dan pemenang"
-          }
-        }
-      }
-    },
-    "legal.terms.service.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gunakan aplikasi secara jujur, aman, dan sesuai program. Anda bertanggung jawab atas ketepatan data, jawaban, berat badan, dan media yang dikirim serta dilarang mengunggah konten milik orang lain tanpa izin."
-          }
-        }
-      }
-    },
-    "legal.terms.service.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Penggunaan layanan"
-          }
-        }
-      }
-    },
-    "legal.terms.wellness.body" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Program berfokus pada kebiasaan dan wellness, bukan layanan medis, diagnosis, atau pengganti konsultasi profesional. Hentikan aktivitas dan cari bantuan profesional bila Anda merasa tidak aman atau mengalami keluhan kesehatan."
-          }
-        }
-      }
-    },
-    "legal.terms.wellness.title" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Informasi wellness"
-          }
-        }
-      }
-    },
     "participant.legal.privacy.message" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -9436,6 +9485,7 @@
       }
     },
     "participant.legal.terms.message" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -9584,6 +9634,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Video contoh lokal"
+          }
+        }
+      }
+    },
+    "participant.payment.apple_action" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beli dengan Apple"
+          }
+        }
+      }
+    },
+    "participant.payment.apple_notice" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pembayaran diproses oleh Apple. Akses diberikan setelah transaksi diverifikasi server."
           }
         }
       }
@@ -10181,7 +10251,6 @@
       }
     },
     "participant.program.duration" : {
-      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -10852,12 +10921,20 @@
         }
       }
     },
+    "Pelacakan dan iklan" : {
+      "comment" : "Explanation of how the app does not use tracking or advertising.",
+      "isCommentAutoGenerated" : true
+    },
     "Pembaruan terakhir" : {
       "comment" : "The last update.",
       "isCommentAutoGenerated" : true
     },
     "Pembayaran" : {
       "comment" : "A section of the admin program information view that deals with payment.",
+      "isCommentAutoGenerated" : true
+    },
+    "Pembelian dan pengembalian dana" : {
+      "comment" : "Peraturan yang berkaitan dengan pembelian dan pengembalian dana.",
       "isCommentAutoGenerated" : true
     },
     "Pemeriksaan" : {
@@ -10873,6 +10950,18 @@
     "Pendaftaran manual" : {
 
     },
+    "Pendaftaran Participant memerlukan QR Coach yang aktif. Kapasitas, jadwal, cutoff, langkah, bukti, penilaian, dan aturan skor mengikuti program yang dipublikasikan. Akses Coach berlaku tiga bulan setelah pembayaran terverifikasi dan menjadi nonaktif saat masa akses berakhir." : {
+      "comment" : "Peraturan yang berlaku saat pendaftaran Program dan Coach.",
+      "isCommentAutoGenerated" : true
+    },
+    "Pengajuan Coach" : {
+      "comment" : "Title of a legal document section for requesting Coach.",
+      "isCommentAutoGenerated" : true
+    },
+    "Pengajuan Coach pertama harus memenuhi kelayakan dan diterima Admin sebelum pembayaran. Renewal dilakukan manual dan tidak memerlukan persetujuan ulang selama approval belum dicabut. Coach dengan Participant aktif tidak dapat menghapus akun sebelum pengalihan diselesaikan oleh Admin." : {
+      "comment" : "Pengajuan Coach pertama harus memenuhi kelayakan dan diterima Admin sebelum pembayaran. Renewal dilakukan manual dan tidak memerlukan persetujuan ulang selama approval",
+      "isCommentAutoGenerated" : true
+    },
     "Pengaturan dan konten dikunci agar program peserta tetap konsisten." : {
       "comment" : "A description of the status of a published program.",
       "isCommentAutoGenerated" : true
@@ -10885,6 +10974,10 @@
       "comment" : "A warning that the settings are locked after the program is published.",
       "isCommentAutoGenerated" : true
     },
+    "Penggunaan layanan" : {
+      "comment" : "Perkaitan yang berlaku saat menggunakan aplikasi.",
+      "isCommentAutoGenerated" : true
+    },
     "Penutupan belum dapat diselesaikan" : {
       "comment" : "A title for an alert that indicates that the closure cannot be completed.",
       "isCommentAutoGenerated" : true
@@ -10893,11 +10986,19 @@
       "comment" : "A section header for the closure status of the program.",
       "isCommentAutoGenerated" : true
     },
+    "Penyedia layanan" : {
+      "comment" : "Text displayed in a legal document section that describes the third-party services used by the app.",
+      "isCommentAutoGenerated" : true
+    },
     "Penyelesaian" : {
 
     },
     "Penyelesaian video" : {
       "comment" : "A section for the video completion.",
+      "isCommentAutoGenerated" : true
+    },
+    "Penyimpanan dan penghapusan" : {
+      "comment" : "Explanation of the retention and deletion policy of the app.",
       "isCommentAutoGenerated" : true
     },
     "Peran" : {
@@ -10933,6 +11034,10 @@
     },
     "Peringkat belum tersedia" : {
 
+    },
+    "Peringkat dan pemenang" : {
+      "comment" : "Peraturan tentang peringkat dan pemenang dalam aplikasi.",
+      "isCommentAutoGenerated" : true
     },
     "Peringkat lainnya" : {
 
@@ -10973,6 +11078,13 @@
       "isCommentAutoGenerated" : true
     },
     "Perubahan jadwal belum diterapkan ke hari." : {
+
+    },
+    "Perubahan ketentuan" : {
+      "comment" : "Title of a section in the Terms of Service that describes changes to the Terms of Service.",
+      "isCommentAutoGenerated" : true
+    },
+    "Perubahan penting akan dicantumkan pada versi terbaru dokumen. Penggunaan layanan setelah perubahan berlaku berarti Anda menerima ketentuan terbaru." : {
 
     },
     "Peserta" : {
@@ -11153,6 +11265,18 @@
     },
     "Program baru" : {
       "comment" : "A label for the new program's title.",
+      "isCommentAutoGenerated" : true
+    },
+    "Program berbayar dan akses Coach dibeli melalui Apple. Tidak tersedia pengembalian dana sukarela setelah pembelian. Hak pengembalian dana, pembatalan, atau pencabutan oleh Apple tetap berlaku dan dapat menyebabkan akses terkait dihentikan." : {
+      "comment" : "Keterangan tentang pembayaran dan penghentian akses ketika pembayaran gagal.",
+      "isCommentAutoGenerated" : true
+    },
+    "Program berfokus pada kebiasaan dan wellness, bukan layanan medis, diagnosis, atau pengganti konsultasi profesional. Hentikan aktivitas dan cari bantuan profesional bila Anda merasa tidak aman atau mengalami keluhan kesehatan." : {
+      "comment" : "Terms and conditions for the wellness program, which is not a medical service, diagnosis, or replacement for professional consultation. Users are responsible for their own health and well-being.",
+      "isCommentAutoGenerated" : true
+    },
+    "Program dan Coach" : {
+      "comment" : "Title of a section in the terms of service that describes the eligibility and eligibility criteria for Coach.",
       "isCommentAutoGenerated" : true
     },
     "Program ini tidak dapat diubah langsung." : {
@@ -12239,6 +12363,10 @@
     "Sinkronkan jadwal atau tambahkan hari baru." : {
 
     },
+    "Skor authoritative dihitung server dari kiriman yang disetujui, berat badan, dan penyesuaian yang teraudit. Keputusan pemenang mengikuti snapshot final yang dikunci Admin. Jika hadiah diumumkan untuk suatu program, syarat hadiah tersebut akan dicantumkan pada detail program." : {
+      "comment" : "Peraturan tentang peringkat dan pemenang.",
+      "isCommentAutoGenerated" : true
+    },
     "Skor ini masih berupa pratinjau lokal." : {
 
     },
@@ -12433,6 +12561,16 @@
         }
       }
     },
+    "status.expired" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berakhir"
+          }
+        }
+      }
+    },
     "status.locked" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12476,12 +12614,42 @@
         }
       }
     },
+    "status.refunded" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dikembalikan"
+          }
+        }
+      }
+    },
     "status.rejected" : {
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ditolak"
+          }
+        }
+      }
+    },
+    "status.revoked" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dicabut"
+          }
+        }
+      }
+    },
+    "status.verified" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terverifikasi"
           }
         }
       }
@@ -12768,6 +12936,10 @@
     },
     "Tio Pranata" : {
       "comment" : "A name of a user.",
+      "isCommentAutoGenerated" : true
+    },
+    "Tujuan penggunaan" : {
+      "comment" : "Text displayed in a legal document explaining the purpose of the data collected by the app.",
       "isCommentAutoGenerated" : true
     },
     "Tulis petunjuk atau isi artikel" : {

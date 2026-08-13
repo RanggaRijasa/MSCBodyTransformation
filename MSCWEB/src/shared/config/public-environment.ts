@@ -70,11 +70,69 @@ function isValidCallback(value: string): boolean {
 }
 
 export function readPublicEnvironment(): PublicEnvironment {
-  return parsePublicEnvironment({
+  const environment = parsePublicEnvironment({
     EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
     EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     EXPO_PUBLIC_AUTH_REDIRECT_URL:
       process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL ??
       (typeof window === 'undefined' ? undefined : `${window.location.origin}/auth/callback`),
   });
+
+  return {
+    ...environment,
+    authRedirectUrl: resolveBrowserAuthRedirectUrl(
+      environment.authRedirectUrl,
+      environment.supabaseUrl,
+      typeof window === 'undefined' ? undefined : window.location.origin,
+    ),
+  };
+}
+
+export function resolveBrowserAuthRedirectUrl(
+  configuredCallback: string,
+  supabaseUrl: string,
+  browserOrigin?: string,
+): string {
+  if (!browserOrigin) return configuredCallback;
+
+  try {
+    const configured = new URL(configuredCallback);
+    const supabase = new URL(supabaseUrl);
+    const browser = new URL(browserOrigin);
+    const shouldUsePhysicalDeviceOrigin = isLoopbackHost(configured.hostname)
+      && isLocalNetworkHost(supabase.hostname)
+      && isPrivateLanHost(browser.hostname)
+      && ['http:', 'https:'].includes(browser.protocol)
+      && browser.username === ''
+      && browser.password === '';
+
+    return shouldUsePhysicalDeviceOrigin
+      ? new URL('/auth/callback', browser.origin).toString()
+      : configuredCallback;
+  } catch {
+    return configuredCallback;
+  }
+}
+
+export function isLocalDevelopmentEnvironment(environment = readPublicEnvironment()): boolean {
+  try {
+    const url = new URL(environment.supabaseUrl);
+    return url.protocol === 'http:' && isLocalNetworkHost(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1';
+}
+
+function isPrivateLanHost(hostname: string): boolean {
+  if (/^10\./u.test(hostname) || /^192\.168\./u.test(hostname)) return true;
+  const match = /^172\.(\d{1,2})\./u.exec(hostname);
+  return match !== null && Number(match[1]) >= 16 && Number(match[1]) <= 31;
+}
+
+function isLocalNetworkHost(hostname: string): boolean {
+  return isLoopbackHost(hostname) || isPrivateLanHost(hostname);
 }

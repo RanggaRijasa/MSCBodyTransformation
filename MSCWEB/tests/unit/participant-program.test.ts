@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { publicProgramSchema } from '@/features/public/public-models';
 import type { ParticipantDayAccess, ParticipantEnrollment, ParticipantSubmission } from '@/features/participant/participant-models';
 import {
+  isRepeatableLocalTestProgram,
   latestSubmissionForStep,
   programsForSegment,
   relevantDayAccess,
@@ -50,10 +51,60 @@ describe('W03 Participant program policy', () => {
   it('separates joined, available, and history using server enrollment state', () => {
     const available = { ...program, id: '66666666-6666-4666-8666-666666666666', title: 'Program tersedia' };
     const completed = { ...program, id: '77777777-7777-4777-8777-777777777777', title: 'Program selesai', status: 'completed' as const };
+    const awaitingPayment = { ...program, id: '99999999-9999-4999-8999-999999999999', title: 'Program menunggu pembayaran', pricing_mode: 'paid' };
     const completedEnrollment = { ...enrollment, id: '88888888-8888-4888-8888-888888888888', program_id: completed.id, status: 'completed' as const };
-    expect(programsForSegment([program, available, completed], [enrollment, completedEnrollment], 'joined').map(({ id }) => id)).toEqual([program.id]);
-    expect(programsForSegment([program, available, completed], [enrollment, completedEnrollment], 'available').map(({ id }) => id)).toEqual([available.id]);
-    expect(programsForSegment([program, available, completed], [enrollment, completedEnrollment], 'history').map(({ id }) => id)).toEqual([completed.id]);
+    const paymentEnrollment = { ...enrollment, id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', program_id: awaitingPayment.id, status: 'waiting_for_payment' as const };
+    const programs = [program, available, completed, awaitingPayment];
+    const enrollments = [enrollment, completedEnrollment, paymentEnrollment];
+    expect(programsForSegment(programs, enrollments, 'joined').map(({ id }) => id)).toEqual([program.id, awaitingPayment.id]);
+    expect(programsForSegment(programs, enrollments, 'available').map(({ id }) => id)).toEqual([available.id]);
+    expect(programsForSegment(programs, enrollments, 'history').map(({ id }) => id)).toEqual([completed.id]);
+  });
+
+  it('keeps the two explicit local fixtures repeatable without showing consumed rows in joined or history', () => {
+    const repeatablePaid = {
+      ...program,
+      id: '12121212-1212-4212-8212-121212121212',
+      title: 'Program uji lokal berbayar',
+      category: 'Pengujian lokal berulang',
+      pricing_mode: 'paid',
+    };
+    const archivedRotation = {
+      ...repeatablePaid,
+      id: '13131313-1313-4313-8313-131313131313',
+      status: 'archived' as const,
+    };
+    const fixtureEnrollment = {
+      ...enrollment,
+      id: '14141414-1414-4414-8414-141414141414',
+      program_id: repeatablePaid.id,
+      status: 'waiting_for_payment' as const,
+    };
+
+    expect(isRepeatableLocalTestProgram(repeatablePaid)).toBe(true);
+    expect(programsForSegment([repeatablePaid, archivedRotation], [fixtureEnrollment], 'available')).toEqual([repeatablePaid]);
+    expect(programsForSegment([repeatablePaid, archivedRotation], [fixtureEnrollment], 'joined')).toEqual([]);
+    expect(programsForSegment([repeatablePaid, archivedRotation], [fixtureEnrollment], 'history')).toEqual([]);
+  });
+
+  it('hides archived fixtures from the previous local W05 sequence', () => {
+    const archivedFixture = {
+      ...program,
+      id: '15151515-1515-4515-8515-151515151515',
+      title: 'Program Uji Pembayaran Lokal #3',
+      category: 'Pengujian lokal berulang',
+      status: 'archived' as const,
+    };
+    const fixtureEnrollment = {
+      ...enrollment,
+      id: '16161616-1616-4616-8616-161616161616',
+      program_id: archivedFixture.id,
+      status: 'waiting_for_payment' as const,
+    };
+
+    expect(programsForSegment([archivedFixture], [fixtureEnrollment], 'available')).toEqual([]);
+    expect(programsForSegment([archivedFixture], [fixtureEnrollment], 'joined')).toEqual([]);
+    expect(programsForSegment([archivedFixture], [fixtureEnrollment], 'history')).toEqual([]);
   });
 
   it('uses server day access without deriving unlock from device dates', () => {

@@ -58,9 +58,14 @@ export function Button({
       style={({ hovered, pressed }) => [
         styles.button,
         {
-          backgroundColor: pressed && tone === 'primary' ? colors.primaryActionPressed : background,
+          backgroundColor: pressed
+            ? tone === 'primary'
+              ? colors.primaryActionPressed
+              : colors.secondaryBackground
+            : background,
           borderColor: tone === 'secondary' ? colors.border : background,
           opacity: isDisabled ? 0.55 : hovered ? 0.9 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
         },
       ]}
     >

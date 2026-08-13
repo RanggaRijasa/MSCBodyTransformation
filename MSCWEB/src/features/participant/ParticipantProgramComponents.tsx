@@ -46,6 +46,8 @@ export function ProgramOffer({
       ? 'Lihat riwayat'
       : enrollment?.status === 'pending'
         ? 'Menunggu aktivasi'
+        : enrollment?.status === 'waiting_for_payment'
+          ? 'Lihat pembayaran'
         : 'Gabung program';
 
   return (

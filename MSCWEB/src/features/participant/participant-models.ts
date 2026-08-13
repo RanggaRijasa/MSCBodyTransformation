@@ -4,7 +4,7 @@ export const enrollmentSchema = z.object({
   id: z.string().uuid(),
   program_id: z.string().uuid(),
   coach_id: z.string().uuid(),
-  status: z.enum(['pending', 'active', 'completed', 'cancelled', 'rejected']),
+  status: z.enum(['pending', 'waiting_for_payment', 'active', 'completed', 'cancelled', 'rejected']),
   enrolled_at: z.string(),
   completed_at: z.string().nullable(),
 });

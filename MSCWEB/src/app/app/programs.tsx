@@ -6,6 +6,7 @@ import { ProgramCard, publicScreenStyles, Section } from '@/features/public/Publ
 import { usePrograms } from '@/features/public/public-queries';
 import { useParticipantEnrollments } from '@/features/participant/participant-queries';
 import { programsForSegment, type ProgramSegment } from '@/features/participant/participant-program-policy';
+import { useEnsureRepeatableLocalFixtures } from '@/features/payment/payment-queries';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { AppShell } from '@/shared/navigation/AppShell';
 import { Button, InlineMessage, SegmentedControl, StateView } from '@/shared/ui/primitives';
@@ -22,6 +23,7 @@ export default function PublicProgramsRoute() {
   const { state, requireAuthentication } = useAuth();
   const isParticipant = state.status === 'authenticated' && state.account.role === 'participant';
   const enrollments = useParticipantEnrollments(isParticipant);
+  const localFixtures = useEnsureRepeatableLocalFixtures(isParticipant);
   const role = state.status === 'authenticated' ? state.account.role : 'guest';
   const requestedSegment = parseSegment(params.segment);
   const segment = requestedSegment ?? (isParticipant ? 'joined' : 'available');
@@ -62,9 +64,9 @@ export default function PublicProgramsRoute() {
             <InlineMessage title="Masuk diperlukan" message="Program yang diikuti dan riwayat hanya dimuat untuk akun Participant." />
             <Button label="Masuk" onPress={() => requireAuthentication(`/app/programs?segment=${segment}`)} />
           </>
-        ) : programs.isPending || (privateSegment && enrollments.isPending) ? (
+        ) : programs.isPending || localFixtures.isPending || (privateSegment && enrollments.isPending) ? (
           <StateView kind="loading" />
-        ) : programs.isError || (privateSegment && enrollments.isError) ? (
+        ) : programs.isError || localFixtures.isError || (privateSegment && enrollments.isError) ? (
           <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void Promise.all([programs.refetch(), enrollments.refetch()])} />} />
         ) : (
           <Section

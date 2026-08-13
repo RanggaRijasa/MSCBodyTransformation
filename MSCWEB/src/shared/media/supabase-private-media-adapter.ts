@@ -4,9 +4,10 @@ import { registerPrivateSignedUrl } from '@/shared/auth/private-cache';
 
 export const DEFAULT_SIGNED_MEDIA_TTL_SECONDS = 60;
 
-// W00 intentionally exposes only the private bucket that exists in the local
-// schema. Later phases add their bucket names together with migrations/policies.
-export type PrivateMediaBucket = 'question-photos';
+export type PrivateMediaBucket =
+  | 'question-photos'
+  | 'payment-evidence'
+  | 'payment-destination-assets';
 
 export type PrivateMediaObjectReference = Readonly<{
   bucket: PrivateMediaBucket;
