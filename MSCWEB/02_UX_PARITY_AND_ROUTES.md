@@ -74,6 +74,10 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 | Review queue | Coach review routes | Exact/Adaptive | filter + action badge |
 | Proof review sheet | detail/modal responsive | Exact | sticky Tolak/Setujui |
 | Unique Coach QR | Coach QR route | Exact | raw identifier tidak ditampilkan |
+| Profil Coach publik | `/c/:handle` | New | public share page; tidak memakai raw QR/UUID |
+| Edit profil Coach | `/app/profile` role Coach | Adaptive | field opsional dan kontrol publikasi |
+| Bintang Coach manual | insight pada bukti makanan | Web replacement | AI memberi rating; Coach tidak mengisi pada alur normal |
+| Macro foto makanan | detail submission/activity | New | hasil asynchronous dan sekunder dari poin |
 | Admin dashboard | `/admin` | Exact/Adaptive | attention, quick actions, metrics |
 | Admin Program | `/admin/programs` | Adaptive | search/list; wide table bila efektif |
 | Admin People | `/admin/people` | Exact/Adaptive | Peserta/Coach/Admin |
@@ -115,6 +119,27 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 - `UX-PAY-005` Setelah upload, pengguna MUST melihat thumbnail aman, nama/ukuran file, pernyataan pemeriksaan manual, dan tombol kirim eksplisit.
 - `UX-PAY-006` Pending screen MUST tidak menjanjikan waktu approval yang belum ditetapkan.
 
+### 4.5 Profil Coach publik
+
+- `UX-CPR-001` `/c/:handle` MUST dapat dibuka Guest dan menampilkan foto, nama, serta badge `Coach terverifikasi` sebagai identitas wajib.
+- `UX-CPR-002` Headline, biografi, kota/area layanan, kontak/sosial, testimoni, dan galeri before–after hanya dirender ketika Coach mengisi dan memublikasikan field tersebut; section kosong MUST tidak meninggalkan card/heading kosong.
+- `UX-CPR-003` Tombol `Bagikan profil` MUST memakai Web Share API bila tersedia dan fallback menyalin canonical URL dengan feedback yang dapat diakses.
+- `UX-CPR-004` Nomor telepon, WhatsApp, Instagram, TikTok, dan website MUST menjadi link berlabel jelas. Tidak boleh ada icon-only contact row atau kontak yang belum diaktifkan publik.
+- `UX-CPR-005` Halaman edit Coach MUST membedakan data otomatis/read-only (badge), data akun (nama), foto yang dapat diganti, field opsional, dan toggle publikasi per kontak.
+- `UX-CPR-006` Before–after MUST memakai caption netral, alt text, urutan yang jelas, dan tidak menjanjikan hasil serupa. Testimoni MUST tidak menampilkan identitas subjek melebihi izin publikasinya.
+- `UX-CPR-007` Profil tanpa field opsional tetap MUST terlihat lengkap dan profesional melalui identitas wajib, CTA bagikan, serta layout yang tidak terasa kosong.
+
+### 4.6 Insight foto makanan
+
+- `UX-AI-001` Tepat sebelum submit pada pertanyaan foto makanan, UI MUST menampilkan disclosure ringkas: `Foto makanan ini akan dianalisis otomatis oleh layanan AI.` Tidak ada checkbox consent terpisah pada baseline.
+- `UX-AI-002` Setelah submission berhasil, status poin/approval tampil lebih dahulu. Card insight terpisah menampilkan `Menganalisis foto…` dan memperbarui hasil tanpa memblokir halaman.
+- `UX-AI-003` Hasil MUST menampilkan rating 1–5 dengan icon `Star` Phosphor, estimasi kkal/protein/karbohidrat/lemak, confidence label yang manusiawi bila diperlukan, dan insight non-diagnostik.
+- `UX-AI-004` Estimasi MUST dilabeli `Perkiraan dari foto` dan tidak boleh dipresentasikan sebagai pengukuran pasti atau saran medis.
+- `UX-AI-005` Provider timeout/failure MUST menampilkan `Analisis belum tersedia` serta retry server-safe bila diizinkan; status submission dan poin yang sudah sah tidak berubah.
+- `UX-AI-006` Rating 1–2 MUST disertai alasan rubric yang spesifik dan netral. Hasil ambigu MUST menggunakan 3 atau lebih, bukan menghukum Participant.
+- `UX-AI-007` Coach tidak melihat input bintang manual pada alur normal. Aksi koreksi, bila tersedia bagi Coach/Admin, MUST berada di menu sekunder, meminta alasan, dan menjelaskan bahwa poin tidak berubah.
+- `UX-AI-008` Insight dan alasan rating MUST ditampilkan dalam Bahasa Indonesia yang natural. Istilah teknis provider, raw JSON, atau kalimat bahasa Inggris MUST tidak terlihat pada UI Participant, Coach, maupun Admin.
+
 ## 5. Responsive behavior
 
 Breakpoint logical baseline:
@@ -145,4 +170,3 @@ Breakpoint logical baseline:
 - Focus ring tidak boleh dihapus; token focus harus kontras pada semua surface.
 - Modal/sheet harus mengunci focus, memiliki accessible name, dan mengembalikan focus ke trigger.
 - Scroll restoration harus diuji pada tab switch, modal close, browser back, dan deep link.
-

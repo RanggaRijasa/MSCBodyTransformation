@@ -118,6 +118,15 @@ Icon utama adalah Phosphor melalui SVG. Package baseline `phosphor-react-native`
 | `warning` | `Warning` |
 | `back` | `ArrowLeft` |
 | `more` | `DotsThree` |
+| `share` | `ShareNetwork` |
+| `verifiedCoach` | `SealCheck` |
+| `instagram` | `InstagramLogo` |
+| `tiktok` | `TiktokLogo` |
+| `website` | `GlobeSimple` |
+| `whatsapp` | `WhatsappLogo` |
+| `phone` | `Phone` |
+| `starRating` | `Star` |
+| `aiInsight` | `Sparkle` |
 
 Final mapping harus diaudit berdampingan dengan screen iOS pada implementation phase. Nama semantic tetap stabil walau glyph dituning.
 
@@ -133,13 +142,19 @@ Shared primitives minimum:
 - `Sheet`, `Dialog`, `Toast`, `InlineMessage`;
 - `UserAvatar` dengan neutral blank-person fallback, tanpa initials berwarna;
 - `ProgramPoster`, `ProgressRing`, `StatusBadge`, `PointsLabel`;
-- `EvidenceViewer`, `PaymentProofUploader`, `QRScanner`.
+- `EvidenceViewer`, `PaymentProofUploader`, `QRScanner`;
+- `CoachPublicProfile`, `SocialContactLink`, `TestimonialCard`, `BeforeAfterGallery`;
+- `FoodInsightCard` dan `StarRating` untuk state pending/available/unavailable/error.
 
 - `DS-CMP-001` Buttons MUST memiliki default, hover-capable, pressed, focus-visible, disabled, dan loading state.
 - `DS-CMP-002` Status MUST selalu menggabungkan warna dengan label/icon/shape.
 - `DS-CMP-003` Long content dan forms MUST berada pada neutral surfaces; glass tidak digunakan untuk setiap card.
 - `DS-CMP-004` Avatar kosong MUST memakai neutral blank-person glyph; tidak membuat initials atau warna berdasarkan role.
 - `DS-CMP-005` Skeleton MUST mengikuti layout final dan tidak dipakai sebagai pengganti explicit empty/error state.
+- `DS-CMP-006` `StarRating` MUST memakai SVG Phosphor `Star` melalui `MSCIcon`, label teks `n dari 5 bintang`, dan tidak boleh dibuat dari emoji, glyph teks, `div`, atau CSS drawing.
+- `DS-CMP-007` Profil Coach publik MUST memakai section yang menghilang ketika datanya kosong, bukan placeholder generik atau nested card untuk setiap field.
+- `DS-CMP-008` Before–after MUST tetap dibaca sebagai dua gambar berlabel `Sebelum` dan `Sesudah`; perbedaan tidak boleh disampaikan melalui posisi saja.
+- `DS-CMP-009` `FoodInsightCard` MUST menempatkan label `Perkiraan dari foto` dekat macro dan tidak memakai animasi berulang setelah hasil tersedia.
 
 ## 6. Motion
 

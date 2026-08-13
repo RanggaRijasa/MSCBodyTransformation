@@ -2,7 +2,7 @@
 
 Status: `Not started`  
 Autonomy: `A` locally; `C` for ambiguous operational authority  
-Depends on: stable Participant, payment, evidence, Coach, and scoring contracts
+Depends on: stable Participant, payment, evidence, Coach, scoring, public-profile, and W06.5 food-insight contracts
 
 ## Objective
 
@@ -24,6 +24,7 @@ Deliver Admin parity for Dashboard, Program, People, Content, payment/applicatio
 - People Peserta/Coach/Admin and detail/actions;
 - Content authoring using shared Participant renderer;
 - integrated payment and Coach application review;
+- Coach public-profile content moderation and AI insight operational visibility;
 - scoring adjustments, winner preview/lock/snapshot;
 - approved enrollment fallback operations and audit/settings;
 - compact and data-dense wide layouts.
@@ -59,6 +60,10 @@ Deliver Admin parity for Dashboard, Program, People, Content, payment/applicatio
 - [ ] Authorized fallback enrollment/scoring corrections require reason and audit.
 - [ ] Winner calculation preview handles ties/fewer than five; lock creates stable snapshot.
 - [ ] Settings never display or edit secrets in browser.
+- [ ] Admin Coach detail shows public-profile publication state without exposing hidden contact fields outside authorized detail.
+- [ ] Testimonial/before–after moderation supports approve/reject-with-reason and records actor/time/content version.
+- [ ] Admin can inspect AI job/result status, provider/model alias, version, and redacted error code without seeing API key, prompt, raw provider payload, or private path.
+- [ ] Authorized AI rating correction requires reason/audit and cannot mutate approval, points, or leaderboard ledger.
 
 ## Sub-agent plan
 
@@ -77,6 +82,8 @@ The primary agent owns shared program renderer, authority operation interfaces, 
 - keyboard/data-table/dialog accessibility;
 - simulator parity and wide design review;
 - audit record completeness and sensitive-log scan.
+- public-profile moderation and hidden-contact leakage tests;
+- food-insight redaction/correction/point-independence tests.
 
 ## Exit criteria
 
@@ -84,6 +91,7 @@ The primary agent owns shared program renderer, authority operation interfaces, 
 - Browser cannot bypass authority functions through direct writes.
 - Program preview and Participant renderer do not diverge.
 - Winner lock and adjustments are stable, audited, and private-weight safe.
+- Public Coach media is moderated without reusing private evidence, and AI operational tools reveal no provider secret/raw payload.
 
 ## User input or authorization
 
@@ -94,4 +102,3 @@ The primary agent owns shared program renderer, authority operation interfaces, 
 ## Progress log
 
 Append simulator area, compact/wide behavior, operations/tests, audit evidence, decisions/deferrals, files/commands, and next item.
-

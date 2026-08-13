@@ -54,6 +54,13 @@ Coach memiliki dashboard, QR pendaftaran unik, peserta yang ditangani, antrian r
 - `PROD-CCH-003` Pembayaran terverifikasi tidak otomatis sama dengan approval Coach; activation tetap membutuhkan keputusan Admin authoritative.
 - `PROD-CCH-004` Coach MUST hanya dapat mengakses participant/submission yang berada dalam scope relasi dan programnya.
 - `PROD-CCH-005` Keputusan bukti aktivitas MUST idempotent, diaudit, dan penolakan MUST memiliki alasan.
+- `PROD-CCH-006` Coach aktif MUST dapat memublikasikan profil yang dapat dibagikan dengan foto profil, nama, dan badge `Coach terverifikasi` yang berasal dari data server-controlled.
+- `PROD-CCH-007` Foto profil awal SHOULD berasal dari foto akun Google; Coach MAY menggantinya dengan foto profil yang telah dinormalisasi. Jika Google tidak menyediakan foto, Coach MUST mengunggah foto sebelum profil dapat dipublikasikan. Nama mengikuti profil akun yang berwenang, sedangkan badge MUST NOT dapat diedit oleh Coach.
+- `PROD-CCH-008` Headline profesional, cerita/biografi, kota atau area layanan, Instagram, TikTok, website, WhatsApp, nomor telepon, testimoni, dan galeri before–after MUST bersifat opsional.
+- `PROD-CCH-009` Setiap field kontak opsional MUST memiliki kontrol publikasi tersendiri. Nilai yang tidak dipublikasikan MUST tidak ikut berada pada public read model, HTML, metadata sosial, atau response Guest.
+- `PROD-CCH-010` Semua testimoni/before–after MUST melewati moderation state. Jika konten menampilkan atau mengutip orang lain, Coach juga MUST menyatakan memiliki izin subjek; konten diri sendiri tidak memerlukan attestation pihak ketiga. Bukti program privat MUST NOT dipakai ulang sebagai media profil publik.
+- `PROD-CCH-011` Profil publik MUST memakai handle publik stabil dan tombol `Bagikan profil`; raw QR Coach, user UUID privat, dan enrollment identifier MUST NOT berada pada URL atau metadata berbagi.
+- `PROD-CCH-012` Badge terverifikasi MUST mengikuti entitlement Coach aktif. Entitlement kedaluwarsa/dicabut MUST menghapus badge dan menutup publikasi profil sampai authority dipulihkan.
 
 ### 3.4 Admin
 
@@ -95,6 +102,20 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-OPS-004` Admin People MUST mempertahankan segment Peserta, Coach, dan Admin serta pending-application workflow.
 - `PROD-OPS-005` Preview program Admin MUST memakai renderer yang sama dengan experience Participant agar preview tidak menyimpang dari hasil publikasi.
 
+### 4.5 Analisis foto makanan dan bintang AI
+
+- `PROD-AI-001` Analisis AI MUST hanya berjalan untuk pertanyaan foto yang secara eksplisit dikonfigurasi sebagai foto makanan/minuman; upload foto lain MUST tidak dikirim ke provider AI.
+- `PROD-AI-002` Submission, approval, dan pemberian poin authoritative MUST tidak menunggu hasil AI. Hasil AI adalah feedback sekunder dan MUST NOT mengubah poin, enrollment, role, atau status approval.
+- `PROD-AI-003` Untuk foto makanan, sistem MAY menghasilkan estimasi energi, protein, karbohidrat, lemak, insight non-diagnostik dalam Bahasa Indonesia, dan rating 1–5 bintang secara asynchronous.
+- `PROD-AI-004` Rating AI MUST menggunakan rubric pertanyaan/program yang dipublikasikan dan kalibrasi favorable: 4 adalah default untuk makanan/minuman yang tampak wajar tanpa pelanggaran jelas; 5 untuk kecocokan kuat; 3 untuk hasil campuran/tidak cukup jelas; 1–2 hanya untuk ketidaksesuaian berat yang terlihat jelas dan confidence tinggi.
+- `PROD-AI-005` Policy server `food_rating_policy_v1` MUST mensyaratkan confidence `>= 0.90`, rubric eksplisit, serta reason `not_food_for_required_food` untuk rating 1 atau `severe_explicit_rubric_mismatch` untuk rating 2. Semua outcome 1–2 lain MUST dinaikkan menjadi minimal 3/`uncertain`. AI MUST tidak menilai disiplin, karakter, bentuk tubuh, diagnosis, atau keamanan makanan yang tidak dapat dipastikan secara visual.
+- `PROD-AI-006` Rating utama berasal dari AI sehingga Coach tidak perlu memberi bintang pada alur normal. Sistem MUST menyediakan koreksi sekunder untuk assigned Coach dan authorized Admin ketika hasil jelas salah; koreksi memerlukan alasan/audit dan tetap tidak memengaruhi poin.
+- `PROD-AI-007` UI MUST membedakan state `Menganalisis`, `Analisis tersedia`, `Tidak dapat dianalisis`, dan `Analisis gagal`; kegagalan/provider outage MUST tidak membuat submission gagal.
+- `PROD-AI-008` Provider vision MUST berada di belakang interface internal dan konfigurasi environment. Provider yang kompatibel dengan kontrak OpenAI dapat diganti melalui base URL, API key, model, dan provider ID tanpa mengubah feature/domain code; provider yang tidak kompatibel memerlukan adapter baru.
+- `PROD-AI-009` Credential provider MUST hanya berada server-side. Browser MUST NOT menerima API key, raw provider request/response, atau instruksi sistem.
+- `PROD-AI-010` Sebelum submit foto makanan, UI MUST menampilkan disclosure singkat bahwa foto akan dianalisis otomatis oleh layanan AI. Baseline tidak memerlukan checkbox consent terpisah, ZDR khusus, DPIA terpisah, atau tombol withdraw khusus.
+- `PROD-AI-011` Seluruh insight, alasan rating, label hasil, dan fallback AI yang ditampilkan kepada pengguna MUST menggunakan Bahasa Indonesia yang ramah, ringkas, tidak menghakimi, dan tidak diagnostik. Raw output provider berbahasa lain MUST tidak ditampilkan langsung.
+
 ## 5. Adaptasi web yang disengaja
 
 | Area | iPhone | MSCWEB |
@@ -112,6 +133,7 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - Meniru API atau visual Liquid Glass secara palsu pada browser yang tidak mendukung efek terkait.
 - Menjanjikan offline mutation atau upload saat koneksi tidak ada.
 - Auto-verification transfer dari screenshot.
+- Menggunakan analisis foto makanan untuk diagnosis, rekomendasi medis, keputusan poin, atau approval bukti.
 - Payment gateway, VA dinamis, atau QRIS dinamis.
 - Mengganti backend Supabase dengan Cloudflare D1/KV.
 - Membuat ulang icon menggunakan `div`, CSS drawing, emoji, atau icon family acak.
@@ -125,4 +147,5 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-SUC-004` UI compact lulus visual comparison pada ukuran target iPhone dan tidak terlihat seperti desktop cards yang dipadatkan.
 - `PROD-SUC-005` Tidak ada akses silang terhadap foto bukti, bukti pembayaran, berat, atau raw QR identifier dalam pengujian RLS.
 - `PROD-SUC-006` PWA dapat dipasang, membuka route yang benar, dan memberi shell/status offline yang jujur.
-
+- `PROD-SUC-007` Coach dapat memublikasikan dan membagikan profil publik yang tetap aman ketika semua field opsional kosong.
+- `PROD-SUC-008` Foto makanan menerima feedback macro dan bintang AI secara asynchronous tanpa memperlambat poin/approval, dan provider dapat diganti tanpa mengubah feature code.

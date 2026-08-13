@@ -32,11 +32,13 @@ Produce final release evidence, obtain explicit production authorizations, perfo
 - [ ] Domain/subdomain, privacy/terms/support, reviewer roster, payment/reconciliation/dispute/retention/SLA are approved.
 - [ ] Production bank/QRIS data handling has owner and rotation procedure.
 - [ ] Hosted Supabase migration/function/Auth/Storage rollout reviewed and explicitly authorized.
+- [ ] Food AI provider terms/data-use, model availability, rate limits, spend ceiling, secret owner/rotation, and failure alert are reviewed; production provider secret is configured only through authorized server secret management.
 - [ ] Cloudflare deployment/domain/DNS/secrets/headers reviewed and explicitly authorized.
 - [ ] Enforced candidate CSP has passed on an authorized preview with production-shaped OAuth/Supabase endpoints; any prior waiver is resolved before rollout.
 - [ ] Backup/rollback/incident contacts and smoke-test account prepared.
 - [ ] Production smoke-test mutation scope is separately approved: exact test identities, allowed Guest/Participant/Coach/Admin/payment operations, proof/media upload permission, records allowed to persist, retention, and cleanup owner/steps.
 - [ ] No production mutation occurs from an unapproved sub-agent.
+- [ ] Synthetic production AI smoke scope is separately authorized and does not use a real Participant photo.
 
 ## Repository split checklist
 
@@ -91,7 +93,7 @@ Production external actions remain primary-agent controlled and require exact au
 
 ## User input or authorization
 
-Required: all unresolved business/legal/brand inputs, exact production Supabase actions, exact Cloudflare/domain actions, exact Git/repository actions, and launch decision.
+Required: all unresolved business/legal/brand inputs, exact production Supabase actions, AI provider/secret activation, exact Cloudflare/domain actions, exact Git/repository actions, and launch decision.
 
 ## Progress log
 

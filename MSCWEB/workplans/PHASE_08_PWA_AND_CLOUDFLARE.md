@@ -2,7 +2,7 @@
 
 Status: `Not started`  
 Autonomy: `A` local, `B` physical-device checks, `D` external preview/production changes  
-Depends on: W01–W07 capability completion
+Depends on: W01–W07 capability completion, including W06.5
 
 ## Objective
 
@@ -21,6 +21,7 @@ Harden MSCWEB as an installable, secure, accessible, performant PWA; prepare Clo
 - final manifest/icons/install guidance;
 - service-worker cache/update/offline behavior;
 - Cloudflare Workers Static Assets config and SPA routing;
+- canonical/Open Graph/social-preview delivery for `/c/:handle` without leaking hidden profile data;
 - CSP/security headers and permissions policy;
 - code splitting/image/bundle performance compliance;
 - browser/device/accessibility matrix evidence;
@@ -44,6 +45,10 @@ Harden MSCWEB as an installable, secure, accessible, performant PWA; prepare Clo
 - [ ] Workers Static Assets directory and SPA `not_found_handling` verified locally/dry run.
 - [ ] Hashed asset vs HTML/manifest/service-worker cache policies.
 - [ ] Canonical/404/robots/preview noindex behavior.
+- [ ] `/c/:handle` refresh and share crawler resolve the correct published Coach; unpublished/expired/unknown handles return safe not-found metadata.
+- [ ] Per-handle title/description/image use only the public profile read model; published phone/WhatsApp may render only in profile body, while every hidden contact, raw QR, auth ID, private media, phone, and WhatsApp stay out of Open Graph/SEO metadata.
+- [ ] Canonical URL strips tracking query parameters while ordinary browser navigation may retain them for attribution handling.
+- [ ] Cache invalidation covers profile publish/edit/moderation/entitlement expiry without caching a private draft as public.
 - [ ] Environment validation and no secret/service-role in output.
 - [ ] CSP report-only test, then local/preview enforcement plan.
 - [ ] With separate external authorization, deploy an isolated noindex preview and validate report-only CSP against real Cloudflare routing, Supabase Auth/Storage/Realtime endpoints, OAuth redirect, media, and service worker.
@@ -53,6 +58,7 @@ Harden MSCWEB as an installable, secure, accessible, performant PWA; prepare Clo
 ### Performance/accessibility/devices
 
 - [ ] Route-level chunking keeps Admin/Coach out of public landing initial bundle.
+- [ ] AI provider code/key remains server-only and is absent from public/Coach/Admin route chunks.
 - [ ] Image thumbnail/lazy/full-resolution authorization behavior.
 - [ ] Lighthouse/Web Vitals/bundle budgets.
 - [ ] Safari iOS current/previous, installed iOS PWA, Chrome Android, desktop Chrome/Safari/Edge.
@@ -81,6 +87,7 @@ Do not let sub-agents deploy, change DNS, configure credentials, or accept budge
 - CSP and security-header checks;
 - Lighthouse/Web Vitals/bundle analyzer;
 - full Playwright matrix plus physical-device manual record;
+- social crawler/canonical/cache tests for minimum/full/unpublished/expired Coach profiles;
 - dependency and secret scans.
 
 ## Exit criteria

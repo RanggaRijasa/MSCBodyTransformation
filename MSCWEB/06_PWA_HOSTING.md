@@ -94,6 +94,15 @@ Section minimum:
 - `PWA-LND-004` Metadata MUST mencakup title, description, canonical, Open Graph, favicon, dan theme-color.
 - `PWA-LND-005` Structured data hanya ditambahkan bila content benar-benar memenuhi schema; tidak membuat rating/testimonial palsu.
 
+### 5.1 Profil Coach publik dan social preview
+
+- `PWA-CPR-001` `/c/:handle` MUST memiliki title, description, canonical URL, dan Open Graph image yang berasal hanya dari public Coach read model.
+- `PWA-CPR-002` Canonical MUST menghapus `utm_*`, `fbclid`, dan query tracking lain; link tetap boleh dibuka dengan parameter tersebut tanpa menjadikannya canonical.
+- `PWA-CPR-003` Crawler yang tidak menjalankan SPA JavaScript MUST tetap menerima metadata profil published yang benar. Strategi Worker HTML rendering/metadata injection dan cache-nya MUST diprototipekan serta dikunci sebelum W08 selesai.
+- `PWA-CPR-004` Unknown, draft, expired, revoked, dan unlisted profile MUST tidak menghasilkan metadata seolah Coach masih terverifikasi.
+- `PWA-CPR-005` Raw QR, auth ID, private media path, dan setiap field dengan public toggle off MUST tidak masuk HTML/meta/cache response. Nomor telepon/WhatsApp yang memang dipublikasikan MAY tampil pada body profil, tetapi MUST tidak dimasukkan ke title, description, Open Graph, JSON-LD, atau metadata crawler.
+- `PWA-CPR-006` Cache key/invalidation MUST memperhitungkan handle, publication/moderation version, dan entitlement state; response draft/private MUST tidak pernah masuk public cache.
+
 ## 6. Security headers
 
 Baseline headers:
@@ -152,4 +161,3 @@ Sebelum production:
 - secrets hanya di provider configuration;
 - rollback deploy dan cache purge procedure diuji;
 - incident contact dan status communication ditentukan.
-

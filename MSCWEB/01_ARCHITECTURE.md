@@ -18,6 +18,7 @@ Baseline implementasi:
 | Data fetching | TanStack Query + typed repository/use-case boundary |
 | Forms | React Hook Form + Zod pada UI boundary |
 | Backend | Supabase Auth, Postgres, Storage, RPC/Edge Functions |
+| Food vision | Server-side provider adapter; OpenRouter/OpenAI-compatible transport sebagai adapter awal |
 | Hosting | Cloudflare Workers Static Assets |
 | Unit/component test | Vitest + React Native Testing Library |
 | End-to-end | Playwright; browser/device coverage pada dokumen QA |
@@ -53,6 +54,15 @@ Cloudflare
   ├─ DNS + TLS
   ├─ static application assets
   └─ SPA route fallback / headers
+
+Async food insight
+  Submission event / durable database job
+       ↓
+  Supabase Edge Function worker
+       ↓
+  FoodVisionProvider interface
+       ↓
+  OpenRouter adapter sekarang / adapter provider lain kemudian
 ```
 
 - `ARCH-006` Cloudflare MUST NOT menjadi database kedua atau menyimpan authority state produk.
@@ -60,6 +70,9 @@ Cloudflare
 - `ARCH-008` View MUST NOT melakukan query langsung atau memuat business rule authoritative.
 - `ARCH-009` Domain model MUST bebas dari React, browser `File`, Supabase SDK type, dan component type.
 - `ARCH-010` Adapters MUST memetakan framework values menjadi domain values di boundary.
+- `ARCH-011` Pemanggilan model vision MUST berlangsung server-side setelah foto dinormalisasi dan MUST tidak dilakukan langsung dari browser.
+- `ARCH-012` Job analisis MUST durable, idempotent per submission + analysis version, retry terbatas, dan tidak berada dalam transaksi authority submission/poin. Best-effort enqueue setelah commit MUST didampingi reconciliation scan yang membuat job untuk setiap eligible submission tanpa job agar crash di antaranya tidak kehilangan analisis permanen.
+- `ARCH-013` Domain hanya menerima hasil `FoodInsight` tervalidasi; provider-specific payload, SDK type, model name, dan transport error berhenti di adapter.
 
 ## 3. Struktur project target
 
@@ -139,6 +152,7 @@ Route group dapat disembunyikan oleh Expo Router. URL publik harus stabil, machi
 | `/app/leaderboard` | leaderboard |
 | `/app/coach` | Coach Participant / Coach root sesuai guard |
 | `/app/profile` | profil |
+| `/c/:handle` | profil Coach publik yang dapat dibagikan |
 | `/admin/*` | Admin-only surface |
 | `/privacy`, `/terms`, `/payment-help` | legal/support public |
 
@@ -147,8 +161,41 @@ Route group dapat disembunyikan oleh Expo Router. URL publik harus stabil, machi
 - `ARCH-NAV-003` Deep link ke private route MUST menuju login bila session tidak ada dan kembali ke route tersebut setelah auth bila authorized.
 - `ARCH-NAV-004` Deep link unauthorized MUST menunjukkan state aman; tidak boleh membocorkan keberadaan entity privat.
 - `ARCH-NAV-005` Setiap tab compact MUST mempertahankan stack/history masuk akal tanpa meniru `NavigationStack` dengan global boolean state.
+- `ARCH-NAV-006` `:handle` profil Coach MUST berupa public slug server-managed yang tidak sama dengan raw QR, auth user ID, atau enrollment identifier.
 
-## 7. Rendering strategy
+## 7. Food vision provider boundary
+
+Contract internal minimum:
+
+```text
+FoodVisionProvider.analyze(normalizedImage, programRubric)
+  → detectedKind: food | drink | shake | not_food | uncertain
+  → energyKcal?, proteinGrams?, carbohydrateGrams?, fatGrams?
+  → starRating: 1...5
+  → confidence: 0...1
+  → reasonCode
+  → insightText
+```
+
+Konfigurasi server-side minimum:
+
+```text
+FOOD_AI_PROVIDER=openrouter
+FOOD_AI_BASE_URL=https://openrouter.ai/api/v1
+FOOD_AI_API_KEY=<server secret>
+FOOD_AI_MODEL=google/gemma-4-26b-a4b-it:free
+FOOD_AI_PROMPT_VERSION=<version>
+```
+
+- `ARCH-AI-001` Feature/domain MUST bergantung pada `FoodVisionProvider`, bukan OpenRouter SDK atau endpoint langsung.
+- `ARCH-AI-002` Adapter awal SHOULD memakai `fetch` dan schema output tervalidasi agar tidak menambah provider SDK ke browser maupun shared domain.
+- `ARCH-AI-003` Perubahan antar-provider OpenAI-compatible SHOULD cukup mengganti `PROVIDER`, `BASE_URL`, `API_KEY`, dan `MODEL`. Klaim "ganti API key saja" MUST NOT dibuat untuk provider dengan endpoint/schema berbeda; provider tersebut membutuhkan adapter implementasi baru.
+- `ARCH-AI-004` Worker MUST mengirim hanya byte foto ternormalisasi dan rubric minimum. Nama, user ID, berat, caption bebas, object path, signed URL, dan data program lain MUST tidak dikirim kecuali field rubric yang sudah di-allowlist.
+- `ARCH-AI-005` Server validator MUST memverifikasi schema, rentang macro/rating/confidence, reason code, dan favorable-rating guard sebelum menyimpan hasil.
+- `ARCH-AI-006` Hasil MUST menyimpan provider/model alias, prompt/rubric version, status, attempt count, dan timestamps untuk reproducibility tanpa menyimpan raw request/response provider.
+- `ARCH-AI-007` Provider prompt/schema MUST meminta `insightText` Bahasa Indonesia. Server MUST menolak, meregenerasi secara terbatas, atau mengganti output non-Indonesia dengan fallback Indonesia tervalidasi; client MUST tidak menerjemahkan raw output secara ad hoc.
+
+## 8. Rendering strategy
 
 - `ARCH-WEB-001` Landing dan halaman legal SHOULD dihasilkan sebagai static HTML untuk SEO dan first paint.
 - `ARCH-WEB-002` Authenticated app MAY menggunakan client rendering karena bersifat session-dependent dan app-like.
@@ -156,7 +203,7 @@ Route group dapat disembunyikan oleh Expo Router. URL publik harus stabil, machi
 - `ARCH-WEB-004` Pilihan rendering MUST tetap dapat diekspor ke output yang dilayani Cloudflare Workers Static Assets.
 - `ARCH-WEB-005` API route Expo MUST NOT digunakan sebagai pengganti RPC/Edge Function authority tanpa ADR dan threat review.
 
-## 8. Error contract
+## 9. Error contract
 
 Repository/use case mengembalikan typed error minimal:
 
@@ -169,7 +216,7 @@ offline | timeout | rateLimited | storageRejected | unknown
 - `ARCH-ERR-002` Error UI MUST berbahasa Indonesia, actionable, dan memberi retry hanya jika aman.
 - `ARCH-ERR-003` Logging MUST NOT memuat token, password, raw QR payload, berat badan, signed URL, object path privat, atau isi foto.
 
-## 9. Referensi resmi
+## 10. Referensi resmi
 
 - [Expo: Develop websites](https://docs.expo.dev/workflow/web/)
 - [Expo: Progressive web apps](https://docs.expo.dev/guides/progressive-web-apps/)

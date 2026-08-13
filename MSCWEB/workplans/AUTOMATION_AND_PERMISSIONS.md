@@ -14,6 +14,7 @@ The following are authorized local, non-destructive actions within the approved 
 - create/test local Supabase migrations, RLS, Storage policies, seeds, RPCs, and Edge Functions against local only;
 - generate design/reference assets and local PWA icon derivatives from approved source assets;
 - implement landing, Guest, Participant, Coach, Admin, and payment flows against local/mock data according to the active phase;
+- implement W06.5 with deterministic fake AI fixtures, provider contract tests, and local Supabase jobs without a real provider key;
 - perform local security, privacy, concurrency, cache, offline, and responsive testing;
 - prepare Cloudflare/Supabase production configuration files with placeholders and dry-run validation;
 - produce release checklists, runbooks, and migration plans.
@@ -30,6 +31,7 @@ The following are authorized local, non-destructive actions within the approved 
 | Browser camera permission | QR scanning device/browser test | 05 |
 | Physical iPhone/Android access | installed PWA, camera, safe area, keyboard verification | 08 |
 | Cloudflare noindex preview deployment authorization | real routing/OAuth/Supabase endpoint and enforced-CSP gate | 08 |
+| Optional OpenRouter runtime secret | one synthetic provider smoke; not required for deterministic W06.5 completion | 06.5 |
 
 The user has already granted conceptual permission for iOS Simulator inspection and sub-agent use. System-level approval prompts may still appear when the local host requires them.
 
@@ -37,7 +39,7 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 
 | Decision/input | Used by | Can work continue before it? |
 |---|---|---|
-| Final landing visual approval | Phase 01 production polish | Yes, Codex can build v1 and present it |
+| Final landing visual approval | W01 production polish | Yes, Codex can build v1 and present it |
 | Approved production photography/Coach identity | Landing/Coach | Yes, placeholders or generated reference only |
 | Domain and subdomain | Cloudflare/Auth | Yes, use documented placeholders |
 | Production bank name/account/holder | Payment | Yes, use safe local fixture values |
@@ -50,10 +52,12 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 | Production Admin/reviewer identities | Authorization/release | Local deterministic fixtures only |
 | Monitoring/analytics vendor and consent policy | Hardening | Core app can proceed without vendor |
 | Notification channel/provider | Payment/operations | In-app status can proceed; external notifications deferred |
+| Production AI provider/model, spend/rate limit, and secret owner | Food insight release | Yes; W06.5 can complete with fake provider, but production activation cannot |
 
 ## Actions requiring explicit authorization at execution time
 
 - deploy or mutate hosted Supabase main;
+- configure a real food-AI provider secret, enable production analysis, or send any production/user photo to an external model;
 - configure production Google OAuth provider/redirects;
 - upload real bank/QRIS/payment destination data;
 - deploy to Cloudflare, bind a custom domain, change DNS, secrets, routes, cache rules, or security headers in production;
@@ -67,9 +71,10 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 
 ## Recommended permission sequence
 
-1. Phase 00: explicitly authorize modification of package manifests/lockfile and installation of the approved baseline; then approve network access if the host prompts.
-2. Phase 00: provide/authorize local Google OAuth configuration and physical/emulated iOS/Android QR checks for feasibility exit.
-3. Phase 01: choose an authorized repository split now or explicitly defer it to W09.
-4. Phase 05: provide business payment and cleanup-policy inputs for production-readiness; continue with test fixtures meanwhile.
-5. Phase 08: authorize a noindex Cloudflare preview for real routing/CSP validation, or explicitly record a rollout-blocking waiver.
-6. Phase 09: separately authorize production Supabase, Cloudflare/domain, production smoke-test mutations/cleanup, and exact Git/repository operations.
+1. W00: explicitly authorize modification of package manifests/lockfile and installation of the approved baseline; then approve network access if the host prompts.
+2. W00: provide/authorize local Google OAuth configuration and physical/emulated iOS/Android QR checks for feasibility exit.
+3. W01: choose an authorized repository split now or explicitly defer it to W09.
+4. W05: provide business payment and cleanup-policy inputs for production-readiness; continue with test fixtures meanwhile.
+5. W06.5: optionally provide a runtime-only OpenRouter key for one synthetic smoke; otherwise retain deterministic provider tests.
+6. W08: authorize a noindex Cloudflare preview for real routing/CSP validation, or explicitly record a rollout-blocking waiver.
+7. W09: separately authorize production Supabase, AI provider/secret activation, Cloudflare/domain, production smoke-test mutations/cleanup, and exact Git/repository operations.

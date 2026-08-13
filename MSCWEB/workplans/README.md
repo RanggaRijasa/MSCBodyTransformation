@@ -17,6 +17,7 @@ These workplans translate the product specs into ordered, verifiable implementat
 | W04 | [Evidence, review, and scoring](./PHASE_04_EVIDENCE_REVIEW_AND_SCORING.md) | private media, Coach review, authoritative points | mostly automatic locally |
 | W05 | [Enrollment and manual payment](./PHASE_05_ENROLLMENT_AND_MANUAL_PAYMENT.md) | QR enrollment and Admin-approved payment | local automatic; business inputs required |
 | W06 | [Coach experience](./PHASE_06_COACH_EXPERIENCE.md) | application, payment, activation, Coach operations | local automatic; policy inputs required |
+| W06.5 | [Async food insight](./PHASE_06_5_ASYNC_FOOD_INSIGHT.md) | non-blocking macro insight and favorable AI stars | automatic with fake provider; real key optional |
 | W07 | [Admin experience](./PHASE_07_ADMIN_EXPERIENCE.md) | program/people/content/operations parity | mostly automatic locally |
 | W08 | [PWA and Cloudflare hardening](./PHASE_08_PWA_AND_CLOUDFLARE.md) | installable, secure, performant production candidate | preview automatic; production permission required |
 | W09 | [Release and repository split](./PHASE_09_RELEASE_AND_REPOSITORY_SPLIT.md) | release evidence and safe standalone repo | explicit external/Git decisions required |
@@ -33,8 +34,9 @@ See [AUTOMATION_AND_PERMISSIONS.md](./AUTOMATION_AND_PERMISSIONS.md) for the con
 | W03 | `PROD-PTC-*`, `PROD-PRG-*`, `PROD-LDB-*`, `UX-HOME-*`, `UX-PRG-*` |
 | W04 | `PROD-PRG-005`, `PROD-OPS-002`, `SEC-STO-*`, `SEC-OP-*`, `QA-JRN-006` |
 | W05 | `PAY-*`, `UX-PAY-*`, `SEC-DATA-*`, `QA-JRN-001…004` |
-| W06 | `PROD-CCH-*`, `PROD-OPS-001`, `PAY-CCH-*`, `QA-JRN-005/006` |
-| W07 | `PROD-ADM-*`, `PROD-OPS-003…005`, scoring/winner requirements, Admin `QA-*` |
+| W06 | `PROD-CCH-*`, `PROD-OPS-001`, `UX-CPR-*`, `QA-CPR-*`, `PAY-CCH-*`, `QA-JRN-005/006/009` |
+| W06.5 | `PROD-AI-*`, `ARCH-AI-*`, `UX-AI-*`, `SEC-PRV-005…010`, `QA-AI-*`, `QA-JRN-010/011` |
+| W07 | `PROD-ADM-*`, `PROD-OPS-003…005`, scoring/winner/profile-moderation/AI-operations requirements, Admin `QA-*` |
 | W08 | `PWA-*`, `DS-MOT-*`, `DS-GLS-*`, accessibility/performance/release `QA-*` |
 | W09 | `PROD-SUC-*`, QA release gates, safe repository split criteria |
 

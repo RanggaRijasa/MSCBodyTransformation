@@ -96,6 +96,24 @@ Given PWA terpasang
 When dibuka dari Home Screen online dan kemudian offline  
 Then online route/session bekerja; offline menampilkan shell/status jujur dan mutation disabled.
 
+### `QA-JRN-009` Coach membagikan profil publik
+
+Given Coach aktif dengan hanya foto, nama, dan badge otomatis serta beberapa field opsional kosong
+When Coach memublikasikan profil dan memilih `Bagikan profil`
+Then canonical `/c/:handle` dapat dibuka Guest, field kosong tidak dirender, raw QR/user UUID tidak ada pada URL/HTML, dan share fallback menyalin URL yang sama.
+
+### `QA-JRN-010` Insight makanan tidak memblokir poin
+
+Given pertanyaan foto dikonfigurasi untuk analisis makanan dan submission memenuhi aturan poin otomatis
+When Participant mengirim foto dan provider AI lambat
+Then submission/poin authoritative selesai tanpa menunggu AI, UI menampilkan `Menganalisis foto…`, lalu hasil macro/bintang muncul setelah job selesai.
+
+### `QA-JRN-011` Provider AI gagal
+
+Given submission foto makanan berhasil
+When provider timeout, rate-limit, mengembalikan schema invalid, atau tidak tersedia
+Then job retry/berakhir aman, UI menampilkan `Analisis belum tersedia`, tidak ada poin/approval yang dibatalkan, dan tidak ada key/payload privat pada browser/log.
+
 ## 5. Payment acceptance matrix
 
 | Case | Expected |
@@ -134,6 +152,31 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - session expiry;
 - application Coach tidak eligible;
 - payment pending/rejected/expired/concurrent review.
+- profil Coach hanya berisi field wajib, semua field opsional, kontak sebagian publik, handle tidak ditemukan, entitlement kedaluwarsa, dan media menunggu moderation;
+- food, drink, shake, not-food, foto buram/ambigu, provider timeout/rate-limit/schema invalid, duplicate job, correction conflict, dan low-confidence request untuk rating 1–2.
+
+## 6.1 Coach public profile acceptance
+
+- `QA-CPR-001` Foto awal Google diimpor/ditransformasi tanpa hotlink; Coach dapat mengganti avatar dan media lama mengikuti cleanup policy.
+- `QA-CPR-002` Nama dan badge berasal dari authority; Coach tidak dapat memalsukan badge atau mempertahankannya setelah entitlement berakhir.
+- `QA-CPR-003` Setiap kontak yang toggle publikasinya off tidak muncul pada public API, HTML, metadata, maupun cache Guest.
+- `QA-CPR-004` Semua testimoni/before–after memerlukan moderation state; attestation izin pihak ketiga hanya wajib ketika orang lain ditampilkan/dikutip. Konten diri sendiri memiliki publication path tanpa attestation pihak ketiga, dan bucket bukti privat tidak dapat dipakai sebagai sumber.
+- `QA-CPR-005` Web Share, copy fallback, canonical URL, unknown handle, unlisted profile, keyboard, screen reader, compact, dan wide states lulus.
+
+## 6.2 Food insight and favorable-rating acceptance
+
+- `QA-AI-001` Hanya question dengan analysis mode `food` membuat job; submission foto lain menghasilkan nol provider call.
+- `QA-AI-002` Browser/network bundle tidak mengandung provider API key, system prompt, raw Storage path, atau signed URL provider input.
+- `QA-AI-003` Provider adapter menerima fixture food/drink/shake/not-food dan menolak output di luar schema/range.
+- `QA-AI-004` Rating validator menetapkan: 4 default untuk food yang plausible tanpa pelanggaran jelas; 5 untuk match kuat; 3 untuk ambigu; rating 1 hanya untuk `not_food_for_required_food` dan rating 2 hanya untuk `severe_explicit_rubric_mismatch`, keduanya dengan rubric eksplisit serta confidence `>= 0.90` menurut `food_rating_policy_v1`.
+- `QA-AI-005` Property/table tests MUST membuktikan setiap no-rubric, confidence `< 0.90`, unknown-reason, atau rating/reason mismatch 1–2 disimpan minimal sebagai 3 atau `uncertain`; policy version berasal dari server, bukan provider.
+- `QA-AI-006` Crash setelah submission commit tetapi sebelum enqueue MUST dipulihkan oleh reconciliation scan menjadi tepat satu job untuk analysis version tersebut tanpa mengubah poin/approval.
+- `QA-AI-007` Duplicate delivery/retry menghasilkan satu result untuk submission + analysis version; correction beralasan diaudit dan tidak mengubah poin.
+- `QA-AI-008` Provider timeout/rate-limit/invalid JSON/invalid macro tidak mengubah submission, approval, ledger poin, atau Coach role.
+- `QA-AI-009` Mengganti konfigurasi ke fake OpenAI-compatible provider tidak memerlukan perubahan feature/domain code. Adapter noncompatible diuji melalui contract suite yang sama.
+- `QA-AI-010` Disclosure AI dan anjuran menghindari wajah/dokumen terlihat sebelum submit, tetapi tidak ada checkbox consent terpisah pada baseline.
+- `QA-AI-011` Insight dan alasan rating menggunakan Bahasa Indonesia yang natural dan non-diagnostik, label `Perkiraan dari foto`, icon bintang Phosphor, dan tidak memberi klaim keamanan/medis dari foto.
+- `QA-AI-012` Output provider berbahasa Inggris, campuran yang tidak layak, raw JSON, atau istilah teknis provider MUST tidak dirender langsung; validator menggunakan retry terbatas atau fallback Bahasa Indonesia deterministic.
 
 ## 7. Accessibility acceptance
 
@@ -155,6 +198,8 @@ Core screenshot set:
 - Guest Home/login;
 - Participant Home, catalog, program detail, day accordion, step, payment states;
 - Coach Dashboard, review queue/detail, QR;
+- profil Coach publik/edit/share dengan field minimum dan lengkap;
+- insight makanan pending/available/unavailable serta rating 1–5;
 - Admin Dashboard, Program, People, payment/Coach review;
 - compact light/dark dan wide Admin;
 - loading/empty/error/offline;
@@ -174,4 +219,3 @@ Visual regression threshold tidak boleh menyembunyikan large layout drift. Perub
 - RLS negative tests lulus;
 - SOP pembayaran/retention/dispute telah diputuskan;
 - production Supabase/Cloudflare deployment mendapat authorization eksplisit.
-

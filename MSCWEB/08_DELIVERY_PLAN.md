@@ -10,7 +10,7 @@ Dokumen ini adalah delivery overview. Workplan eksekusi rinci, checklist, sub-ag
 - Setiap phase berakhir dengan build/test/demo evidence dan spec delta.
 - Repository tetap menyatu sampai checkpoint pemisahan aman.
 
-## Phase 0 — feasibility spikes
+## W00 — feasibility spikes
 
 Tujuan: membuktikan risiko platform sebelum feature work.
 
@@ -27,7 +27,7 @@ Tujuan: membuktikan risiko platform sebelum feature work.
 
 Exit: keputusan rendering/export, QR library/adapter, image pipeline, dan dependency versions dikunci lewat ADR. Tidak ada production deploy.
 
-## Phase 1 — foundation and design system
+## W01 — foundation and design system
 
 - dependency container dan domain/repository boundaries;
 - theme/tokens/light/dark;
@@ -39,7 +39,7 @@ Exit: keputusan rendering/export, QR library/adapter, image pipeline, dan depend
 
 Exit: landing dan empty app shell berjalan pada compact/wide, installable locally, accessibility smoke lulus.
 
-## Phase 2 — Auth and public Participant shell
+## W02 — Auth and public Participant shell
 
 - Google Auth local;
 - callback/preserved intent/session/logout cache clearing;
@@ -49,17 +49,25 @@ Exit: landing dan empty app shell berjalan pada compact/wide, installable locall
 
 Exit: Guest tidak pernah menerima private data; auth/deep link journeys lulus.
 
-## Phase 3 — Participant program parity
+## W03 — Participant program parity
 
 - enrolled/available/history;
 - program activity/day accordion/locks;
 - article/video/form/quiz/weight step renderer;
-- evidence picker/camera/upload/status;
 - home focus/progress/points.
 
-Exit: Participant dapat menjalankan full program flow terhadap Supabase local; scoring/review authority tetap server-side.
+Exit: Participant dapat menjalankan program flow dan mengisi jawaban dasar terhadap Supabase local; scoring/review authority tetap server-side.
 
-## Phase 4 — enrollment and manual payment
+## W04 — Evidence, review, and authoritative scoring
+
+- evidence picker/camera/normalization/private upload/status;
+- Coach-scoped review queue/detail;
+- approve/reject/idempotency/audit;
+- authoritative step/weight points dan private media access.
+
+Exit: `QA-JRN-006` dan negative RLS/concurrency tests lulus; pending/rejected evidence tidak memberi poin.
+
+## W05 — Enrollment and manual payment
 
 - scan QR Coach;
 - free enrollment operation;
@@ -70,17 +78,29 @@ Exit: Participant dapat menjalankan full program flow terhadap Supabase local; s
 
 Exit: journeys `QA-JRN-001` sampai `004` dan payment negative/concurrency suite lulus.
 
-## Phase 5 — Coach parity
+## W06 — Coach experience and public profile
 
 - Coach application/eligibility/pricing/payment;
 - activation Admin operation;
 - Coach dashboard/QR/participants/activity/review queue;
 - evidence review approval/rejection;
-- Coach program/leaderboard/profile.
+- Coach program/leaderboard/profile;
+- public `/c/:handle`, required Google/account identity, optional professional/contact/testimonial/before–after fields, publication controls, dan share action.
 
-Exit: Coach access hanya aktif melalui authority path dan cross-Coach RLS tests lulus.
+Exit: Coach access hanya aktif melalui authority path, cross-Coach RLS tests lulus, dan profil minimum dapat dipublikasikan/dibagikan tanpa membocorkan hidden contact/raw QR.
 
-## Phase 6 — Admin parity
+## W06.5 — Async food insight and AI stars
+
+- question-level food analysis flag dan durable idempotent jobs;
+- server-only provider interface dengan OpenRouter/OpenAI-compatible adapter awal;
+- estimasi kkal/protein/karbohidrat/lemak dan insight non-diagnostik;
+- favorable 1–5 rating dengan 1–2 guard;
+- Participant/Coach pending/result/unavailable UI dan optional audited correction;
+- privacy-minimal payload, secret, provider-failure, and point-independence tests.
+
+Exit: insight berjalan asynchronous tanpa memengaruhi submission/approval/poin, rating rendah hanya lolos guard, dan provider compatible dapat diganti lewat config tanpa feature change.
+
+## W07 — Admin parity
 
 - Dashboard/metrics/attention;
 - Program CRUD/publish/preview;
@@ -88,10 +108,11 @@ Exit: Coach access hanya aktif melalui authority path dan cross-Coach RLS tests 
 - Content management;
 - score corrections/winner lock/fallback operations;
 - Settings dan complete audit surfaces.
+- moderation testimoni/before–after serta operational view AI yang ter-redact.
 
 Exit: semua Admin iPhone capabilities memiliki parity evidence atau accepted deferral.
 
-## Phase 7 — PWA hardening
+## W08 — PWA hardening
 
 - offline/cache/update behavior;
 - install guidance;
@@ -100,12 +121,22 @@ Exit: semua Admin iPhone capabilities memiliki parity evidence atau accepted def
 - full browser/device/accessibility pass;
 - observability redaction;
 - production runbooks dan policy blockers.
+- canonical/Open Graph/cache behavior untuk profil Coach publik.
 
 Exit: release gates pada QA spec lulus; production deploy masih memerlukan izin eksplisit.
 
+## W09 — Release and repository split
+
+- requirement-to-evidence traceability dan unresolved-risk register;
+- authorized production Supabase/AI provider/Cloudflare rollout bila diminta;
+- controlled production smoke scope;
+- safe repository split dengan satu authority migration Supabase.
+
+Exit: release/split dilakukan dan diverifikasi hanya dalam authorization yang tepat, atau tetap jelas belum dilakukan dengan blocker terdokumentasi.
+
 ## Safe repository split checkpoint
 
-Pindahkan `MSCWEB` ke repository sendiri setelah Phase 1, hanya bila semua kondisi ini benar:
+Pindahkan `MSCWEB` ke repository sendiri setelah W01, hanya bila semua kondisi ini benar:
 
 - Expo project dapat install, lint, typecheck, test, export, dan serve sendiri dari folder `MSCWEB`;
 - tidak mengimpor source Swift atau path runtime dari parent;
