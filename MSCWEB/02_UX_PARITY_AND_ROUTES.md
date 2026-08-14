@@ -71,6 +71,7 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 | Photo picker/camera | browser picker/capture | Adaptive | normalisasi dan privacy sama |
 | Leaderboard/winners | `/app/leaderboard` | Exact | tanpa berat privat |
 | Coach dashboard | `/app/home` role Coach | Exact/Adaptive | quick actions sama |
+| Katalog Program Coach | `/coach/programs` | Exact | memakai ulang katalog/flow Participant; bukan daftar program dampingan |
 | Review queue | Coach review routes | Exact/Adaptive | filter + action badge |
 | Proof review sheet | detail/modal responsive | Exact | sticky Tolak/Setujui |
 | Unique Coach QR | Coach QR route | Exact | raw identifier tidak ditampilkan |

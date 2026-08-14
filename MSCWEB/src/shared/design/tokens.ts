@@ -55,6 +55,13 @@ export const lightSemanticTokens = {
   info: '#2457A6',
   overlay: 'rgba(17, 17, 17, 0.52)',
   disabled: '#71717A',
+  podiumGold: '#D4A900',
+  podiumSilver: '#666A73',
+  podiumBronze: '#B96817',
+  podiumGoldSurface: '#FFF7D6',
+  podiumSilverSurface: '#F0F1F3',
+  podiumBronzeSurface: '#FFF0E2',
+  primaryTintSurface: '#FFF0F1',
 } as const;
 
 export const darkSemanticTokens = {
@@ -76,6 +83,13 @@ export const darkSemanticTokens = {
   info: '#78A9FF',
   overlay: 'rgba(0, 0, 0, 0.72)',
   disabled: '#8A8A8F',
+  podiumGold: '#FFD84A',
+  podiumSilver: '#C7C9D1',
+  podiumBronze: '#E99A4A',
+  podiumGoldSurface: '#332A05',
+  podiumSilverSurface: '#292A2E',
+  podiumBronzeSurface: '#352315',
+  primaryTintSurface: '#351417',
 } as const;
 
 export const componentTokens = {

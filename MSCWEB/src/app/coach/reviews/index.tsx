@@ -9,9 +9,8 @@ export default function CoachReviewsRoute() {
   const authorized = state.status === 'authenticated' && state.account.role === 'coach';
   const reviews = useCoachReviews(authorized);
   return (
-    <AppShell role="coach" activeRoute="dashboard" title="Bukti peserta">
+    <AppShell role="coach" activeRoute="dashboard" title="Periksa bukti">
       {!authorized ? <StateView kind="forbidden" /> : reviews.isPending ? <StateView kind="loading" /> : reviews.isError ? <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void reviews.refetch()} />} /> : <CoachReviewQueue items={reviews.data ?? []} onRetry={() => void reviews.refetch()} />}
     </AppShell>
   );
 }
-

@@ -25,7 +25,14 @@ describe('Cloudflare Worker routing contract', () => {
     await expect(worker.fetch(new Request('https://msc.invalid/login?returnTo=%2Fapp'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/app/programs/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/coach/reviews'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/coach/participants'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/coach/activity'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/coach/leaderboard'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/coach/qr'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/app/coach-application'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/c/coach-lestari'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/coach/reviews/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/coach/participants/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/app/payments/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/admin/payments/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ url: 'https://msc.invalid/app.html' }));
@@ -44,6 +51,8 @@ describe('Cloudflare Worker routing contract', () => {
     expect(unknownAppNavigation.status).toBe(404);
     const malformedEntityNavigation = await worker.fetch(new Request('https://msc.invalid/app/programs/not-a-uuid'), env);
     expect(malformedEntityNavigation.status).toBe(404);
+    const malformedCoachHandle = await worker.fetch(new Request('https://msc.invalid/c/Coach_Lestari'), env);
+    expect(malformedCoachHandle.status).toBe(404);
   });
 
   it('rejects mutation methods at the static edge', async () => {

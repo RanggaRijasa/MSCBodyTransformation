@@ -42,10 +42,11 @@ describe('W04 evidence, review, and scoring boundary', () => {
       reviewed_at: null,
       review_note: null,
       participant: { id: '10000000-0000-4000-8000-000000000003', display_name: 'Peserta', avatar_url: null, weight_kg: 70 },
-      program: { id: '10000000-0000-4000-8000-000000000004', title: 'Program' },
+      program: { id: '10000000-0000-4000-8000-000000000004', title: 'Program', ends_on: '2026-08-20', timezone: 'Asia/Makassar', points_per_activity: 10 },
       day: { day_number: 1, title: 'Mulai' },
-      step: { id: '10000000-0000-4000-8000-000000000005', title: 'Bukti', content_kind: 'form' },
+      step: { id: '10000000-0000-4000-8000-000000000005', title: 'Bukti', instructions: 'Kirim bukti aktivitas.', content_kind: 'form', verification_mode: 'coach_review' },
       answers: [],
+      quiz_result: null,
       initial_weight_kg: 75,
     });
     expect(parsed).not.toHaveProperty('initial_weight_kg');

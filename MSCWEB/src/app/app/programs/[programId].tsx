@@ -25,19 +25,20 @@ export default function ProgramDetailRoute() {
   const program = useProgram(programId);
   const { colors } = useAppTheme();
   const { state, requireAuthentication } = useAuth();
-  const isParticipant = state.status === 'authenticated' && state.account.role === 'participant';
-  const enrollments = useParticipantEnrollments(isParticipant);
-  const dayAccess = useParticipantDayAccess(isParticipant);
-  const submissions = useParticipantSubmissions(isParticipant);
-  const scores = useParticipantScores(isParticipant);
-  const assignedCoach = useParticipantAssignedCoach(isParticipant);
+  const canJoinPrograms = state.status === 'authenticated'
+    && (state.account.role === 'participant' || state.account.role === 'coach');
+  const enrollments = useParticipantEnrollments(canJoinPrograms);
+  const dayAccess = useParticipantDayAccess(canJoinPrograms);
+  const submissions = useParticipantSubmissions(canJoinPrograms);
+  const scores = useParticipantScores(canJoinPrograms);
+  const assignedCoach = useParticipantAssignedCoach(canJoinPrograms);
   const role = state.status === 'authenticated' ? state.account.role : 'guest';
   const enrollment = enrollments.data?.find((candidate) => candidate.program_id === programId);
   const isRepeatableFixture = program.data ? isRepeatableLocalTestProgram(program.data) : false;
   const visibleEnrollment = isRepeatableFixture ? undefined : enrollment;
   const activeExperience = visibleEnrollment?.status === 'active' || visibleEnrollment?.status === 'completed';
-  const privatePending = isParticipant && [enrollments, dayAccess, submissions, scores].some((query) => query.isPending);
-  const privateError = isParticipant && [enrollments, dayAccess, submissions, scores].some((query) => query.isError);
+  const privatePending = canJoinPrograms && [enrollments, dayAccess, submissions, scores].some((query) => query.isPending);
+  const privateError = canJoinPrograms && [enrollments, dayAccess, submissions, scores].some((query) => query.isError);
 
   return (
     <AppShell role={role} activeRoute="programs" title={selectedStepId ? 'Detail langkah' : program.data?.title ?? 'Detail program'}>
@@ -68,7 +69,7 @@ export default function ProgramDetailRoute() {
                 }
               }}
             />
-            {isParticipant && assignedCoach.data ? (
+            {canJoinPrograms && assignedCoach.data ? (
               <Card>
                 <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>Coach pendamping</Text>
                 <View style={styles.coachRow}>

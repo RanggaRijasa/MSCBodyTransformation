@@ -61,6 +61,7 @@ Coach memiliki dashboard, QR pendaftaran unik, peserta yang ditangani, antrian r
 - `PROD-CCH-010` Semua testimoni/before–after MUST melewati moderation state. Jika konten menampilkan atau mengutip orang lain, Coach juga MUST menyatakan memiliki izin subjek; konten diri sendiri tidak memerlukan attestation pihak ketiga. Bukti program privat MUST NOT dipakai ulang sebagai media profil publik.
 - `PROD-CCH-011` Profil publik MUST memakai handle publik stabil dan tombol `Bagikan profil`; raw QR Coach, user UUID privat, dan enrollment identifier MUST NOT berada pada URL atau metadata berbagi.
 - `PROD-CCH-012` Badge terverifikasi MUST mengikuti entitlement Coach aktif. Entitlement kedaluwarsa/dicabut MUST menghapus badge dan menutup publikasi profil sampai authority dipulihkan.
+- `PROD-CCH-013` Coach aktif MUST tetap dapat mengikuti program sebagai peserta program. Tab Program Coach MUST memakai katalog `Diikuti`, `Tersedia`, dan `Riwayat` serta detail, QR enrollment, pembayaran, aktivitas, dan seluruh limitasi yang sama dengan Participant. Saat mendaftar, Coach MUST memindai QR Coach miliknya sendiri dan MUST NOT memakai QR Coach lain. Program yang Coach dampingi tidak boleh menjadi katalog terpisah; cakupan pendampingan tetap berada pada `Peserta saya`, aktivitas, review, dan leaderboard Coach.
 
 ### 3.4 Admin
 

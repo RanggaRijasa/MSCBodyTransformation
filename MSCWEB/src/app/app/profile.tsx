@@ -38,6 +38,13 @@ export default function PublicProfileRoute() {
               </View>
             </Section>
             {state.account.role === 'participant' ? <ParticipantProgress /> : null}
+            {state.account.role === 'participant' ? (
+              <Card>
+                <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Menjadi Coach</Text>
+                <Text style={[styles.body, { color: colors.secondaryText }]}>Ajukan akses Coach jika levelmu SC atau lebih tinggi dan persyaratan pelatihan sudah selesai.</Text>
+                <Button label="Ajukan akses Coach" onPress={() => router.push('/app/coach-application')} />
+              </Card>
+            ) : null}
             <Button label="Keluar" tone="destructive" onPress={() => void signOut()} />
           </>
         )}

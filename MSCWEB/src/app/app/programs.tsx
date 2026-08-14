@@ -21,12 +21,14 @@ export default function PublicProgramsRoute() {
   const params = useLocalSearchParams<{ segment?: string }>();
   const programs = usePrograms();
   const { state, requireAuthentication } = useAuth();
-  const isParticipant = state.status === 'authenticated' && state.account.role === 'participant';
-  const enrollments = useParticipantEnrollments(isParticipant);
-  const localFixtures = useEnsureRepeatableLocalFixtures(isParticipant);
+  const canJoinPrograms = state.status === 'authenticated'
+    && (state.account.role === 'participant' || state.account.role === 'coach');
+  const enrollments = useParticipantEnrollments(canJoinPrograms);
+  const localFixtures = useEnsureRepeatableLocalFixtures(canJoinPrograms);
   const role = state.status === 'authenticated' ? state.account.role : 'guest';
+  const catalogRoute = role === 'coach' ? '/coach/programs' : '/app/programs';
   const requestedSegment = parseSegment(params.segment);
-  const segment = requestedSegment ?? (isParticipant ? 'joined' : 'available');
+  const segment = requestedSegment ?? (canJoinPrograms ? 'joined' : 'available');
   const scrollRef = useRef<ScrollView>(null);
   const storageKey = `msc-program-catalog-scroll:${segment}`;
 
@@ -55,14 +57,14 @@ export default function PublicProgramsRoute() {
         <SegmentedControl
           label="Daftar program"
           value={segment}
-          onChange={(value) => router.push(`/app/programs?segment=${value}`)}
+          onChange={(value) => router.replace(`${catalogRoute}?segment=${value}`)}
           options={segments}
         />
 
-        {privateSegment && !isParticipant ? (
+        {privateSegment && !canJoinPrograms ? (
           <>
-            <InlineMessage title="Masuk diperlukan" message="Program yang diikuti dan riwayat hanya dimuat untuk akun Participant." />
-            <Button label="Masuk" onPress={() => requireAuthentication(`/app/programs?segment=${segment}`)} />
+            <InlineMessage title="Masuk diperlukan" message="Program yang diikuti dan riwayat hanya dimuat untuk akun Participant atau Coach." />
+            <Button label="Masuk" onPress={() => requireAuthentication(`${catalogRoute}?segment=${segment}`)} />
           </>
         ) : programs.isPending || localFixtures.isPending || (privateSegment && enrollments.isPending) ? (
           <StateView kind="loading" />

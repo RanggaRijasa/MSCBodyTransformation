@@ -41,24 +41,29 @@ export class SupabaseCoachReviewRepository implements CoachReviewRepository {
     const enrollmentIds = unique(rows.map((row) => row.enrollment_id));
     const stepIds = unique(rows.map((row) => row.step_id));
     const submissionIds = unique(rows.map((row) => row.id));
-    const [enrollments, steps, answers] = await Promise.all([
+    const [enrollments, steps, answers, quizResults] = await Promise.all([
       this.client.from('program_enrollments').select('id,program_id,participant_id').in('id', enrollmentIds),
-      this.client.from('program_steps').select('id,program_day_id,title,content_kind').in('id', stepIds),
+      this.client.from('program_steps').select('id,program_day_id,title,instructions,content_kind,verification_mode').in('id', stepIds),
       this.client.from('step_submission_answers').select('id,submission_id,question_id,text_value,number_value,selected_option_ids,private_photo_path').in('submission_id', submissionIds),
+      this.client.from('quiz_attempt_results').select('submission_id,correct_count,total_count,percentage,passed,awarded_points').in('submission_id', submissionIds),
     ]);
-    assertResponses(enrollments, steps, answers);
+    assertResponses(enrollments, steps, answers, quizResults);
 
     const participantIds = unique((enrollments.data ?? []).map((row) => row.participant_id));
     const programIds = unique((enrollments.data ?? []).map((row) => row.program_id));
     const dayIds = unique((steps.data ?? []).map((row) => row.program_day_id));
     const questionIds = unique((answers.data ?? []).map((row) => row.question_id));
-    const [profiles, programs, days, questions] = await Promise.all([
+    const optionIds = unique((answers.data ?? []).flatMap((row) => row.selected_option_ids));
+    const [profiles, programs, days, questions, options] = await Promise.all([
       this.client.from('profiles').select('user_id,display_name,provider_avatar_url').in('user_id', participantIds),
-      this.client.from('programs').select('id,title').in('id', programIds),
+      this.client.from('programs').select('id,title,ends_on,timezone,points_per_activity').in('id', programIds),
       this.client.from('program_days').select('id,day_number,title').in('id', dayIds),
       this.client.from('program_questions').select('id,prompt').in('id', questionIds),
+      optionIds.length > 0
+        ? this.client.from('program_question_options').select('id,title').in('id', optionIds)
+        : Promise.resolve({ data: [], error: null }),
     ]);
-    assertResponses(profiles, programs, days, questions);
+    assertResponses(profiles, programs, days, questions, options);
 
     const enrollmentById = indexBy(enrollments.data ?? [], 'id');
     const stepById = indexBy(steps.data ?? [], 'id');
@@ -66,6 +71,8 @@ export class SupabaseCoachReviewRepository implements CoachReviewRepository {
     const programById = indexBy(programs.data ?? [], 'id');
     const dayById = indexBy(days.data ?? [], 'id');
     const questionById = indexBy(questions.data ?? [], 'id');
+    const optionById = indexBy(options.data ?? [], 'id');
+    const quizResultBySubmissionId = indexBy(quizResults.data ?? [], 'submission_id');
 
     return rows.map((submission) => {
       const enrollment = enrollmentById.get(submission.enrollment_id);
@@ -85,7 +92,9 @@ export class SupabaseCoachReviewRepository implements CoachReviewRepository {
         answers: (answers.data ?? []).filter((answer) => answer.submission_id === submission.id).map((answer) => ({
           ...answer,
           prompt: questionById.get(answer.question_id)?.prompt ?? 'Jawaban peserta',
+          selected_option_titles: answer.selected_option_ids.map((id) => optionById.get(id)?.title).filter((title): title is string => typeof title === 'string'),
         })),
+        quiz_result: quizResultBySubmissionId.get(submission.id) ?? null,
       });
       if (!result.success) throw new CoachReviewRepositoryError('unknown');
       return result.data;

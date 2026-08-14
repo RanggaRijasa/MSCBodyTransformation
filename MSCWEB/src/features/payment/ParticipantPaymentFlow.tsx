@@ -4,6 +4,7 @@ import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-nativ
 
 import type { PublicProgram } from '@/features/public/public-models';
 import { repeatableLocalFixtureCategory } from '@/features/participant/participant-program-policy';
+import { useAuth } from '@/shared/auth/AuthProvider';
 import { registerPrivateObjectUrl } from '@/shared/auth/private-cache';
 import { isLocalDevelopmentEnvironment } from '@/shared/config/public-environment';
 import { rupiahFormatter } from '@/shared/design/formatters';
@@ -23,6 +24,8 @@ import { paymentStatusPresentation, type PaymentOrder } from './payment-models';
 
 export function ParticipantPaymentFlow({ program }: { program: PublicProgram }) {
   const { colors } = useAppTheme();
+  const { state } = useAuth();
+  const isCoach = state.status === 'authenticated' && state.account.role === 'coach';
   const orders = useOwnPaymentOrders(program.id, program.pricing_mode === 'paid');
   const createOrder = useCreateProgramPaymentOrder();
   const enrollFree = useEnrollFreeProgram();
@@ -63,13 +66,13 @@ export function ParticipantPaymentFlow({ program }: { program: PublicProgram }) 
     <ScrollView contentContainerStyle={styles.screen} style={styles.scrollArea} testID="participant.enrollment.flow">
       <Card>
         <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>Daftar ke {program.title}</Text>
-        <Text style={[styles.body, { color: colors.secondaryText }]}>Pindai QR Coach untuk memastikan pendamping yang benar. Kode tidak dapat diketik atau disalin.</Text>
-        <Button label="Pindai QR Coach" icon="qr" loading={enrollFree.isPending || createOrder.isPending} onPress={() => setScannerVisible(true)} />
+        <Text style={[styles.body, { color: colors.secondaryText }]}>{isCoach ? 'Pindai QR Coach milikmu sendiri untuk melanjutkan. QR Coach lain tidak dapat digunakan.' : 'Pindai QR Coach untuk memastikan pendamping yang benar. Kode tidak dapat diketik atau disalin.'}</Text>
+        <Button label={isCoach ? 'Pindai QR Coach milikmu' : 'Pindai QR Coach'} icon="qr" loading={enrollFree.isPending || createOrder.isPending} onPress={() => setScannerVisible(true)} />
       </Card>
 
       {error ? <InlineMessage title="Belum dapat dilanjutkan" message={error} tone="destructive" /> : null}
       <Button label="Kembali ke detail program" tone="secondary" icon="back" onPress={() => router.back()} />
-      <Dialog visible={scannerVisible} title="Pindai QR Coach" onClose={() => setScannerVisible(false)}>
+      <Dialog visible={scannerVisible} title={isCoach ? 'Pindai QR Coach milikmu' : 'Pindai QR Coach'} onClose={() => setScannerVisible(false)}>
         <QRScanner onScan={(payload) => void handleScan(payload)} onClose={() => setScannerVisible(false)} />
       </Dialog>
     </ScrollView>

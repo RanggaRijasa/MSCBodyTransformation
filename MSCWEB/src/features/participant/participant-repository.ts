@@ -78,9 +78,11 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
   private readonly privateMedia = new SupabasePrivateMediaAdapter(this.client);
 
   async getProfile(): Promise<ParticipantProfile | null> {
+    const actorId = await this.getAuthenticatedUserId();
     const response = await this.client
       .from('profiles')
       .select('public_profile_id, display_name, city, provider_avatar_url')
+      .eq('user_id', actorId)
       .maybeSingle();
     if (response.error !== null) throw mapRepositoryError(response.error);
     if (response.data === null) return null;
@@ -90,9 +92,11 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
   }
 
   async listEnrollments(): Promise<ParticipantEnrollment[]> {
+    const actorId = await this.getAuthenticatedUserId();
     const response = await this.client
       .from('program_enrollments')
       .select('id, program_id, coach_id, status, enrolled_at, completed_at')
+      .eq('participant_id', actorId)
       .order('enrolled_at', { ascending: false });
     return parseRows(response.data, response.error, enrollmentSchema);
   }
@@ -103,17 +107,23 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
   }
 
   async listSubmissions(): Promise<ParticipantSubmission[]> {
+    const enrollmentIds = (await this.listEnrollments()).map((enrollment) => enrollment.id);
+    if (enrollmentIds.length === 0) return [];
     const response = await this.client
       .from('step_submissions')
       .select('id, enrollment_id, step_id, attempt_sequence, status, review_note, submitted_at')
+      .in('enrollment_id', enrollmentIds)
       .order('attempt_sequence', { ascending: false });
     return parseRows(response.data, response.error, submissionSchema);
   }
 
   async listScores(): Promise<ParticipantScore[]> {
+    const enrollmentIds = (await this.listEnrollments()).map((enrollment) => enrollment.id);
+    if (enrollmentIds.length === 0) return [];
     const response = await this.client
       .from('program_scores')
-      .select('enrollment_id, activity_points, quiz_points, weight_points, adjustment_points, progress_percentage, rank, recalculated_at');
+      .select('enrollment_id, activity_points, quiz_points, weight_points, adjustment_points, progress_percentage, rank, recalculated_at')
+      .in('enrollment_id', enrollmentIds);
     return parseRows(response.data, response.error, scoreSchema);
   }
 
@@ -208,6 +218,14 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
       request_idempotency_key: command.idempotencyKey,
     });
     if (response.error !== null) throw mapRepositoryError(response.error);
+  }
+
+  private async getAuthenticatedUserId(): Promise<string> {
+    const response = await this.client.auth.getUser();
+    if (response.error !== null || response.data.user === null) {
+      throw new ParticipantRepositoryError('sessionExpired');
+    }
+    return response.data.user.id;
   }
 }
 

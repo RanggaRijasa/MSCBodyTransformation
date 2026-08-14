@@ -11,10 +11,12 @@ export default function ParticipantPaymentRoute() {
   const programId = typeof params.programId === 'string' ? params.programId : '';
   const { state } = useAuth();
   const program = useProgram(programId);
-  const authorized = state.status === 'authenticated' && state.account.role === 'participant';
+  const authorized = state.status === 'authenticated'
+    && (state.account.role === 'participant' || state.account.role === 'coach');
+  const role = state.status === 'authenticated' ? state.account.role : 'guest';
 
   return (
-    <AppShell role={authorized ? 'participant' : 'guest'} activeRoute="programs" title="Pendaftaran program">
+    <AppShell role={authorized ? role : 'guest'} activeRoute="programs" title="Pendaftaran program">
       {!authorized ? <StateView kind="forbidden" /> : program.isPending ? <StateView kind="loading" /> : program.isError ? <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void program.refetch()} />} /> : program.data ? <ParticipantPaymentFlow program={program.data} /> : <StateView kind="empty" />}
     </AppShell>
   );

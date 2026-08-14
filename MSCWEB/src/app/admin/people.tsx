@@ -1,5 +1,9 @@
-import { RoleShellScreen } from '@/shared/navigation/RoleShellScreen';
+import { AdminCoachApplications } from '@/features/coach/AdminCoachApplicationComponents';
+import { useAuth } from '@/shared/auth/AuthProvider';
+import { AppShell } from '@/shared/navigation/AppShell';
 
 export default function AdminPeopleRoute() {
-  return <RoleShellScreen role="admin" activeRoute="people" title="Orang" description="Area Peserta, Coach, dan Admin menunggu kontrak authority fase Admin." />;
+  const { state } = useAuth();
+  const authorized = state.status === 'authenticated' && state.account.role === 'admin';
+  return <AppShell role="admin" activeRoute="people" title="Orang" subtitle="Aplikasi dan aktivasi Coach"><AdminCoachApplications authorized={authorized} /></AppShell>;
 }
