@@ -140,6 +140,7 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 - `UX-AI-006` Rating 1–2 MUST disertai alasan rubric yang spesifik dan netral. Hasil ambigu MUST menggunakan 3 atau lebih, bukan menghukum Participant.
 - `UX-AI-007` Coach tidak melihat input bintang manual pada alur normal. Aksi koreksi, bila tersedia bagi Coach/Admin, MUST berada di menu sekunder, meminta alasan, dan menjelaskan bahwa poin tidak berubah.
 - `UX-AI-008` Insight dan alasan rating MUST ditampilkan dalam Bahasa Indonesia yang natural. Istilah teknis provider, raw JSON, atau kalimat bahasa Inggris MUST tidak terlihat pada UI Participant, Coach, maupun Admin.
+- `UX-AI-009` Card insight MUST menampilkan paling banyak dua kalimat pendek. UI MUST tidak memotong kalimat dengan ellipsis; output yang melampaui kontrak diganti server dengan fallback valid sebelum dirender.
 
 ## 5. Responsive behavior
 

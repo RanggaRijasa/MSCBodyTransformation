@@ -22,6 +22,7 @@ import { PersonSimpleRunIcon } from 'phosphor-react-native/src/icons/PersonSimpl
 import { QrCodeIcon } from 'phosphor-react-native/src/icons/QrCode';
 import { RankingIcon } from 'phosphor-react-native/src/icons/Ranking';
 import { SquaresFourIcon } from 'phosphor-react-native/src/icons/SquaresFour';
+import { StarIcon } from 'phosphor-react-native/src/icons/Star';
 import { SlidersHorizontalIcon } from 'phosphor-react-native/src/icons/SlidersHorizontal';
 import { TrophyIcon } from 'phosphor-react-native/src/icons/Trophy';
 import { UploadSimpleIcon } from 'phosphor-react-native/src/icons/UploadSimple';
@@ -66,6 +67,7 @@ export type MSCIconName =
   | 'reviewEvidence'
   | 'search'
   | 'settings'
+  | 'star'
   | 'tie'
   | 'trophy'
   | 'upload'
@@ -106,6 +108,7 @@ const semanticIcons: Record<MSCIconName, IconComponent> = {
   reviewEvidence: ChecksIcon,
   search: MagnifyingGlassIcon,
   settings: GearSixIcon,
+  star: StarIcon,
   tie: EqualsIcon,
   trophy: TrophyIcon,
   upload: UploadSimpleIcon,

@@ -1070,6 +1070,24 @@ export type Database = {
           },
         ]
       }
+      food_insight_jobs: {
+        Row: { id: string; submission_id: string; answer_id: string; question_id: string; analysis_version: string; rubric: string | null; rubric_version: string | null; status: string; attempt_count: number; max_attempts: number; next_attempt_at: string; lease_token: string | null; lease_expires_at: string | null; terminal_error_code: string | null; created_at: string; updated_at: string; completed_at: string | null }
+        Insert: { id?: string; submission_id: string; answer_id: string; question_id: string; analysis_version: string; rubric?: string | null; rubric_version?: string | null; status?: string; attempt_count?: number; max_attempts?: number; next_attempt_at?: string; lease_token?: string | null; lease_expires_at?: string | null; terminal_error_code?: string | null; created_at?: string; updated_at?: string; completed_at?: string | null }
+        Update: { id?: string; submission_id?: string; answer_id?: string; question_id?: string; analysis_version?: string; rubric?: string | null; rubric_version?: string | null; status?: string; attempt_count?: number; max_attempts?: number; next_attempt_at?: string; lease_token?: string | null; lease_expires_at?: string | null; terminal_error_code?: string | null; created_at?: string; updated_at?: string; completed_at?: string | null }
+        Relationships: []
+      }
+      food_insight_results: {
+        Row: { id: string; job_id: string; submission_id: string; question_id: string; analysis_version: string; policy_version: string; output_policy_version: string; provider_name: string; model_alias: string; detected_kind: string; protein_grams: number | null; carbohydrate_grams: number | null; fat_grams: number | null; calorie_kcal: number | null; ai_rating: number; effective_rating: number; confidence: number; reason_code: string; insight_sentences: string[]; version: number; created_at: string; updated_at: string }
+        Insert: { id?: string; job_id: string; submission_id: string; question_id: string; analysis_version: string; policy_version: string; output_policy_version: string; provider_name: string; model_alias: string; detected_kind: string; protein_grams?: number | null; carbohydrate_grams?: number | null; fat_grams?: number | null; calorie_kcal?: number | null; ai_rating: number; effective_rating: number; confidence: number; reason_code: string; insight_sentences: string[]; version?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; job_id?: string; submission_id?: string; question_id?: string; analysis_version?: string; policy_version?: string; output_policy_version?: string; provider_name?: string; model_alias?: string; detected_kind?: string; protein_grams?: number | null; carbohydrate_grams?: number | null; fat_grams?: number | null; calorie_kcal?: number | null; ai_rating?: number; effective_rating?: number; confidence?: number; reason_code?: string; insight_sentences?: string[]; version?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      food_insight_corrections: {
+        Row: { id: string; result_id: string; actor_id: string; previous_rating: number; corrected_rating: number; reason: string; idempotency_key: string; created_at: string }
+        Insert: { id?: string; result_id: string; actor_id: string; previous_rating: number; corrected_rating: number; reason: string; idempotency_key: string; created_at?: string }
+        Update: { id?: string; result_id?: string; actor_id?: string; previous_rating?: number; corrected_rating?: number; reason?: string; idempotency_key?: string; created_at?: string }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_purpose: string
@@ -1397,6 +1415,9 @@ export type Database = {
       }
       program_questions: {
         Row: {
+          analysis_mode: string
+          analysis_rubric: string | null
+          analysis_rubric_version: string | null
           id: string
           kind: string
           prompt: string
@@ -1404,6 +1425,9 @@ export type Database = {
           step_id: string
         }
         Insert: {
+          analysis_mode?: string
+          analysis_rubric?: string | null
+          analysis_rubric_version?: string | null
           id?: string
           kind: string
           prompt: string
@@ -1411,6 +1435,9 @@ export type Database = {
           step_id: string
         }
         Update: {
+          analysis_mode?: string
+          analysis_rubric?: string | null
+          analysis_rubric_version?: string | null
           id?: string
           kind?: string
           prompt?: string
@@ -2228,6 +2255,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      list_public_food_question_configs: { Args: { target_question_ids: string[] }; Returns: Json[] }
+      enqueue_food_insight: { Args: { target_submission_id: string; target_analysis_version?: string }; Returns: string | null }
+      reconcile_food_insight_jobs: { Args: { target_analysis_version?: string }; Returns: number }
+      claim_food_insight_job: { Args: { lease_seconds?: number; target_submission_id?: string }; Returns: Json }
+      complete_food_insight_job: { Args: { target_job_id: string; target_lease_token: string; validated_result: Json; provider_name: string; model_alias: string }; Returns: string }
+      fail_food_insight_job: { Args: { target_job_id: string; target_lease_token: string; error_code: string; retryable: boolean }; Returns: string }
+      correct_food_insight_rating: {
+        Args: { target_result_id: string; expected_version: number; corrected_rating: number; correction_reason: string; request_idempotency_key: string }
+        Returns: Database['public']['Tables']['food_insight_results']['Row']
+        SetofOptions: { from: '*'; to: 'food_insight_results'; isOneToOne: true; isSetofReturn: false }
+      }
       admin_adjust_score: {
         Args: {
           points: number
@@ -3849,4 +3887,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

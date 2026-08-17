@@ -15,6 +15,9 @@ const publicProgramQuestionSchema = z.object({
   question_order: z.number().int(),
   kind: z.string(),
   prompt: z.string(),
+  analysis_mode: z.enum(['none', 'food']).default('none'),
+  analysis_rubric: nullableText,
+  analysis_rubric_version: nullableText,
   program_question_options: z.array(publicProgramQuestionOptionSchema).default([]),
 }).passthrough();
 

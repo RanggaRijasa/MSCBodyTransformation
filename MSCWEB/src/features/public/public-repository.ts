@@ -40,7 +40,7 @@ export class SupabasePublicRepository implements PublicRepository {
       result_limit: 50,
       result_offset: 0,
     });
-    return parseRows(data, error, publicProgramSchema);
+    return this.hydrateFoodQuestionConfigs(parseRows(data, error, publicProgramSchema));
   }
 
   async getProgram(id: string): Promise<PublicProgram | null> {
@@ -49,7 +49,7 @@ export class SupabasePublicRepository implements PublicRepository {
       result_limit: 1,
       result_offset: 0,
     });
-    return parseRows(data, error, publicProgramSchema)[0] ?? null;
+    return (await this.hydrateFoodQuestionConfigs(parseRows(data, error, publicProgramSchema)))[0] ?? null;
   }
 
   async listCoaches(): Promise<PublicCoach[]> {
@@ -88,6 +88,18 @@ export class SupabasePublicRepository implements PublicRepository {
       result_offset: 0,
     });
     return parseRows(data, error, publicWinnerPosterSchema);
+  }
+
+  private async hydrateFoodQuestionConfigs(programs: PublicProgram[]): Promise<PublicProgram[]> {
+    const questionIds = programs.flatMap((program) => program.program_days.flatMap((day) => day.program_steps.flatMap((step) => step.program_questions.map((question) => question.id))));
+    if (questionIds.length === 0) return programs;
+    const response = await this.client.rpc('list_public_food_question_configs', { target_question_ids: questionIds });
+    if (response.error) throw new PublicRepositoryError();
+    const schema = z.array(z.object({ id: z.string().uuid(), analysis_mode: z.enum(['none', 'food']), analysis_rubric: z.string().nullable(), analysis_rubric_version: z.string().nullable() }));
+    const parsed = schema.safeParse(response.data ?? []);
+    if (!parsed.success) throw new PublicRepositoryError();
+    const configs = new Map(parsed.data.map((config) => [config.id, config]));
+    return programs.map((program) => ({ ...program, program_days: program.program_days.map((day) => ({ ...day, program_steps: day.program_steps.map((step) => ({ ...step, program_questions: step.program_questions.map((question) => ({ ...question, ...(configs.get(question.id) ?? {}) })) })) })) }));
   }
 }
 

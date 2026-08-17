@@ -1,6 +1,6 @@
 # MSCWEB W06.5 — Async food insight and AI star rating
 
-Status: `Not started`  
+Status: `Completed`  
 Autonomy: `A` with deterministic local/fake provider; `B` for a real OpenRouter smoke key; `D` for production secret/deployment  
 Depends on: W04 submission/scoring authority and W06 Coach review/profile foundation
 
@@ -23,7 +23,7 @@ Add asynchronous food-photo analysis that estimates macro values, writes support
 
 - question-level `food` analysis configuration;
 - durable/idempotent analysis job and result contract in local Supabase;
-- server-side `FoodVisionProvider` plus OpenRouter/OpenAI-compatible adapter;
+- server-side `FoodVisionProvider` plus OpenRouter/OpenAI-compatible adapter dengan default `google/gemma-4-31b-it:free`;
 - schema/range/favorable-rating validator;
 - Participant and Coach insight UI with pending/available/unavailable/error states;
 - required audited correction operation plus secondary Coach correction path for clearly incorrect rating; W07 adds the Admin UI;
@@ -32,55 +32,59 @@ Add asynchronous food-photo analysis that estimates macro values, writes support
 
 ## Mandatory simulator gate
 
-- [ ] Launch the current iOS Participant photo-submission and Coach evidence detail/rating flows.
-- [ ] Record where manual stars appear, state order, labels, and whether rating changes approval/poin in the native prototype.
-- [ ] Record the intentional web divergence: AI replaces routine manual star entry while approval and points keep their existing authority paths.
+- [x] Launch the current iOS Participant photo-submission and Coach evidence detail/rating flows.
+- [x] Record where manual stars appear, state order, labels, and whether rating changes approval/poin in the native prototype.
+- [x] Record the intentional web divergence: AI replaces routine manual star entry while approval and points keep their existing authority paths.
 
 ## Checklist
 
 ### Contract and migration
 
-- [ ] Add explicit analysis mode only to eligible photo questions; default remains `none`.
-- [ ] Add one durable job/result per `submission_id + analysis_version`, status transitions, attempts, retry schedule, and typed terminal errors.
-- [ ] Best-effort enqueue only after a valid submission commit; enqueue failure cannot roll back submission/poin.
-- [ ] Add an idempotent reconciliation scan that finds every eligible committed submission without its analysis-version job and creates the missing job.
-- [ ] Store only validated result/version metadata, never raw provider request/response.
-- [ ] RLS allows Participant owner, assigned Coach, and authorized Admin scope only; Guest and unrelated Coach denied.
+- [x] Add explicit analysis mode only to eligible photo questions; default remains `none`.
+- [x] Add one durable job/result per `submission_id + analysis_version`, status transitions, attempts, retry schedule, and typed terminal errors.
+- [x] Best-effort enqueue only after a valid submission commit; enqueue failure cannot roll back submission/poin.
+- [x] Add an idempotent reconciliation scan that finds every eligible committed submission without its analysis-version job and creates the missing job.
+- [x] Store only validated result/version metadata, never raw provider request/response.
+- [x] RLS allows Participant owner, assigned Coach, and authorized Admin scope only; Guest and unrelated Coach denied.
 
 ### Provider boundary
 
-- [ ] Define `FoodVisionProvider` in server/domain boundary without provider SDK types.
-- [ ] Implement OpenRouter through `fetch` using server-only `FOOD_AI_PROVIDER`, `BASE_URL`, `API_KEY`, `MODEL`, and version config.
-- [ ] Keep actual key out of repository, browser bundle, logs, fixtures, screenshots, and local committed env files.
-- [ ] Prove another fake OpenAI-compatible provider works by environment/config change only.
-- [ ] Document that noncompatible endpoint/schema needs a new adapter; do not claim universal API-key-only portability.
+- [x] Define `FoodVisionProvider` in server/domain boundary without provider SDK types.
+- [x] Implement OpenRouter through `fetch` using server-only `FOOD_AI_PROVIDER`, `BASE_URL`, `API_KEY`, `MODEL`, and version config.
+- [x] Read the OpenRouter model slug only from `FOOD_AI_MODEL`; changing to another compatible OpenRouter model requires environment change and restart/redeploy, not feature/domain edits.
+- [x] Send `reasoning: { effort: "none", exclude: true }` and never store/forward reasoning content.
+- [x] Add preflight/health validation for image input, text output, structured response, and optional/off reasoning; incompatible model fails only the secondary insight job.
+- [x] Keep actual key out of repository, browser bundle, logs, fixtures, screenshots, and local committed env files.
+- [x] Prove another fake OpenAI-compatible provider works by environment/config change only.
+- [x] Document that noncompatible endpoint/schema needs a new adapter; do not claim universal API-key-only portability.
 
 ### Result and favorable rating
 
-- [ ] Validate `food | drink | shake | not_food | uncertain`, optional macro values, 1–5 rating, confidence, allowlisted reason, and concise Indonesian insight.
-- [ ] Prompt/schema requires Bahasa Indonesia; reject or replace non-Indonesian insight with a deterministic Indonesian fallback instead of exposing raw provider text.
-- [ ] Use 4 as the normal default for a plausible food/drink/shake without a clear major mismatch.
-- [ ] Use 5 only for strong rubric match and 3 for ambiguity/mixed evidence.
-- [ ] Use server-owned versioned policy `food_rating_policy_v1`: confidence threshold `>= 0.90`; rating 1 only for `not_food_for_required_food`; rating 2 only for `severe_explicit_rubric_mismatch`; both require a published explicit rubric.
-- [ ] Server clamps every other 1–2 outcome to 3/`uncertain`; model/provider output cannot change the threshold or reason allowlist.
-- [ ] Never infer discipline, character, body shape, diagnosis, allergens, spoilage, or food safety from the image.
-- [ ] Keep AI/corrected rating separate from step points, approval state, and leaderboard ledger.
+- [x] Validate `food | drink | shake | not_food | uncertain`, optional macro values, 1–5 rating, confidence, allowlisted reason, and concise Indonesian insight.
+- [x] Prompt/schema requires `insightSentences` with one or two complete Bahasa Indonesia sentences, each at most 80 characters and at most 160 characters combined.
+- [x] Reject or replace overlong/non-Indonesian insight with a deterministic Indonesian fallback instead of truncating or exposing raw provider text.
+- [x] Use 4 as the normal default for a plausible food/drink/shake without a clear major mismatch.
+- [x] Use 5 only for strong rubric match and 3 for ambiguity/mixed evidence.
+- [x] Use server-owned versioned policy `food_rating_policy_v1`: confidence threshold `>= 0.90`; rating 1 only for `not_food_for_required_food`; rating 2 only for `severe_explicit_rubric_mismatch`; both require a published explicit rubric.
+- [x] Server clamps every other 1–2 outcome to 3/`uncertain`; model/provider output cannot change the threshold or reason allowlist.
+- [x] Never infer discipline, character, body shape, diagnosis, allergens, spoilage, or food safety from the image.
+- [x] Keep AI/corrected rating separate from step points, approval state, and leaderboard ledger.
 
 ### Privacy-minimal flow
 
-- [ ] Reuse W04 orientation/resize/metadata-removal pipeline before provider delivery.
-- [ ] Send image bytes plus the minimum allowlisted rubric; do not send identity, weight, free-form profile data, object path, or signed URL.
-- [ ] Show one disclosure before food-photo submission and ask users to avoid faces/documents; no separate consent checkbox.
-- [ ] Follow existing submission retention/deletion lifecycle; no separate ZDR/DPIA/withdrawal feature is required for baseline.
-- [ ] Reassess provider terms/data-use before production or when provider changes materially.
+- [x] Reuse W04 orientation/resize/metadata-removal pipeline before provider delivery.
+- [x] Send image bytes plus the minimum allowlisted rubric; do not send identity, weight, free-form profile data, object path, or signed URL.
+- [x] Show one disclosure before food-photo submission and ask users to avoid faces/documents; no separate consent checkbox.
+- [x] Follow existing submission retention/deletion lifecycle; no separate ZDR/DPIA/withdrawal feature is required for baseline.
+- [x] Reassess provider terms/data-use before production or when provider changes materially.
 
 ### UI and operations
 
-- [ ] Submission/poin state renders before AI and never shows a blocking AI spinner.
-- [ ] `FoodInsightCard` handles pending, result, not-food/uncertain, retry-safe failure, and unavailable states.
-- [ ] Macro uses `Perkiraan dari foto`; rating uses Phosphor `Star` plus accessible `n dari 5 bintang`.
-- [ ] Coach has no star input in normal review; correction is a secondary action for assigned Coach, reason-required, and audited. W06.5 owns the operation/Coach path; W07 adds equivalent authorized Admin UI.
-- [ ] Provider outage/rate-limit/invalid output has no effect on upload, approval, points, or other Coach actions.
+- [x] Submission/poin state renders before AI and never shows a blocking AI spinner.
+- [x] `FoodInsightCard` handles pending, result, not-food/uncertain, retry-safe failure, and unavailable states.
+- [x] Macro uses `Perkiraan dari foto`; rating uses Phosphor `Star` plus accessible `n dari 5 bintang`.
+- [x] Coach has no star input in normal review; correction is a secondary action for assigned Coach, reason-required, and audited. W06.5 owns the operation/Coach path; W07 adds equivalent authorized Admin UI.
+- [x] Provider outage/rate-limit/invalid output has no effect on upload, approval, points, or other Coach actions.
 
 ## Sub-agent plan
 
@@ -96,6 +100,8 @@ The primary agent owns schema/authority decisions, provider interface, prompt/ru
 - crash-between-commit-and-enqueue recovery test proving reconciliation creates exactly one missing job;
 - provider contract tests with deterministic food/drink/shake/not-food/ambiguous/invalid fixtures;
 - language-contract tests for Indonesian output, mixed-language output, English-only output, and deterministic Indonesian fallback;
+- request-shape test proving model comes from environment, reasoning effort is `none`, and output-token cap is applied;
+- model-swap test proving a second compatible OpenRouter slug needs configuration change only, plus incompatible-model safe failure;
 - local Supabase job idempotency/retry/RLS/concurrent correction tests;
 - `QA-JRN-010`, `QA-JRN-011`, and all `QA-AI-*` checks;
 - Playwright pending → result and provider-failure journeys on compact/wide;
@@ -119,3 +125,15 @@ The primary agent owns schema/authority decisions, provider interface, prompt/ru
 ## Progress log
 
 Append simulator evidence, migration/job versions, provider/model alias, prompt/rubric version, rating distribution fixtures, privacy/security tests, commands/results, external authorizations, and next item.
+
+### 2026-08-14 — W06.5 completed locally
+
+- Files: added migration `20260814122036_w06_5_async_food_insight.sql`, server provider/contracts/validator, local Edge Function worker, browser repository/query/card, Participant disclosure/enqueue wiring, Coach correction wiring, generated-type additions, and focused unit/integration/E2E coverage.
+- Simulator evidence: built and launched the current native iOS app on iPhone 17 Simulator. Participant photo submission presents the native camera/library actions before sending. Coach evidence detail places manual 1–5 stars after the submitted evidence; approval/rejection and authoritative points remain separate actions. Intentional web divergence: routine manual stars are removed from normal Coach review, AI supplies the secondary rating, and approval/points keep their existing server-owned paths. No native source or Xcode project file was changed.
+- Contract versions: analysis `food_insight_v1`; rating policy `food_rating_policy_v1`; output policy `food_insight_output_v1`; eligible rubric fixture `rubric_food_v1`; migration timestamp `20260814122036`.
+- Provider boundary: deterministic local provider alias `deterministic-food-fixture-v1`; OpenAI-compatible adapter defaults to `google/gemma-4-31b-it:free` only when explicitly configured. Provider, base URL, key, model, and worker secret remain server-only environment values. Noncompatible endpoint/schema requires a new adapter.
+- Rating fixtures: plausible food `4`, drink `4`, strong-rubric shake `5`, explicit-rubric/high-confidence not-food `1`, ambiguous `3`, and invalid/English/unsafe copy rejected or replaced with deterministic Indonesian fallback. Boundary tests cover confidence `0.89/0.90`, both severe reasons, missing rubric, mismatched kind/reason, unknown reason, invalid ranges, HTTP 429/503, and malformed JSON.
+- Privacy and authority evidence: W04 normalization runs before upload; worker sends downloaded bytes plus the minimum rubric only. Local RLS proves Participant owner, assigned Coach, and authorized Admin access while Guest, unrelated Participant, and unrelated Coach are denied. Reconciliation creates exactly one versioned job after missed enqueue; non-food photos create zero jobs. Automatic points are awarded before AI, remain unchanged after result/correction/retry, and correction is reason-required, audited, optimistic-concurrency-safe, and idempotent.
+- Commands passed: `npm run typecheck`; `npm run lint -- --no-cache`; `npm test` (`128` passed, `6` environment-skipped); explicit local `food-insight.local.test.ts` (`1` passed); `npm run build`; `npm run verify:bundle`; `npm run verify:pwa`; Playwright evidence review on `chromium-compact` and `chromium-desktop` (`4` passed). Browser inspection found no console warning/error; final bundles contain no provider credential marker or concrete private-media object path.
+- Local-only operation: the migration was applied to Supabase local and Colima/Supabase were left running. No real OpenRouter key, real-provider smoke, hosted Supabase deployment, production secret mutation, Git mutation, or native project change was performed. Real-provider smoke remains optional; hosted migration/function/secret deployment remains W09 authorization work.
+- Remaining W06.5 blockers: none. Next phase item: W07 Admin experience, including the authorized Admin correction UI over the W06.5 operation.

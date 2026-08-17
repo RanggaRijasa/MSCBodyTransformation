@@ -177,6 +177,9 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - `QA-AI-010` Disclosure AI dan anjuran menghindari wajah/dokumen terlihat sebelum submit, tetapi tidak ada checkbox consent terpisah pada baseline.
 - `QA-AI-011` Insight dan alasan rating menggunakan Bahasa Indonesia yang natural dan non-diagnostik, label `Perkiraan dari foto`, icon bintang Phosphor, dan tidak memberi klaim keamanan/medis dari foto.
 - `QA-AI-012` Output provider berbahasa Inggris, campuran yang tidak layak, raw JSON, atau istilah teknis provider MUST tidak dirender langsung; validator menggunakan retry terbatas atau fallback Bahasa Indonesia deterministic.
+- `QA-AI-013` Structured output MUST berisi satu atau dua `insightSentences`; setiap item maksimal 80 karakter dan total maksimal 160 karakter. Output kosong, tiga kalimat, overlong, atau kalimat terpotong MUST gagal validasi dan menggunakan fallback valid.
+- `QA-AI-014` Request OpenRouter memakai `FOOD_AI_MODEL=google/gemma-4-31b-it:free` sebagai default, `reasoning.effort=none`, `reasoning.exclude=true`, dan output-token cap. Reasoning response tidak disimpan.
+- `QA-AI-015` Mengganti `FOOD_AI_MODEL` ke compatible OpenRouter fixture/model tidak memerlukan perubahan feature/domain/adapter; model tanpa image, structured response, atau reasoning-off gagal aman tanpa memengaruhi submission, approval, atau poin.
 
 ## 7. Accessibility acceptance
 

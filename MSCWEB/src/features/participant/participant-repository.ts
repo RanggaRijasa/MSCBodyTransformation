@@ -195,6 +195,18 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
       const row = Array.isArray(response.data) ? response.data[0] : response.data;
       const result = submissionSchema.safeParse(row);
       if (!result.success) throw new ParticipantRepositoryError('unknown');
+      if (required.some((question) => question.analysis_mode === 'food')) {
+        void (async () => {
+          try {
+            await this.client.rpc('enqueue_food_insight', {
+              target_submission_id: result.data.id,
+              target_analysis_version: 'food_insight_v1',
+            });
+          } catch {
+            // Reconciliation repairs a missed secondary job; submission remains final.
+          }
+        })();
+      }
       command.onProgress?.(1, 'Bukti berhasil dikirim');
       return result.data;
     } catch (error) {

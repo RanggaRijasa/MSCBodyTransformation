@@ -116,6 +116,8 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-AI-009` Credential provider MUST hanya berada server-side. Browser MUST NOT menerima API key, raw provider request/response, atau instruksi sistem.
 - `PROD-AI-010` Sebelum submit foto makanan, UI MUST menampilkan disclosure singkat bahwa foto akan dianalisis otomatis oleh layanan AI. Baseline tidak memerlukan checkbox consent terpisah, ZDR khusus, DPIA terpisah, atau tombol withdraw khusus.
 - `PROD-AI-011` Seluruh insight, alasan rating, label hasil, dan fallback AI yang ditampilkan kepada pengguna MUST menggunakan Bahasa Indonesia yang ramah, ringkas, tidak menghakimi, dan tidak diagnostik. Raw output provider berbahasa lain MUST tidak ditampilkan langsung.
+- `PROD-AI-012` Insight utama MUST terdiri dari satu atau dua kalimat Bahasa Indonesia. Setiap kalimat MUST utuh dan tidak lebih dari 80 karakter; gabungan insight MUST tidak lebih dari 160 karakter.
+- `PROD-AI-013` Provider baseline MUST OpenRouter dengan model default `google/gemma-4-31b-it:free` dan reasoning dimatikan. Model slug MUST berasal dari konfigurasi server sehingga model OpenRouter lain yang kompatibel dapat dipilih tanpa mengubah feature/domain code.
 
 ## 5. Adaptasi web yang disengaja
 

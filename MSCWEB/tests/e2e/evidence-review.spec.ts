@@ -18,6 +18,7 @@ let programId = '';
 let stepId = '';
 let enrollmentId = '';
 let rejectStepId = '';
+let unavailableStepId = '';
 
 test.describe('W04 private evidence and Coach review', () => {
   test.beforeAll(async () => {
@@ -40,8 +41,10 @@ test.describe('W04 private evidence and Coach review', () => {
     const dayId = randomUUID();
     stepId = randomUUID();
     rejectStepId = randomUUID();
+    unavailableStepId = randomUUID();
     const questionId = randomUUID();
     const rejectQuestionId = randomUUID();
+    const unavailableQuestionId = randomUUID();
     enrollmentId = randomUUID();
     const today = localDate(0);
     expect((await service.from('programs').insert({
@@ -69,10 +72,12 @@ test.describe('W04 private evidence and Coach review', () => {
     expect((await service.from('program_steps').insert([
       { id: stepId, program_day_id: dayId, step_order: 1, title: 'Unggah bukti W04', instructions: 'Ambil foto yang jelas sesuai petunjuk.', content_kind: 'form', completion_policy: 'answer_all_questions', verification_mode: 'coach_review' },
       { id: rejectStepId, program_day_id: dayId, step_order: 2, title: 'Refleksi W04', instructions: 'Tuliskan refleksi singkat.', content_kind: 'form', completion_policy: 'answer_all_questions', verification_mode: 'coach_review' },
+      { id: unavailableStepId, program_day_id: dayId, step_order: 3, title: 'Foto insight tidak tersedia', instructions: 'Unggah foto untuk menguji kegagalan AI sekunder.', content_kind: 'form', completion_policy: 'answer_all_questions', verification_mode: 'coach_review' },
     ])).error).toBeNull();
     expect((await service.from('program_questions').insert([
-      { id: questionId, step_id: stepId, question_order: 1, kind: 'photo_upload', prompt: 'Bukti foto aktivitas' },
-      { id: rejectQuestionId, step_id: rejectStepId, question_order: 1, kind: 'long_answer', prompt: 'Apa yang sudah dilakukan?' },
+      { id: questionId, step_id: stepId, question_order: 1, kind: 'photo_upload', prompt: 'Bukti foto aktivitas', analysis_mode: 'food', analysis_rubric: 'Foto makanan perlu menampilkan sumber protein dan sayur.', analysis_rubric_version: 'rubric_food_v1' },
+      { id: rejectQuestionId, step_id: rejectStepId, question_order: 1, kind: 'long_answer', prompt: 'Apa yang sudah dilakukan?', analysis_mode: 'none', analysis_rubric: null, analysis_rubric_version: null },
+      { id: unavailableQuestionId, step_id: unavailableStepId, question_order: 1, kind: 'photo_upload', prompt: 'Foto makanan untuk kegagalan provider', analysis_mode: 'food', analysis_rubric: null, analysis_rubric_version: null },
     ])).error).toBeNull();
     expect((await service.from('program_enrollments').insert({ id: enrollmentId, program_id: programId, participant_id: participantId, coach_id: coachId, status: 'active' })).error).toBeNull();
     expect((await service.from('program_scores').insert({ enrollment_id: enrollmentId, activity_points: 0, quiz_points: 0, weight_points: 0, adjustment_points: 0, progress_percentage: 0 })).error).toBeNull();
@@ -89,6 +94,10 @@ test.describe('W04 private evidence and Coach review', () => {
 
   test('Participant submits normalized private photo and Coach approves it once', async ({ page }) => {
     test.skip(!canRun || !participantSession || !coachSession, 'Memerlukan Supabase lokal.');
+    const browserLog: string[] = [];
+    const pageErrors: string[] = [];
+    page.on('console', (message) => browserLog.push(message.text()));
+    page.on('pageerror', (error) => pageErrors.push(error.message));
     await installSession(page, participantSession);
     await page.goto(`/app/programs/${programId}?step=${stepId}`);
     await expect(page.getByTestId('participant.submission.form')).toBeVisible();
@@ -107,6 +116,26 @@ test.describe('W04 private evidence and Coach review', () => {
     const { data: answers } = await service.from('step_submission_answers').select('private_photo_path').eq('submission_id', submissionId);
     const objectPath = answers?.[0]?.private_photo_path as string;
     expect(objectPath).toContain(`${participantId}/${enrollmentId}/${submissionId}/`);
+    await expect(page.getByText('Analisis sedang diproses')).toBeVisible();
+    await expect.poll(async () => (await service.from('food_insight_jobs').select('id').eq('submission_id', submissionId)).data?.length).toBe(1);
+    const claimed = await service.rpc('claim_food_insight_job', { lease_seconds: 90, target_submission_id: submissionId });
+    const foodJob = claimed.data as { id: string; lease_token: string };
+    expect((await service.rpc('complete_food_insight_job', { target_job_id: foodJob.id, target_lease_token: foodJob.lease_token, provider_name: 'fake', model_alias: 'deterministic-food-fixture-v1', validated_result: { detected_kind: 'food', protein_grams: 28, carbohydrate_grams: 42, fat_grams: 14, calorie_kcal: 410, rating: 4, confidence: 0.84, reason_code: 'plausible_food', insight_sentences: ['Porsi tampak cukup seimbang untuk panduan program.'] } })).error).toBeNull();
+    await expect(page.getByLabel('4 dari 5 bintang')).toBeVisible();
+    await expect(page.getByText('410 kkal')).toBeVisible();
+
+    await page.goto(`/app/programs/${programId}?step=${unavailableStepId}`);
+    await page.getByLabel('Ambil atau pilih foto').setInputFiles({ name: 'gagal.png', mimeType: 'image/png', buffer: onePixelPng() });
+    await page.getByRole('button', { name: 'Kirim jawaban' }).click();
+    await page.getByRole('button', { name: 'Kirim sekarang' }).click();
+    await expect.poll(async () => (await service.from('step_submissions').select('id').eq('step_id', unavailableStepId).maybeSingle()).data?.id).not.toBeUndefined();
+    const unavailableSubmissionId = (await service.from('step_submissions').select('id').eq('step_id', unavailableStepId).single()).data?.id as string;
+    await expect.poll(async () => (await service.from('food_insight_jobs').select('id').eq('submission_id', unavailableSubmissionId)).data?.length).toBe(1);
+    const unavailableClaim = await service.rpc('claim_food_insight_job', { lease_seconds: 90, target_submission_id: unavailableSubmissionId });
+    const unavailableJob = unavailableClaim.data as { id: string; lease_token: string };
+    expect((await service.rpc('fail_food_insight_job', { target_job_id: unavailableJob.id, target_lease_token: unavailableJob.lease_token, error_code: 'incompatible_model', retryable: false })).error).toBeNull();
+    await expect(page.getByText('Insight tidak tersedia')).toBeVisible();
+    expect((await service.from('step_submissions').select('status').eq('id', unavailableSubmissionId).single()).data?.status).toBe('pending');
 
     await page.evaluate(() => globalThis.localStorage.clear());
     await installSession(page, coachSession);
@@ -124,11 +153,14 @@ test.describe('W04 private evidence and Coach review', () => {
     await expect(page.getByRole('heading', { name: 'Riwayat program' })).toBeVisible();
     await page.getByRole('button', { name: 'Kembali ke filter bukti' }).click();
     await page.getByRole('button', { name: 'Terapkan filter' }).click();
-    await expect(page.getByText('Peserta W04')).toBeVisible();
-    await page.getByRole('button', { name: /Peserta W04/ }).click();
+    const foodReview = page.getByRole('button', { name: /Peserta W04, Unggah bukti W04/ });
+    await expect(foodReview).toBeVisible();
+    await foodReview.click();
     await expect(page.getByText('Persetujuan Coach diperlukan')).toBeVisible();
     await expect(page.getByText('Ambil foto yang jelas sesuai petunjuk.')).toBeVisible();
     await expect(page.getByLabel('Bukti foto peserta')).toBeVisible();
+    await expect(page.getByLabel('4 dari 5 bintang')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Koreksi rating AI' })).toBeVisible();
     await page.getByRole('button', { name: 'Perbesar bukti foto' }).click();
     await expect(page.getByRole('button', { name: 'Perkecil bukti foto' })).toBeVisible();
     await page.getByRole('button', { name: 'Setujui • 10 poin' }).click();
@@ -143,6 +175,9 @@ test.describe('W04 private evidence and Coach review', () => {
     const { count } = await service.from('audit_events').select('id', { count: 'exact', head: true }).eq('subject_id', submissionId).eq('kind', 'submission_approved');
     expect(count).toBe(1);
     expect(await page.locator('body').innerText()).not.toContain(objectPath);
+    expect(browserLog.join('\n')).not.toContain(objectPath);
+    expect(browserLog.join('\n')).not.toMatch(/FOOD_AI_|sk-or-/u);
+    expect(pageErrors).toEqual([]);
   });
 
   test('Coach rejection requires a reason and Participant can see actionable feedback', async ({ page }) => {

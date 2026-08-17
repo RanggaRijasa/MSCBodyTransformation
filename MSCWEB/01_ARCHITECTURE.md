@@ -174,7 +174,7 @@ FoodVisionProvider.analyze(normalizedImage, programRubric)
   → starRating: 1...5
   → confidence: 0...1
   → reasonCode
-  → insightText
+  → insightSentences: string[1...2]
 ```
 
 Konfigurasi server-side minimum:
@@ -183,9 +183,24 @@ Konfigurasi server-side minimum:
 FOOD_AI_PROVIDER=openrouter
 FOOD_AI_BASE_URL=https://openrouter.ai/api/v1
 FOOD_AI_API_KEY=<server secret>
-FOOD_AI_MODEL=google/gemma-4-26b-a4b-it:free
+FOOD_AI_MODEL=google/gemma-4-31b-it:free
+FOOD_AI_REASONING_EFFORT=none
+FOOD_AI_MAX_OUTPUT_TOKENS=256
 FOOD_AI_PROMPT_VERSION=<version>
+FOOD_AI_OUTPUT_POLICY_VERSION=food_insight_output_v1
 ```
+
+Contoh pergantian model di OpenRouter tanpa perubahan kode:
+
+```text
+# default free
+FOOD_AI_MODEL=google/gemma-4-31b-it:free
+
+# contoh pindah ke endpoint berbayar dari model yang sama
+FOOD_AI_MODEL=google/gemma-4-31b-it
+```
+
+API key dan base URL tetap sama selama provider-nya OpenRouter. Slug model lain juga dapat dipakai bila lulus capability preflight.
 
 - `ARCH-AI-001` Feature/domain MUST bergantung pada `FoodVisionProvider`, bukan OpenRouter SDK atau endpoint langsung.
 - `ARCH-AI-002` Adapter awal SHOULD memakai `fetch` dan schema output tervalidasi agar tidak menambah provider SDK ke browser maupun shared domain.
@@ -193,7 +208,9 @@ FOOD_AI_PROMPT_VERSION=<version>
 - `ARCH-AI-004` Worker MUST mengirim hanya byte foto ternormalisasi dan rubric minimum. Nama, user ID, berat, caption bebas, object path, signed URL, dan data program lain MUST tidak dikirim kecuali field rubric yang sudah di-allowlist.
 - `ARCH-AI-005` Server validator MUST memverifikasi schema, rentang macro/rating/confidence, reason code, dan favorable-rating guard sebelum menyimpan hasil.
 - `ARCH-AI-006` Hasil MUST menyimpan provider/model alias, prompt/rubric version, status, attempt count, dan timestamps untuk reproducibility tanpa menyimpan raw request/response provider.
-- `ARCH-AI-007` Provider prompt/schema MUST meminta `insightText` Bahasa Indonesia. Server MUST menolak, meregenerasi secara terbatas, atau mengganti output non-Indonesia dengan fallback Indonesia tervalidasi; client MUST tidak menerjemahkan raw output secara ad hoc.
+- `ARCH-AI-007` Provider prompt/schema MUST meminta array `insightSentences` berisi satu atau dua kalimat Bahasa Indonesia, masing-masing maksimal 80 karakter. Server menggabungkannya menjadi `insightText` untuk UI dan MUST menolak, meregenerasi secara terbatas, atau mengganti output invalid/non-Indonesia dengan fallback Indonesia tervalidasi; client MUST tidak menerjemahkan atau memotong raw output secara ad hoc.
+- `ARCH-AI-008` Request OpenRouter MUST mengirim model dari `FOOD_AI_MODEL`, `reasoning: { effort: "none", exclude: true }`, output-token cap, dan structured `response_format`. Reasoning content yang tetap muncul MUST diabaikan dan tidak disimpan.
+- `ARCH-AI-009` Mengganti model dalam OpenRouter SHOULD hanya memerlukan perubahan `FOOD_AI_MODEL` dan restart/redeploy server. Preflight/health check MUST memastikan model baru menerima image input, menghasilkan text, mendukung structured response, dan tidak mewajibkan reasoning; model incompatible gagal aman tanpa memengaruhi submission/poin.
 
 ## 8. Rendering strategy
 
@@ -223,3 +240,6 @@ offline | timeout | rateLimited | storageRejected | unknown
 - [Expo: Publish websites](https://docs.expo.dev/guides/publishing-websites/)
 - [Supabase: Google Auth](https://supabase.com/docs/guides/auth/social-login/auth-google)
 - [Cloudflare: Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
+- [OpenRouter: Gemma 4 31B free](https://openrouter.ai/google/gemma-4-31b-it%3Afree/api)
+- [OpenRouter: Quickstart and model field](https://openrouter.ai/docs/quickstart)
+- [OpenRouter: Reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens)

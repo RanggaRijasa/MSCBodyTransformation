@@ -9,6 +9,7 @@ import { registerPrivateObjectUrl } from '@/shared/auth/private-cache';
 import { componentTokens, primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { Button, Card, InlineMessage, ProgressBar } from '@/shared/ui/primitives';
+import { FoodInsightCard } from '@/features/food-insight/FoodInsightCard';
 
 type DraftAnswer = ParticipantQuestionAnswer & { previewUrl?: string };
 
@@ -123,6 +124,13 @@ export function ParticipantSubmissionForm({
           ))}
         </Card>
       )}
+
+      {interactiveQuestions(step).some((question) => question.analysis_mode === 'food') ? (
+        <>
+          {!submission ? <InlineMessage title="Analisis foto dengan AI" message="Foto makanan ini akan dianalisis otomatis oleh layanan AI. Hindari wajah dan dokumen pribadi di dalam foto." tone="warning" /> : null}
+          <FoodInsightCard submissionId={submission?.id} />
+        </>
+      ) : null}
 
       {progress.value > 0 && progress.value < 1 ? (
         <View accessibilityLiveRegion="polite">

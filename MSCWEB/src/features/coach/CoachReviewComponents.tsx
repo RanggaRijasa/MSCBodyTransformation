@@ -14,6 +14,7 @@ import {
 import type { CoachReviewItem } from './coach-review-models';
 import { useCoachReviewDecision, useCoachReviews } from './coach-review-queries';
 import { getCoachReviewRepository } from './coach-review-repository';
+import { FoodInsightCard } from '@/features/food-insight/FoodInsightCard';
 import { componentTokens, primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { useResponsiveLayout } from '@/shared/design/useResponsiveLayout';
@@ -375,6 +376,7 @@ export function CoachReviewDetail({ submissionId }: { submissionId: string }) {
             </Card>
           ))}
           {item.quiz_result ? <QuizResult result={item.quiz_result} /> : null}
+          <FoodInsightCard submissionId={item.id} allowCorrection />
           <Text style={[styles.caption, styles.numeric, { color: colors.secondaryText }]}>Dikirim {formatDateTime(item.submitted_at, item.program.timezone)}</Text>
         </View>
         {item.review_note ? <InlineMessage title="Catatan pemeriksaan" message={item.review_note} tone={item.status === 'rejected' ? 'destructive' : 'info'} /> : null}
