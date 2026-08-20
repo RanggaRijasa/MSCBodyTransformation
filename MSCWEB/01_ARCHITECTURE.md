@@ -134,6 +134,29 @@ Folder nyata MAY disesuaikan sedikit dengan convention Expo, tetapi dependency d
 - `ARCH-AUTH-005` Role guard client hanya untuk UX. Authorization sebenarnya MUST ditegakkan RLS/RPC/Function.
 - `ARCH-AUTH-006` Logout dan session-invalid MUST membersihkan private caches, in-memory media, dan pending signed URLs.
 
+### 5.1 First-login onboarding state
+
+```text
+Google OAuth callback/session refresh
+  → get_my_session_context
+      guest/no session       → public shell
+      provisional            → /onboarding/profile
+      coach_handoff_pending  → current Coach onboarding/payment/status step
+      cleanup_pending        → cleanup/sign-out state
+      active participant     → preserved authorized route or /app
+      active coach/admin     → protected role root
+```
+
+- `ARCH-ONB-001` Auth state MUST distinguish `guest`, `onboarding`, and `active authenticated`; a profile row with role `participant` is insufficient to establish active Participant access.
+- `ARCH-ONB-002` Add a fixed session-context RPC returning role, onboarding status, account purpose, profile-completeness flags, provisional expiry, and safe current onboarding step. It MUST not return phone number, QR payload, payment proof/path, or editable metadata claims.
+- `ARCH-ONB-003` Central route guard MUST allow provisional sessions only public routes, OAuth callback, logout/cancel, and typed `/onboarding/*` destinations. UI guard and browser redirect do not replace RLS/RPC checks.
+- `ARCH-ONB-004` Safe intended route persists through OAuth/onboarding and is consumed only after `onboarding_status=active`; external/unauthorized/stale destinations fall back to the role root.
+- `ARCH-ONB-005` Add provisional-only `save_my_provisional_onboarding_profile`; do not narrow or repurpose shared `update_my_profile`, which remains compatible with active native/web profile editing. Reuse/harden `finalize_participant_onboarding`, `prepare_coach_application_handoff`, W06 Coach application, and W05/W06 manual-payment boundaries behind onboarding repository/use cases.
+- `ARCH-ONB-006` Coach proof completion MUST use one idempotent database wrapper/variant that validates and submits the prepared proof, changes order to `under_review`, and finalizes profile as active Participant in the same transaction. Provisional Coach onboarding MUST not call generic `submit_payment_evidence` followed by a second finalizer. Admin approval later activates Coach.
+- `ARCH-ONB-007` Explicit pre-proof cancellation uses a trusted two-phase receipt: authenticated `request_my_provisional_cancellation(idempotency_key)` validates/cancels artifacts, stores a private receipt, and sets cleanup pending; a server worker then removes media, revokes all sessions, and deletes Auth/profile. Retry before deletion returns the same receipt; after deletion the client converges to Guest and MUST not require an authenticated prior-success response.
+- `ARCH-ONB-008` Expired/abandoned provisional cleanup MUST extend existing scheduled cleanup to reconcile Coach application/order/media artifacts before Auth deletion. `beforeunload`/tab-close network calls MUST NOT be the cleanup authority.
+- `ARCH-ONB-009` Existing active accounts bypass first-login onboarding. Existing active Participant Coach application remains `/app/coach-application` and shares domain components without sharing provisional lifecycle state. Payment correction keeps the same application/order; terminal application rejection closes them and a later explicit reapplication creates a new version/history.
+
 ## 6. Routing dan navigation state
 
 Route group dapat disembunyikan oleh Expo Router. URL publik harus stabil, machine-readable, dan tidak bergantung pada copy UI.
@@ -143,6 +166,11 @@ Route group dapat disembunyikan oleh Expo Router. URL publik harus stabil, machi
 | `/` | landing |
 | `/login` | Google login |
 | `/auth/callback` | OAuth callback |
+| `/onboarding/profile` | Nama, HP, level, tujuan akun untuk provisional user |
+| `/onboarding/participant/coach` | scan/konfirmasi QR Coach lalu finalisasi Peserta |
+| `/onboarding/coach/eligibility` | syarat HOM STS/ICT dan harga Coach |
+| `/onboarding/coach/payment` | rekening/QRIS/upload bukti Coach provisional |
+| `/onboarding/coach/status` | pending/correction/rejected/active application state |
 | `/app` | role-aware entry |
 | `/app/home` | home/dashboard role aktif |
 | `/app/programs` | program root |

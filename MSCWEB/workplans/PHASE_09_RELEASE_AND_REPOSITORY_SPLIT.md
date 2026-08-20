@@ -34,6 +34,7 @@ Produce final release evidence, obtain explicit production authorizations, perfo
 - [ ] Hosted Supabase migration/function/Auth/Storage rollout reviewed and explicitly authorized.
 - [ ] Food AI provider terms/data-use, model availability, rate limits, spend ceiling, secret owner/rotation, and failure alert are reviewed; production provider secret is configured only through authorized server secret management.
 - [ ] Sales Overview production-read scope, Admin identities, ledger reconciliation sample, and no-export/no-PII response evidence are approved.
+- [ ] First-login production onboarding has approved Google callback/origins, provisional expiry/cleanup schedule, test identities, QR Coach fixture, cancellation cleanup, and no-private-access evidence.
 - [ ] Image Storage production inventory backfill, Trash/purge period, protected-state matrix, worker/operator/alerts, public-cache invalidation, and rollback/incident runbook are approved.
 - [ ] Cloudflare deployment/domain/DNS/secrets/headers reviewed and explicitly authorized.
 - [ ] Enforced candidate CSP has passed on an authorized preview with production-shaped OAuth/Supabase endpoints; any prior waiver is resolved before rollout.
@@ -42,6 +43,7 @@ Produce final release evidence, obtain explicit production authorizations, perfo
 - [ ] No production mutation occurs from an unapproved sub-agent.
 - [ ] Synthetic production AI smoke scope is separately authorized and does not use a real Participant photo.
 - [ ] Production media-management smoke uses only synthetic owned images with exact allowed trash/restore/purge and cleanup scope; no real user image may be deleted for smoke testing.
+- [ ] Production onboarding smoke has separate authorization for exact Google identity, Participant/Coach path, QR/payment proof, records allowed to persist, and Auth/profile/application/order/media cleanup.
 
 ## Repository split checklist
 
@@ -96,7 +98,7 @@ Production external actions remain primary-agent controlled and require exact au
 
 ## User input or authorization
 
-Required: all unresolved business/legal/brand inputs, exact production Supabase actions, financial-report read scope, media inventory/deletion activation, AI provider/secret activation, exact Cloudflare/domain actions, exact Git/repository actions, and launch decision.
+Required: all unresolved business/legal/brand inputs, exact production Supabase/Auth onboarding actions, financial-report read scope, media inventory/deletion activation, AI provider/secret activation, exact Cloudflare/domain actions, exact Git/repository actions, and launch decision.
 
 ## Progress log
 

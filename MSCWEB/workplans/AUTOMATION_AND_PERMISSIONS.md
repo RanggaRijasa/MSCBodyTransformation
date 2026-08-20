@@ -15,6 +15,7 @@ The following are authorized local, non-destructive actions within the approved 
 - generate design/reference assets and local PWA icon derivatives from approved source assets;
 - implement landing, Guest, Participant, Coach, Admin, and payment flows against local/mock data according to the active phase;
 - implement W06.5 with deterministic fake AI fixtures, provider contract tests, and local Supabase jobs without a real provider key;
+- implement W07.4 first-login onboarding remediation with local Google/provisional fixtures and synthetic QR/payment proof;
 - implement W07.5 Sales Overview against deterministic local ledger fixtures without external analytics;
 - implement W07.6 media inventory/Trash/restore/purge against synthetic local images only;
 - perform local security, privacy, concurrency, cache, offline, and responsive testing;
@@ -35,6 +36,7 @@ The following are authorized local, non-destructive actions within the approved 
 | Cloudflare noindex preview deployment authorization | real routing/OAuth/Supabase endpoint and enforced-CSP gate | 08 |
 | Optional OpenRouter runtime secret | one synthetic provider smoke; not required for deterministic W06.5 completion | 06.5 |
 | Colima/Supabase local plus synthetic media fixtures | W07.5 ledger integration and W07.6 Storage worker/race tests | 07.5/07.6 |
+| Existing local Google OAuth and browser camera permission | optional real callback/QR smoke after deterministic W07.4 tests | 07.4 |
 
 The user has already granted conceptual permission for iOS Simulator inspection and sub-agent use. System-level approval prompts may still appear when the local host requires them.
 
@@ -63,6 +65,7 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 - deploy or mutate hosted Supabase main;
 - configure a real food-AI provider secret, enable production analysis, or send any production/user photo to an external model;
 - deploy/activate media inventory backfill, Trash/purge worker, or delete/restore any hosted user image;
+- deploy Auth bootstrap/session/onboarding/cancel/cleanup changes or create/cancel/finalize a production registration identity;
 - run production Sales Overview reads or export financial/customer aggregates without an approved Admin/test scope;
 - configure production Google OAuth provider/redirects;
 - upload real bank/QRIS/payment destination data;
@@ -82,6 +85,7 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 3. W01: choose an authorized repository split now or explicitly defer it to W09.
 4. W05: provide business payment and cleanup-policy inputs for production-readiness; continue with test fixtures meanwhile.
 5. W06.5: optionally provide a runtime-only OpenRouter key for one synthetic smoke; otherwise retain deterministic provider tests.
-6. W07.6: confirm production media retention/Trash/operator policy; keep all development on synthetic local media until hosted activation is explicitly authorized.
-7. W08: authorize a noindex Cloudflare preview for real routing/CSP validation, or explicitly record a rollout-blocking waiver.
-8. W09: separately authorize production Supabase, financial-read smoke scope, media inventory/purge activation, AI provider/secret activation, Cloudflare/domain, production smoke-test mutations/cleanup, and exact Git/repository operations.
+6. W07.4: reuse local Google OAuth/camera for optional real smoke; do not mutate hosted Auth or production identities.
+7. W07.6: confirm production media retention/Trash/operator policy; keep all development on synthetic local media until hosted activation is explicitly authorized.
+8. W08: authorize a noindex Cloudflare preview for real routing/CSP validation, or explicitly record a rollout-blocking waiver.
+9. W09: separately authorize production Supabase/Auth onboarding, financial-read smoke scope, media inventory/purge activation, AI provider/secret activation, Cloudflare/domain, production smoke-test mutations/cleanup, and exact Git/repository operations.

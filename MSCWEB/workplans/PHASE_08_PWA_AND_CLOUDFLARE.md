@@ -2,7 +2,7 @@
 
 Status: `Not started`  
 Autonomy: `A` local, `B` physical-device checks, `D` external preview/production changes  
-Depends on: W01–W07.6 capability completion, including W06.5, Sales Overview, and Image Storage
+Depends on: W01–W07.6 capability completion, including W06.5, W07.4 onboarding remediation, Sales Overview, and Image Storage
 
 ## Objective
 

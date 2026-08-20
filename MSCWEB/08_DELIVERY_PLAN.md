@@ -112,6 +112,17 @@ Exit: insight berjalan asynchronous tanpa memengaruhi submission/approval/poin, 
 
 Exit: semua Admin iPhone capabilities memiliki parity evidence atau accepted deferral.
 
+## W07.4 — Registration and first-login onboarding remediation
+
+- session context membedakan provisional/onboarding/active, bukan role saja;
+- profile form Nama/HP/Level Member dan tujuan Peserta/Ajukan Coach;
+- Participant QR Coach finalization tanpa manual code;
+- new-user Coach eligibility/manual payment/proof/pending Admin;
+- proof submission mengaktifkan Participant tanpa memberi role Coach;
+- provisional cancel/resume/expiry cleanup dan active-user regressions.
+
+Exit: new Google user tidak dapat membuka private app sebelum onboarding authoritative; Participant memerlukan QR valid, applicant Coach tetap Participant sampai Admin approval, dan abandoned provisional identity dibersihkan aman.
+
 ## W07.5 — Admin Sales Overview
 
 - Dashboard Quick Access `Ringkasan penjualan` dan route `/admin/sales`;

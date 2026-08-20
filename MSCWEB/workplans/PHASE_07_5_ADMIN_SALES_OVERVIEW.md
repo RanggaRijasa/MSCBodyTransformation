@@ -2,7 +2,7 @@
 
 Status: `Not started`  
 Autonomy: `A` against local Supabase; `D` for hosted deployment or production financial smoke  
-Depends on: completed W07 Admin experience and reproducible W05/W06 payment ledger/reversal contract
+Depends on: completed W07 Admin experience, completed W07.4 onboarding remediation, and reproducible W05/W06 payment ledger/reversal contract
 
 ## Objective
 

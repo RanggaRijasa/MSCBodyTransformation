@@ -61,6 +61,9 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 | Debug role picker | dev-only scenario tools | Adaptive | tidak masuk production bundle |
 | Guest Home | `/app/home` tanpa session | Exact | tidak hydrate data privat |
 | Login | `/login` | Web replacement | hanya Google |
+| Profil onboarding pertama | `/onboarding/profile` | Exact/Adaptive | nama, HP, level, tujuan Peserta/Ajukan Coach |
+| Finalisasi Peserta | `/onboarding/participant/coach` | Adaptive | scan QR browser; provisional account belum aktif |
+| Eligibility/pembayaran Coach baru | `/onboarding/coach/*` | Adaptive/Web replacement | iOS hierarchy, manual bank/QRIS web |
 | Participant Home | `/app/home` | Exact/Adaptive | urutan Program, Fokus, Top 5, Pemenang, Coach |
 | Katalog Program | `/app/programs` | Exact | segment Diikuti/Tersedia/Riwayat |
 | Detail/offer Program | `/app/programs/:id` | Exact | state/CTA mengikuti entitlement |
@@ -170,6 +173,22 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 - `UX-MED-010` Bulk selection hanya muncul pada Sampah atau safe orphan/superseded filter, maksimum 100 item. Select-all page tidak boleh berarti seluruh dataset yang belum dimuat.
 - `UX-MED-011` Screenshot Manage Storage yang diberikan pengguna adalah referensi hierarchy/tabs/table saja. Video, paket 50 GB, Wix location, warna biru, dan bulk delete bebas MUST tidak dianggap sebagai contract MSCWEB.
 - `UX-MED-012` Public Coach image URL memakai opaque media ID/gateway. UI/API publik tidak merender raw `photo_reference`/`media_object_path`; known legacy direct Storage URL tidak menjadi fallback.
+
+### 4.9 Pendaftaran pertama Peserta atau applicant Coach
+
+- `UX-ONB-001` `/login` tetap satu halaman Google karena provider menentukan existing/new identity setelah callback. Jangan menambahkan role selector pada login; new provisional user baru diarahkan ke `Lengkapi profil`.
+- `UX-ONB-002` `/onboarding/profile` MUST menampilkan Nama, Nomor HP, Level Member, dan section `Tujuan akun` dengan radio-card `Lanjut sebagai Peserta` serta `Ajukan menjadi Coach`, mengikuti hierarchy iOS yang diberikan.
+- `UX-ONB-003` `Ajukan menjadi Coach` MUST menjelaskan `Lengkapi syarat, pembayaran, dan persetujuan Admin`; tidak boleh memakai copy `Daftar sebagai Coach` atau menyiratkan role langsung aktif.
+- `UX-ONB-004` Member menonaktifkan Coach card dan CTA menjelaskan level minimum. Mengubah level merekonsiliasi selected purpose, eligibility, dan harga tanpa menghapus nama/HP.
+- `UX-ONB-005` Onboarding memakai focused full-screen route tanpa bottom navigation/app dashboard. Header memiliki native/browser-safe Back dan `Tutup`/`Batalkan pendaftaran`; browser Back tidak boleh melewati route guard ke private app.
+- `UX-ONB-006` Jalur Peserta menampilkan `Hubungkan dengan Coach`, penjelasan bahwa akun MSC belum aktif sampai QR dikonfirmasi, tombol `Pindai QR Coach`, confirmed Coach card, `Pindai ulang`, dan CTA `Aktifkan akun Peserta`.
+- `UX-ONB-007` Camera denied/unsupported/invalid/expired/unapproved/mismatched QR MUST menampilkan state actionable dan tetap tidak menyediakan input kode manual.
+- `UX-ONB-008` Jalur Coach memakai urutan `Syarat Coach` → `Pembayaran Coach` → `Status pengajuan`; reuse W06 eligibility/payment components tetapi mempertahankan onboarding Back/Cancel dan provisional state.
+- `UX-ONB-009` Coach payment page MUST menampilkan level, harga server, tiga bulan, tidak auto-renew, rekening/QRIS, upload proof, dan bahwa payment tidak langsung mengaktifkan Coach.
+- `UX-ONB-010` Setelah proof submitted, status menunjukkan `Menunggu persetujuan Admin`, `Akun tetap sebagai Peserta`, dan `Menunggu pemeriksaan Admin`; CTA masuk ke Participant app/status. Correction/rejection memberi reason serta resume yang aman.
+- `UX-ONB-011` Explicit cancel sebelum proof meminta confirmation dan kembali Guest setelah cleanup. Menutup tab tanpa confirmation MAY melanjutkan draft sampai 24 jam; copy harus jujur dan menyediakan resume/cancel saat login kembali.
+- `UX-ONB-012` Web adaptation MUST mengganti copy iOS `akun belum dibuat` menjadi `akun MSC belum aktif` karena Google telah membuat Auth identity provisional. Jangan mengklaim tidak ada account record sama sekali.
+- `UX-ONB-013` Existing active account tidak melihat onboarding. Deep link provisional ke `/app`, `/coach`, atau `/admin` selalu replace ke step onboarding yang authoritative tanpa flash private content.
 
 ## 5. Responsive behavior
 

@@ -147,6 +147,21 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-MED-010` Batch purge UI hanya MAY untuk item yang sudah berada di Sampah atau orphan/superseded yang tervalidasi, maksimal 100 item per request, dengan impact summary dan reason. Unknown/unclassified media MUST fail closed.
 - `PROD-MED-011` `coach-public-media` MUST dimigrasikan menjadi private dan dilayani melalui controlled opaque media gateway sebelum Trash tersedia. Public profile/API MUST memakai opaque media ID, bukan raw Storage path; known legacy direct URL MUST gagal setelah cutover.
 
+### 4.8 Remediation onboarding pendaftaran pertama
+
+- `PROD-ONB-001` Google OAuth MAY membuat Supabase Auth identity dan profile provisional, tetapi user baru MUST NOT diperlakukan sebagai Participant aktif sebelum onboarding authoritative selesai.
+- `PROD-ONB-002` Setelah registrasi Google pertama, seluruh user baru MUST masuk ke onboarding bersama berisi Nama, Nomor HP, Level Member, dan pilihan tujuan `Lanjut sebagai Peserta` atau `Ajukan menjadi Coach`.
+- `PROD-ONB-003` Pilihan tujuan bukan pemilihan role. Role server tetap `participant`; `Ajukan menjadi Coach` hanya menetapkan application intent. Coach/Admin MUST NOT dapat self-assign.
+- `PROD-ONB-004` `Member` MUST menonaktifkan pilihan Coach dengan penjelasan. SC atau lebih tinggi MAY melanjutkan, tetapi HOM STS dan ICT MUST dicentang sendiri dan tidak pernah otomatis.
+- `PROD-ONB-005` Jalur Peserta MUST memvalidasi QR Coach approved, public, dan memiliki entitlement aktif sebelum profile provisional diaktifkan. Tidak ada input/manual-code fallback atau raw QR yang terlihat/copyable.
+- `PROD-ONB-006` Jalur Coach applicant MUST menyelesaikan profil, eligibility, harga server, pembayaran manual tiga bulan, dan bukti pembayaran. Setelah proof valid berstatus `under_review`, account diaktifkan sebagai Participant dan application tetap menunggu Admin; role Coach belum aktif.
+- `PROD-ONB-007` Admin approval authoritative MAY mengaktifkan Coach secara atomik sesuai W06. `Minta perbaikan bukti` bersifat nonterminal dan MUST mempertahankan Participant serta application/order yang sama untuk resubmit. `Tolak pengajuan` bersifat terminal untuk application/order tersebut; Participant tetap aktif dan reapplication berikutnya membuat application/order baru dengan history lama tetap utuh.
+- `PROD-ONB-008` Existing active Participant yang memilih Coach dari Profil MUST tetap memakai W06 application flow tanpa dipaksa mengulang first-login onboarding.
+- `PROD-ONB-009` OAuth callback/session refresh MUST resolve `onboarding_status` dan `account_purpose`, bukan role saja. Provisional/coach-handoff/cleanup state MUST tidak dapat membuka private Participant/Coach/Admin mutations di luar allowlisted onboarding operations.
+- `PROD-ONB-010` Explicit `Batalkan pendaftaran` sebelum proof submitted MUST membuat idempotent cancellation receipt, membatalkan provisional artifacts, lalu worker terpercaya membersihkan media, mencabut session, menghapus provisional identity, dan mengembalikan client ke Guest. Tab/browser close yang tidak reliable ditangani expiry cleanup server.
+- `PROD-ONB-011` Setelah proof Coach submitted atau profile Participant finalized, registration identity menjadi durable. Keluar dari onboarding setelah titik tersebut MUST kembali ke Participant/status flow, bukan menghapus financial/application history.
+- `PROD-ONB-012` Safe intended route MAY dipertahankan melewati onboarding dan digunakan hanya setelah account aktif serta route authorized; onboarding route tidak boleh dilewati dengan deep link/browser Back.
+
 ## 5. Adaptasi web yang disengaja
 
 | Area | iPhone | MSCWEB |
@@ -182,3 +197,4 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-SUC-008` Foto makanan menerima feedback macro dan bintang AI secara asynchronous tanpa memperlambat poin/approval, dan provider dapat diganti tanpa mengubah feature code.
 - `PROD-SUC-009` Admin dapat merekonsiliasi Ringkasan penjualan manual web ke payment ledger untuk periode WITA tanpa pending/rejected/double-counted commerce atau private payment data.
 - `PROD-SUC-010` Admin dapat melihat penggunaan gambar pengguna dan trash/restore/purge media eligible melalui Storage API, sementara protected/shared/unknown media tetap utuh dan domain history/poin/ledger tetap tersedia.
+- `PROD-SUC-011` User Google baru selalu menyelesaikan onboarding Peserta/Coach intent; Participant aktif hanya setelah QR valid, sedangkan applicant Coach tetap Participant sampai Admin approval tanpa akses provisional bocor.

@@ -150,6 +150,7 @@ Nama final dapat diselaraskan dengan existing `commerce_purchase_intents`, `comm
 | Sales aggregate | none | none | fixed aggregate/detail projection | none |
 | Media inventory | own record status only | scoped evidence status only | safe fixed projection | none |
 | Media deletion job | none | none | request/restore/confirm through narrow operation | none |
+| Provisional onboarding profile | own onboarding projection/operations only | none | authorized support/audit only | none |
 
 - `SEC-AUTHZ-001` Coach role alone MUST NOT grant access ke semua Participant.
 - `SEC-AUTHZ-002` Admin UI visibility MUST NOT be treated as authorization.
@@ -207,6 +208,13 @@ correct_food_insight_rating
 record_revenue_reversal
 record_exceptional_cash_adjustment
 get_admin_sales_overview
+get_my_session_context
+save_my_provisional_onboarding_profile
+finalize_participant_onboarding
+prepare_coach_application_handoff
+submit_coach_onboarding_payment_evidence
+request_my_provisional_cancellation
+process_provisional_cancellation
 list_admin_managed_media
 request_admin_media_trash
 restore_admin_media
@@ -241,6 +249,20 @@ Setiap operation:
 - Cross-tab logout/session refresh harus terkoordinasi.
 - Auth callback dan preserved-return route harus dilindungi open redirect.
 - CSP dan `frame-ancestors` harus membatasi embedding app untuk mengurangi clickjacking.
+
+### 6.1 Provisional onboarding security
+
+- `SEC-ONB-001` Auth user/profile bootstrap MUST always set server role `participant`, `account_purpose=participant`, `onboarding_status=provisional`, expiry, and no finalized timestamp. Google `user_metadata` MAY seed display/photo only and MUST NOT authorize role, purpose, level, Coach eligibility, or active status.
+- `SEC-ONB-002` Session-context RPC MUST be a fixed projection and route guards MUST use `onboarding_status`. Every private domain operation also MUST enforce active status or an explicit provisional allowlist; client redirects alone are insufficient.
+- `SEC-ONB-003` Provisional allowlist is limited to own profile draft, Participant QR finalization, Coach handoff/application/payment proof, status, cancel, logout, and public reads. Provisional users MUST NOT access enrollments, scores, private evidence, other profiles, Coach workspace, or Admin operations.
+- `SEC-ONB-004` Provisional onboarding MUST use new `save_my_provisional_onboarding_profile` with own provisional status, trimmed name, normalized phone, member level, purpose, current version, and purpose-level compatibility. Shared `update_my_profile` MUST retain active-profile semantics for native/web editing. Phone and draft MUST not enter logs/analytics/error payloads.
+- `SEC-ONB-005` Participant finalization MUST validate raw QR only inside the operation against Coach role, approved/public state, active entitlement, expiry, and self/mismatch rules; raw QR MUST not enter route, log, analytics, cache, or response.
+- `SEC-ONB-006` Provisional Coach onboarding MUST use `submit_coach_onboarding_payment_evidence` as one transaction for prepared-proof validation/submission, order `under_review`, and active Participant profile finalization. Generic proof submit MUST reject provisional Coach onboarding so a two-call partial state cannot occur; operation MUST not assign Coach role/entitlement.
+- `SEC-ONB-007` `request_my_provisional_cancellation` MUST create/return one private idempotency receipt, cancel eligible application/order/upload intents, and set cleanup pending without deleting the caller mid-response. A trusted worker processes the receipt, removes media, revokes sessions, and deletes Auth/profile. After proof submitted, cancellation request instead retains/finalizes Participant and financial/application audit.
+- `SEC-ONB-008` Scheduled provisional cleanup MUST use the same cancellation-receipt/worker path with `FOR UPDATE SKIP LOCKED`, recheck relationships/artifacts, and retry partial failures. No separate direct `auth.users` deletion path or service credential reaches browser.
+- `SEC-ONB-009` OAuth callback, refresh, duplicate tab, retry, and double-click finalization MUST be idempotent. One user has one profile, one onboarding finalization, and at most one active/pending Coach application/order intent.
+- `SEC-ONB-010` Active existing Participant/Coach/Admin MUST not be downgraded or redirected into onboarding by editable data, stale browser cache, or forged purpose/status input.
+- `SEC-ONB-011` Cancellation worker MUST revoke all sessions before Auth deletion through trusted server capability. Deleting `auth.users` alone is insufficient; a captured stale access token MUST fail every onboarding/private operation. Response loss after receipt creation or identity deletion converges to the same Guest outcome without requiring an authenticated prior-success lookup.
 
 ## 7. Privacy and logging
 
@@ -291,6 +313,11 @@ Operational log MAY mencatat opaque request ID, event type, redacted actor ID, s
 - direct browser/SQL delete referenced media ditolak; Storage API worker retry menghasilkan satu tombstone/audit;
 - trashed media tidak dapat diakses normal, restore bekerja sebelum purge, dan purged media tidak dapat dipulihkan;
 - media audit/log/browser tidak memuat raw path, signed URL, weight, image bytes, atau service credential.
+- provisional user cannot query active Participant/Coach/Admin private data or bypass onboarding by deep link;
+- forged role/purpose/member level/onboarding status/QR cannot activate account or Coach role;
+- Participant QR finalization and Coach proof-to-Participant finalization are idempotent under concurrent tabs/retries;
+- pre-proof cancel removes provisional Auth/profile/artifacts safely, while post-proof cancel preserves financial/application history and Participant access;
+- expired provisional cleanup handles stale application/order/media without orphan Auth/profile/Storage records.
 
 ## 9. Environment
 

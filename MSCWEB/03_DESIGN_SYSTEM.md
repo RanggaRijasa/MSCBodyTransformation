@@ -151,6 +151,7 @@ Shared primitives minimum:
 - `FoodInsightCard` dan `StarRating` untuk state pending/available/unavailable/error.
 - `SalesMetric`, `AccessibleSalesChart`, `SalesBreakdownRow`;
 - `StorageUsageSummary`, `MediaInventoryRow`, `MediaImpactDialog`, `DeletionJobStatus`.
+- `OnboardingHeader`, `AccountPurposeChoice`, `CoachEligibilitySummary`, `CoachQRConfirmationCard`, `RegistrationStatusCard`.
 
 - `DS-CMP-001` Buttons MUST memiliki default, hover-capable, pressed, focus-visible, disabled, dan loading state.
 - `DS-CMP-002` Status MUST selalu menggabungkan warna dengan label/icon/shape.
@@ -164,6 +165,8 @@ Shared primitives minimum:
 - `DS-CMP-010` Chart penjualan MUST memakai semantic colors dan menyediakan exact text/table equivalent; jangan menggambar chart dengan kumpulan `div` atau menambah chart library tanpa approval.
 - `DS-CMP-011` Thumbnail gambar privat MUST memakai shared authorized media viewer dengan placeholder netral dan explicit deleted/unavailable state; jangan menaruh path/filename sebagai alt text.
 - `DS-CMP-012` Destructive media action MUST memakai semantic destructive color hanya pada final confirmation/action, bukan pada seluruh inventory row atau usage chart.
+- `DS-CMP-013` Account-purpose cards MUST use actual radio semantics, visible selected indicator, label, and description; do not draw radio/check/icon with CSS `div`, emoji, or text glyph.
+- `DS-CMP-014` First-login onboarding MUST preserve the iOS hierarchy and shared tokens while using browser-safe history, camera, file input, keyboard, and scroll behavior; do not wrap the flow in desktop dashboard cards.
 
 ## 6. Motion
 

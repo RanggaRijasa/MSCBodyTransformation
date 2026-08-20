@@ -170,6 +170,6 @@ Append simulator area, compact/wide behavior, operations/tests, audit evidence, 
 ### 2026-08-20 — Extension plan setelah W07
 
 - W07 tetap `Completed`; Sales Overview dan Image Storage adalah scope web baru yang tidak mengubah exit evidence W07.
-- Urutan aktif direvisi menjadi W07.5 `Admin Sales Overview`, W07.6 `Admin Image Storage Management`, lalu W08 hardening.
+- Urutan aktif direvisi menjadi W07.4 `Registration and First-login Onboarding Remediation`, W07.5 `Admin Sales Overview`, W07.6 `Admin Image Storage Management`, lalu W08 hardening.
 - Dua quick action baru adalah intentional web-only extension. Final Dashboard mempertahankan dua aksi native-derived pertama dan memakai grid 2 × 2 pada compact.
 - Tidak ada source/migration/runtime W07 yang diubah oleh planning entry ini; implementasi harus mengikuti workplan baru dan fresh simulator/web gates masing-masing.

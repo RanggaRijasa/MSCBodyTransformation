@@ -126,6 +126,18 @@ Given satu gambar eligible, satu gambar masih protected, dan satu path dipakai l
 When Admin memindahkan eligible image ke Sampah lalu mengonfirmasi purge
 Then normal user segera kehilangan akses, protected/shared image tetap utuh, worker rechecks references dan mencapai satu logical purge outcome melalui Storage API dengan retry aman, serta domain record/poin/audit tetap tersedia dengan satu tombstone/audit.
 
+### `QA-JRN-014` Google user baru menjadi Peserta
+
+Given Google OAuth menghasilkan Auth identity dan profile provisional
+When user mengisi nama/HP/level, memilih `Lanjut sebagai Peserta`, memindai QR Coach valid, dan mengonfirmasi
+Then account menjadi active Participant exactly once, current Coach tersimpan authoritative, raw QR tidak terekspos, dan preserved authorized intent dilanjutkan.
+
+### `QA-JRN-015` Google user baru mengajukan Coach
+
+Given provisional user berlevel SC atau lebih tinggi
+When memilih `Ajukan menjadi Coach`, mencentang HOM STS/ICT/terms, membuat order tiga bulan, dan mengirim proof valid
+Then account menjadi active Participant, application/payment tetap menunggu Admin, role Coach belum aktif, dan approval Admin kemudian mengaktifkan Coach exactly once.
+
 ## 5. Payment acceptance matrix
 
 | Case | Expected |
@@ -168,6 +180,7 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - food, drink, shake, not-food, foto buram/ambigu, provider timeout/rate-limit/schema invalid, duplicate job, correction conflict, dan low-confidence request untuk rating 1–2.
 - sales zero/reversal-only/pending-only, WITA boundary, partial/full reversal, approved-without-ledger, purpose program/Coach, missing display name, dan equal top totals;
 - media orphan/shared reference/protected/unknown, pending review, active AI job, published Coach media, trash/restore/purge, concurrent reference, worker retry, missing object, dan partial batch failure.
+- first-login existing/new Google identity, provisional/expired/cleanup state, incomplete profile, Member Coach choice, invalid/denied QR, camera denied, two tabs, duplicate callback/finalize, preserved unauthorized intent, pre-proof cancel, tab close/resume, Coach proof correction/rejection/approval.
 
 ## 6.1 Coach public profile acceptance
 
@@ -227,6 +240,24 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - `QA-MED-013` Final W07.6 Dashboard has four Quick Access cards in 2 × 2 compact/up-to-four-wide layout; first two actions preserve order/alignment and Activity remains reachable above bottom navigation.
 - `QA-MED-014` Automatic payment cleanup racing inventory reconciliation on the same proof results in one deleted/tombstoned inventory state; Image Storage never claims ownership of the delete or offers restore/purge controls.
 
+## 6.5 Registration and first-login onboarding acceptance
+
+- `QA-ONB-001` New Google Auth row bootstraps one provisional Participant profile with provider name/photo defaults, 24-hour expiry, no active/finalized status, and no role/purpose derived from `user_metadata`.
+- `QA-ONB-002` Existing active Participant/Coach/Admin bypass onboarding and reaches safe intended/role route; provisional, coach-handoff, and cleanup states cannot flash/render private app content.
+- `QA-ONB-003` Session context includes only safe role/onboarding/purpose/completeness/expiry projection. AuthProvider models explicit onboarding state and invalidates cached context across callback, account switch, finalization, cancellation, and session refresh.
+- `QA-ONB-004` Profile form validates Indonesian copy, name, phone, all member levels, purpose, Member-disabled Coach, purpose reconciliation after level change, keyboard/scroll/200%-zoom, and no phone logging.
+- `QA-ONB-005` Participant path blocks finalization for missing/invalid/expired/unapproved/non-public/inactive-entitlement QR; no manual code exists. Valid QR sets active Participant/current Coach once under double click, concurrent tab, retry, and callback refresh.
+- `QA-ONB-006` Coach path blocks Member/incomplete HOM STS/ICT/terms, uses server price bands, three-month/no-auto-renew copy, manual bank/QRIS, normalized private proof, and one current application/order.
+- `QA-ONB-007` `submit_coach_onboarding_payment_evidence` atomically submits prepared proof, sets order `under_review`, and finalizes Participant exactly once; forced failure cannot persist only one side. Generic proof submit rejects provisional Coach orders. Only Admin approval activates Coach.
+- `QA-ONB-008` `Minta perbaikan bukti` preserves active Participant and the same application/order with append-only attempt. `Tolak pengajuan` is terminal for that pair; later explicit reapplication creates a new pair while old history remains.
+- `QA-ONB-009` Provisional RLS/RPC negative suite denies private profile/enrollment/score/evidence/payment-other-user/Coach/Admin data and mutations while allowing only explicit onboarding/public operations.
+- `QA-ONB-010` Explicit pre-proof cancel creates one cancellation receipt and cleanup-pending state; worker cancels artifacts/media, revokes sessions, deletes Auth/profile, and returns Guest. Response loss before/after deletion converges without authenticated prior-success lookup. Cancellation after proof preserves Participant/financial/application history.
+- `QA-ONB-011` Expired cleanup enqueues the same receipt/worker path, rechecks relationships, handles stale Coach draft/order/unsubmitted upload, retries partial failure, and leaves no orphan media/identity.
+- `QA-ONB-012` Preserved internal intent resumes only after active finalization and authorization. External/open-redirect, role-mismatched, stale, `/admin`, and `/coach` intents fall back safely.
+- `QA-ONB-013` Compact visual flow matches current iOS hierarchy for profile choice, Coach eligibility, payment, pending status, and Participant QR confirmed/unconfirmed states; deliberate copy uses `akun MSC belum aktif` for provisional web identity.
+- `QA-ONB-014` Existing active Participant can still edit profile through shared `update_my_profile`, open `/app/coach-application`, and complete W06 flow while provisional onboarding uses a separate profile-save RPC.
+- `QA-ONB-015` Cancellation/expiry revokes all sessions before Auth deletion; stale access token, second tab, and delayed callback cannot recreate or access the cancelled profile.
+
 ## 7. Accessibility acceptance
 
 - seluruh core flow dapat selesai keyboard-only pada desktop;
@@ -252,6 +283,7 @@ Core screenshot set:
 - Admin Dashboard, Program, People, payment/Coach review;
 - Admin Ringkasan penjualan dengan zero/normal/reversal-only periods;
 - Admin Penyimpanan gambar: Gambar, Sampah, protected, trash confirmation, failed job, dan purge complete;
+- first-login profile purpose choice, Participant QR unconfirmed/confirmed, Coach eligibility/payment/pending/correction, cancel/resume;
 - compact light/dark dan wide Admin;
 - loading/empty/error/offline;
 - text zoom / long Indonesian copy.
@@ -269,6 +301,7 @@ Visual regression threshold tidak boleh menyembunyikan large layout drift. Perub
 - no secret scan lulus;
 - RLS negative tests lulus;
 - sales ledger reconciliation dan media deletion race/retry/tombstone suite lulus;
+- first-login provisional route/RLS/finalization/cancellation/expiry suite lulus;
 - SOP pembayaran/retention/dispute telah diputuskan;
 - production media deletion policy, protected-state matrix, worker schedule, dan operator/rollback procedure telah disetujui;
 - production Supabase/Cloudflare deployment mendapat authorization eksplisit.
