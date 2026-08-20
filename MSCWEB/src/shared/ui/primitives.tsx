@@ -6,6 +6,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -305,7 +306,7 @@ export function Dialog({
             <Text accessibilityRole="header" style={[styles.stateTitle, { color: colors.primaryText }]}>{title}</Text>
             <IconButton label="Tutup" icon="rejected" onPress={onClose} />
           </View>
-          {children}
+          <ScrollView contentContainerStyle={styles.dialogBody} keyboardShouldPersistTaps="handled">{children}</ScrollView>
         </View>
       </View>
     </Modal>
@@ -375,8 +376,9 @@ const styles = StyleSheet.create({
   inlineCopy: { flex: 1, gap: primitiveTokens.space.xxSmall },
   inlineTitle: typographyTokens.bodyStrong,
   overlay: { flex: 1, justifyContent: 'center', padding: primitiveTokens.space.large },
-  dialog: { width: '100%', maxWidth: 560, alignSelf: 'center', borderWidth: 1, borderRadius: primitiveTokens.radius.prominent, padding: primitiveTokens.space.large, gap: primitiveTokens.space.large },
+  dialog: { width: '100%', maxWidth: 560, maxHeight: '90%', alignSelf: 'center', borderWidth: 1, borderRadius: primitiveTokens.radius.prominent, padding: primitiveTokens.space.large, gap: primitiveTokens.space.large },
   dialogHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: primitiveTokens.space.medium },
+  dialogBody: { gap: primitiveTokens.space.large, paddingBottom: primitiveTokens.space.xxSmall },
   toast: { position: 'absolute', left: primitiveTokens.space.medium, right: primitiveTokens.space.medium, bottom: primitiveTokens.space.xLarge, minHeight: componentTokens.minimumTouchTarget, borderRadius: primitiveTokens.radius.medium, paddingHorizontal: primitiveTokens.space.medium, alignItems: 'center', justifyContent: 'center' },
   toastText: typographyTokens.callout,
 });

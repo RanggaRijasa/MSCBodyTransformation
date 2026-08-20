@@ -114,6 +114,18 @@ Given submission foto makanan berhasil
 When provider timeout, rate-limit, mengembalikan schema invalid, atau tidak tersedia
 Then job retry/berakhir aman, UI menampilkan `Analisis belum tersedia`, tidak ada poin/approval yang dibatalkan, dan tidak ada key/payload privat pada browser/log.
 
+### `QA-JRN-012` Admin melihat penjualan bersih
+
+Given fixture memiliki penjualan program, akses Coach, order pending/rejected, dan satu reversal
+When Admin membuka `Ringkasan penjualan` untuk 30 hari WITA
+Then bruto hanya menjumlah verified ledger, reversal ditampilkan terpisah, net adalah bruto dikurangi reversal, pending/rejected tidak menjadi revenue, dan tidak ada double count dari commerce projection.
+
+### `QA-JRN-013` Admin menghapus gambar pengguna dengan aman
+
+Given satu gambar eligible, satu gambar masih protected, dan satu path dipakai lebih dari satu reference
+When Admin memindahkan eligible image ke Sampah lalu mengonfirmasi purge
+Then normal user segera kehilangan akses, protected/shared image tetap utuh, worker rechecks references dan mencapai satu logical purge outcome melalui Storage API dengan retry aman, serta domain record/poin/audit tetap tersedia dengan satu tombstone/audit.
+
 ## 5. Payment acceptance matrix
 
 | Case | Expected |
@@ -154,6 +166,8 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - payment pending/rejected/expired/concurrent review.
 - profil Coach hanya berisi field wajib, semua field opsional, kontak sebagian publik, handle tidak ditemukan, entitlement kedaluwarsa, dan media menunggu moderation;
 - food, drink, shake, not-food, foto buram/ambigu, provider timeout/rate-limit/schema invalid, duplicate job, correction conflict, dan low-confidence request untuk rating 1–2.
+- sales zero/reversal-only/pending-only, WITA boundary, partial/full reversal, approved-without-ledger, purpose program/Coach, missing display name, dan equal top totals;
+- media orphan/shared reference/protected/unknown, pending review, active AI job, published Coach media, trash/restore/purge, concurrent reference, worker retry, missing object, dan partial batch failure.
 
 ## 6.1 Coach public profile acceptance
 
@@ -181,6 +195,38 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - `QA-AI-014` Request OpenRouter memakai `FOOD_AI_MODEL=google/gemma-4-31b-it:free` sebagai default, `reasoning.effort=none`, `reasoning.exclude=true`, dan output-token cap. Reasoning response tidak disimpan.
 - `QA-AI-015` Mengganti `FOOD_AI_MODEL` ke compatible OpenRouter fixture/model tidak memerlukan perubahan feature/domain/adapter; model tanpa image, structured response, atau reasoning-off gagal aman tanpa memengaruhi submission, approval, atau poin.
 
+## 6.3 Sales overview acceptance
+
+- `QA-SLS-001` Admin-only RPC accepts inclusive `from_at`, exclusive `to_at`, allowlisted timezone, and rejects invalid or range over 366 days; Guest/Participant/Coach fail closed.
+- `QA-SLS-002` Gross = sum verified ledger, reversal = sum reversal ledger, net = gross − reversal, order count is distinct verified order, dan average memakai gross verified/order count dengan zero-safe behavior.
+- `QA-SLS-003` `approved` order without verified ledger, pending/correction/rejected/expired/cancelled order, proof, event, entitlement, and `commerce_transactions` MUST not increase sales totals.
+- `QA-SLS-004` Daily buckets and 7/30/90/custom ranges are deterministic across WITA midnight/DST-independent boundaries; formatter uses `id-ID`, IDR, and tabular numerals.
+- `QA-SLS-005` Purpose/program/top-customer breakdown reconciles to totals. Customer projection contains opaque `person_id`, display name, order count, gross/reversal/net only; no email/phone/member/bank/proof/reconciliation/path.
+- `QA-SLS-006` Multiple partial/full revenue reversals relate to one verified entry, are idempotent, cumulative `<= verified`, and are recognized on each reversal timestamp; period net can be zero/negative without UI hiding it.
+- `QA-SLS-007` Late/rejected-but-paid, duplicate transfer, and overpayment-difference returns use exceptional cash-adjustment fixtures and do not alter gross/reversal/net sales; unmatched/refused adjustments fail closed.
+- `QA-SLS-008` Query plan on representative fixture uses appropriate reporting indexes; Supabase security/performance advisors pass and no materialized view is added without evidence.
+- `QA-SLS-009` W07.5 Quick Access preserves first two native-derived actions, adds the third Sales action with intentional wrapping, reaches `/admin/sales`, and remains usable compact/wide, keyboard, screen reader, dark mode, and 200% zoom.
+- `QA-SLS-010` Chart has exact accessible table/list equivalent; zero/loading/error/stale/reversal-only states do not depend on color or animation.
+- `QA-SLS-011` Program/customer top lists each return at most five rows, group by immutable ID, and tie-break by net desc, gross desc, verified-order count desc, stable ID asc. Duplicate names remain distinct; null/deleted owner is `Pengguna dihapus` with safe/non-navigable behavior when needed.
+- `QA-SLS-012` Two customers with multiple orders retain distinct `customer_group_id` after both profiles are deleted; `person_id` becomes null and no contact snapshot remains. Legacy pre-key null-owner orders are separate per-order unknown groups and never merge.
+
+## 6.4 Image storage management acceptance
+
+- `QA-MED-001` Inventory reconciles all objects/references in `question-photos`, `payment-evidence`, and `coach-public-media`; unknown objects fail closed. Out-of-scope buckets cannot be requested through forged input.
+- `QA-MED-002` Usage equals sum of Storage metadata byte size for managed user-image buckets. Trash remains counted until purge; quota is absent unless trusted server config supplies it.
+- `QA-MED-003` Browser receives opaque IDs and safe labels only. Raw path/signed URL/namespace/service key/image bytes/weight/reconciliation data do not appear in route, API projection, audit, console, analytics, or shared cache.
+- `QA-MED-004` All `payment-evidence` Admin trash/purge attempts are rejected because cleanup is automatic; evidence pending review, active AI job, account cleanup, published Coach media not yet detached, shared reference, and unknown classification also block purge with typed reason.
+- `QA-MED-005` Trash closes normal access immediately; Admin preview remains no-store; restore before purge reactivates the same reference exactly once.
+- `QA-MED-006` Purge operation rechecks reference fingerprint immediately before Storage API removal. Concurrent new/changed reference causes conflict and object remains.
+- `QA-MED-007` Worker claims jobs with lease/`SKIP LOCKED`, tolerates at-least-once remote remove invocation, retries Storage/finalization failure, treats already-missing object as recoverable finalization, and writes exactly one logical tombstone/audit/final outcome. A forced crash after `.remove()` success proves recovery.
+- `QA-MED-008` Permanent delete uses Storage API, never SQL deletion of `storage.objects`. Direct client delete of managed referenced assets and non-Admin RPC calls are denied.
+- `QA-MED-009` Deleting eligible question evidence preserves submission/review/poin/leaderboard and UI displays Indonesian deletion tombstone. Automatic payment-retention cleanup preserves transaction/ledger/audit and inventory reflects its deleted state without exposing manual controls.
+- `QA-MED-010` `coach-public-media` becomes private and public RPC returns opaque media ID. Controlled gateway validates published+active state; published avatar/item detaches before trash; a previously known legacy direct URL and gateway URL both fail immediately after Trash, before physical purge.
+- `QA-MED-011` Keyset pagination, filters, safe search, thumbnail lazy loading/object URL cleanup, 100-item batch cap, select-current-page semantics, and partial failure recovery pass compact/wide tests.
+- `QA-MED-012` Clean migration-chain test reproduces every referenced media column/RPC/policy before deletion is enabled; generated database types match committed migrations.
+- `QA-MED-013` Final W07.6 Dashboard has four Quick Access cards in 2 × 2 compact/up-to-four-wide layout; first two actions preserve order/alignment and Activity remains reachable above bottom navigation.
+- `QA-MED-014` Automatic payment cleanup racing inventory reconciliation on the same proof results in one deleted/tombstoned inventory state; Image Storage never claims ownership of the delete or offers restore/purge controls.
+
 ## 7. Accessibility acceptance
 
 - seluruh core flow dapat selesai keyboard-only pada desktop;
@@ -204,6 +250,8 @@ Core screenshot set:
 - profil Coach publik/edit/share dengan field minimum dan lengkap;
 - insight makanan pending/available/unavailable serta rating 1–5;
 - Admin Dashboard, Program, People, payment/Coach review;
+- Admin Ringkasan penjualan dengan zero/normal/reversal-only periods;
+- Admin Penyimpanan gambar: Gambar, Sampah, protected, trash confirmation, failed job, dan purge complete;
 - compact light/dark dan wide Admin;
 - loading/empty/error/offline;
 - text zoom / long Indonesian copy.
@@ -220,5 +268,7 @@ Visual regression threshold tidak boleh menyembunyikan large layout drift. Perub
 - dependency audit ditinjau;
 - no secret scan lulus;
 - RLS negative tests lulus;
+- sales ledger reconciliation dan media deletion race/retry/tombstone suite lulus;
 - SOP pembayaran/retention/dispute telah diputuskan;
+- production media deletion policy, protected-state matrix, worker schedule, dan operator/rollback procedure telah disetujui;
 - production Supabase/Cloudflare deployment mendapat authorization eksplisit.

@@ -161,52 +161,33 @@ export function ProgramActivity({
         <Text style={[styles.body, { color: colors.secondaryText }]}>Status hari dan akses berasal dari server program.</Text>
       </View>
 
-      {program.program_days.map((day) => {
-        const access = visibleAccesses.find((candidate) => candidate.program_day_id === day.id);
-        if (!access) return null;
-        const expanded = expandedDayId === day.id;
-        const locked = access.access_state === 'locked';
-        return (
-          <View key={day.id} style={[styles.dayCard, { backgroundColor: colors.surface, borderColor: access.is_current_day ? colors.primaryAction : colors.border }]}> 
-            <Pressable
-              testID={`participant.program.day.${day.day_number}`}
-              accessibilityRole="button"
-              accessibilityState={{ expanded }}
-              accessibilityLabel={`${access.is_current_day ? 'Hari ini, ' : ''}Hari ke-${day.day_number}, ${day.title}`}
-              onPress={() => setExpandedDayId(expanded ? undefined : day.id)}
-              style={styles.dayHeader}
-            >
-              <View style={[styles.dayIcon, { backgroundColor: colors.secondaryBackground }]}>
-                <MSCIcon name={locked ? 'forbidden' : 'program'} color={locked ? colors.warning : colors.primaryAction} />
-              </View>
-              <View style={styles.flexCopy}>
-                <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{access.is_current_day ? 'Hari ini · ' : ''}Hari ke-{day.day_number}</Text>
-                <Text style={[styles.body, { color: colors.secondaryText }]}>{day.title}</Text>
-              </View>
-              <Text style={[styles.expandGlyph, { color: colors.secondaryText }]}>{expanded ? '−' : '+'}</Text>
-            </Pressable>
-            {expanded ? (
-              <View style={[styles.dayContent, { borderColor: colors.border }]}>
-                {locked ? (
-                  <InlineMessage title="Aktivitas belum tersedia" message="Kembali saat jadwal program membuka hari ini." tone="warning" />
-                ) : day.program_steps.length ? day.program_steps.map((step) => (
-                  <StepRow
-                    key={step.id}
-                    step={step}
-                    submission={latestSubmissionForStep(submissions, step.id)}
-                    readOnly={access.access_state === 'read_only'}
-                    onPress={() => onOpenStep(step.id)}
-                  />
-                )) : (
-                  <InlineMessage title="Belum ada aktivitas" message="Hari ini belum memiliki langkah yang diterbitkan." />
-                )}
-              </View>
-            ) : null}
-          </View>
-        );
-      })}
+      <ProgramDayList program={program} accesses={visibleAccesses} submissions={submissions} expandedDayId={expandedDayId} onExpandedDayChange={setExpandedDayId} onOpenStep={onOpenStep} />
     </View>
   );
+}
+
+export function ProgramDefinitionPreview({ program, role }: { program: PublicProgram; role: 'participant' | 'coach' }) {
+  const { colors } = useAppTheme();
+  const [expandedDayId, setExpandedDayId] = useState(program.program_days[0]?.id);
+  const accesses: ParticipantDayAccess[] = program.program_days.map((day, index) => ({
+    enrollment_id: program.id, program_id: program.id, program_day_id: day.id,
+    day_number: day.day_number, access_state: 'available', is_current_day: index === 0,
+  }));
+  return <View style={styles.stack} testID="admin.program.preview.shared-renderer">
+    <View style={styles.sectionHeading}><Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Aktivitas program</Text><Text style={[styles.body, { color: colors.secondaryText }]}>{role === 'participant' ? 'Peserta dapat membuka dan menyelesaikan langkah yang tersedia.' : 'Coach memantau urutan langkah dan membuka pemeriksaan sesuai kewenangan.'}</Text></View>
+    <ProgramDayList program={program} accesses={accesses} submissions={[]} expandedDayId={expandedDayId} onExpandedDayChange={setExpandedDayId} onOpenStep={() => undefined} />
+  </View>;
+}
+
+function ProgramDayList({ program, accesses, submissions, expandedDayId, onExpandedDayChange, onOpenStep }: { program: PublicProgram; accesses: ParticipantDayAccess[]; submissions: ParticipantSubmission[]; expandedDayId?: string; onExpandedDayChange: (id?: string) => void; onOpenStep: (id: string) => void }) {
+  const { colors } = useAppTheme();
+  return <>{program.program_days.map((day) => {
+    const access = accesses.find((candidate) => candidate.program_day_id === day.id);
+    if (!access) return null;
+    const expanded = expandedDayId === day.id;
+    const locked = access.access_state === 'locked';
+    return <View key={day.id} style={[styles.dayCard, { backgroundColor: colors.surface, borderColor: access.is_current_day ? colors.primaryAction : colors.border }]}><Pressable testID={`participant.program.day.${day.day_number}`} accessibilityRole="button" accessibilityState={{ expanded }} accessibilityLabel={`${access.is_current_day ? 'Hari ini, ' : ''}Hari ke-${day.day_number}, ${day.title}`} onPress={() => onExpandedDayChange(expanded ? undefined : day.id)} style={styles.dayHeader}><View style={[styles.dayIcon, { backgroundColor: colors.secondaryBackground }]}><MSCIcon name={locked ? 'forbidden' : 'program'} color={locked ? colors.warning : colors.primaryAction} /></View><View style={styles.flexCopy}><Text style={[styles.cardTitle, { color: colors.primaryText }]}>{access.is_current_day ? 'Hari ini · ' : ''}Hari ke-{day.day_number}</Text><Text style={[styles.body, { color: colors.secondaryText }]}>{day.title}</Text></View><Text style={[styles.expandGlyph, { color: colors.secondaryText }]}>{expanded ? '−' : '+'}</Text></Pressable>{expanded ? <View style={[styles.dayContent, { borderColor: colors.border }]}>{locked ? <InlineMessage title="Aktivitas belum tersedia" message="Kembali saat jadwal program membuka hari ini." tone="warning" /> : day.program_steps.length ? day.program_steps.map((step) => <StepRow key={step.id} step={step} submission={latestSubmissionForStep(submissions, step.id)} readOnly={access.access_state === 'read_only'} onPress={() => onOpenStep(step.id)} />) : <InlineMessage title="Belum ada aktivitas" message="Hari ini belum memiliki langkah yang diterbitkan." />}</View> : null}</View>;
+  })}</>;
 }
 
 function StepRow({

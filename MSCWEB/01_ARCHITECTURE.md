@@ -153,6 +153,8 @@ Route group dapat disembunyikan oleh Expo Router. URL publik harus stabil, machi
 | `/app/coach` | Coach Participant / Coach root sesuai guard |
 | `/app/profile` | profil |
 | `/c/:handle` | profil Coach publik yang dapat dibagikan |
+| `/admin/sales` | ringkasan penjualan manual web Admin |
+| `/admin/image-storage` | inventory, Sampah, restore, dan purge gambar pengguna |
 | `/admin/*` | Admin-only surface |
 | `/privacy`, `/terms`, `/payment-help` | legal/support public |
 
@@ -212,7 +214,51 @@ API key dan base URL tetap sama selama provider-nya OpenRouter. Slug model lain 
 - `ARCH-AI-008` Request OpenRouter MUST mengirim model dari `FOOD_AI_MODEL`, `reasoning: { effort: "none", exclude: true }`, output-token cap, dan structured `response_format`. Reasoning content yang tetap muncul MUST diabaikan dan tidak disimpan.
 - `ARCH-AI-009` Mengganti model dalam OpenRouter SHOULD hanya memerlukan perubahan `FOOD_AI_MODEL` dan restart/redeploy server. Preflight/health check MUST memastikan model baru menerima image input, menghasilkan text, mendukung structured response, dan tidak mewajibkan reasoning; model incompatible gagal aman tanpa memengaruhi submission/poin.
 
-## 8. Rendering strategy
+## 8. Admin sales reporting boundary
+
+```text
+Admin Sales screen
+  → Sales use case/repository
+  → narrow Admin-only reporting RPC
+  → payment_ledger (money authority)
+       + payment_orders (purpose/program/order-state dimensions)
+       + programs/profiles (safe display projections only)
+```
+
+- `ARCH-SLS-001` Baseline reporting MUST query recognized-revenue ledger entries once and MUST NOT add `commerce_transactions` to the same totals; kedua tabel adalah projection berbeda dari transaksi yang sama untuk manual web payment.
+- `ARCH-SLS-002` RPC MUST menerima `from_at`, `to_at`, dan allowlisted report timezone; server validates maximum range 366 days, inclusive/exclusive boundary, Admin role, dan returns a fixed JSON projection.
+- `ARCH-SLS-003` Live aggregate query adalah baseline. Materialized view/warehouse/third-party analytics MUST tidak ditambahkan sebelum `EXPLAIN (ANALYZE, BUFFERS)` dan volume nyata membuktikan kebutuhan.
+- `ARCH-SLS-004` Index reporting MUST ditentukan dari query final dan representative fixtures. Composite equality/range order, partial pending-order index, serta covering columns MAY digunakan; index spekulatif atau duplicate MUST dihindari.
+- `ARCH-SLS-005` Chart MUST menggunakan existing React Native primitives/`react-native-svg` dan accessible table/list equivalent. Tidak ada chart atau analytics dependency baru pada baseline.
+- `ARCH-SLS-006` Ledger remediation MUST allow exactly one verified entry per order, multiple idempotent revenue-reversal entries related to that verified entry, and a cumulative-reversal constraint `<= verified amount`. Remove the current uniqueness assumption that permits only one reversal per order.
+- `ARCH-SLS-007` Exceptional cash returns for unrecognized late/duplicate/overpayment funds MUST use a separate cash-adjustment authority/table and MUST not enter gross/reversal/net sales aggregates.
+- `ARCH-SLS-008` Top program/customer rows group by immutable program/owner ID, return opaque IDs, limit to five, and sort deterministically by net desc, gross desc, verified-order count desc, then stable ID asc. Missing/deleted profile renders `Pengguna dihapus` without merging duplicate names.
+- `ARCH-SLS-009` Create a private durable customer-reporting key before account/profile deletion and snapshot it onto every payment order. RPC returns opaque `customer_group_id` plus nullable `person_id`; it never returns the key-to-auth-user mapping. Backfill groups known owners consistently, while legacy null-owner rows become separate per-order unknown groups.
+
+## 9. Managed media inventory and deletion boundary
+
+```text
+Admin Image Storage screen
+  → fixed safe inventory RPC (opaque media ID)
+  → private media registry/reference inventory
+  → Admin trash/restore/purge-intent RPC
+  → table-backed durable deletion job
+  → server-only Edge Function worker
+  → reference/protected-state recheck
+  → Supabase Storage API remove
+  → tombstone + audit finalization
+```
+
+- `ARCH-MED-001` Private registry MUST map opaque media ID to bucket/object path, owner, media category, byte size, lifecycle state, version, dan path hash. Raw path stays in unexposed/private data and MUST not be returned to browser.
+- `ARCH-MED-002` Reference inventory MUST cover every allowlisted domain reference, including shared/multiple references. Existing objects require deterministic backfill/reconciliation before deletion UI is enabled.
+- `ARCH-MED-003` Lifecycle minimum: `active`, `protected`, `trashed`, `purge_queued`, `purging`, `purged`, `failed`, dan `restored`. Trash/restore/purge mutations use expected version + idempotency key and append audit.
+- `ARCH-MED-004` Reuse the existing leased table-job pattern: claim with short transaction and `FOR UPDATE SKIP LOCKED`; perform Storage API call outside database lock; then finalize idempotently. Missing object after a successful prior delete MUST complete the tombstone instead of retrying forever.
+- `ARCH-MED-005` Worker MUST recompute references, protected state, and reference fingerprint immediately before removal. A changed/new reference returns safe conflict and leaves the object intact.
+- `ARCH-MED-006` Permanent deletion MUST call Supabase Storage API. Direct SQL mutation of `storage.objects`, browser service-role use, and direct feature calls to `.remove()` for managed referenced assets MUST be prohibited.
+- `ARCH-MED-007` `coach-public-media` MUST be private before managed deletion launches. Public Coach media is served through an opaque-ID gateway/Edge Function that verifies current published reference and active asset state on every request; W07.6 uses `Cache-Control: no-store` until W08 introduces a proven versioned cache/invalidation contract. Normal user/public reads deny trashed/purge states; Admin-only preview is no-store and revokes browser object URLs.
+- `ARCH-MED-008` Storage summary derives bytes/count from `storage.objects.metadata` through a server projection. Plan quota/limit appears only when supplied by a trusted server configuration; it is never hardcoded from a screenshot or product plan assumption.
+
+## 10. Rendering strategy
 
 - `ARCH-WEB-001` Landing dan halaman legal SHOULD dihasilkan sebagai static HTML untuk SEO dan first paint.
 - `ARCH-WEB-002` Authenticated app MAY menggunakan client rendering karena bersifat session-dependent dan app-like.
@@ -220,7 +266,7 @@ API key dan base URL tetap sama selama provider-nya OpenRouter. Slug model lain 
 - `ARCH-WEB-004` Pilihan rendering MUST tetap dapat diekspor ke output yang dilayani Cloudflare Workers Static Assets.
 - `ARCH-WEB-005` API route Expo MUST NOT digunakan sebagai pengganti RPC/Edge Function authority tanpa ADR dan threat review.
 
-## 9. Error contract
+## 11. Error contract
 
 Repository/use case mengembalikan typed error minimal:
 
@@ -233,7 +279,7 @@ offline | timeout | rateLimited | storageRejected | unknown
 - `ARCH-ERR-002` Error UI MUST berbahasa Indonesia, actionable, dan memberi retry hanya jika aman.
 - `ARCH-ERR-003` Logging MUST NOT memuat token, password, raw QR payload, berat badan, signed URL, object path privat, atau isi foto.
 
-## 10. Referensi resmi
+## 12. Referensi resmi
 
 - [Expo: Develop websites](https://docs.expo.dev/workflow/web/)
 - [Expo: Progressive web apps](https://docs.expo.dev/guides/progressive-web-apps/)
@@ -243,3 +289,5 @@ offline | timeout | rateLimited | storageRejected | unknown
 - [OpenRouter: Gemma 4 31B free](https://openrouter.ai/google/gemma-4-31b-it%3Afree/api)
 - [OpenRouter: Quickstart and model field](https://openrouter.ai/docs/quickstart)
 - [OpenRouter: Reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens)
+- [Supabase: Storage size usage](https://supabase.com/docs/guides/platform/manage-your-usage/storage-size)
+- [Supabase: Delete objects through Storage API](https://supabase.com/docs/guides/storage/management/delete-objects)

@@ -112,6 +112,27 @@ Exit: insight berjalan asynchronous tanpa memengaruhi submission/approval/poin, 
 
 Exit: semua Admin iPhone capabilities memiliki parity evidence atau accepted deferral.
 
+## W07.5 — Admin Sales Overview
+
+- Dashboard Quick Access `Ringkasan penjualan` dan route `/admin/sales`;
+- ledger-authoritative gross/reversal/net/order metrics;
+- 7/30/90/custom WITA filters dan purpose Program/Akses Coach;
+- daily trend, program, purpose, customer, dan non-revenue pipeline breakdown;
+- Admin-only fixed projection, privacy, query-plan/index, responsive/accessibility tests.
+
+Exit: semua angka dapat direkonsiliasi ke payment ledger tanpa double count commerce, pending tidak menjadi revenue, dan response tidak memuat private payment/customer data.
+
+## W07.6 — Admin Image Storage
+
+- fourth Quick Access `Penyimpanan gambar` dan route `/admin/image-storage`;
+- managed usage/inventory untuk user-uploaded question, payment, dan Coach-profile images;
+- private media registry/reference reconciliation dan opaque browser IDs;
+- Sampah, restore, permanent-purge intent, protected-state matrix, tombstones;
+- leased server worker dengan last-moment reference recheck dan Supabase Storage API delete;
+- destructive/race/retry/cache/privacy/accessibility/regression tests.
+
+Exit: Admin dapat menghapus eligible synthetic local image tanpa merusak domain history/poin/ledger, sedangkan protected/shared/unknown media fail closed dan tidak ada raw path/service key di browser.
+
 ## W08 — PWA hardening
 
 - offline/cache/update behavior;
@@ -122,6 +143,7 @@ Exit: semua Admin iPhone capabilities memiliki parity evidence atau accepted def
 - observability redaction;
 - production runbooks dan policy blockers.
 - canonical/Open Graph/cache behavior untuk profil Coach publik.
+- sales/inventory cache isolation dan public-media deletion invalidation.
 
 Exit: release gates pada QA spec lulus; production deploy masih memerlukan izin eksplisit.
 
@@ -171,6 +193,7 @@ Pilihan yang direkomendasikan setelah split:
 - SLA review pembayaran dan notification channel;
 - expiry, resubmission, dispute/refund, reconciliation SOP;
 - retention/deletion policy untuk bukti program dan pembayaran;
+- production Trash/purge period, media protected-state policy, worker/operator/alert, dan cache invalidation runbook;
 - daftar Admin/reviewer production dan least-privilege process;
 - privacy policy/terms/support contact;
 - exact Supabase hosted project authorization dan Google OAuth credentials;

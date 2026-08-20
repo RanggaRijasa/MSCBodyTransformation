@@ -1658,6 +1658,7 @@ export type Database = {
           cover_path: string | null
           created_at: string
           created_by: string
+          default_verification_mode: string
           desired_price: number | null
           draft_idempotency_key: string | null
           duration_mode: string
@@ -1692,6 +1693,7 @@ export type Database = {
           cover_path?: string | null
           created_at?: string
           created_by: string
+          default_verification_mode?: string
           desired_price?: number | null
           draft_idempotency_key?: string | null
           duration_mode: string
@@ -1726,6 +1728,7 @@ export type Database = {
           cover_path?: string | null
           created_at?: string
           created_by?: string
+          default_verification_mode?: string
           desired_price?: number | null
           draft_idempotency_key?: string | null
           duration_mode?: string
@@ -2255,6 +2258,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_dashboard: { Args: never; Returns: Json }
+      list_admin_people: { Args: never; Returns: Json[] }
+      get_admin_person_detail: { Args: { target_user_id: string }; Returns: Json }
+      list_admin_pending_evidence: { Args: never; Returns: Json[] }
+      list_admin_profile_moderation_items: { Args: never; Returns: Json[] }
+      list_admin_food_insight_operations: { Args: never; Returns: Json[] }
+      list_admin_audit_events: { Args: { result_limit?: number }; Returns: Json[] }
+      get_admin_closure_preflight: { Args: { target_program_id: string }; Returns: Json }
+      preview_admin_program_winners: { Args: { target_program_id: string }; Returns: Json[] }
+      save_admin_program_draft: { Args: { program_payload: Json; request_idempotency_key: string }; Returns: Database['public']['Tables']['programs']['Row'] }
+      duplicate_admin_program_as_draft: { Args: { target_program_id: string; source_program_id: string; target_title: string; target_start_date: string; request_idempotency_key: string }; Returns: Database['public']['Tables']['programs']['Row'] }
+      archive_admin_program: { Args: { target_program_id: string; reason: string; request_idempotency_key: string }; Returns: Database['public']['Tables']['programs']['Row'] }
+      moderate_admin_coach_profile_item: { Args: { target_item_id: string; expected_version: number; decision: string; note: string; request_idempotency_key: string }; Returns: Json }
+      archive_admin_winner_poster: { Args: { target_poster_id: string; reason: string; request_idempotency_key: string }; Returns: Database['public']['Tables']['winner_posters']['Row'] }
       list_public_food_question_configs: { Args: { target_question_ids: string[] }; Returns: Json[] }
       enqueue_food_insight: { Args: { target_submission_id: string; target_analysis_version?: string }; Returns: string | null }
       reconcile_food_insight_jobs: { Args: { target_analysis_version?: string }; Returns: number }

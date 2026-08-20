@@ -127,6 +127,10 @@ Icon utama adalah Phosphor melalui SVG. Package baseline `phosphor-react-native`
 | `phone` | `Phone` |
 | `starRating` | `Star` |
 | `aiInsight` | `Sparkle` |
+| `salesOverview` | `ChartLineUp` |
+| `imageStorage` | `ImagesSquare` |
+| `trash` | `Trash` |
+| `restore` | `ArrowCounterClockwise` |
 
 Final mapping harus diaudit berdampingan dengan screen iOS pada implementation phase. Nama semantic tetap stabil walau glyph dituning.
 
@@ -145,6 +149,8 @@ Shared primitives minimum:
 - `EvidenceViewer`, `PaymentProofUploader`, `QRScanner`;
 - `CoachPublicProfile`, `SocialContactLink`, `TestimonialCard`, `BeforeAfterGallery`;
 - `FoodInsightCard` dan `StarRating` untuk state pending/available/unavailable/error.
+- `SalesMetric`, `AccessibleSalesChart`, `SalesBreakdownRow`;
+- `StorageUsageSummary`, `MediaInventoryRow`, `MediaImpactDialog`, `DeletionJobStatus`.
 
 - `DS-CMP-001` Buttons MUST memiliki default, hover-capable, pressed, focus-visible, disabled, dan loading state.
 - `DS-CMP-002` Status MUST selalu menggabungkan warna dengan label/icon/shape.
@@ -155,6 +161,9 @@ Shared primitives minimum:
 - `DS-CMP-007` Profil Coach publik MUST memakai section yang menghilang ketika datanya kosong, bukan placeholder generik atau nested card untuk setiap field.
 - `DS-CMP-008` Before–after MUST tetap dibaca sebagai dua gambar berlabel `Sebelum` dan `Sesudah`; perbedaan tidak boleh disampaikan melalui posisi saja.
 - `DS-CMP-009` `FoodInsightCard` MUST menempatkan label `Perkiraan dari foto` dekat macro dan tidak memakai animasi berulang setelah hasil tersedia.
+- `DS-CMP-010` Chart penjualan MUST memakai semantic colors dan menyediakan exact text/table equivalent; jangan menggambar chart dengan kumpulan `div` atau menambah chart library tanpa approval.
+- `DS-CMP-011` Thumbnail gambar privat MUST memakai shared authorized media viewer dengan placeholder netral dan explicit deleted/unavailable state; jangan menaruh path/filename sebagai alt text.
+- `DS-CMP-012` Destructive media action MUST memakai semantic destructive color hanya pada final confirmation/action, bukan pada seluruh inventory row atau usage chart.
 
 ## 6. Motion
 

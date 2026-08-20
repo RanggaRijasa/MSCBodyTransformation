@@ -119,6 +119,34 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-AI-012` Insight utama MUST terdiri dari satu atau dua kalimat Bahasa Indonesia. Setiap kalimat MUST utuh dan tidak lebih dari 80 karakter; gabungan insight MUST tidak lebih dari 160 karakter.
 - `PROD-AI-013` Provider baseline MUST OpenRouter dengan model default `google/gemma-4-31b-it:free` dan reasoning dimatikan. Model slug MUST berasal dari konfigurasi server sehingga model OpenRouter lain yang kompatibel dapat dipilih tanpa mengubah feature/domain code.
 
+### 4.6 Ringkasan penjualan Admin
+
+- `PROD-SLS-001` Admin MUST dapat membuka `Ringkasan penjualan` dari `Akses cepat` Dashboard tanpa menambah destination baru pada bottom navigation/sidebar utama.
+- `PROD-SLS-002` Penjualan web manual MUST dihitung dari ledger uang authoritative: `verified` sebagai penjualan terverifikasi dan revenue `reversal` yang terhubung ke verified entry sebagai pengurang revenue. Status order `approved` tanpa ledger MUST NOT dihitung sebagai revenue.
+- `PROD-SLS-003` Ringkasan minimum MUST menampilkan penjualan terverifikasi bruto, pembalikan, penjualan bersih, jumlah order terverifikasi, rata-rata nilai order bruto, tren harian, jenis pembelian, program terlaris, dan pelanggan teratas.
+- `PROD-SLS-004` Baseline MUST mencakup pembelian program dan akses Coach dengan filter `Semua`, `Program`, dan `Akses Coach`. Data StoreKit/Google Play atau commerce channel lain MUST tidak dicampur sampai contract lintas-channel dinormalisasi melalui keputusan terpisah.
+- `PROD-SLS-005` Nilai `Menunggu pemeriksaan` MAY ditampilkan sebagai pipeline order terpisah, tetapi MUST NOT dijumlahkan sebagai penjualan atau revenue.
+- `PROD-SLS-006` Breakdown sumber pembayaran MUST NOT dibuat dari `declared_method` karena rekening dan QRIS ditampilkan bersama dan field tersebut bukan bukti cara transfer aktual. Gunakan dimensi jenis pembelian/program yang authoritative.
+- `PROD-SLS-007` Periode default MUST 30 hari dalam `Asia/Makassar`, dengan pilihan 7/30/90 hari dan rentang khusus maksimal 366 hari. Batas waktu memakai inclusive start dan exclusive end serta selalu menampilkan zona laporan.
+- `PROD-SLS-008` Pelanggan teratas hanya menampilkan nama tampilan, jumlah order, dan nilai bersih pada permukaan Admin. Email, nomor HP, member level, rekening, bukti, dan reconciliation reference MUST tidak masuk response overview.
+- `PROD-SLS-009` Revenue reversal MAY terdiri dari beberapa entry parsial, tetapi cumulative reversal MUST tidak melebihi verified amount dan setiap entry MUST terkait ke verified ledger entry serta idempotency key. Reversal diakui pada timestamp entry reversal, sehingga net suatu periode MAY negatif.
+- `PROD-SLS-010` Pengembalian transfer yang tidak pernah menjadi revenue—late/rejected-but-paid, duplicate transfer, atau overpayment difference—MUST dicatat sebagai exceptional cash adjustment terpisah dan MUST NOT mengurangi sales net. Approved voluntary cancellation yang non-refundable juga tidak membuat reversal.
+- `PROD-SLS-011` Setiap order MUST memiliki privacy-safe `customer_reporting_key` server-controlled yang bertahan setelah profile deletion tanpa menyimpan contact snapshot. Sales groups by key; `person_id` hanya dikembalikan bila profil masih ada. Legacy null-owner order yang tidak dapat direkonstruksi MUST dipisah per order dan ditandai unknown, tidak digabung menjadi satu pelanggan.
+
+### 4.7 Pengelolaan gambar unggahan pengguna
+
+- `PROD-MED-001` Admin MUST dapat membuka `Penyimpanan gambar` dari `Akses cepat` Dashboard dan melihat penggunaan gambar pengguna yang dikelola MSC, bukan angka paket/quota Supabase yang di-hardcode.
+- `PROD-MED-002` Baseline inventory MUST mencakup bucket user-uploaded `question-photos`, `payment-evidence`, dan `coach-public-media`. Manual Trash/restore/purge hanya untuk eligible `question-photos` dan `coach-public-media`; `payment-evidence` inventory bersifat read-only dan tetap dihapus otomatis oleh kontrak retensi pembayaran. `public-media`, `payment-destination-assets`, PWA/brand assets, video, dan file non-gambar berada di luar scope deletion baseline.
+- `PROD-MED-003` Browser MUST menerima opaque media ID dan metadata aman; raw object path, signed URL, bucket-internal namespace, isi gambar, berat, atau reconciliation data MUST tidak muncul pada URL, log, analytics, atau audit response.
+- `PROD-MED-004` Admin MUST dapat memindahkan gambar eligible ke `Sampah`, memulihkannya sebelum purge, dan meminta `Hapus permanen` melalui operation beralasan, terkonfirmasi, idempotent, dan diaudit.
+- `PROD-MED-005` Memindahkan ke Sampah MUST segera menutup akses Participant/Coach/public melalui private/controlled delivery boundary, tetapi byte Storage tetap dihitung sampai purge berhasil. UI MUST membedakan `Digunakan`, `Dapat dibebaskan`, dan `Sudah dibebaskan`.
+- `PROD-MED-006` Gambar MUST dilindungi dari deletion saat pembayaran/evidence masih diperiksa, correction/dispute aktif, food insight masih queued/processing/retry, account cleanup berjalan, atau reference state belum dapat diklasifikasikan dengan aman.
+- `PROD-MED-007` Penghapusan gambar bukti yang sudah eligible MUST mempertahankan submission, keputusan, poin, transaction metadata, dan audit. Viewer mengganti media dengan tombstone `Gambar telah dihapus oleh Admin`; poin tidak dihitung ulang.
+- `PROD-MED-008` Media Coach yang masih dipublikasikan MUST di-unpublish/didetach secara authoritative sebelum quarantine. Confirmation MUST menjelaskan profil/item publik yang terdampak.
+- `PROD-MED-009` Permanent purge MUST dilakukan worker server melalui Supabase Storage API setelah reference/protected-state recheck. SQL `DELETE` terhadap `storage.objects` dan service-role credential di browser MUST dilarang.
+- `PROD-MED-010` Batch purge UI hanya MAY untuk item yang sudah berada di Sampah atau orphan/superseded yang tervalidasi, maksimal 100 item per request, dengan impact summary dan reason. Unknown/unclassified media MUST fail closed.
+- `PROD-MED-011` `coach-public-media` MUST dimigrasikan menjadi private dan dilayani melalui controlled opaque media gateway sebelum Trash tersedia. Public profile/API MUST memakai opaque media ID, bukan raw Storage path; known legacy direct URL MUST gagal setelah cutover.
+
 ## 5. Adaptasi web yang disengaja
 
 | Area | iPhone | MSCWEB |
@@ -152,3 +180,5 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-SUC-006` PWA dapat dipasang, membuka route yang benar, dan memberi shell/status offline yang jujur.
 - `PROD-SUC-007` Coach dapat memublikasikan dan membagikan profil publik yang tetap aman ketika semua field opsional kosong.
 - `PROD-SUC-008` Foto makanan menerima feedback macro dan bintang AI secara asynchronous tanpa memperlambat poin/approval, dan provider dapat diganti tanpa mengubah feature code.
+- `PROD-SUC-009` Admin dapat merekonsiliasi Ringkasan penjualan manual web ke payment ledger untuk periode WITA tanpa pending/rejected/double-counted commerce atau private payment data.
+- `PROD-SUC-010` Admin dapat melihat penggunaan gambar pengguna dan trash/restore/purge media eligible melalui Storage API, sementara protected/shared/unknown media tetap utuh dan domain history/poin/ledger tetap tersedia.

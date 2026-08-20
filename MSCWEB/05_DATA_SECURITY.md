@@ -82,6 +82,38 @@ result: submission_id, analysis_version, detected_kind,
         completed_at
 ```
 
+### Revenue reversal dan exceptional cash adjustment
+
+```text
+payment_ledger verified: one per order, recognized amount, verified_at
+payment_ledger reversal: many per verified entry, amount, reason,
+                         idempotency_key, verified_at, related_ledger_id
+exceptional_cash_adjustments: order_id?, adjustment_kind,
+                              amount_minor, resolution_status,
+                              reason, idempotency_key, recorded_at
+payment_customer_reporting_keys: reporting_key, user_id?, created_at
+payment_orders: customer_reporting_key snapshot
+```
+
+`exceptional_cash_adjustments` mencatat pengembalian dana yang tidak pernah menjadi recognized revenue; row tersebut tidak masuk gross/reversal/net Sales Overview. Mapping reporting key ke user berada di private schema dan tidak dikembalikan ke browser; key/order snapshot dipertahankan sebagai pseudonymous financial grouping setelah profile deletion.
+
+### `managed_media_assets`, `managed_media_references`, dan `media_deletion_jobs`
+
+```text
+asset: id, bucket_id, object_path, object_path_hash, owner_user_id?,
+       media_category, byte_size, mime_type, lifecycle_status,
+       version, discovered_at, updated_at
+reference: asset_id, reference_kind, reference_id, reference_status,
+           is_protected, protection_reason?, observed_at
+deletion job: id, asset_id, requested_by, reason, status,
+              expected_asset_version, reference_fingerprint,
+              not_before, lease_token?, lease_expires_at?, attempt_count,
+              impact_snapshot_json, idempotency_key,
+              requested_at, completed_at?
+```
+
+Nama/schema final MAY memakai private tables/views, tetapi raw `object_path` MUST berada di unexposed/private projection. Browser hanya menerima opaque asset ID dan metadata aman.
+
 Nama final dapat diselaraskan dengan existing `commerce_purchase_intents`, `commerce_transactions`, transaction events, program entitlements, `coach_payment_records`, dan Coach entitlements. Yang wajib dipertahankan adalah invariants, bukan nama tabel konseptual di atas.
 
 - `SEC-DATA-001` Amount canonical MUST integer minor units (Rupiah) atau numeric/Decimal yang konsisten; MUST NOT binary float.
@@ -92,6 +124,12 @@ Nama final dapat diselaraskan dengan existing `commerce_purchase_intents`, `comm
 - `SEC-DATA-006` Public Coach read model MUST mengembalikan hanya field yang dipublikasikan dan status badge server-controlled; row private profile tidak boleh diekspos langsung kepada Guest.
 - `SEC-DATA-007` `public_handle` MUST unik, stabil, tidak berasal dari raw QR, dan perubahan handle MUST diaudit serta mempertahankan redirect bila kelak diizinkan.
 - `SEC-DATA-008` Satu submission + analysis version MUST hanya memiliki satu job/result aktif. Retry provider maupun reconciliation scan MUST tidak membuat hasil/rating ganda, dan scan MUST menemukan eligible submission yang commit tetapi belum memiliki job.
+- `SEC-DATA-009` Sales report MUST memakai `payment_ledger.amount_minor`, `entry_kind`, dan `verified_at`; `payment_orders` hanya menjadi dimension/order-pipeline source. `commerce_transactions` MUST tidak dijumlahkan bersama ledger manual.
+- `SEC-DATA-010` Payment ledger remediation MUST enforce one verified entry per order, multiple idempotent reversal entries related to verified entry, and cumulative reversal not exceeding verified amount. Unrecognized-fund returns live in separate exceptional cash-adjustment records and do not affect sales net.
+- `SEC-DATA-011` Every payment order MUST snapshot a server-controlled privacy-safe customer reporting key. Profile/account deletion MAY null the private user mapping but MUST not null the order key; browser report gets opaque group ID and nullable authorized person ID, never mapping/contact snapshot.
+- `SEC-DATA-012` Media registry/reference inventory MUST direkonsiliasi terhadap `storage.objects` dan seluruh reference tables sebelum deletion diaktifkan. Unknown object/reference MUST diklasifikasikan `protected`/`unknown`, bukan diasumsikan orphan.
+- `SEC-DATA-013` `object_path_hash` dan reference fingerprint MUST digunakan untuk audit/concurrency evidence; raw object path MUST tidak masuk audit payload atau browser response.
+- `SEC-DATA-014` Purged media MUST meninggalkan tombstone/status yang cukup untuk menjaga audit dan menjelaskan viewer state tanpa mempertahankan signed URL atau media bytes.
 
 ## 3. Authorization matrix
 
@@ -109,6 +147,9 @@ Nama final dapat diselaraskan dengan existing `commerce_purchase_intents`, `comm
 | Profil Coach yang dipublikasikan | read | read own published | moderate/manage through operation | read published |
 | Draft profil/kontak Coach | none | own only | authorized moderation | none |
 | Food insight | own submission | assigned scope | authorized review | none |
+| Sales aggregate | none | none | fixed aggregate/detail projection | none |
+| Media inventory | own record status only | scoped evidence status only | safe fixed projection | none |
+| Media deletion job | none | none | request/restore/confirm through narrow operation | none |
 
 - `SEC-AUTHZ-001` Coach role alone MUST NOT grant access ke semua Participant.
 - `SEC-AUTHZ-002` Admin UI visibility MUST NOT be treated as authorization.
@@ -125,7 +166,9 @@ Buckets minimum:
 | `payment-proofs` | private | bukti transfer/QRIS |
 | `profile-media` | private atau transformed public sesuai policy | avatar |
 | `payment-destinations` | read-controlled | QRIS static image |
-| `coach-public-media` | public/read-controlled | avatar dan media profil yang secara eksplisit dipublikasikan |
+| `coach-public-media` | private; controlled public gateway | avatar dan media profil yang secara eksplisit dipublikasikan |
+
+W07.6 managed-image allowlist uses the actual implemented buckets `question-photos`, `payment-evidence`, and `coach-public-media`. Conceptual name `program-evidence` maps to `question-photos`; it is not a second bucket.
 
 - `SEC-STO-001` Private bucket object MUST diakses melalui authenticated download atau short-lived signed URL.
 - `SEC-STO-002` Policy pada `storage.objects` MUST mengikat bucket, owner/scope, request status, dan object path convention.
@@ -134,6 +177,13 @@ Buckets minimum:
 - `SEC-STO-005` Delete/retention job MUST mengaudit referensi database sebelum object dihapus.
 - `SEC-STO-006` Foto Google yang dipakai sebagai avatar MUST diimpor melalui media pipeline dan disajikan dari media profil yang dikontrol aplikasi; UI publik MUST tidak hotlink URL provider yang dapat kedaluwarsa atau membocorkan parameter akun.
 - `SEC-STO-007` Before–after/testimoni publik MUST berasal dari upload khusus profil, dinormalisasi, dibersihkan metadata, dan tidak boleh menyalin object path bucket bukti privat.
+- `SEC-STO-008` Admin inventory MUST NOT grant browser-wide `SELECT`/`DELETE` on `storage.objects`; access happens through fixed Admin RPC projection and server-only worker.
+- `SEC-STO-009` Direct SQL deletion from `storage.objects` MUST dilarang. Permanent removal uses Storage API so metadata dan underlying object are removed consistently.
+- `SEC-STO-010` Immediately before remove, worker MUST lock/claim the job and recompute references/protected state. List-then-delete without recheck is unsafe.
+- `SEC-STO-011` Trashed assets MUST be denied to normal owner/Coach/public read policies. Admin-only Trash preview must be no-store and must not create shareable signed URL.
+- `SEC-STO-012` Permanent delete result MUST record count/bytes/category/path hash, not raw path. Partial/missing-object/finalization failures remain retryable and idempotent.
+- `SEC-STO-013` `coach-public-media` MUST be private; RLS alone cannot revoke an object from a public bucket. Public delivery MUST use opaque asset ID and controlled server gateway that checks active published profile/item reference plus non-trashed asset state. Draft, pending/rejected moderation, superseded, and trashed media MUST not be publicly readable through current or legacy direct path.
+- `SEC-STO-014` `payment-evidence` remains inventory-only in Admin Image Storage. Existing automatic orphan/30-day retention worker owns deletion; Admin media trash/purge RPC MUST reject this bucket. Inventory reconciliation and automatic cleanup must be idempotent when racing on the same object.
 
 Referensi resmi: [Supabase Storage access control](https://supabase.com/docs/guides/storage/security/access-control) dan [Supabase private downloads/signed URLs](https://supabase.com/docs/guides/storage/serving/downloads).
 
@@ -154,6 +204,15 @@ publish_my_coach_profile
 moderate_coach_profile_content
 enqueue_food_insight
 correct_food_insight_rating
+record_revenue_reversal
+record_exceptional_cash_adjustment
+get_admin_sales_overview
+list_admin_managed_media
+request_admin_media_trash
+restore_admin_media
+confirm_admin_media_purge
+claim_admin_media_deletion_job
+finalize_admin_media_deletion_job
 ```
 
 Setiap operation:
@@ -170,6 +229,9 @@ Setiap operation:
 - `SEC-OP-002` Idempotency key MUST unik per actor + operation intent dan disimpan bersama result/transition.
 - `SEC-OP-003` Repeated identical request MUST mengembalikan prior success atau safe conflict, bukan duplicate side effect.
 - `SEC-OP-004` Transaction isolation/locking MUST diuji dengan concurrent approvals.
+- `SEC-OP-005` Sales RPC is stable/read-only, validates Admin and bounded date range, and returns no reconciliation/bank/proof/private-media fields.
+- `SEC-OP-006` Trash/restore/purge operations MUST validate Admin, expected asset version, current reference fingerprint, allowlisted category, protected state, reason, and idempotency key.
+- `SEC-OP-007` Storage API calls MUST occur outside a long-running database transaction. Worker lease/finalization follows short-transaction retry-safe saga semantics.
 
 ## 6. Authentication security
 
@@ -223,6 +285,12 @@ Operational log MAY mencatat opaque request ID, event type, redacted actor ID, s
 - browser bundle tidak mengandung `FOOD_AI_API_KEY` atau provider prompt;
 - food-disabled submission tidak pernah membuat job AI;
 - job AI idempotent, outage tidak memengaruhi submission/poin, dan rating 1–2 gagal bila favorable guard tidak terpenuhi.
+- Participant/Coach/Guest tidak dapat memanggil sales overview atau memperoleh aggregate response;
+- sales response tidak memuat identity/contact/bank/reconciliation/proof/path fields dan tidak double-count ledger/commerce;
+- referenced/protected/unknown media gagal dipurge dan concurrent new reference wins over deletion;
+- direct browser/SQL delete referenced media ditolak; Storage API worker retry menghasilkan satu tombstone/audit;
+- trashed media tidak dapat diakses normal, restore bekerja sebelum purge, dan purged media tidak dapat dipulihkan;
+- media audit/log/browser tidak memuat raw path, signed URL, weight, image bytes, atau service credential.
 
 ## 9. Environment
 

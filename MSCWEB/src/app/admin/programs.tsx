@@ -1,5 +1,9 @@
-import { RoleShellScreen } from '@/shared/navigation/RoleShellScreen';
+import { AdminProgramsExperience } from '@/features/admin/AdminProgramComponents';
+import { useAuth } from '@/shared/auth/AuthProvider';
+import { AppShell } from '@/shared/navigation/AppShell';
 
 export default function AdminProgramsRoute() {
-  return <RoleShellScreen role="admin" activeRoute="programs" title="Program" description="Area pengelolaan program disiapkan tanpa data fixture produksi." />;
+  const { state } = useAuth();
+  const authorized = state.status === 'authenticated' && state.account.role === 'admin';
+  return <AppShell role="admin" activeRoute="programs" title="Program"><AdminProgramsExperience authorized={authorized} /></AppShell>;
 }

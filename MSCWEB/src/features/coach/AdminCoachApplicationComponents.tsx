@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { registerPrivateObjectUrl } from '@/shared/auth/private-cache';
 import { rupiahFormatter } from '@/shared/design/formatters';
@@ -11,14 +11,18 @@ import { getCoachExperienceRepository, type CoachApplicationQueueItem } from './
 import { useAdminCoachApplications, useAdminCoachDecision } from './coach-experience-queries';
 
 export function AdminCoachApplications({ authorized }: { authorized: boolean }) {
+  const { colors } = useAppTheme();
   const queue = useAdminCoachApplications(authorized);
   const [scope, setScope] = useState<'action' | 'all'>('action');
+  const [visibleCount, setVisibleCount] = useState(20);
   if (!authorized) return <StateView kind="forbidden" />;
   if (queue.isPending) return <StateView kind="loading" />;
   if (queue.isError) return <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void queue.refetch()} />} />;
   const actionable = (queue.data ?? []).filter((item) => item.aggregate.application.status === 'submitted');
   const items = scope === 'action' ? actionable : queue.data ?? [];
-  return <View style={styles.root} testID="admin.coach-applications"><View style={styles.controls}><SegmentedControl label="Lingkup aplikasi Coach" value={scope} onChange={setScope} options={[{ label: `Perlu tindakan (${actionable.length})`, value: 'action' }, { label: 'Semua aplikasi', value: 'all' }]} /></View><ScrollView contentContainerStyle={styles.content}>{items.length === 0 ? <StateView kind="empty" /> : items.map((item) => <ApplicationCard key={item.aggregate.application.id} item={item} />)}</ScrollView></View>;
+  const visibleItems = items.slice(0, visibleCount);
+  const changeScope = (next: 'action' | 'all') => { setScope(next); setVisibleCount(20); };
+  return <View style={styles.root} testID="admin.coach-applications"><SegmentedControl label="Lingkup aplikasi Coach" value={scope} onChange={changeScope} options={[{ label: `Perlu tindakan (${actionable.length})`, value: 'action' }, { label: 'Semua aplikasi', value: 'all' }]} />{items.length === 0 ? <InlineMessage title={scope === 'action' ? 'Tidak ada aplikasi yang perlu ditindak' : 'Belum ada aplikasi Coach'} message={scope === 'action' ? 'Semua aplikasi Coach sudah diproses.' : 'Aplikasi Coach akan tampil di sini saat tersedia.'} tone={scope === 'action' ? 'success' : 'info'} /> : <View style={styles.content}><Text accessibilityLiveRegion="polite" style={[styles.summary, { color: colors.secondaryText }]}>Menampilkan {visibleItems.length} dari {items.length} aplikasi</Text>{visibleItems.map((item) => <ApplicationCard key={item.aggregate.application.id} item={item} />)}{visibleItems.length < items.length ? <Button label="Muat 20 aplikasi lagi" tone="secondary" onPress={() => setVisibleCount((count) => Math.min(count + 20, items.length))} /> : null}</View>}</View>;
 }
 
 function ApplicationCard({ item }: { item: CoachApplicationQueueItem }) {
@@ -55,8 +59,8 @@ function EvidencePreview({ order }: { order: CoachPaymentOrder }) {
 function applicationStatus(value: string) { return ({ draft: 'Draf', ineligible: 'Belum memenuhi syarat', submitted: 'Menunggu Admin', accepted_pending_payment: 'Menunggu pembayaran', active: 'Aktif', rejected: 'Ditolak', expired: 'Kedaluwarsa' } as Record<string, string>)[value] ?? value; }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, minHeight: 0 }, controls: { padding: primitiveTokens.space.medium },
-  content: { width: '100%', maxWidth: 900, alignSelf: 'center', padding: primitiveTokens.space.large, paddingBottom: 140, gap: primitiveTokens.space.medium },
+  root: { width: '100%', gap: primitiveTokens.space.medium },
+  content: { width: '100%', gap: primitiveTokens.space.medium }, summary: typographyTokens.caption,
   rowBetween: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: primitiveTokens.space.medium },
   identity: { flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium }, flexCopy: { flex: 1, minWidth: 0, gap: primitiveTokens.space.xxSmall },
   detail: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: primitiveTokens.space.medium, paddingTop: primitiveTokens.space.medium, gap: primitiveTokens.space.medium },

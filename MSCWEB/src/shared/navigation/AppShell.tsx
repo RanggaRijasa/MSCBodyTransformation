@@ -14,14 +14,16 @@ type AppShellProps = PropsWithChildren<{
   role?: AppRole;
   title: string;
   subtitle?: string;
+  hideHeader?: boolean;
 }>;
 
-export function AppShell({ activeRoute, role = 'guest', title, subtitle, children }: AppShellProps) {
+export function AppShell({ activeRoute, role = 'guest', title, subtitle, hideHeader = false, children }: AppShellProps) {
   const layout = useResponsiveLayout();
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
   const isCompact = layout === 'compact';
   const isMedium = layout === 'medium';
+  const isAdminCompact = isCompact && role === 'admin';
   const routes = navigationByRole[role];
 
   const navigation = (
@@ -88,6 +90,7 @@ export function AppShell({ activeRoute, role = 'guest', title, subtitle, childre
                 numberOfLines={1}
                 style={[
                   styles.navigationLabel,
+                  isAdminCompact && styles.adminCompactNavigationLabel,
                   { color: foregroundColor },
                   isActive && styles.navigationLabelActive,
                 ]}
@@ -105,10 +108,10 @@ export function AppShell({ activeRoute, role = 'guest', title, subtitle, childre
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       {!isCompact ? navigation : null}
       <View style={styles.contentColumn}>
-        <View style={[styles.header, { backgroundColor: colors.background, borderColor: colors.primaryAction }]}>
-          <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.primaryText }]}>{title}</Text>
+        {!hideHeader ? <View style={[styles.header, isAdminCompact && styles.adminCompactHeader, { backgroundColor: colors.background, borderColor: isAdminCompact ? colors.background : colors.primaryAction }]}> 
+          <Text accessibilityRole="header" style={[styles.headerTitle, isAdminCompact && styles.adminCompactHeaderTitle, { color: colors.primaryText }]}>{title}</Text>
           {subtitle ? <Text style={[styles.headerSubtitle, { color: colors.secondaryText }]}>{subtitle}</Text> : null}
-        </View>
+        </View> : null}
         <View style={[styles.content, isCompact && { paddingBottom: componentTokens.compactTabBarHeight + Math.max(insets.bottom, primitiveTokens.space.xSmall) }]}>{children}</View>
         {isCompact ? navigation : null}
       </View>
@@ -120,7 +123,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, flexDirection: 'row', minWidth: 0 },
   contentColumn: { flex: 1, minWidth: 0 },
   header: { minHeight: componentTokens.compactHeaderHeight, justifyContent: 'center', borderBottomWidth: 3, paddingHorizontal: primitiveTokens.space.large, paddingVertical: primitiveTokens.space.small },
+  adminCompactHeader: { minHeight: 88, justifyContent: 'flex-end', borderBottomWidth: 0, paddingHorizontal: primitiveTokens.space.medium, paddingBottom: primitiveTokens.space.small },
   headerTitle: typographyTokens.title,
+  adminCompactHeaderTitle: typographyTokens.titleLarge,
   headerSubtitle: typographyTokens.callout,
   content: { flex: 1, minHeight: 0 },
   navigationRail: { width: componentTokens.navigationWidth, borderRightWidth: 3, paddingTop: primitiveTokens.space.large, paddingHorizontal: primitiveTokens.space.small, gap: primitiveTokens.space.xSmall },
@@ -179,5 +184,6 @@ const styles = StyleSheet.create({
     minHeight: typographyTokens.caption.lineHeight,
     textAlign: 'center',
   },
+  adminCompactNavigationLabel: { fontSize: 10, lineHeight: 13 },
   navigationLabelActive: { fontWeight: '700' },
 });

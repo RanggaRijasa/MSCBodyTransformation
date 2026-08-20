@@ -80,6 +80,8 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 | Bintang Coach manual | insight pada bukti makanan | Web replacement | AI memberi rating; Coach tidak mengisi pada alur normal |
 | Macro foto makanan | detail submission/activity | New | hasil asynchronous dan sekunder dari poin |
 | Admin dashboard | `/admin` | Exact/Adaptive | attention, quick actions, metrics |
+| Sales overview | `/admin/sales` dari Akses cepat | New | internal manual-web analytics; bukan tab utama |
+| Image storage | `/admin/image-storage` dari Akses cepat | New | inventory/Sampah/purge user images; bukan tab utama |
 | Admin Program | `/admin/programs` | Adaptive | search/list; wide table bila efektif |
 | Admin People | `/admin/people` | Exact/Adaptive | Peserta/Coach/Admin |
 | Coach application review | `/admin/coach-applications/:id` | Adaptive | payment + eligibility + audit |
@@ -141,6 +143,33 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 - `UX-AI-007` Coach tidak melihat input bintang manual pada alur normal. Aksi koreksi, bila tersedia bagi Coach/Admin, MUST berada di menu sekunder, meminta alasan, dan menjelaskan bahwa poin tidak berubah.
 - `UX-AI-008` Insight dan alasan rating MUST ditampilkan dalam Bahasa Indonesia yang natural. Istilah teknis provider, raw JSON, atau kalimat bahasa Inggris MUST tidak terlihat pada UI Participant, Coach, maupun Admin.
 - `UX-AI-009` Card insight MUST menampilkan paling banyak dua kalimat pendek. UI MUST tidak memotong kalimat dengan ellipsis; output yang melampaui kontrak diganti server dengan fallback valid sebelum dirender.
+
+### 4.7 Akses cepat dan ringkasan penjualan Admin
+
+- `UX-SLS-001` `Akses cepat` final MUST mempertahankan `Buat program` dan `Tambah poster`, lalu menambahkan `Ringkasan penjualan` dan `Penyimpanan gambar` sebagai intentional web-only extension.
+- `UX-SLS-002` Compact final memakai grid 2 × 2 dengan card/action semantics yang sama; wide MAY memakai empat kolom. Kartu tidak boleh dipadatkan menjadi empat kolom sempit pada ponsel atau menggeser `Aktivitas terbaru` ke balik bottom navigation.
+- `UX-SLS-003` `/admin/sales` membuka route detail dengan browser history/back dan `Dashboard` tetap menjadi active root; tidak menambah tab utama keenam.
+- `UX-SLS-004` Default 30 hari menampilkan KPI penjualan bersih, bruto, pembalikan, order terverifikasi, dan rata-rata order; filter 7/30/90/rentang khusus serta jenis pembelian berada dalam filter surface yang accessible.
+- `UX-SLS-005` Tren harian MUST memiliki chart ringkas dan equivalent table/list dengan tanggal serta nilai exact. Color, line/bar height, atau arah panah tidak boleh menjadi satu-satunya pembawa makna.
+- `UX-SLS-006` Section minimum: `Ringkasan`, `Tren penjualan`, `Menurut jenis pembelian`, `Program terlaris`, `Pelanggan teratas`, dan `Pipeline order`. Empty/zero/reversal-only data MUST tetap menjelaskan hasil secara jujur.
+- `UX-SLS-007` Pelanggan teratas menampilkan nama tampilan, nilai bersih, dan jumlah order; row menuju detail Orang yang sudah authorized. Jangan menampilkan email atau copy seperti `null, null`.
+- `UX-SLS-008` Screenshot sales yang diberikan pengguna adalah referensi hierarchy/information density saja. Warna biru, gaya Wix, placeholder image, dan label Inggris MUST tidak disalin; UI mengikuti token hitam-merah-kuning MSC.
+- `UX-SLS-009` Program dan pelanggan teratas masing-masing dibatasi lima item dengan tie-break stabil. Duplicate display name tetap menjadi row terpisah berdasarkan opaque ID; deleted/missing profile memakai label `Pengguna dihapus`.
+
+### 4.8 Penyimpanan gambar Admin
+
+- `UX-MED-001` `/admin/image-storage` menampilkan heading `Penyimpanan gambar`, ringkasan bytes/count, breakdown `Bukti program`, `Bukti pembayaran`, dan `Media profil Coach`, lalu segment `Gambar`/`Sampah`.
+- `UX-MED-002` Ringkasan MUST dilabeli `Penggunaan gambar pengguna`. Jika quota server tidak tersedia, jangan tampilkan progress `digunakan dari X GB`; tampilkan total dan breakdown saja.
+- `UX-MED-003` Wide memakai data table; compact memakai list/card. Keduanya menampilkan thumbnail aman, pemilik, kategori/lokasi manusiawi, ukuran, tanggal, reference/protection status, tanpa filename/object path privat.
+- `UX-MED-004` Search menggunakan nama pemilik/program/order label yang aman. Filter minimum: kategori, lifecycle/protected status, rentang tanggal, dan ukuran. Pagination MUST keyset/cursor, bukan offset dalam daftar besar.
+- `UX-MED-005` Detail image menunjukkan preview authorized, ringkasan reference/impact, alasan protected bila ada, retention state, dan satu primary contextual action. Private thumbnail/download tidak masuk shared/browser cache.
+- `UX-MED-006` `Pindahkan ke Sampah` memerlukan reason dan impact confirmation. `Pulihkan` hanya tersedia sebelum purge. `Hapus permanen` memerlukan confirmation kedua, acknowledgment irreversible, reason, dan jumlah item/bytes.
+- `UX-MED-007` Item di Sampah tetap dihitung sebagai `Dapat dibebaskan` sampai purge selesai. Failed job mempunyai status dan retry aman; UI MUST tidak mengklaim ruang bebas sebelum Storage API berhasil.
+- `UX-MED-008` Protected/unknown item menonaktifkan deletion dengan alasan actionable. Media publik yang terdampak harus menjelaskan bahwa profil/item akan di-unpublish sebelum quarantine.
+- `UX-MED-009` Bukti pembayaran selalu menampilkan label `Dikelola otomatis · retensi 30 hari` dan tidak memiliki tombol Trash/Pulihkan/Hapus permanen. Admin hanya melihat penggunaan, status retensi, dan hasil cleanup.
+- `UX-MED-010` Bulk selection hanya muncul pada Sampah atau safe orphan/superseded filter, maksimum 100 item. Select-all page tidak boleh berarti seluruh dataset yang belum dimuat.
+- `UX-MED-011` Screenshot Manage Storage yang diberikan pengguna adalah referensi hierarchy/tabs/table saja. Video, paket 50 GB, Wix location, warna biru, dan bulk delete bebas MUST tidak dianggap sebagai contract MSCWEB.
+- `UX-MED-012` Public Coach image URL memakai opaque media ID/gateway. UI/API publik tidak merender raw `photo_reference`/`media_object_path`; known legacy direct Storage URL tidak menjadi fallback.
 
 ## 5. Responsive behavior
 

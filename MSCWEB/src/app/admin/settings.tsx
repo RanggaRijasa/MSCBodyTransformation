@@ -1,5 +1,9 @@
-import { RoleShellScreen } from '@/shared/navigation/RoleShellScreen';
+import { AdminSettingsExperience } from '@/features/admin/AdminSettingsComponents';
+import { useAuth } from '@/shared/auth/AuthProvider';
+import { AppShell } from '@/shared/navigation/AppShell';
 
 export default function AdminSettingsRoute() {
-  return <RoleShellScreen role="admin" activeRoute="settings" title="Pengaturan" description="Pengaturan web akan ditambahkan hanya bila relevan dan terotorisasi." />;
+  const { state } = useAuth();
+  const authorized = state.status === 'authenticated' && state.account.role === 'admin';
+  return <AppShell role="admin" activeRoute="settings" title="Pengaturan"><AdminSettingsExperience authorized={authorized} /></AppShell>;
 }

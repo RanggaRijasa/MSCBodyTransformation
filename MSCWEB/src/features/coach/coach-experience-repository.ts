@@ -181,7 +181,9 @@ export class SupabaseCoachExperienceRepository {
     const [applicationsResponse, ordersResponse] = await Promise.all([
       this.client.rpc('list_coach_applications_for_admin'),
       this.client.from('payment_orders').select(coachPaymentColumns)
-        .eq('purpose', 'coach_access').order('created_at', { ascending: false }),
+        .eq('purpose', 'coach_access')
+        .not('coach_application_id', 'is', null)
+        .order('created_at', { ascending: false }),
     ]);
     if (applicationsResponse.error) throw mapCoachError(applicationsResponse.error);
     if (ordersResponse.error) throw mapCoachError(ordersResponse.error);

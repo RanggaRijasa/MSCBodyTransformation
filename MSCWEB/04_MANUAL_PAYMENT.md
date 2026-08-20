@@ -185,14 +185,21 @@ Transfer setelah reservasi berakhir ditangani sebagai pengecualian Admin:
 1. bila kursi masih tersedia, Admin dapat memulihkan order untuk diperiksa;
 2. bila program sudah penuh dan dana telah masuk, pembayaran ditolak dan dana dikembalikan.
 
-`No refund` hanya berlaku untuk pembatalan sukarela setelah pembayaran disetujui. Exceptional reversal yang hanya dapat diproses Admin, wajib diaudit, dan ditargetkan selesai dalam tujuh hari kerja berlaku untuk:
+`No refund` hanya berlaku untuk pembatalan sukarela setelah pembayaran disetujui. `Penyelesaian dana luar biasa` adalah istilah operasional payung yang hanya dapat diproses Admin, wajib diaudit, dan ditargetkan selesai dalam tujuh hari kerja untuk:
 
 - pembayaran ditolak tetapi dana telah masuk;
 - transfer ganda;
 - kelebihan transfer, sebesar selisihnya;
 - program dibatalkan MSC atau tidak dapat disediakan.
 
-Kebijakan exceptional reversal ini tetap memerlukan pemeriksaan legal sebelum production. UI Participant tidak menyediakan menu refund.
+Authority ledger dibedakan sebagai berikut:
+
+- pembayaran ditolak tetapi dana telah masuk, transfer ganda, dan kelebihan transfer adalah `exceptional cash adjustment` karena dana tersebut tidak pernah menjadi recognized revenue;
+- program dibatalkan MSC/tidak dapat disediakan membuat linked revenue `reversal` hanya jika order sebelumnya mempunyai verified revenue ledger entry;
+- jika program dibatalkan sebelum revenue diverifikasi tetapi dana perlu dikembalikan, gunakan cash adjustment, bukan revenue reversal;
+- pembatalan sukarela yang non-refundable tidak membuat reversal atau cash adjustment.
+
+Satu penyelesaian MUST dipetakan ke tepat satu authority di atas. Cash adjustment tidak mengurangi Sales Overview; revenue reversal mengurangi net pada timestamp reversal. Kebijakan penyelesaian dana luar biasa ini tetap memerlukan pemeriksaan legal sebelum production. UI Participant tidak menyediakan menu refund.
 
 Owner bisnis menetapkan bukti pembayaran Participant dan Coach dihapus 30 hari setelah unggah. Implementasi production MUST membedakan penghapusan file gambar privat dari pemeliharaan metadata transaksi/audit non-gambar. Catatan order, nominal, keputusan, alasan, ledger, dan event audit tidak boleh ikut dihapus tanpa kebijakan retensi transaksi dan legal yang terpisah. File yang masih `under_review` pada hari ke-30 dipertahankan sampai keputusan Admin, lalu segera dihapus setelah keputusan tercatat.
 

@@ -2,7 +2,7 @@
 
 Status: `Not started`  
 Autonomy: `A` local, `B` physical-device checks, `D` external preview/production changes  
-Depends on: W01–W07 capability completion, including W06.5
+Depends on: W01–W07.6 capability completion, including W06.5, Sales Overview, and Image Storage
 
 ## Objective
 
@@ -37,6 +37,7 @@ Harden MSCWEB as an installable, secure, accessible, performant PWA; prepare Clo
 - [ ] Browser remains fully usable without installation.
 - [ ] iOS Add to Home Screen guidance and supported install affordance.
 - [ ] Public shell/assets only in precache; private API/media never precached.
+- [ ] Sales responses and Image Storage inventory/thumbnail/Trash responses never enter service-worker/shared caches.
 - [ ] Offline state is truthful and server mutations are disabled, not queued silently.
 - [ ] Safe service-worker update/reload behavior and account-cache cleanup.
 
@@ -60,6 +61,7 @@ Harden MSCWEB as an installable, secure, accessible, performant PWA; prepare Clo
 - [ ] Route-level chunking keeps Admin/Coach out of public landing initial bundle.
 - [ ] AI provider code/key remains server-only and is absent from public/Coach/Admin route chunks.
 - [ ] Image thumbnail/lazy/full-resolution authorization behavior.
+- [ ] Purged/detached public Coach media is no longer served after documented CDN/browser invalidation window; stale direct URLs fail safely.
 - [ ] Lighthouse/Web Vitals/bundle budgets.
 - [ ] Safari iOS current/previous, installed iOS PWA, Chrome Android, desktop Chrome/Safari/Edge.
 - [ ] Camera QR, picker, safe area, virtual keyboard, browser Back, rotation, and standalone external links.
@@ -84,6 +86,7 @@ Do not let sub-agents deploy, change DNS, configure credentials, or accept budge
 - production export and Cloudflare-compatible local serve;
 - manifest/installability/icon audit;
 - offline/private-cache/account-switch suite;
+- sales/private inventory cache isolation and public-media purge invalidation suite;
 - CSP and security-header checks;
 - Lighthouse/Web Vitals/bundle analyzer;
 - full Playwright matrix plus physical-device manual record;
