@@ -33,6 +33,12 @@ const knownAppRoutes = new Set([
   '/admin/audit',
   '/login',
   '/auth/callback',
+  '/onboarding/profile',
+  '/onboarding/participant/coach',
+  '/onboarding/coach/eligibility',
+  '/onboarding/coach/payment',
+  '/onboarding/coach/status',
+  '/onboarding/cleanup',
 ]);
 
 function isKnownAppRoute(pathname: string): boolean {

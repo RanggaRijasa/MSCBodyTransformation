@@ -43,13 +43,13 @@ export default function LoginRoute() {
         </View>
         <View style={styles.copy}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Masuk ke MSC</Text>
-          <Text style={[styles.body, { color: colors.secondaryText }]}>Gunakan akun Google untuk melanjutkan. Kamu akan kembali ke halaman yang tadi dipilih.</Text>
+          <Text style={[styles.body, { color: colors.secondaryText }]}>Gunakan akun Google untuk melanjutkan. Akun baru akan melengkapi profil lalu memilih lanjut sebagai Peserta atau mengajukan Coach.</Text>
         </View>
         {errorMessage ? <InlineMessage title="Tidak dapat masuk" message={errorMessage} tone="destructive" /> : null}
         <Button label="Lanjutkan dengan Google" loading={isStarting} onPress={() => void startGoogleLogin()} testID="google-login" />
         <View style={styles.assuranceRow}>
           <MSCIcon name="forbidden" color={colors.secondaryText} />
-          <Text style={[styles.assurance, { color: colors.secondaryText }]}>Akun baru selalu dimulai sebagai Peserta. Role Coach atau Admin hanya berasal dari data yang dilindungi server.</Text>
+          <Text style={[styles.assurance, { color: colors.secondaryText }]}>Pilihan tujuan akun bukan pemilihan role. Kewenangan awal tetap Peserta; Coach hanya aktif setelah syarat, pembayaran, dan persetujuan Admin.</Text>
         </View>
       </Card>
     </ScrollView>

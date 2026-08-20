@@ -23,9 +23,9 @@ export default function PublicProfileRoute() {
             <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Jelajahi sebagai Tamu</Text>
             <Text style={[styles.body, { color: colors.secondaryText }]}>Masuk untuk melihat profil, program yang diikuti, bukti, dan progres pribadi. Data tersebut tidak dimuat dalam mode Tamu.</Text>
             <Button label="Masuk dengan Google" onPress={() => router.push('/login?returnTo=/app/profile')} />
-            <InlineMessage title="Pendaftaran aman" message="Akun baru selalu dibuat sebagai Peserta. Coach dan Admin tidak dapat dipilih saat mendaftar." />
+            <InlineMessage title="Pendaftaran aman" message="Akun baru dimulai dengan kewenangan Peserta. Saat onboarding, kamu dapat melanjutkan sebagai Peserta atau mengajukan Coach; Admin tetap memutuskan aktivasi Coach." />
           </Card>
-        ) : (
+        ) : state.status === 'onboarding' ? <StateView kind="loading" /> : (
           <>
             {state.account.role === 'participant'
               ? <ParticipantIdentity />

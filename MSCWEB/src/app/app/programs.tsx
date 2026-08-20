@@ -57,7 +57,7 @@ export default function PublicProgramsRoute() {
         <SegmentedControl
           label="Daftar program"
           value={segment}
-          onChange={(value) => router.replace(`${catalogRoute}?segment=${value}`)}
+          onChange={(value) => router.push(`${catalogRoute}?segment=${value}`)}
           options={segments}
         />
 

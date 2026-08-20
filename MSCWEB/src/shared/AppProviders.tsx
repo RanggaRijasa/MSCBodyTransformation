@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type PropsWithChildren, useState } from 'react';
 
 import { AuthProvider } from '@/shared/auth/AuthProvider';
+import { SessionRouteGuard } from '@/shared/auth/SessionRouteGuard';
 
 export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(() => new QueryClient({
@@ -11,7 +12,7 @@ export function AppProviders({ children }: PropsWithChildren) {
   }));
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider><SessionRouteGuard />{children}</AuthProvider>
     </QueryClientProvider>
   );
 }

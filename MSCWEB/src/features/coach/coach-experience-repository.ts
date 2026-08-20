@@ -136,7 +136,7 @@ export class SupabaseCoachExperienceRepository {
     return parse(response.data ?? [], z.array(paymentAttemptSchema));
   }
 
-  async submitPaymentEvidence(orderId: string, file: Blob, idempotencyKey: string, onProgress?: (value: number, message: string) => void): Promise<CoachPaymentOrder> {
+  async submitPaymentEvidence(orderId: string, file: Blob, idempotencyKey: string, onProgress?: (value: number, message: string) => void, onboarding = false): Promise<CoachPaymentOrder> {
     onProgress?.(0.08, 'Menyiapkan unggahan aman');
     const preparedResponse = await this.client.rpc('prepare_payment_evidence_attempt', {
       target_order_id: orderId,
@@ -151,9 +151,13 @@ export class SupabaseCoachExperienceRepository {
     let uploaded = false;
     try {
       onProgress?.(0.62, 'Mengunggah bukti pribadi');
+      // The idempotent prepare RPC may return an earlier prepared path after a
+      // lost response. A prepared object is not financial history yet, so it
+      // is safe to replace before retrying the upload.
+      await this.privateMedia.remove(reference).catch(() => undefined);
       await this.privateMedia.upload(reference, normalized.blob, 'image/jpeg');
       uploaded = true;
-      const response = await this.client.rpc('submit_payment_evidence', {
+      const response = await this.client.rpc(onboarding ? 'submit_coach_onboarding_payment_evidence' : 'submit_payment_evidence', {
         target_attempt_id: prepared.id,
         content_sha256_hex: hash,
         content_byte_size: normalized.byteSize,
@@ -164,7 +168,25 @@ export class SupabaseCoachExperienceRepository {
       onProgress?.(1, 'Bukti berhasil dikirim');
       return parse(response.data, coachPaymentOrderSchema);
     } catch (error) {
-      if (uploaded) await this.privateMedia.remove(reference).catch(() => undefined);
+      // Do not delete on an ambiguous response. The atomic RPC may already
+      // have committed the submitted attempt and Participant activation.
+      try {
+        const [attempts, orders] = await Promise.all([
+          this.listAttempts(orderId),
+          this.listMyCoachPaymentOrders(),
+        ]);
+        const currentAttempt = attempts.find((attempt) => attempt.id === prepared.id);
+        const currentOrder = orders.find((order) => order.id === orderId);
+        if (currentAttempt?.status === 'submitted' && currentOrder?.status === 'under_review') {
+          onProgress?.(1, 'Bukti berhasil dikirim');
+          return currentOrder;
+        }
+        if (uploaded && currentAttempt?.status === 'prepared') {
+          await this.privateMedia.remove(reference).catch(() => undefined);
+        }
+      } catch {
+        // Preserve the object when reconciliation itself is unavailable.
+      }
       throw error;
     }
   }
@@ -210,6 +232,16 @@ export class SupabaseCoachExperienceRepository {
       target_order_id: order.id,
       expected_version: order.version,
       rejection_reason: reason.trim(),
+      request_idempotency_key: idempotencyKey,
+    });
+    if (response.error) throw mapCoachError(response.error);
+  }
+
+  async requestCoachCorrection(order: CoachPaymentOrder, reason: string, idempotencyKey: string): Promise<void> {
+    const response = await this.client.rpc('request_coach_payment_correction', {
+      target_order_id: order.id,
+      expected_version: order.version,
+      correction_reason: reason.trim(),
       request_idempotency_key: idempotencyKey,
     });
     if (response.error) throw mapCoachError(response.error);

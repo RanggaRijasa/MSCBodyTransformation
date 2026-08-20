@@ -23,6 +23,11 @@ describe('Cloudflare Worker routing contract', () => {
     await expect(worker.fetch(new Request('https://msc.invalid/'), env).then((r) => r.text())).resolves.toBe('landing');
     await expect(worker.fetch(new Request('https://msc.invalid/app/profile'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/login?returnTo=%2Fapp'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/onboarding/profile'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/onboarding/participant/coach'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/onboarding/coach/eligibility'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/onboarding/coach/payment'), env).then((r) => r.text())).resolves.toBe('app-shell');
+    await expect(worker.fetch(new Request('https://msc.invalid/onboarding/coach/status'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/app/programs/11111111-1111-4111-8111-111111111111'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/coach/reviews'), env).then((r) => r.text())).resolves.toBe('app-shell');
     await expect(worker.fetch(new Request('https://msc.invalid/coach/participants'), env).then((r) => r.text())).resolves.toBe('app-shell');

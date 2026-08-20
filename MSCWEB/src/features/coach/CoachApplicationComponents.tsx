@@ -27,7 +27,7 @@ export function CoachApplicationFlow({ authorized }: { authorized: boolean }) {
   if (application.isPending || orders.isPending) return <StateView kind="loading" />;
   if (application.isError || orders.isError) return <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void Promise.all([application.refetch(), orders.refetch()])} />} />;
 
-  const latestOrder = orders.data?.[0];
+  const latestOrder = orders.data?.find((order) => !['rejected', 'cancelled', 'expired', 'reversed'].includes(order.status));
   if (latestOrder) return <CoachPaymentOrderView order={latestOrder} />;
   const current = application.data?.application;
   if (current?.status === 'active') {
@@ -86,7 +86,7 @@ function CheckRow({ label, checked, locked = false, onPress }: { label: string; 
   );
 }
 
-export function CoachPaymentOrderView({ order }: { order: CoachPaymentOrder }) {
+export function CoachPaymentOrderView({ order, onboarding = false, embedded = false, onSubmitted }: { order: CoachPaymentOrder; onboarding?: boolean; embedded?: boolean; onSubmitted?: () => void }) {
   const { colors } = useAppTheme();
   const submitEvidence = useSubmitCoachPaymentEvidence();
   const [file, setFile] = useState<File>();
@@ -100,17 +100,18 @@ export function CoachPaymentOrderView({ order }: { order: CoachPaymentOrder }) {
     if (!file) return;
     setError(undefined);
     try {
-      await submitEvidence.mutateAsync({ orderId: order.id, file, idempotencyKey: uploadKey.current, onProgress: (value, message) => setProgress({ value, message }) });
+      await submitEvidence.mutateAsync({ orderId: order.id, file, idempotencyKey: uploadKey.current, onboarding, onProgress: (value, message) => setProgress({ value, message }) });
       setFile(undefined);
       if (inputRef.current) inputRef.current.value = '';
+      onSubmitted?.();
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Bukti belum dapat dikirim.');
     }
   };
 
-  return (
-    <ScrollView contentContainerStyle={styles.content} testID="coach.application.payment">
-      <InlineMessage title={order.status === 'under_review' ? 'Sedang diperiksa Admin' : order.status === 'approved' ? 'Akses Coach aktif' : order.status === 'correction_required' ? 'Bukti perlu diperbaiki' : 'Selesaikan pembayaran'} message={order.status === 'under_review' ? 'Unggahan dikunci sampai Admin menerima atau menolak bukti.' : order.status === 'approved' ? 'Masuk kembali bila dashboard Coach belum muncul.' : order.latest_rejection_reason ?? 'Gunakan rekening atau QRIS di bawah, lalu unggah bukti pembayaran.'} tone={order.status === 'approved' ? 'success' : order.status === 'correction_required' ? 'destructive' : 'warning'} />
+  const content = (
+    <>
+      <InlineMessage title={order.status === 'under_review' ? 'Sedang diperiksa Admin' : order.status === 'approved' ? 'Akses Coach aktif' : order.status === 'correction_required' ? 'Bukti perlu diperbaiki' : 'Selesaikan pembayaran'} message={order.status === 'under_review' ? 'Akun tetap sebagai Peserta selama Admin memeriksa bukti.' : order.status === 'approved' ? 'Masuk kembali bila dashboard Coach belum muncul.' : order.latest_rejection_reason ?? 'Gunakan rekening atau QRIS di bawah, lalu unggah bukti pembayaran.'} tone={order.status === 'approved' ? 'success' : order.status === 'correction_required' ? 'destructive' : 'warning'} />
       <Card>
         <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>Tujuan pembayaran</Text>
         {order.qris_object_path_snapshot ? <PrivateQris objectPath={order.qris_object_path_snapshot} /> : null}
@@ -129,9 +130,12 @@ export function CoachPaymentOrderView({ order }: { order: CoachPaymentOrder }) {
         {canUpload ? <Button label="Kirim bukti pembayaran" icon="upload" disabled={!file} loading={submitEvidence.isPending} onPress={() => void submit()} /> : <StatusBadge label={order.status === 'under_review' ? 'Terkunci selama pemeriksaan' : order.status} tone={order.status === 'approved' ? 'success' : 'warning'} />}
       </Card>
       {error ? <InlineMessage title="Unggahan gagal" message={error} tone="destructive" /> : null}
-      <Button label="Kembali ke profil" tone="secondary" icon="back" onPress={() => router.replace('/app/profile')} />
-    </ScrollView>
+      <Button label={onboarding ? 'Kembali ke syarat Coach' : 'Kembali ke profil'} tone="secondary" icon="back" onPress={() => onboarding ? router.replace('/onboarding/coach/eligibility') : router.replace('/app/profile')} />
+    </>
   );
+  return embedded
+    ? <View style={[styles.content, styles.embeddedContent]} testID="coach.application.payment">{content}</View>
+    : <ScrollView contentContainerStyle={styles.content} testID="coach.application.payment">{content}</ScrollView>;
 }
 
 function PrivateQris({ objectPath }: { objectPath: string }) {
@@ -162,6 +166,7 @@ function PaymentDetail({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 760, alignSelf: 'center', padding: primitiveTokens.space.large, gap: primitiveTokens.space.large, paddingBottom: 140 },
+  embeddedContent: { padding: 0, paddingBottom: 0 },
   heading: typographyTokens.title,
   cardTitle: typographyTokens.headline,
   body: typographyTokens.body,

@@ -26,6 +26,14 @@ test.describe('W02 public application and auth gate', () => {
     await expect(page.locator('body')).not.toContainText('evil.example');
   });
 
+  test('Guest direct links to privileged roots are guarded by Google login', async ({ page }) => {
+    for (const path of ['/coach', '/admin']) {
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`/login\\?returnTo=${encodeURIComponent(path)}$`));
+      await expect(page.getByRole('heading', { name: 'Masuk ke MSC' })).toBeVisible();
+    }
+  });
+
   test('invalid OAuth callback is mapped to Indonesian recovery copy', async ({ page }) => {
     await page.goto('/auth/callback');
     await expect(page.getByText('Tautan masuk tidak valid. Mulai proses masuk lagi.')).toBeVisible();

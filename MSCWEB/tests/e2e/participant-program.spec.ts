@@ -11,6 +11,8 @@ let service: SupabaseClient | undefined;
 let userId: string | undefined;
 let enrollmentId: string | undefined;
 let programId: string | undefined;
+let programDayId: string | undefined;
+let programStepId: string | undefined;
 let session: Session | undefined;
 
 test.describe('W03 Participant program experience', () => {
@@ -27,11 +29,40 @@ test.describe('W03 Participant program experience', () => {
     enrollmentId = randomUUID();
 
     const { data: coachRows } = await service.from('profiles').select('user_id').eq('role', 'coach').limit(1);
-    const { data: programRows } = await service.from('programs').select('id').eq('status', 'active').limit(1);
+    const { data: adminRows } = await service.from('profiles').select('user_id').eq('role', 'admin').limit(1);
     const coachId = coachRows?.[0]?.user_id;
-    programId = programRows?.[0]?.id;
+    const adminId = adminRows?.[0]?.user_id;
+    programId = randomUUID();
+    programDayId = randomUUID();
+    programStepId = randomUUID();
     expect(coachId).toBeTruthy();
-    expect(programId).toBeTruthy();
+    expect(adminId).toBeTruthy();
+
+    expect((await service.from('programs').insert({
+      id: programId,
+      title: 'Program Integration Storage',
+      summary: 'Fixture deterministik browser W03.',
+      status: 'active',
+      pace: 'scheduled',
+      duration_mode: 'specific_dates',
+      starts_on: localDate(-1),
+      ends_on: localDate(2),
+      timezone: 'Asia/Makassar',
+      past_step_policy: 'read_only',
+      future_step_policy: 'locked',
+      wellness_disclaimer: 'Program wellness non-diagnostik.',
+      points_per_activity: 10,
+      points_per_weight_kg: 100,
+      quiz_passing_percentage: 70,
+      pricing_mode: 'free',
+      desired_price: null,
+      participant_limit: 20,
+      published_at: new Date().toISOString(),
+      created_by: adminId as string,
+    })).error).toBeNull();
+    expect((await service.from('program_days').insert({ id: programDayId, program_id: programId, day_number: 1, title: 'Hari pertama', scheduled_on: localDate(0) })).error).toBeNull();
+    expect((await service.from('program_steps').insert({ id: programStepId, program_day_id: programDayId, step_order: 1, title: 'Unggah Foto', instructions: 'Unggah foto jawaban.', content_kind: 'form', completion_policy: 'answer_all_questions', verification_mode: 'coach_review' })).error).toBeNull();
+    expect((await service.from('program_questions').insert({ step_id: programStepId, question_order: 1, prompt: 'Unggah foto jawaban', kind: 'photo_upload' })).error).toBeNull();
 
     expect((await service.from('profiles').update({
       role: 'participant',
@@ -66,7 +97,14 @@ test.describe('W03 Participant program experience', () => {
   });
 
   test.afterAll(async () => {
-    if (service && userId) await service.auth.admin.deleteUser(userId);
+    if (!service) return;
+    if (enrollmentId) await service.from('program_scores').delete().eq('enrollment_id', enrollmentId);
+    if (enrollmentId) await service.from('program_enrollments').delete().eq('id', enrollmentId);
+    if (programStepId) await service.from('program_questions').delete().eq('step_id', programStepId);
+    if (programStepId) await service.from('program_steps').delete().eq('id', programStepId);
+    if (programDayId) await service.from('program_days').delete().eq('id', programDayId);
+    if (programId) await service.from('programs').delete().eq('id', programId);
+    if (userId) await service.auth.admin.deleteUser(userId);
   });
 
   test('Guest preserves catalog segment in the URL and browser Back', async ({ page }) => {
@@ -130,7 +168,7 @@ test.describe('W03 Participant program experience', () => {
     await step.click();
     await expect(page.getByTestId('participant.step.renderer')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Jawaban aktivitas' })).toBeVisible();
-    await expect(page.getByText('Unggah foto jawaban')).toBeVisible();
+    await expect(page.getByTestId('participant.submission.form').getByText('Unggah foto jawaban')).toBeVisible();
     await expect(page.getByLabel('Ambil atau pilih foto')).toBeEnabled();
     expect(await page.locator('body').innerText()).not.toContain('coach_qr_identifier');
     expect(await page.locator('body').innerText()).not.toContain('Berat awal');
@@ -141,3 +179,8 @@ test.describe('W03 Participant program experience', () => {
     await expect(page.getByTestId('participant.program.catalog')).toBeVisible();
   });
 });
+
+function localDate(offset: number) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Makassar', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(new Date(Date.now() + offset * 86_400_000));
+}

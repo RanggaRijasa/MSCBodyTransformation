@@ -320,6 +320,244 @@ export type Database = {
           },
         ]
       }
+      coach_public_media_namespaces: {
+        Row: {
+          coach_user_id: string
+          media_namespace: string
+        }
+        Insert: {
+          coach_user_id: string
+          media_namespace?: string
+        }
+        Update: {
+          coach_user_id?: string
+          media_namespace?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_public_media_namespaces_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      coach_public_profile_drafts: {
+        Row: {
+          biography: string
+          coach_user_id: string
+          instagram_url: string
+          phone_number: string
+          professional_headline: string
+          profile_photo_object_path: string | null
+          public_handle: string
+          service_area: string
+          show_instagram: boolean
+          show_phone: boolean
+          show_tiktok: boolean
+          show_website: boolean
+          show_whatsapp: boolean
+          tiktok_url: string
+          updated_at: string
+          website_url: string
+          whatsapp_number: string
+        }
+        Insert: {
+          biography?: string
+          coach_user_id: string
+          instagram_url?: string
+          phone_number?: string
+          professional_headline?: string
+          profile_photo_object_path?: string | null
+          public_handle: string
+          service_area?: string
+          show_instagram?: boolean
+          show_phone?: boolean
+          show_tiktok?: boolean
+          show_website?: boolean
+          show_whatsapp?: boolean
+          tiktok_url?: string
+          updated_at?: string
+          website_url?: string
+          whatsapp_number?: string
+        }
+        Update: {
+          biography?: string
+          coach_user_id?: string
+          instagram_url?: string
+          phone_number?: string
+          professional_headline?: string
+          profile_photo_object_path?: string | null
+          public_handle?: string
+          service_area?: string
+          show_instagram?: boolean
+          show_phone?: boolean
+          show_tiktok?: boolean
+          show_website?: boolean
+          show_whatsapp?: boolean
+          tiktok_url?: string
+          updated_at?: string
+          website_url?: string
+          whatsapp_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_public_profile_drafts_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      coach_public_profile_items: {
+        Row: {
+          body: string
+          coach_user_id: string
+          content_version: number
+          id: string
+          includes_third_party: boolean
+          is_public: boolean
+          item_kind: string
+          media_object_path: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_idempotency_key: string | null
+          moderation_note: string | null
+          moderation_status: string
+          moderation_version: number
+          permission_attested: boolean
+          submitted_at: string
+          title: string
+        }
+        Insert: {
+          body?: string
+          coach_user_id: string
+          content_version?: number
+          id?: string
+          includes_third_party?: boolean
+          is_public?: boolean
+          item_kind: string
+          media_object_path?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_idempotency_key?: string | null
+          moderation_note?: string | null
+          moderation_status?: string
+          moderation_version?: number
+          permission_attested?: boolean
+          submitted_at?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          coach_user_id?: string
+          content_version?: number
+          id?: string
+          includes_third_party?: boolean
+          is_public?: boolean
+          item_kind?: string
+          media_object_path?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_idempotency_key?: string | null
+          moderation_note?: string | null
+          moderation_status?: string
+          moderation_version?: number
+          permission_attested?: boolean
+          submitted_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_public_profile_items_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coach_public_profile_items_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      coach_public_profiles: {
+        Row: {
+          biography: string | null
+          coach_user_id: string
+          display_name: string
+          instagram_url: string | null
+          is_verified: boolean
+          phone_number: string | null
+          photo_kind: string
+          photo_reference: string
+          professional_headline: string | null
+          public_handle: string
+          published_at: string
+          service_area: string | null
+          tiktok_url: string | null
+          updated_at: string
+          website_url: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          biography?: string | null
+          coach_user_id: string
+          display_name: string
+          instagram_url?: string | null
+          is_verified?: boolean
+          phone_number?: string | null
+          photo_kind: string
+          photo_reference: string
+          professional_headline?: string | null
+          public_handle: string
+          published_at?: string
+          service_area?: string | null
+          tiktok_url?: string | null
+          updated_at?: string
+          website_url?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          biography?: string | null
+          coach_user_id?: string
+          display_name?: string
+          instagram_url?: string | null
+          is_verified?: boolean
+          phone_number?: string | null
+          photo_kind?: string
+          photo_reference?: string
+          professional_headline?: string | null
+          public_handle?: string
+          published_at?: string
+          service_area?: string | null
+          tiktok_url?: string | null
+          updated_at?: string
+          website_url?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_public_profiles_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coach_public_profiles_public_handle_fkey"
+            columns: ["public_handle"]
+            isOneToOne: true
+            referencedRelation: "coach_public_profile_drafts"
+            referencedColumns: ["public_handle"]
+          },
+        ]
+      }
       coach_store_products: {
         Row: {
           actual_price: number | null
@@ -641,6 +879,233 @@ export type Database = {
           },
         ]
       }
+      food_insight_corrections: {
+        Row: {
+          actor_id: string
+          corrected_rating: number
+          created_at: string
+          id: string
+          idempotency_key: string
+          previous_rating: number
+          reason: string
+          result_id: string
+        }
+        Insert: {
+          actor_id: string
+          corrected_rating: number
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          previous_rating: number
+          reason: string
+          result_id: string
+        }
+        Update: {
+          actor_id?: string
+          corrected_rating?: number
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          previous_rating?: number
+          reason?: string
+          result_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_insight_corrections_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "food_insight_corrections_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "food_insight_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_insight_jobs: {
+        Row: {
+          analysis_version: string
+          answer_id: string
+          attempt_count: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          lease_expires_at: string | null
+          lease_token: string | null
+          max_attempts: number
+          next_attempt_at: string
+          question_id: string
+          rubric: string | null
+          rubric_version: string | null
+          status: string
+          submission_id: string
+          terminal_error_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          analysis_version: string
+          answer_id: string
+          attempt_count?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          question_id: string
+          rubric?: string | null
+          rubric_version?: string | null
+          status?: string
+          submission_id: string
+          terminal_error_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          analysis_version?: string
+          answer_id?: string
+          attempt_count?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          question_id?: string
+          rubric?: string | null
+          rubric_version?: string | null
+          status?: string
+          submission_id?: string
+          terminal_error_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_insight_jobs_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "step_submission_answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_insight_jobs_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "program_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_insight_jobs_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "step_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_insight_results: {
+        Row: {
+          ai_rating: number
+          analysis_version: string
+          calorie_kcal: number | null
+          carbohydrate_grams: number | null
+          confidence: number
+          created_at: string
+          detected_kind: string
+          effective_rating: number
+          fat_grams: number | null
+          id: string
+          insight_sentences: string[]
+          job_id: string
+          model_alias: string
+          output_policy_version: string
+          policy_version: string
+          protein_grams: number | null
+          provider_name: string
+          question_id: string
+          reason_code: string
+          submission_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          ai_rating: number
+          analysis_version: string
+          calorie_kcal?: number | null
+          carbohydrate_grams?: number | null
+          confidence: number
+          created_at?: string
+          detected_kind: string
+          effective_rating: number
+          fat_grams?: number | null
+          id?: string
+          insight_sentences: string[]
+          job_id: string
+          model_alias: string
+          output_policy_version: string
+          policy_version: string
+          protein_grams?: number | null
+          provider_name: string
+          question_id: string
+          reason_code: string
+          submission_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          ai_rating?: number
+          analysis_version?: string
+          calorie_kcal?: number | null
+          carbohydrate_grams?: number | null
+          confidence?: number
+          created_at?: string
+          detected_kind?: string
+          effective_rating?: number
+          fat_grams?: number | null
+          id?: string
+          insight_sentences?: string[]
+          job_id?: string
+          model_alias?: string
+          output_policy_version?: string
+          policy_version?: string
+          protein_grams?: number | null
+          provider_name?: string
+          question_id?: string
+          reason_code?: string
+          submission_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_insight_results_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "food_insight_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_insight_results_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "program_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_insight_results_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "step_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participant_coach_change_requests: {
         Row: {
           coach_id: string
@@ -691,6 +1156,7 @@ export type Database = {
           effective_from: string
           effective_until: string | null
           id: string
+          instructions: string
           qris_object_path: string | null
           status: string
           version: number
@@ -705,6 +1171,7 @@ export type Database = {
           effective_from: string
           effective_until?: string | null
           id?: string
+          instructions?: string
           qris_object_path?: string | null
           status: string
           version: number
@@ -719,6 +1186,7 @@ export type Database = {
           effective_from?: string
           effective_until?: string | null
           id?: string
+          instructions?: string
           qris_object_path?: string | null
           status?: string
           version?: number
@@ -939,11 +1407,13 @@ export type Database = {
           correction_expires_at: string | null
           created_at: string
           currency: string
+          declared_method: string
           destination_id: string
           destination_version: number
           evidence_submitted_at: string | null
           id: string
           idempotency_key: string
+          instructions_snapshot: string
           latest_rejection_reason: string | null
           owner_user_id: string | null
           pending_enrollment_id: string | null
@@ -969,11 +1439,13 @@ export type Database = {
           correction_expires_at?: string | null
           created_at?: string
           currency?: string
+          declared_method?: string
           destination_id: string
           destination_version: number
           evidence_submitted_at?: string | null
           id?: string
           idempotency_key: string
+          instructions_snapshot?: string
           latest_rejection_reason?: string | null
           owner_user_id?: string | null
           pending_enrollment_id?: string | null
@@ -999,11 +1471,13 @@ export type Database = {
           correction_expires_at?: string | null
           created_at?: string
           currency?: string
+          declared_method?: string
           destination_id?: string
           destination_version?: number
           evidence_submitted_at?: string | null
           id?: string
           idempotency_key?: string
+          instructions_snapshot?: string
           latest_rejection_reason?: string | null
           owner_user_id?: string | null
           pending_enrollment_id?: string | null
@@ -1070,24 +1544,6 @@ export type Database = {
           },
         ]
       }
-      food_insight_jobs: {
-        Row: { id: string; submission_id: string; answer_id: string; question_id: string; analysis_version: string; rubric: string | null; rubric_version: string | null; status: string; attempt_count: number; max_attempts: number; next_attempt_at: string; lease_token: string | null; lease_expires_at: string | null; terminal_error_code: string | null; created_at: string; updated_at: string; completed_at: string | null }
-        Insert: { id?: string; submission_id: string; answer_id: string; question_id: string; analysis_version: string; rubric?: string | null; rubric_version?: string | null; status?: string; attempt_count?: number; max_attempts?: number; next_attempt_at?: string; lease_token?: string | null; lease_expires_at?: string | null; terminal_error_code?: string | null; created_at?: string; updated_at?: string; completed_at?: string | null }
-        Update: { id?: string; submission_id?: string; answer_id?: string; question_id?: string; analysis_version?: string; rubric?: string | null; rubric_version?: string | null; status?: string; attempt_count?: number; max_attempts?: number; next_attempt_at?: string; lease_token?: string | null; lease_expires_at?: string | null; terminal_error_code?: string | null; created_at?: string; updated_at?: string; completed_at?: string | null }
-        Relationships: []
-      }
-      food_insight_results: {
-        Row: { id: string; job_id: string; submission_id: string; question_id: string; analysis_version: string; policy_version: string; output_policy_version: string; provider_name: string; model_alias: string; detected_kind: string; protein_grams: number | null; carbohydrate_grams: number | null; fat_grams: number | null; calorie_kcal: number | null; ai_rating: number; effective_rating: number; confidence: number; reason_code: string; insight_sentences: string[]; version: number; created_at: string; updated_at: string }
-        Insert: { id?: string; job_id: string; submission_id: string; question_id: string; analysis_version: string; policy_version: string; output_policy_version: string; provider_name: string; model_alias: string; detected_kind: string; protein_grams?: number | null; carbohydrate_grams?: number | null; fat_grams?: number | null; calorie_kcal?: number | null; ai_rating: number; effective_rating: number; confidence: number; reason_code: string; insight_sentences: string[]; version?: number; created_at?: string; updated_at?: string }
-        Update: { id?: string; job_id?: string; submission_id?: string; question_id?: string; analysis_version?: string; policy_version?: string; output_policy_version?: string; provider_name?: string; model_alias?: string; detected_kind?: string; protein_grams?: number | null; carbohydrate_grams?: number | null; fat_grams?: number | null; calorie_kcal?: number | null; ai_rating?: number; effective_rating?: number; confidence?: number; reason_code?: string; insight_sentences?: string[]; version?: number; created_at?: string; updated_at?: string }
-        Relationships: []
-      }
-      food_insight_corrections: {
-        Row: { id: string; result_id: string; actor_id: string; previous_rating: number; corrected_rating: number; reason: string; idempotency_key: string; created_at: string }
-        Insert: { id?: string; result_id: string; actor_id: string; previous_rating: number; corrected_rating: number; reason: string; idempotency_key: string; created_at?: string }
-        Update: { id?: string; result_id?: string; actor_id?: string; previous_rating?: number; corrected_rating?: number; reason?: string; idempotency_key?: string; created_at?: string }
-        Relationships: []
-      }
       profiles: {
         Row: {
           account_purpose: string
@@ -1102,6 +1558,7 @@ export type Database = {
           finalized_at: string | null
           member_level: string | null
           onboarding_status: string
+          onboarding_version: number
           phone_number: string | null
           profile_avatar_path: string | null
           provider_avatar_url: string | null
@@ -1124,6 +1581,7 @@ export type Database = {
           finalized_at?: string | null
           member_level?: string | null
           onboarding_status?: string
+          onboarding_version?: number
           phone_number?: string | null
           profile_avatar_path?: string | null
           provider_avatar_url?: string | null
@@ -1146,6 +1604,7 @@ export type Database = {
           finalized_at?: string | null
           member_level?: string | null
           onboarding_status?: string
+          onboarding_version?: number
           phone_number?: string | null
           profile_avatar_path?: string | null
           provider_avatar_url?: string | null
@@ -2258,31 +2717,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_admin_dashboard: { Args: never; Returns: Json }
-      list_admin_people: { Args: never; Returns: Json[] }
-      get_admin_person_detail: { Args: { target_user_id: string }; Returns: Json }
-      list_admin_pending_evidence: { Args: never; Returns: Json[] }
-      list_admin_profile_moderation_items: { Args: never; Returns: Json[] }
-      list_admin_food_insight_operations: { Args: never; Returns: Json[] }
-      list_admin_audit_events: { Args: { result_limit?: number }; Returns: Json[] }
-      get_admin_closure_preflight: { Args: { target_program_id: string }; Returns: Json }
-      preview_admin_program_winners: { Args: { target_program_id: string }; Returns: Json[] }
-      save_admin_program_draft: { Args: { program_payload: Json; request_idempotency_key: string }; Returns: Database['public']['Tables']['programs']['Row'] }
-      duplicate_admin_program_as_draft: { Args: { target_program_id: string; source_program_id: string; target_title: string; target_start_date: string; request_idempotency_key: string }; Returns: Database['public']['Tables']['programs']['Row'] }
-      archive_admin_program: { Args: { target_program_id: string; reason: string; request_idempotency_key: string }; Returns: Database['public']['Tables']['programs']['Row'] }
-      moderate_admin_coach_profile_item: { Args: { target_item_id: string; expected_version: number; decision: string; note: string; request_idempotency_key: string }; Returns: Json }
-      archive_admin_winner_poster: { Args: { target_poster_id: string; reason: string; request_idempotency_key: string }; Returns: Database['public']['Tables']['winner_posters']['Row'] }
-      list_public_food_question_configs: { Args: { target_question_ids: string[] }; Returns: Json[] }
-      enqueue_food_insight: { Args: { target_submission_id: string; target_analysis_version?: string }; Returns: string | null }
-      reconcile_food_insight_jobs: { Args: { target_analysis_version?: string }; Returns: number }
-      claim_food_insight_job: { Args: { lease_seconds?: number; target_submission_id?: string }; Returns: Json }
-      complete_food_insight_job: { Args: { target_job_id: string; target_lease_token: string; validated_result: Json; provider_name: string; model_alias: string }; Returns: string }
-      fail_food_insight_job: { Args: { target_job_id: string; target_lease_token: string; error_code: string; retryable: boolean }; Returns: string }
-      correct_food_insight_rating: {
-        Args: { target_result_id: string; expected_version: number; corrected_rating: number; correction_reason: string; request_idempotency_key: string }
-        Returns: Database['public']['Tables']['food_insight_results']['Row']
-        SetofOptions: { from: '*'; to: 'food_insight_results'; isOneToOne: true; isSetofReturn: false }
-      }
       admin_adjust_score: {
         Args: {
           points: number
@@ -2365,6 +2799,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      allocate_my_coach_public_media_path: {
+        Args: { media_folder: string }
+        Returns: string
+      }
       apply_provider_profile_defaults: {
         Args: { provider_avatar_url?: string; provider_display_name?: string }
         Returns: {
@@ -2380,6 +2818,7 @@ export type Database = {
           finalized_at: string | null
           member_level: string | null
           onboarding_status: string
+          onboarding_version: number
           phone_number: string | null
           profile_avatar_path: string | null
           provider_avatar_url: string | null
@@ -2395,6 +2834,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      approve_coach_payment_and_activate: {
+        Args: {
+          destination_matches: boolean
+          expected_version: number
+          reconciled_amount_minor: number
+          reconciliation_reference: string
+          request_idempotency_key: string
+          target_order_id: string
+        }
+        Returns: Json
       }
       approve_payment_order: {
         Args: {
@@ -2415,11 +2865,13 @@ export type Database = {
           correction_expires_at: string | null
           created_at: string
           currency: string
+          declared_method: string
           destination_id: string
           destination_version: number
           evidence_submitted_at: string | null
           id: string
           idempotency_key: string
+          instructions_snapshot: string
           latest_rejection_reason: string | null
           owner_user_id: string | null
           pending_enrollment_id: string | null
@@ -2441,6 +2893,79 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      archive_admin_program: {
+        Args: {
+          reason: string
+          request_idempotency_key: string
+          target_program_id: string
+        }
+        Returns: {
+          archive_idempotency_key: string | null
+          category: string | null
+          completion_idempotency_key: string | null
+          cover_alt_text: string | null
+          cover_path: string | null
+          created_at: string
+          created_by: string
+          default_verification_mode: string
+          desired_price: number | null
+          draft_idempotency_key: string | null
+          duration_mode: string
+          ends_on: string
+          future_step_policy: string
+          id: string
+          pace: string
+          participant_limit: number | null
+          past_step_policy: string
+          points_per_activity: number
+          points_per_weight_kg: number
+          pricing_mode: string
+          publish_idempotency_key: string | null
+          published_at: string | null
+          quiz_passing_percentage: number
+          registration_closes_at: string | null
+          reopen_idempotency_key: string | null
+          source_program_id: string | null
+          starts_on: string
+          status: string
+          summary: string
+          timezone: string
+          title: string
+          updated_at: string
+          wellness_disclaimer: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "programs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      archive_admin_winner_poster: {
+        Args: {
+          reason: string
+          request_idempotency_key: string
+          target_poster_id: string
+        }
+        Returns: {
+          alt_text: string
+          deleted_at: string | null
+          id: string
+          idempotency_key: string | null
+          is_published: boolean
+          media_path: string
+          mutation_idempotency_key: string | null
+          program_id: string
+          published_at: string | null
+          winner_snapshot_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "winner_posters"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       archive_program: {
         Args: {
           reason: string
@@ -2455,6 +2980,7 @@ export type Database = {
           cover_path: string | null
           created_at: string
           created_by: string
+          default_verification_mode: string
           desired_price: number | null
           draft_idempotency_key: string | null
           duration_mode: string
@@ -2502,11 +3028,13 @@ export type Database = {
           correction_expires_at: string | null
           created_at: string
           currency: string
+          declared_method: string
           destination_id: string
           destination_version: number
           evidence_submitted_at: string | null
           id: string
           idempotency_key: string
+          instructions_snapshot: string
           latest_rejection_reason: string | null
           owner_user_id: string | null
           pending_enrollment_id: string | null
@@ -2528,16 +3056,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      change_my_coach_from_qr: {
-        Args: { request_idempotency_key: string; scanned_coach_qr: string }
-        Returns: Json
-      }
       claim_apple_commerce_reconciliation_batch: {
         Args: { batch_size?: number; target_environment: string }
         Returns: Json[]
       }
       claim_apple_identity_credential_for_account: {
         Args: { target_account_id: string }
+        Returns: Json
+      }
+      claim_food_insight_job: {
+        Args: { lease_seconds?: number; target_submission_id?: string }
         Returns: Json
       }
       claim_pending_apple_account_events: {
@@ -2547,6 +3075,10 @@ export type Database = {
       claim_pending_apple_identity_revocations: {
         Args: { batch_size?: number }
         Returns: Json[]
+      }
+      claim_provisional_cancellation: {
+        Args: { target_receipt_id?: string }
+        Returns: Json
       }
       cleanup_expired_payment_evidence: { Args: never; Returns: number }
       complete_apple_account_event: {
@@ -2583,6 +3115,16 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_food_insight_job: {
+        Args: {
+          model_alias: string
+          provider_name: string
+          target_job_id: string
+          target_lease_token: string
+          validated_result: Json
+        }
+        Returns: string
+      }
       complete_program: {
         Args: {
           reason: string
@@ -2597,6 +3139,7 @@ export type Database = {
           cover_path: string | null
           created_at: string
           created_by: string
+          default_verification_mode: string
           desired_price: number | null
           draft_idempotency_key: string | null
           duration_mode: string
@@ -2630,6 +3173,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      complete_provisional_cancellation: {
+        Args: { target_receipt_id: string }
+        Returns: boolean
+      }
       consume_commerce_rate_limit: {
         Args: { caller_account_id: string; target_operation: string }
         Returns: undefined
@@ -2638,9 +3185,85 @@ export type Database = {
         Args: { target_operation: string; target_subject_hash?: string }
         Returns: number
       }
+      correct_food_insight_rating: {
+        Args: {
+          corrected_rating: number
+          correction_reason: string
+          expected_version: number
+          request_idempotency_key: string
+          target_result_id: string
+        }
+        Returns: {
+          ai_rating: number
+          analysis_version: string
+          calorie_kcal: number | null
+          carbohydrate_grams: number | null
+          confidence: number
+          created_at: string
+          detected_kind: string
+          effective_rating: number
+          fat_grams: number | null
+          id: string
+          insight_sentences: string[]
+          job_id: string
+          model_alias: string
+          output_policy_version: string
+          policy_version: string
+          protein_grams: number | null
+          provider_name: string
+          question_id: string
+          reason_code: string
+          submission_id: string
+          updated_at: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "food_insight_results"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_coach_payment_order: {
         Args: { request_idempotency_key: string; target_application_id: string }
-        Returns: Json
+        Returns: {
+          account_name_snapshot: string
+          account_reference_snapshot: string
+          amount_minor: number
+          bank_code_snapshot: string
+          bank_name_snapshot: string
+          coach_application_id: string | null
+          coach_user_id_snapshot: string | null
+          correction_expires_at: string | null
+          created_at: string
+          currency: string
+          declared_method: string
+          destination_id: string
+          destination_version: number
+          evidence_submitted_at: string | null
+          id: string
+          idempotency_key: string
+          instructions_snapshot: string
+          latest_rejection_reason: string | null
+          owner_user_id: string | null
+          pending_enrollment_id: string | null
+          program_id: string | null
+          purpose: string
+          qris_object_path_snapshot: string | null
+          reservation_expires_at: string | null
+          reserved_at: string | null
+          retention_after: string | null
+          status: string
+          timezone_snapshot: string
+          updated_at: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_coach_purchase_intent: {
         Args: {
@@ -2656,6 +3279,7 @@ export type Database = {
           destination_account_reference: string
           destination_bank_code: string
           destination_bank_name: string
+          destination_instructions: string
           destination_qris_object_path?: string
           effective_at: string
         }
@@ -2669,6 +3293,7 @@ export type Database = {
           effective_from: string
           effective_until: string | null
           id: string
+          instructions: string
           qris_object_path: string | null
           status: string
           version: number
@@ -2683,10 +3308,48 @@ export type Database = {
       create_program_payment_order: {
         Args: {
           coach_qr_payload: string
+          payment_method: string
           request_idempotency_key: string
           target_program_id: string
         }
-        Returns: Json
+        Returns: {
+          account_name_snapshot: string
+          account_reference_snapshot: string
+          amount_minor: number
+          bank_code_snapshot: string
+          bank_name_snapshot: string
+          coach_application_id: string | null
+          coach_user_id_snapshot: string | null
+          correction_expires_at: string | null
+          created_at: string
+          currency: string
+          declared_method: string
+          destination_id: string
+          destination_version: number
+          evidence_submitted_at: string | null
+          id: string
+          idempotency_key: string
+          instructions_snapshot: string
+          latest_rejection_reason: string | null
+          owner_user_id: string | null
+          pending_enrollment_id: string | null
+          program_id: string | null
+          purpose: string
+          qris_object_path_snapshot: string | null
+          reservation_expires_at: string | null
+          reserved_at: string | null
+          retention_after: string | null
+          status: string
+          timezone_snapshot: string
+          updated_at: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_program_purchase_intent: {
         Args: {
@@ -2732,12 +3395,12 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      duplicate_program_as_draft: {
+      duplicate_admin_program_as_draft: {
         Args: {
           request_idempotency_key: string
-          source_target_id: string
+          source_program_id: string
           target_program_id: string
-          target_starts_on: string
+          target_start_date: string
           target_title: string
         }
         Returns: {
@@ -2748,6 +3411,7 @@ export type Database = {
           cover_path: string | null
           created_at: string
           created_by: string
+          default_verification_mode: string
           desired_price: number | null
           draft_idempotency_key: string | null
           duration_mode: string
@@ -2781,6 +3445,64 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      duplicate_program_as_draft: {
+        Args: {
+          request_idempotency_key: string
+          source_target_id: string
+          target_program_id: string
+          target_starts_on: string
+          target_title: string
+        }
+        Returns: {
+          archive_idempotency_key: string | null
+          category: string | null
+          completion_idempotency_key: string | null
+          cover_alt_text: string | null
+          cover_path: string | null
+          created_at: string
+          created_by: string
+          default_verification_mode: string
+          desired_price: number | null
+          draft_idempotency_key: string | null
+          duration_mode: string
+          ends_on: string
+          future_step_policy: string
+          id: string
+          pace: string
+          participant_limit: number | null
+          past_step_policy: string
+          points_per_activity: number
+          points_per_weight_kg: number
+          pricing_mode: string
+          publish_idempotency_key: string | null
+          published_at: string | null
+          quiz_passing_percentage: number
+          registration_closes_at: string | null
+          reopen_idempotency_key: string | null
+          source_program_id: string | null
+          starts_on: string
+          status: string
+          summary: string
+          timezone: string
+          title: string
+          updated_at: string
+          wellness_disclaimer: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "programs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      enqueue_expired_provisional_cancellations: {
+        Args: never
+        Returns: number
+      }
+      enqueue_food_insight: {
+        Args: { target_analysis_version?: string; target_submission_id: string }
+        Returns: string
+      }
       enroll_free_program: {
         Args: { scanned_coach_qr: string; target_program_id: string }
         Returns: {
@@ -2799,15 +3521,32 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ensure_repeatable_local_program_fixtures: {
+        Args: never
+        Returns: boolean
+      }
       expire_commerce_state: { Args: never; Returns: Json }
       expire_payment_orders: { Args: never; Returns: number }
+      fail_food_insight_job: {
+        Args: {
+          error_code: string
+          retryable: boolean
+          target_job_id: string
+          target_lease_token: string
+        }
+        Returns: string
+      }
+      fail_provisional_cancellation: {
+        Args: { failure_code: string; target_receipt_id: string }
+        Returns: boolean
+      }
       finalize_external_apple_account_deletion: {
         Args: { target_account_id: string }
         Returns: string
       }
       finalize_my_account_deletion: { Args: never; Returns: string }
       finalize_participant_onboarding: {
-        Args: { coach_qr: string }
+        Args: { coach_qr: string; expected_version?: number }
         Returns: {
           account_purpose: string
           city: string
@@ -2821,6 +3560,7 @@ export type Database = {
           finalized_at: string | null
           member_level: string | null
           onboarding_status: string
+          onboarding_version: number
           phone_number: string | null
           profile_avatar_path: string | null
           provider_avatar_url: string | null
@@ -2855,6 +3595,15 @@ export type Database = {
         }
         Returns: Json
       }
+      get_admin_closure_preflight: {
+        Args: { target_program_id: string }
+        Returns: Json
+      }
+      get_admin_dashboard: { Args: never; Returns: Json }
+      get_admin_person_detail: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       get_my_assigned_coach: {
         Args: never
         Returns: {
@@ -2867,7 +3616,23 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_coach_activity_feed: { Args: never; Returns: Json }
       get_my_coach_application: { Args: never; Returns: Json }
+      get_my_coach_leaderboard: {
+        Args: {
+          result_limit?: number
+          result_offset?: number
+          target_program_id: string
+        }
+        Returns: Json[]
+      }
+      get_my_coach_participant_detail: {
+        Args: { target_enrollment_id?: string; target_participant_id: string }
+        Returns: Json
+      }
+      get_my_coach_participant_directory: { Args: never; Returns: Json }
+      get_my_coach_public_profile_draft: { Args: never; Returns: Json }
+      get_my_coach_workspace: { Args: never; Returns: Json }
       get_my_dashboard_summary: {
         Args: never
         Returns: {
@@ -2878,15 +3643,28 @@ export type Database = {
           pending_submission_count: number
         }[]
       }
-      get_my_participant_profile_context: { Args: never; Returns: Json }
+      get_my_provisional_onboarding_profile: { Args: never; Returns: Json }
+      get_my_session_context: { Args: never; Returns: Json }
       get_program_closure_preflight: {
         Args: { target_program_id: string }
+        Returns: Json
+      }
+      get_public_coach_profile: {
+        Args: { target_handle: string }
         Returns: Json
       }
       get_purchase_intent_for_verification: {
         Args: { caller_account_id: string; target_purchase_intent_id: string }
         Returns: Json
       }
+      list_admin_audit_events: {
+        Args: { result_limit?: number }
+        Returns: Json[]
+      }
+      list_admin_food_insight_operations: { Args: never; Returns: Json[] }
+      list_admin_pending_evidence: { Args: never; Returns: Json[] }
+      list_admin_people: { Args: never; Returns: Json[] }
+      list_admin_profile_moderation_items: { Args: never; Returns: Json[] }
       list_coach_applications_for_admin: { Args: never; Returns: Json[] }
       list_my_assigned_participants: { Args: never; Returns: Json[] }
       list_my_commerce_history: { Args: never; Returns: Json[] }
@@ -2908,8 +3686,20 @@ export type Database = {
           object_name: string
         }[]
       }
+      list_payment_evidence_orphans: {
+        Args: { batch_size?: number; dry_run?: boolean; minimum_age?: string }
+        Returns: {
+          is_dry_run: boolean
+          object_created_at: string
+          object_name: string
+        }[]
+      }
       list_public_coaches: {
         Args: { result_limit?: number; result_offset?: number }
+        Returns: Json[]
+      }
+      list_public_food_question_configs: {
+        Args: { target_question_ids: string[] }
         Returns: Json[]
       }
       list_public_leaderboard: {
@@ -3018,12 +3808,74 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      moderate_admin_coach_profile_item: {
+        Args: {
+          decision: string
+          expected_version: number
+          note: string
+          request_idempotency_key: string
+          target_item_id: string
+        }
+        Returns: {
+          body: string
+          coach_user_id: string
+          content_version: number
+          id: string
+          includes_third_party: boolean
+          is_public: boolean
+          item_kind: string
+          media_object_path: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_idempotency_key: string | null
+          moderation_note: string | null
+          moderation_status: string
+          moderation_version: number
+          permission_attested: boolean
+          submitted_at: string
+          title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coach_public_profile_items"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      moderate_coach_public_profile_item: {
+        Args: { decision: string; note: string; target_item_id: string }
+        Returns: {
+          body: string
+          coach_user_id: string
+          content_version: number
+          id: string
+          includes_third_party: boolean
+          is_public: boolean
+          item_kind: string
+          media_object_path: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_idempotency_key: string | null
+          moderation_note: string | null
+          moderation_status: string
+          moderation_version: number
+          permission_attested: boolean
+          submitted_at: string
+          title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coach_public_profile_items"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       pending_program_enrollment_availability: {
         Args: { target_program_id: string }
         Returns: string
       }
       prepare_coach_application_handoff: {
-        Args: never
+        Args: { expected_version?: number }
         Returns: {
           account_purpose: string
           city: string
@@ -3037,6 +3889,7 @@ export type Database = {
           finalized_at: string | null
           member_level: string | null
           onboarding_status: string
+          onboarding_version: number
           phone_number: string | null
           profile_avatar_path: string | null
           provider_avatar_url: string | null
@@ -3060,7 +3913,31 @@ export type Database = {
       prepare_my_account_deletion: { Args: never; Returns: Json }
       prepare_payment_evidence_attempt: {
         Args: { request_idempotency_key: string; target_order_id: string }
-        Returns: Json
+        Returns: {
+          attempt_number: number
+          byte_size: number | null
+          deleted_at: string | null
+          id: string
+          mime_type: string | null
+          object_path: string
+          order_id: string
+          pixel_height: number | null
+          pixel_width: number | null
+          prepared_at: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sha256_hex: string | null
+          status: string
+          submitted_at: string | null
+          upload_idempotency_key: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_evidence_attempts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       prepare_step_submission: {
         Args: {
@@ -3090,6 +3967,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      preview_admin_program_winners: {
+        Args: { target_program_id: string }
+        Returns: Json[]
+      }
+      publish_my_coach_public_profile: { Args: never; Returns: Json }
       publish_program: {
         Args: { request_idempotency_key: string; target_program_id: string }
         Returns: {
@@ -3100,6 +3982,7 @@ export type Database = {
           cover_path: string | null
           created_at: string
           created_by: string
+          default_verification_mode: string
           desired_price: number | null
           draft_idempotency_key: string | null
           duration_mode: string
@@ -3172,6 +4055,10 @@ export type Database = {
         }
         Returns: Json
       }
+      reconcile_food_insight_jobs: {
+        Args: { target_analysis_version?: string }
+        Returns: number
+      }
       record_apple_account_event: {
         Args: {
           target_apple_subject_hash: string
@@ -3213,11 +4100,13 @@ export type Database = {
           correction_expires_at: string | null
           created_at: string
           currency: string
+          declared_method: string
           destination_id: string
           destination_version: number
           evidence_submitted_at: string | null
           id: string
           idempotency_key: string
+          instructions_snapshot: string
           latest_rejection_reason: string | null
           owner_user_id: string | null
           pending_enrollment_id: string | null
@@ -3263,14 +4152,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      register_my_web_push_subscription: {
+      reject_coach_application_and_payment: {
         Args: {
-          target_auth_secret: string
-          target_endpoint: string
-          target_p256dh: string
-          target_user_agent_family: string
+          expected_version: number
+          rejection_reason: string
+          request_idempotency_key: string
+          target_order_id: string
         }
-        Returns: string
+        Returns: Json
       }
       reject_payment_evidence: {
         Args: {
@@ -3289,11 +4178,13 @@ export type Database = {
           correction_expires_at: string | null
           created_at: string
           currency: string
+          declared_method: string
           destination_id: string
           destination_version: number
           evidence_submitted_at: string | null
           id: string
           idempotency_key: string
+          instructions_snapshot: string
           latest_rejection_reason: string | null
           owner_user_id: string | null
           pending_enrollment_id: string | null
@@ -3329,6 +4220,7 @@ export type Database = {
           cover_path: string | null
           created_at: string
           created_by: string
+          default_verification_mode: string
           desired_price: number | null
           draft_idempotency_key: string | null
           duration_mode: string
@@ -3389,6 +4281,56 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      request_coach_payment_correction: {
+        Args: {
+          correction_reason: string
+          expected_version: number
+          request_idempotency_key: string
+          target_order_id: string
+        }
+        Returns: {
+          account_name_snapshot: string
+          account_reference_snapshot: string
+          amount_minor: number
+          bank_code_snapshot: string
+          bank_name_snapshot: string
+          coach_application_id: string | null
+          coach_user_id_snapshot: string | null
+          correction_expires_at: string | null
+          created_at: string
+          currency: string
+          declared_method: string
+          destination_id: string
+          destination_version: number
+          evidence_submitted_at: string | null
+          id: string
+          idempotency_key: string
+          instructions_snapshot: string
+          latest_rejection_reason: string | null
+          owner_user_id: string | null
+          pending_enrollment_id: string | null
+          program_id: string | null
+          purpose: string
+          qris_object_path_snapshot: string | null
+          reservation_expires_at: string | null
+          reserved_at: string | null
+          retention_after: string | null
+          status: string
+          timezone_snapshot: string
+          updated_at: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      request_my_provisional_cancellation: {
+        Args: { request_idempotency_key: string }
+        Returns: Json
+      }
       resolve_coach_qr_for_enrollment: {
         Args: { scanned_coach_qr: string }
         Returns: Json
@@ -3415,11 +4357,13 @@ export type Database = {
           correction_expires_at: string | null
           created_at: string
           currency: string
+          declared_method: string
           destination_id: string
           destination_version: number
           evidence_submitted_at: string | null
           id: string
           idempotency_key: string
+          instructions_snapshot: string
           latest_rejection_reason: string | null
           owner_user_id: string | null
           pending_enrollment_id: string | null
@@ -3470,9 +4414,53 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      revoke_my_web_push_subscription: {
-        Args: { target_endpoint: string }
+      revoke_provisional_cancellation_sessions: {
+        Args: { target_receipt_id: string }
         Returns: boolean
+      }
+      save_admin_program_draft: {
+        Args: { program_payload: Json; request_idempotency_key: string }
+        Returns: {
+          archive_idempotency_key: string | null
+          category: string | null
+          completion_idempotency_key: string | null
+          cover_alt_text: string | null
+          cover_path: string | null
+          created_at: string
+          created_by: string
+          default_verification_mode: string
+          desired_price: number | null
+          draft_idempotency_key: string | null
+          duration_mode: string
+          ends_on: string
+          future_step_policy: string
+          id: string
+          pace: string
+          participant_limit: number | null
+          past_step_policy: string
+          points_per_activity: number
+          points_per_weight_kg: number
+          pricing_mode: string
+          publish_idempotency_key: string | null
+          published_at: string | null
+          quiz_passing_percentage: number
+          registration_closes_at: string | null
+          reopen_idempotency_key: string | null
+          source_program_id: string | null
+          starts_on: string
+          status: string
+          summary: string
+          timezone: string
+          title: string
+          updated_at: string
+          wellness_disclaimer: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "programs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       save_my_coach_application_draft: {
         Args: {
@@ -3510,6 +4498,88 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_my_coach_public_profile_draft: {
+        Args: {
+          biography: string
+          instagram_url: string
+          phone_number: string
+          photo_object_path: string
+          professional_headline: string
+          requested_handle: string
+          service_area: string
+          show_instagram: boolean
+          show_phone: boolean
+          show_tiktok: boolean
+          show_website: boolean
+          show_whatsapp: boolean
+          tiktok_url: string
+          website_url: string
+          whatsapp_number: string
+        }
+        Returns: {
+          biography: string
+          coach_user_id: string
+          instagram_url: string
+          phone_number: string
+          professional_headline: string
+          profile_photo_object_path: string | null
+          public_handle: string
+          service_area: string
+          show_instagram: boolean
+          show_phone: boolean
+          show_tiktok: boolean
+          show_website: boolean
+          show_whatsapp: boolean
+          tiktok_url: string
+          updated_at: string
+          website_url: string
+          whatsapp_number: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coach_public_profile_drafts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      save_my_provisional_onboarding_profile: {
+        Args: {
+          expected_version: number
+          new_account_purpose: string
+          new_display_name: string
+          new_member_level: string
+          new_phone_number: string
+        }
+        Returns: {
+          account_purpose: string
+          city: string
+          coach_biography: string
+          coach_is_approved: boolean
+          coach_is_public: boolean
+          coach_qr_identifier: string | null
+          created_at: string
+          current_coach_id: string | null
+          display_name: string
+          finalized_at: string | null
+          member_level: string | null
+          onboarding_status: string
+          onboarding_version: number
+          phone_number: string | null
+          profile_avatar_path: string | null
+          provider_avatar_url: string | null
+          provisional_expires_at: string | null
+          public_profile_id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       save_program_draft: {
         Args: { program_payload: Json; request_idempotency_key: string }
         Returns: {
@@ -3520,6 +4590,7 @@ export type Database = {
           cover_path: string | null
           created_at: string
           created_by: string
+          default_verification_mode: string
           desired_price: number | null
           draft_idempotency_key: string | null
           duration_mode: string
@@ -3562,6 +4633,53 @@ export type Database = {
         }
         Returns: string
       }
+      submit_coach_onboarding_payment_evidence: {
+        Args: {
+          content_byte_size: number
+          content_pixel_height: number
+          content_pixel_width: number
+          content_sha256_hex: string
+          target_attempt_id: string
+        }
+        Returns: {
+          account_name_snapshot: string
+          account_reference_snapshot: string
+          amount_minor: number
+          bank_code_snapshot: string
+          bank_name_snapshot: string
+          coach_application_id: string | null
+          coach_user_id_snapshot: string | null
+          correction_expires_at: string | null
+          created_at: string
+          currency: string
+          declared_method: string
+          destination_id: string
+          destination_version: number
+          evidence_submitted_at: string | null
+          id: string
+          idempotency_key: string
+          instructions_snapshot: string
+          latest_rejection_reason: string | null
+          owner_user_id: string | null
+          pending_enrollment_id: string | null
+          program_id: string | null
+          purpose: string
+          qris_object_path_snapshot: string | null
+          reservation_expires_at: string | null
+          reserved_at: string | null
+          retention_after: string | null
+          status: string
+          timezone_snapshot: string
+          updated_at: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_my_coach_application: {
         Args: { request_idempotency_key: string; target_application_id: string }
         Returns: {
@@ -3592,13 +4710,47 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      submit_my_coach_public_profile_item: {
+        Args: {
+          body: string
+          includes_third_party: boolean
+          item_kind: string
+          media_object_path: string
+          permission_attested: boolean
+          title: string
+        }
+        Returns: {
+          body: string
+          coach_user_id: string
+          content_version: number
+          id: string
+          includes_third_party: boolean
+          is_public: boolean
+          item_kind: string
+          media_object_path: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_idempotency_key: string | null
+          moderation_note: string | null
+          moderation_status: string
+          moderation_version: number
+          permission_attested: boolean
+          submitted_at: string
+          title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coach_public_profile_items"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_payment_evidence: {
         Args: {
           content_byte_size: number
           content_pixel_height: number
           content_pixel_width: number
           content_sha256_hex: string
-          submitting_owner_user_id: string
           target_attempt_id: string
         }
         Returns: {
@@ -3612,11 +4764,13 @@ export type Database = {
           correction_expires_at: string | null
           created_at: string
           currency: string
+          declared_method: string
           destination_id: string
           destination_version: number
           evidence_submitted_at: string | null
           id: string
           idempotency_key: string
+          instructions_snapshot: string
           latest_rejection_reason: string | null
           owner_user_id: string | null
           pending_enrollment_id: string | null
@@ -3716,6 +4870,7 @@ export type Database = {
           finalized_at: string | null
           member_level: string | null
           onboarding_status: string
+          onboarding_version: number
           phone_number: string | null
           profile_avatar_path: string | null
           provider_avatar_url: string | null
@@ -3752,6 +4907,7 @@ export type Database = {
           finalized_at: string | null
           member_level: string | null
           onboarding_status: string
+          onboarding_version: number
           phone_number: string | null
           profile_avatar_path: string | null
           provider_avatar_url: string | null
@@ -3768,13 +4924,558 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      update_my_profile_avatar: {
-        Args: { request_idempotency_key: string; target_path: string }
-        Returns: string
+      validate_participant_onboarding_coach_qr: {
+        Args: { coach_qr: string }
+        Returns: Json
       }
     }
     Enums: {
       [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  storage: {
+    Tables: {
+      buckets: {
+        Row: {
+          allowed_mime_types: string[] | null
+          avif_autodetection: boolean | null
+          created_at: string | null
+          file_size_limit: number | null
+          id: string
+          name: string
+          owner: string | null
+          owner_id: string | null
+          public: boolean | null
+          type: Database["storage"]["Enums"]["buckettype"]
+          updated_at: string | null
+        }
+        Insert: {
+          allowed_mime_types?: string[] | null
+          avif_autodetection?: boolean | null
+          created_at?: string | null
+          file_size_limit?: number | null
+          id: string
+          name: string
+          owner?: string | null
+          owner_id?: string | null
+          public?: boolean | null
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string | null
+        }
+        Update: {
+          allowed_mime_types?: string[] | null
+          avif_autodetection?: boolean | null
+          created_at?: string | null
+          file_size_limit?: number | null
+          id?: string
+          name?: string
+          owner?: string | null
+          owner_id?: string | null
+          public?: boolean | null
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      buckets_analytics: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          format: string
+          id: string
+          name: string
+          type: Database["storage"]["Enums"]["buckettype"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          format?: string
+          id?: string
+          name: string
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          format?: string
+          id?: string
+          name?: string
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      buckets_vectors: {
+        Row: {
+          created_at: string
+          id: string
+          type: Database["storage"]["Enums"]["buckettype"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          type?: Database["storage"]["Enums"]["buckettype"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      iceberg_namespaces: {
+        Row: {
+          bucket_name: string
+          catalog_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bucket_name: string
+          catalog_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bucket_name?: string
+          catalog_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iceberg_namespaces_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iceberg_tables: {
+        Row: {
+          bucket_name: string
+          catalog_id: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+          namespace_id: string
+          remote_table_id: string | null
+          shard_id: string | null
+          shard_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          bucket_name: string
+          catalog_id: string
+          created_at?: string
+          id?: string
+          location: string
+          name: string
+          namespace_id: string
+          remote_table_id?: string | null
+          shard_id?: string | null
+          shard_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bucket_name?: string
+          catalog_id?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          namespace_id?: string
+          remote_table_id?: string | null
+          shard_id?: string | null
+          shard_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iceberg_tables_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "iceberg_tables_namespace_id_fkey"
+            columns: ["namespace_id"]
+            isOneToOne: false
+            referencedRelation: "iceberg_namespaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migrations: {
+        Row: {
+          executed_at: string | null
+          hash: string
+          id: number
+          name: string
+        }
+        Insert: {
+          executed_at?: string | null
+          hash: string
+          id: number
+          name: string
+        }
+        Update: {
+          executed_at?: string | null
+          hash?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      objects: {
+        Row: {
+          bucket_id: string | null
+          created_at: string | null
+          id: string
+          last_accessed_at: string | null
+          metadata: Json | null
+          name: string | null
+          owner: string | null
+          owner_id: string | null
+          path_tokens: string[] | null
+          updated_at: string | null
+          user_metadata: Json | null
+          version: string | null
+        }
+        Insert: {
+          bucket_id?: string | null
+          created_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          metadata?: Json | null
+          name?: string | null
+          owner?: string | null
+          owner_id?: string | null
+          path_tokens?: string[] | null
+          updated_at?: string | null
+          user_metadata?: Json | null
+          version?: string | null
+        }
+        Update: {
+          bucket_id?: string | null
+          created_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          metadata?: Json | null
+          name?: string | null
+          owner?: string | null
+          owner_id?: string | null
+          path_tokens?: string[] | null
+          updated_at?: string | null
+          user_metadata?: Json | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objects_bucketId_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      s3_multipart_uploads: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          id: string
+          in_progress_size: number
+          key: string
+          metadata: Json | null
+          owner_id: string | null
+          upload_signature: string
+          user_metadata: Json | null
+          version: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          id: string
+          in_progress_size?: number
+          key: string
+          metadata?: Json | null
+          owner_id?: string | null
+          upload_signature: string
+          user_metadata?: Json | null
+          version: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          id?: string
+          in_progress_size?: number
+          key?: string
+          metadata?: Json | null
+          owner_id?: string | null
+          upload_signature?: string
+          user_metadata?: Json | null
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "s3_multipart_uploads_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      s3_multipart_uploads_parts: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          etag: string
+          id: string
+          key: string
+          owner_id: string | null
+          part_number: number
+          size: number
+          upload_id: string
+          version: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          etag: string
+          id?: string
+          key: string
+          owner_id?: string | null
+          part_number: number
+          size?: number
+          upload_id: string
+          version: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          etag?: string
+          id?: string
+          key?: string
+          owner_id?: string | null
+          part_number?: number
+          size?: number
+          upload_id?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "s3_multipart_uploads_parts_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "s3_multipart_uploads_parts_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "s3_multipart_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vector_indexes: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          data_type: string
+          dimension: number
+          distance_metric: string
+          id: string
+          metadata_configuration: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          data_type: string
+          dimension: number
+          distance_metric: string
+          id?: string
+          metadata_configuration?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          data_type?: string
+          dimension?: number
+          distance_metric?: string
+          id?: string
+          metadata_configuration?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vector_indexes_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: false
+            referencedRelation: "buckets_vectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      allow_any_operation: {
+        Args: { expected_operations: string[] }
+        Returns: boolean
+      }
+      allow_only_operation: {
+        Args: { expected_operation: string }
+        Returns: boolean
+      }
+      can_insert_object: {
+        Args: { bucketid: string; metadata: Json; name: string; owner: string }
+        Returns: undefined
+      }
+      extension: { Args: { name: string }; Returns: string }
+      filename: { Args: { name: string }; Returns: string }
+      foldername: { Args: { name: string }; Returns: string[] }
+      get_common_prefix: {
+        Args: { p_delimiter: string; p_key: string; p_prefix: string }
+        Returns: string
+      }
+      get_size_by_bucket: {
+        Args: never
+        Returns: {
+          bucket_id: string
+          size: number
+        }[]
+      }
+      list_multipart_uploads_with_delimiter: {
+        Args: {
+          bucket_id: string
+          delimiter_param: string
+          max_keys?: number
+          next_key_token?: string
+          next_upload_token?: string
+          prefix_param: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          key: string
+        }[]
+      }
+      list_objects_with_delimiter: {
+        Args: {
+          _bucket_id: string
+          delimiter_param: string
+          max_keys?: number
+          next_token?: string
+          prefix_param: string
+          sort_order?: string
+          start_after?: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          last_accessed_at: string
+          metadata: Json
+          name: string
+          updated_at: string
+        }[]
+      }
+      operation: { Args: never; Returns: string }
+      search: {
+        Args: {
+          bucketname: string
+          levels?: number
+          limits?: number
+          offsets?: number
+          prefix: string
+          search?: string
+          sortcolumn?: string
+          sortorder?: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          last_accessed_at: string
+          metadata: Json
+          name: string
+          updated_at: string
+        }[]
+      }
+      search_by_timestamp: {
+        Args: {
+          p_bucket_id: string
+          p_level: number
+          p_limit: number
+          p_prefix: string
+          p_sort_column: string
+          p_sort_column_after: string
+          p_sort_order: string
+          p_start_after: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          key: string
+          last_accessed_at: string
+          metadata: Json
+          name: string
+          updated_at: string
+        }[]
+      }
+      search_v2: {
+        Args: {
+          bucket_name: string
+          levels?: number
+          limits?: number
+          prefix: string
+          sort_column?: string
+          sort_column_after?: string
+          sort_order?: string
+          start_after?: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          key: string
+          last_accessed_at: string
+          metadata: Json
+          name: string
+          updated_at: string
+        }[]
+      }
+    }
+    Enums: {
+      buckettype: "STANDARD" | "ANALYTICS" | "VECTOR"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3902,5 +5603,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {},
+  },
+  storage: {
+    Enums: {
+      buckettype: ["STANDARD", "ANALYTICS", "VECTOR"],
+    },
   },
 } as const

@@ -131,8 +131,6 @@ test.describe('W01 landing and metadata', () => {
 test.describe('W01 role shells and accessibility', () => {
   const cases = [
     { path: '/app/home', links: ['Beranda', 'Program', 'Peringkat', 'Coach', 'Profil'], active: 'Beranda' },
-    { path: '/coach', links: ['Dashboard', 'Program', 'Profil'], active: 'Dashboard' },
-    { path: '/admin', links: ['Dashboard', 'Program', 'Orang', 'Konten', 'Pengaturan'], active: 'Dashboard' },
   ] as const;
 
   for (const shell of cases) {
@@ -214,10 +212,10 @@ test.describe('W01 role shells and accessibility', () => {
   test('wide shell uses rail, focus-visible, dark mode, and reduced motion', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
-    await page.goto('/admin');
-    const settings = page.getByRole('link', { name: 'Pengaturan' });
-    await settings.focus();
-    expect(await settings.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe('none');
+    await page.goto('/app/home');
+    const profile = page.getByRole('link', { name: 'Profil' });
+    await profile.focus();
+    expect(await profile.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe('none');
     expect(await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgb(0, 0, 0)');
     expect(Number.parseFloat(await page.locator('body').evaluate((element) => getComputedStyle(element).transitionDuration))).toBeLessThanOrEqual(0.000001);
   });

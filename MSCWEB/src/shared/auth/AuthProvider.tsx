@@ -9,6 +9,9 @@ import { sanitizeInternalReturnRoute } from './internal-return-route';
 import { SupabaseGoogleOAuthAdapter } from './supabase-google-oauth-adapter';
 import { readPublicEnvironment } from '@/shared/config/public-environment';
 import { getSupabaseBrowserClient } from '@/shared/supabase/client';
+import { consumeOnboardingReturnRoute, saveOnboardingReturnRoute } from './onboarding-return-route';
+import { getOnboardingRepository, OnboardingError } from '@/features/onboarding/onboarding-repository';
+import { onboardingPathForStep, type OnboardingSessionContext } from '@/features/onboarding/onboarding-models';
 
 export type AccountSummary = Readonly<{
   userId: string;
@@ -20,9 +23,14 @@ export type AccountSummary = Readonly<{
   assignedParticipantCount: number;
 }>;
 
-type AuthState =
+export type AuthState =
   | { status: 'loading' }
   | { status: 'guest'; notice?: 'sessionExpired' }
+  | {
+      status: 'onboarding';
+      context: OnboardingSessionContext;
+      providerDefaults: { displayName: string; avatarUrl?: string };
+    }
   | { status: 'authenticated'; account: AccountSummary }
   | { status: 'error'; message: string };
 
@@ -31,6 +39,8 @@ type AuthContextValue = Readonly<{
   signInWithGoogle(returnRoute?: string): Promise<void>;
   completeOAuth(callbackUrl: string): Promise<string>;
   signOut(): Promise<void>;
+  refreshSessionContext(): Promise<AuthState>;
+  finishOnboarding(): Promise<string>;
   requireAuthentication(returnRoute: string): boolean;
 }>;
 
@@ -62,6 +72,47 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     if (accountIdRef.current !== null && accountIdRef.current !== session.user.id) {
       purgePrivateCaches(queryClient);
+      setState({ status: 'loading' });
+    }
+
+    let onboardingContext: OnboardingSessionContext;
+    try {
+      onboardingContext = await getOnboardingRepository().getSessionContext();
+    } catch (contextError) {
+      if (contextError instanceof OnboardingError && contextError.code === 'missingProfile') {
+        accountIdRef.current = null;
+        purgePrivateCaches(queryClient);
+        await client.auth.signOut({ scope: 'local' }).catch(() => undefined);
+        const nextState: AuthState = { status: 'guest' };
+        if (generation === requestGeneration.current) setState(nextState);
+        return nextState;
+      }
+      if (generation === requestGeneration.current) {
+        purgePrivateCaches(queryClient);
+        setState({ status: 'error', message: 'Status pendaftaran tidak dapat dimuat. Coba masuk kembali.' });
+      }
+      return null;
+    }
+
+    if (onboardingContext.onboarding_status !== 'active') {
+      const displayName = safeProviderText(
+        session.user.user_metadata?.display_name
+          ?? session.user.user_metadata?.full_name
+          ?? session.user.user_metadata?.name,
+      ) ?? 'Peserta baru';
+      const avatarCandidate = safeProviderText(
+        session.user.user_metadata?.avatar_url ?? session.user.user_metadata?.picture,
+        2_048,
+      );
+      const providerDefaults = {
+        displayName,
+        ...(avatarCandidate?.startsWith('https://') ? { avatarUrl: avatarCandidate } : {}),
+      };
+      accountIdRef.current = session.user.id;
+      purgePrivateCaches(queryClient);
+      const nextState: AuthState = { status: 'onboarding', context: onboardingContext, providerDefaults };
+      if (generation === requestGeneration.current) setState(nextState);
+      return nextState;
     }
 
     const { data, error } = await client.rpc('get_my_dashboard_summary');
@@ -85,8 +136,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         assignedParticipantCount: row.assigned_participant_count,
       };
       accountIdRef.current = account.userId;
-      if (generation === requestGeneration.current) setState({ status: 'authenticated', account });
-      return account;
+      const nextState: AuthState = { status: 'authenticated', account };
+      if (generation === requestGeneration.current) setState(nextState);
+      return nextState;
     } catch (error) {
       if (generation === requestGeneration.current) {
         purgePrivateCaches(queryClient);
@@ -121,9 +173,30 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const environment = readPublicEnvironment();
     const result = await new SupabaseGoogleOAuthAdapter(client, environment.authRedirectUrl).exchangeCallback(callbackUrl);
     const { data } = await client.auth.getSession();
-    const account = await applySession(data.session, 'SIGNED_IN');
-    return account === null ? '/app' : destinationForRole(account.role, result.returnRoute);
+    const nextState = await applySession(data.session, 'SIGNED_IN');
+    if (nextState?.status === 'onboarding') {
+      saveOnboardingReturnRoute(result.returnRoute);
+      return onboardingPathForStep[nextState.context.resume_step];
+    }
+    return nextState?.status === 'authenticated'
+      ? destinationForRole(nextState.account.role, result.returnRoute)
+      : '/app';
   }, [applySession, client]);
+
+  const refreshSessionContext = useCallback(async (): Promise<AuthState> => {
+    const { data } = await client.auth.getSession();
+    const next = await applySession(data.session, 'TOKEN_REFRESHED');
+    return next ?? { status: 'guest' };
+  }, [applySession, client]);
+
+  const finishOnboarding = useCallback(async (): Promise<string> => {
+    const nextState = await refreshSessionContext();
+    if (nextState.status === 'authenticated') {
+      return consumeOnboardingReturnRoute(nextState.account.role);
+    }
+    if (nextState.status === 'onboarding') return onboardingPathForStep[nextState.context.resume_step];
+    return '/app';
+  }, [refreshSessionContext]);
 
   const signOut = useCallback(async () => {
     manualSignOutRef.current = true;
@@ -140,16 +213,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const requireAuthentication = useCallback((returnRoute: string) => {
     if (state.status === 'authenticated') return true;
+    if (state.status === 'onboarding') {
+      router.replace(onboardingPathForStep[state.context.resume_step] as never);
+      return false;
+    }
     const safeRoute = sanitizeInternalReturnRoute(returnRoute);
     router.push({ pathname: '/login', params: { returnTo: safeRoute } });
     return false;
-  }, [state.status]);
+  }, [state]);
 
   return (
-    <AuthContext.Provider value={{ state, signInWithGoogle, completeOAuth, signOut, requireAuthentication }}>
+    <AuthContext.Provider value={{ state, signInWithGoogle, completeOAuth, signOut, refreshSessionContext, finishOnboarding, requireAuthentication }}>
       {children}
     </AuthContext.Provider>
   );
+}
+
+function safeProviderText(value: unknown, maxLength = 80): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.replace(/[\u0000-\u001F\u007F]/gu, '').trim().slice(0, maxLength);
+  return normalized.length > 0 ? normalized : undefined;
 }
 
 export function useAuth(): AuthContextValue {

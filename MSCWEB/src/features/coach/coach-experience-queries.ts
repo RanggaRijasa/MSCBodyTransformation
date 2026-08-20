@@ -46,7 +46,7 @@ export function useMyCoachPaymentOrders(enabled: boolean) {
 export function useSubmitCoachPaymentEvidence() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (command: { orderId: string; file: Blob; idempotencyKey: string; onProgress?: (value: number, message: string) => void }) => getCoachExperienceRepository().submitPaymentEvidence(command.orderId, command.file, command.idempotencyKey, command.onProgress),
+    mutationFn: (command: { orderId: string; file: Blob; idempotencyKey: string; onProgress?: (value: number, message: string) => void; onboarding?: boolean }) => getCoachExperienceRepository().submitPaymentEvidence(command.orderId, command.file, command.idempotencyKey, command.onProgress, command.onboarding),
     onSuccess: async () => Promise.all([
       client.invalidateQueries({ queryKey: coachExperienceQueryKeys.orders }),
       client.invalidateQueries({ queryKey: coachExperienceQueryKeys.adminApplications }),
@@ -61,9 +61,11 @@ export function useAdminCoachApplications(enabled: boolean) {
 export function useAdminCoachDecision() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (command: { kind: 'approve'; order: Parameters<ReturnType<typeof getCoachExperienceRepository>['approveCoach']>[0]; reference: string; destinationMatches: boolean } | { kind: 'reject'; order: Parameters<ReturnType<typeof getCoachExperienceRepository>['rejectCoach']>[0]; reason: string }) => command.kind === 'approve'
+    mutationFn: (command: { kind: 'approve'; order: Parameters<ReturnType<typeof getCoachExperienceRepository>['approveCoach']>[0]; reference: string; destinationMatches: boolean } | { kind: 'correction' | 'reject'; order: Parameters<ReturnType<typeof getCoachExperienceRepository>['rejectCoach']>[0]; reason: string }) => command.kind === 'approve'
       ? getCoachExperienceRepository().approveCoach(command.order, command.reference, command.destinationMatches, `coach-approve-${crypto.randomUUID()}`)
-      : getCoachExperienceRepository().rejectCoach(command.order, command.reason, `coach-reject-${crypto.randomUUID()}`),
+      : command.kind === 'correction'
+        ? getCoachExperienceRepository().requestCoachCorrection(command.order, command.reason, `coach-correction-${crypto.randomUUID()}`)
+        : getCoachExperienceRepository().rejectCoach(command.order, command.reason, `coach-reject-${crypto.randomUUID()}`),
     onSettled: async () => client.invalidateQueries({ queryKey: coachExperienceQueryKeys.adminApplications }),
   });
 }

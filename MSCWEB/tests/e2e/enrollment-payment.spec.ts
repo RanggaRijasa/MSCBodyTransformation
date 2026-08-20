@@ -101,6 +101,11 @@ test.describe('W05 enrollment and manual payment journey', () => {
     if (freeProgramId) await service.from('programs').delete().eq('id', freeProgramId);
     if (destinationId) await service.from('payment_destinations').delete().eq('id', destinationId);
     if (previousDestination && adminSession) {
+      let restorableQrisPath = previousDestination.qris_object_path;
+      if (restorableQrisPath) {
+        const object = await service.storage.from('payment-destination-assets').download(restorableQrisPath);
+        if (object.error) restorableQrisPath = null;
+      }
       const restored = await sessionClient(adminSession).rpc('create_payment_destination', {
         destination_bank_code: previousDestination.bank_code,
         destination_bank_name: previousDestination.bank_name,
@@ -108,7 +113,7 @@ test.describe('W05 enrollment and manual payment journey', () => {
         destination_account_reference: previousDestination.account_reference,
         destination_instructions: previousDestination.instructions,
         effective_at: new Date().toISOString(),
-        destination_qris_object_path: previousDestination.qris_object_path,
+        destination_qris_object_path: restorableQrisPath,
       });
       expect(restored.error).toBeNull();
     }
