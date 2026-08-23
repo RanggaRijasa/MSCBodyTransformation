@@ -123,6 +123,40 @@ set display_name = 'Peserta Kapasitas',
     finalized_at = now()
 where user_id = 'b1000000-0000-0000-0000-000000000005';
 
+insert into public.coach_applications (
+  id, applicant_user_id, participant_profile_id, display_name_snapshot,
+  phone_number_snapshot, member_level_snapshot, has_completed_hom_sts,
+  has_completed_ict, terms_version, status, draft_idempotency_key,
+  submitted_at, decided_at, decided_by
+) values (
+  'b1100000-0000-0000-0000-000000000002',
+  'b1000000-0000-0000-0000-000000000002',
+  'b1000000-0000-0000-0000-000000000002',
+  'Coach Phase 10', '+6281200000011', 'sc', true, true, 'test-v1',
+  'active', 'phase10-coach-active', now(), now(),
+  'b1000000-0000-0000-0000-000000000002'
+);
+
+insert into public.coach_payment_records (
+  id, application_id, state, price_band, amount_minor_units,
+  provider_reference, verified_at
+) values (
+  'b1200000-0000-0000-0000-000000000002',
+  'b1100000-0000-0000-0000-000000000002',
+  'verified', 'entry', 100000, 'phase10-coach-payment', now()
+);
+
+insert into public.coach_access_entitlements (
+  id, application_id, payment_record_id, coach_user_id, status,
+  starts_at, ends_at
+) values (
+  'b1300000-0000-0000-0000-000000000002',
+  'b1100000-0000-0000-0000-000000000002',
+  'b1200000-0000-0000-0000-000000000002',
+  'b1000000-0000-0000-0000-000000000002',
+  'active', now() - interval '1 day', now() + interval '30 days'
+);
+
 insert into public.programs (
   id, title, status, pace, duration_mode, starts_on, ends_on, timezone,
   participant_limit, registration_closes_at, past_step_policy,
@@ -211,47 +245,19 @@ set local role authenticated;
 set local "request.jwt.claims" =
   '{"sub":"b1000000-0000-0000-0000-000000000001","role":"authenticated"}';
 
-select extensions.is(
-  public.pending_program_enrollment_availability(
-    'b2000000-0000-0000-0000-000000000001'
-  ),
-  'available',
-  'pending intent remains valid while the program accepts registration'
-);
-select extensions.is(
-  public.pending_program_enrollment_availability(
-    'b2000000-0000-0000-0000-000000000002'
-  ),
-  'registration_closed',
-  'pending intent is invalidated from the authoritative server cutoff'
-);
-select extensions.is(
-  public.pending_program_enrollment_availability(
-    'b2000000-0000-0000-0000-000000000003'
-  ),
-  'program_full',
-  'pending intent is invalidated when capacity is reached during auth'
-);
-select extensions.is(
-  public.pending_program_enrollment_availability(
-    'b2000000-0000-0000-0000-000000000099'
-  ),
-  'program_unavailable',
-  'pending intent is invalidated when the program is no longer available'
-);
-
 select lives_ok(
   $$
-    select public.update_my_profile(
-      'Peserta Phase 10', '+6281200000010', 'sc', 'participant'
+    select public.save_my_provisional_onboarding_profile(
+      'Peserta Phase 10', '+6281200000010', 'sc', 'participant', 1
     )
   $$,
-  'user can update only allowlisted profile fields through the RPC'
+  'provisional user can save only allowlisted onboarding fields'
 );
+reset role;
 select extensions.is(
   (
     select member_level from public.profiles
-    where user_id = (select auth.uid())
+    where user_id = 'b1000000-0000-0000-0000-000000000001'
   ),
   'sc',
   'member level persists through the allowlisted operation'
@@ -259,11 +265,14 @@ select extensions.is(
 select extensions.is(
   (
     select role from public.profiles
-    where user_id = (select auth.uid())
+    where user_id = 'b1000000-0000-0000-0000-000000000001'
   ),
   'participant',
   'profile update cannot change the protected role'
 );
+set local role authenticated;
+set local "request.jwt.claims" =
+  '{"sub":"b1000000-0000-0000-0000-000000000001","role":"authenticated"}';
 select extensions.throws_like(
   $$ select public.finalize_participant_onboarding('wrong-qr') $$,
   'coach_qr_invalid',
@@ -289,28 +298,56 @@ select extensions.is(
   'b1000000-0000-0000-0000-000000000002',
   'successful Participant finalization assigns the scanned Coach'
 );
-select extensions.throws_like(
-  $$ select public.cancel_my_provisional_identity() $$,
-  'provisional_cleanup_not_allowed',
-  'an active account cannot be removed through provisional cleanup'
+select extensions.is(
+  public.pending_program_enrollment_availability(
+    'b2000000-0000-0000-0000-000000000001'
+  ),
+  'available',
+  'active account intent remains valid while the program accepts registration'
+);
+select extensions.is(
+  public.pending_program_enrollment_availability(
+    'b2000000-0000-0000-0000-000000000002'
+  ),
+  'registration_closed',
+  'active account intent is invalidated from the authoritative server cutoff'
+);
+select extensions.is(
+  public.pending_program_enrollment_availability(
+    'b2000000-0000-0000-0000-000000000003'
+  ),
+  'program_full',
+  'active account intent is invalidated when capacity is reached'
+);
+select extensions.is(
+  public.pending_program_enrollment_availability(
+    'b2000000-0000-0000-0000-000000000099'
+  ),
+  'program_unavailable',
+  'active account intent is invalidated when the program is unavailable'
+);
+select extensions.is(
+  public.request_my_provisional_cancellation('phase10-active-retained') ->> 'status',
+  'retained',
+  'an active account is retained by the durable cancellation boundary'
 );
 
 set local "request.jwt.claims" =
   '{"sub":"b1000000-0000-0000-0000-000000000003","role":"authenticated"}';
 select extensions.is(
-  public.cancel_my_provisional_identity(),
-  true,
-  'a relationship-free provisional identity can cancel idempotently'
+  public.request_my_provisional_cancellation('phase10-cancel-user') ->> 'status',
+  'queued',
+  'a relationship-free provisional identity receives a durable cleanup receipt'
 );
 
 reset role;
 select extensions.is(
   (
-    select count(*)::bigint from auth.users
-    where id = 'b1000000-0000-0000-0000-000000000003'
+    select onboarding_status from public.profiles
+    where user_id = 'b1000000-0000-0000-0000-000000000003'
   ),
-  0::bigint,
-  'provisional cancellation removes the Auth identity and profile cascade'
+  'cleanup_pending',
+  'provisional cancellation waits for the server cleanup worker'
 );
 
 update public.profiles
@@ -324,11 +361,11 @@ select extensions.is(
 );
 select extensions.is(
   (
-    select count(*)::bigint from auth.users
-    where id = 'b1000000-0000-0000-0000-000000000004'
+    select onboarding_status from public.profiles
+    where user_id = 'b1000000-0000-0000-0000-000000000004'
   ),
-  0::bigint,
-  'expired provisional cleanup removes the Auth identity'
+  'cleanup_pending',
+  'expired provisional cleanup is queued for the server worker'
 );
 select extensions.is(
   (

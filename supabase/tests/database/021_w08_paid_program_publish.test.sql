@@ -24,14 +24,14 @@ insert into public.programs(
 ) values (
   'f8000000-0000-0000-0000-000000000010', 'Program Berbayar W08',
   'Fixture publish manual payment yang selalu di-rollback.', 'draft',
-  'scheduled', 'specific_dates', current_date + 1, current_date + 1,
+  'scheduled', 'specific_dates', current_date + 2, current_date + 2,
   'Asia/Makassar', 'available', 'locked', 'Program wellness non-diagnostik.',
   10, 0, 70, 'paid', 100000, 'f8000000-0000-0000-0000-000000000001'
 );
 insert into public.program_days(id, program_id, day_number, title, scheduled_on)
 values (
   'f8000000-0000-0000-0000-000000000011',
-  'f8000000-0000-0000-0000-000000000010', 1, 'Hari pertama', current_date + 1
+  'f8000000-0000-0000-0000-000000000010', 1, 'Hari pertama', current_date + 2
 );
 insert into public.program_steps(
   id, program_day_id, step_order, title, content_kind,

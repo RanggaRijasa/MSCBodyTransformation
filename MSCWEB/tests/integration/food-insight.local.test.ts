@@ -144,4 +144,11 @@ async function signIn(identity: { email: string; password: string }) {
   const client = createClient(localUrl as string, publishableKey as string, { auth: { persistSession: false, autoRefreshToken: false } });
   expect((await client.auth.signInWithPassword({ email: identity.email, password: identity.password })).error).toBeNull(); return client;
 }
-function date(offset: number) { return new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10); }
+function date(offset: number) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Makassar',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(Date.now() + offset * 86_400_000));
+}

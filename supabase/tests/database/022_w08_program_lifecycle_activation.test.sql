@@ -12,6 +12,13 @@ insert into auth.users (
   '{"provider":"email","providers":["email"]}', '{}', now(), now()
 );
 
+-- Isolate the lifecycle result from scheduled programs loaded by seed.sql.
+-- The transaction rolls this change back after the assertions finish.
+update public.programs
+set status = 'draft',
+    published_at = null
+where status = 'scheduled';
+
 insert into public.programs(
   id, title, summary, status, pace, duration_mode, starts_on, ends_on,
   timezone, past_step_policy, future_step_policy, wellness_disclaimer,
@@ -21,7 +28,9 @@ insert into public.programs(
   (
     'fa000000-0000-0000-0000-000000000010', 'Program jatuh tempo W08',
     'Fixture lifecycle yang selalu di-rollback.', 'scheduled',
-    'scheduled', 'specific_dates', current_date - 1, current_date + 1,
+    'scheduled', 'specific_dates',
+    timezone('Asia/Jakarta', statement_timestamp())::date - 1,
+    timezone('Asia/Jakarta', statement_timestamp())::date + 1,
     'Asia/Jakarta', 'available', 'locked', 'Program wellness non-diagnostik.',
     10, 0, 70, 'free', null, now(),
     'fa000000-0000-0000-0000-000000000001'
@@ -29,7 +38,9 @@ insert into public.programs(
   (
     'fa000000-0000-0000-0000-000000000011', 'Program mendatang W08',
     'Fixture lifecycle yang selalu di-rollback.', 'scheduled',
-    'scheduled', 'specific_dates', current_date + 1, current_date + 2,
+    'scheduled', 'specific_dates',
+    timezone('Asia/Jakarta', statement_timestamp())::date + 1,
+    timezone('Asia/Jakarta', statement_timestamp())::date + 2,
     'Asia/Jakarta', 'available', 'locked', 'Program wellness non-diagnostik.',
     10, 0, 70, 'free', null, now(),
     'fa000000-0000-0000-0000-000000000001'

@@ -213,11 +213,13 @@ select extensions.is(
   'c1000000-0000-0000-0000-000000000001'::uuid,
   'a recently reauthenticated relationship-free participant is finalized'
 );
-select extensions.is(
-  public.finalize_my_account_deletion(),
-  'c1000000-0000-0000-0000-000000000001'::uuid,
-  'finalization is idempotent when the trusted server retries'
+select extensions.throws_like(
+  $$ select public.finalize_my_account_deletion() $$,
+  'active_account_required',
+  'browser retry is denied after the profile leaves active state'
 );
+
+reset role;
 select extensions.is(
   (
     select onboarding_status
@@ -236,8 +238,6 @@ select extensions.is(
   null,
   'finalization removes personal contact data'
 );
-
-reset role;
 
 select extensions.is(
   (

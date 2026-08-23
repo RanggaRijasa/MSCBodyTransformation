@@ -48,7 +48,6 @@ select extensions.lives_ok(
       'ends_on', current_date,
       'timezone', 'Asia/Makassar',
       'participant_limit', 10,
-      'registration_closes_at', (statement_timestamp() + interval '1 hour'),
       'past_step_policy', 'available',
       'future_step_policy', 'locked',
       'wellness_disclaimer', 'Program kebugaran non-diagnostik.',
@@ -384,7 +383,7 @@ select extensions.is(
        'program_created', 'program_published', 'program_completed',
        'winners_locked', 'managed_content_updated'
      )),
-  7::bigint,
+  8::bigint,
   'authoritative Admin transitions write the expected audit events once'
 );
 select extensions.throws_like(

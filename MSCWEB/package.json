@@ -15,6 +15,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:integration:local": "sh scripts/run-local-supabase-integration.sh",
+    "test:functions:local": "node scripts/verify-local-edge-functions.mjs",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "icons": "sh scripts/generate-pwa-icons.sh",

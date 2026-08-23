@@ -24,6 +24,7 @@ it.runIf(canRun)(
     const applicationIds: string[] = [];
     const orderIds: string[] = [];
     const objectPaths: string[] = [];
+    const destinationId = randomUUID();
 
     try {
       const [admin, coach, participant, coachApplicant, cancellationApplicant, expiredRelationship] = await Promise.all([
@@ -42,6 +43,18 @@ it.runIf(canRun)(
       const coachQr = `w074-${randomUUID()}`;
       await activateAdmin(service, admin.id);
       await activateCoach(service, coach.id, admin.id, coachQr, applicationIds);
+      expect((await service.from('payment_destinations').insert({
+        id: destinationId,
+        version: 704,
+        bank_code: 'TST',
+        bank_name: 'Bank Uji Tidak Dapat Dibayar',
+        account_name: 'FIXTURE W07.4',
+        account_reference: '0000000000',
+        effective_from: new Date(Date.now() - 60_000).toISOString(),
+        status: 'active',
+        created_by: admin.id,
+        instructions: 'Jangan melakukan pembayaran nyata ke data pengujian ini.',
+      })).error).toBeNull();
       const [adminClient, participantClient, coachApplicantClient, cancellationClient] = await Promise.all([
         signIn(admin),
         signIn(participant),
@@ -320,6 +333,7 @@ it.runIf(canRun)(
         await service.from('coach_payment_records').delete().in('application_id', applicationIds);
         await service.from('coach_applications').delete().in('id', applicationIds);
       }
+      await service.from('payment_destinations').delete().eq('id', destinationId);
       for (const identity of identities) {
         await service.auth.admin.deleteUser(identity.id);
       }

@@ -19,6 +19,7 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
   const publicObjectPaths: string[] = [];
   const programId = randomUUID();
   const paidProgramId = randomUUID();
+  const destinationId = randomUUID();
 
   try {
     const [admin, sc, supervisor, leadership, member] = await Promise.all([
@@ -32,6 +33,18 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
     for (const [identity, name] of [[sc, 'Coach Sari'], [supervisor, 'Coach Surya'], [leadership, 'Peserta Leadership'], [member, 'Peserta Member']] as const) {
       await updateProfile(service, identity.id, { role: 'participant', display_name: name, phone_number: '+6281234567890', provider_avatar_url: 'https://example.com/avatar.jpg' });
     }
+    expect((await service.from('payment_destinations').insert({
+      id: destinationId,
+      version: 606,
+      bank_code: 'TST',
+      bank_name: 'Bank Uji Tidak Dapat Dibayar',
+      account_name: 'FIXTURE W06',
+      account_reference: '0000000000',
+      effective_from: new Date(Date.now() - 60_000).toISOString(),
+      status: 'active',
+      created_by: admin.id,
+      instructions: 'Jangan melakukan pembayaran nyata ke data pengujian ini.',
+    })).error).toBeNull();
 
     const [adminClient, scClient, supervisorClient, leadershipClient, memberClient] = await Promise.all([
       signIn(admin), signIn(sc), signIn(supervisor), signIn(leadership), signIn(member),
@@ -479,6 +492,7 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
     await service.from('coach_applications').delete().in('id', applicationIds);
     if (objectPaths.length) await service.storage.from('payment-evidence').remove(objectPaths);
     if (publicObjectPaths.length) await service.storage.from('coach-public-media').remove(publicObjectPaths);
+    await service.from('payment_destinations').delete().eq('id', destinationId);
     for (const user of users) await service.auth.admin.deleteUser(user.id);
   }
 });

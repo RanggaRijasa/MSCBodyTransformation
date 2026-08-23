@@ -242,6 +242,41 @@ insert into public.coach_access_entitlements (
   'active', now() - interval '1 day', now() + interval '30 days'
 );
 
+insert into public.coach_public_profile_drafts(
+  coach_user_id, public_handle, profile_photo_object_path,
+  professional_headline, biography, service_area
+) values (
+  'c1000000-0000-0000-0000-000000000002',
+  'coach-publik-phase11',
+  'coaches/c1400000-0000-0000-0000-000000000002/avatar/c1500000-0000-0000-0000-000000000002.jpg',
+  'Coach', 'Profil publik sintetis.', 'Denpasar'
+);
+
+insert into public.coach_public_media_namespaces(coach_user_id, media_namespace)
+values (
+  'c1000000-0000-0000-0000-000000000002',
+  'c1400000-0000-0000-0000-000000000002'
+);
+
+insert into private.coach_public_media_assets(
+  id, coach_user_id, object_path, media_folder
+) values (
+  'c1500000-0000-0000-0000-000000000001',
+  'c1000000-0000-0000-0000-000000000002',
+  'coaches/c1400000-0000-0000-0000-000000000002/avatar/c1500000-0000-0000-0000-000000000002.jpg',
+  'avatar'
+);
+
+insert into public.coach_public_profiles(
+  coach_user_id, public_handle, display_name, photo_kind,
+  photo_reference, professional_headline, biography, service_area
+) values (
+  'c1000000-0000-0000-0000-000000000002',
+  'coach-publik-phase11', 'Coach Publik', 'storage',
+  'coaches/c1400000-0000-0000-0000-000000000002/avatar/c1500000-0000-0000-0000-000000000002.jpg',
+  'Coach', 'Profil publik sintetis.', 'Denpasar'
+);
+
 insert into public.programs (
   id,
   title,

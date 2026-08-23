@@ -137,7 +137,7 @@ insert into public.programs (
   participant_limit, registration_closes_at, past_step_policy,
   future_step_policy, wellness_disclaimer, points_per_activity,
   points_per_weight_kg, quiz_passing_percentage, pricing_mode,
-  desired_price, created_by
+  desired_price, published_at, created_by
 )
 values
   (
@@ -145,7 +145,7 @@ values
     'Program Deadline Gratis', 'active', 'scheduled', 'fixed_duration',
     current_date - 1, current_date + 7, 'Asia/Jakarta', 1,
     clock_timestamp() - interval '1 minute', 'available', 'locked',
-    'Program kebugaran non-diagnostik.', 10, 100, 70, 'free', null,
+    'Program kebugaran non-diagnostik.', 10, 100, 70, 'free', null, now(),
     'a1000000-0000-0000-0000-000000000001'
   ),
   (
@@ -153,7 +153,7 @@ values
     'Program Deadline Berbayar', 'active', 'scheduled', 'fixed_duration',
     current_date - 1, current_date + 7, 'Asia/Jakarta', null,
     clock_timestamp() - interval '1 minute', 'available', 'locked',
-    'Program kebugaran non-diagnostik.', 10, 100, 70, 'paid', 100000,
+    'Program kebugaran non-diagnostik.', 10, 100, 70, 'paid', 100000, now(),
     'a1000000-0000-0000-0000-000000000001'
   );
 

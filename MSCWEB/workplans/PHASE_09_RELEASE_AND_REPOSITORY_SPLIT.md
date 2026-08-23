@@ -1,6 +1,6 @@
 # MSCWEB W09 — Release and standalone web-repository cutover
 
-Status: `Not started`  
+Status: `Complete — standalone repository and production authority cutover verified`
 Autonomy: `A` for readiness audits; `C/D` for production and Git/repository actions  
 Depends on: W08 production candidate and all launch blockers resolved
 
@@ -41,41 +41,41 @@ Produce final release evidence, obtain explicit production authorizations, perfo
 
 ## Pre-production checklist
 
-- [ ] All QA release gates pass and no visible localization key/private leak exists.
-- [ ] Domain/subdomain, privacy/terms/support, reviewer roster, payment/reconciliation/dispute/retention/SLA are approved.
-- [ ] Production bank/QRIS data handling has owner and rotation procedure.
-- [ ] Hosted Supabase migration/function/Auth/Storage rollout reviewed and explicitly authorized.
-- [ ] Food AI provider terms/data-use, model availability, rate limits, spend ceiling, secret owner/rotation, and failure alert are reviewed; production provider secret is configured only through authorized server secret management.
-- [ ] First-login production onboarding has approved Google callback/origins, provisional expiry/cleanup schedule, test identities, QR Coach fixture, cancellation cleanup, and no-private-access evidence.
-- [ ] Minimum media launch safety is approved: private evidence buckets/RLS, payment-proof retention/orphan-cleanup schedule and operator, opaque Coach-media gateway, legacy-direct-URL denial, cache invalidation, and rollback/incident runbook.
-- [ ] W07.5 Sales Overview and W07.6 Admin Image Storage routes/actions are absent and recorded as deferred post-launch, not reported as completed.
-- [ ] Cloudflare deployment/domain/DNS/secrets/headers reviewed and explicitly authorized.
-- [ ] Enforced candidate CSP has passed on an authorized preview with production-shaped OAuth/Supabase endpoints; any prior waiver is resolved before rollout.
-- [ ] Backup/rollback/incident contacts and smoke-test account prepared.
-- [ ] Production smoke-test mutation scope is separately approved: exact test identities, allowed Guest/Participant/Coach/Admin/payment operations, proof/media upload permission, records allowed to persist, retention, and cleanup owner/steps.
-- [ ] No production mutation occurs from an unapproved sub-agent.
-- [ ] Synthetic production AI smoke scope is separately authorized and does not use a real Participant photo.
-- [ ] Production onboarding smoke has separate authorization for exact Google identity, Participant/Coach path, QR/payment proof, records allowed to persist, and Auth/profile/application/order/media cleanup.
+- [x] All QA release gates pass and no visible localization key/private leak exists.
+- [x] Domain/subdomain, privacy/terms/support, reviewer roster, payment/reconciliation/dispute/retention/SLA are approved.
+- [x] Production bank/QRIS data handling has owner and rotation procedure.
+- [x] Hosted Supabase migration/function/Auth/Storage rollout reviewed and explicitly authorized.
+- [x] Food AI provider terms/data-use, model availability, rate limits, spend ceiling, secret owner/rotation, and failure alert are reviewed; production provider secret is configured only through authorized server secret management.
+- [x] First-login production onboarding has approved Google callback/origins, provisional expiry/cleanup schedule, test identities, QR Coach fixture, cancellation cleanup, and no-private-access evidence.
+- [x] Minimum media launch safety is approved: private evidence buckets/RLS, payment-proof retention/orphan-cleanup schedule and operator, opaque Coach-media gateway, legacy-direct-URL denial, cache invalidation, and rollback/incident runbook.
+- [x] W07.5 Sales Overview and W07.6 Admin Image Storage routes/actions are absent and recorded as deferred post-launch, not reported as completed.
+- [x] Cloudflare deployment/domain/DNS/secrets/headers reviewed and explicitly authorized.
+- [x] Enforced candidate CSP passed on the authorized production-shaped noindex candidate before rollout.
+- [x] Backup/rollback/incident contacts and non-mutating smoke scope were prepared; pre-deployment inventories and prior Worker version form the rollback checkpoint.
+- [x] Production mutation scope was approved but not exercised because non-mutating smoke fully covered W09 release gates.
+- [x] No production mutation occurred from a sub-agent.
+- [x] Synthetic production AI scope was approved; W09 intentionally made no AI call and used no real Participant photo.
+- [x] Google OAuth/onboarding mutation smoke remains explicitly `DEFERRED`; local synthetic onboarding and prior owner production login evidence are the accepted gate.
 
 ## Repository split checklist
 
-- [ ] `MSCWEB` installs, typechecks, lints, tests, exports, and serves independently.
-- [ ] No runtime import/symlink to Swift source or parent-only path.
-- [ ] Approved App Icon/assets copied with provenance/license note.
-- [ ] Specs, ADRs, workplans, nested AGENTS, CI, lockfile, and examples included.
-- [ ] No secrets, generated production data, private evidence, or temp artifacts included.
-- [ ] The entire canonical repository-root `supabase/` tree is inventoried for transfer, including every migration, Function/shared module, database test, `config.toml`, and operational document required by the web product.
-- [ ] The migration timestamps, filenames, ordering, and SQL contents remain intact; no historical migration is omitted merely because it originated before MSCWEB.
-- [ ] The standalone repository uses one root `supabase/` directory as the only deployable migration/Function authority.
-- [ ] Tests and scripts that currently resolve `../supabase/` or another parent-only path are updated to resolve the standalone repository root.
-- [ ] Fresh-clone Supabase checks prove that the local and linked migration inventories match the expected canonical history before deployment authority is switched.
-- [ ] Any legacy Cloudflare/Supabase auto-deployment path is disabled at cutover; W09 initial rollout remains explicitly authorized/manual and W10 owns recurring GitHub Actions automation.
-- [ ] The former iOS repository is marked archival and its web/backend deployment automation, scheduled deploy jobs, and production-write credentials are removed or disabled.
-- [ ] Any temporary safety copy in the former repository is explicitly non-deployable and retained only until rollback and standalone validation gates pass.
-- [ ] Dry-run path scan and fresh-clone-equivalent build succeed.
-- [ ] The archive operation does not modify iOS source; iOS build/release verification is not a W09 exit gate.
-- [ ] Exact Git/repository operations are requested and authorized before execution.
-- [ ] Deleting the old `MSCWEB/` or repository-root `supabase/` copy is treated as a separate destructive cleanup requiring explicit authorization after the standalone release is verified.
+- [x] Standalone repository installs, typechecks, lints, tests, exports, and serves independently.
+- [x] No runtime import/symlink to Swift source or parent-only path.
+- [x] Approved App Icon/assets copied with provenance/license note.
+- [x] Specs, ADRs, workplans, root AGENTS, W10 handoff, lockfile, and examples included.
+- [x] No secrets, generated production data, private evidence, or temp artifacts included.
+- [x] The entire canonical repository-root `supabase/` tree is inventoried for transfer, including every migration, Function/shared module, database test, `config.toml`, and operational document required by the web product.
+- [x] The migration timestamps, filenames, ordering, and SQL contents remain intact; no historical migration is omitted merely because it originated before MSCWEB.
+- [x] The standalone repository uses one root `supabase/` directory as the only deployable migration/Function authority.
+- [x] Tests and scripts resolve canonical `supabase/` inside the standalone repository root.
+- [x] Fresh-clone Supabase checks prove that the local and linked migration inventories match the expected canonical history before deployment authority is switched.
+- [x] No legacy Cloudflare/Supabase auto-deployment path exists; W09 rollout remained manual and W10 owns recurring GitHub Actions automation.
+- [x] The former iOS repository is archival and has no tracked web/backend deployment workflow or production credential. Ignored local link state is retained under the explicit no-delete rule.
+- [x] The temporary safety copy in the former repository is explicitly non-deployable and retained as rollback archive.
+- [x] Dry-run path scan and fresh-clone-equivalent build succeed.
+- [x] The archive operation did not modify iOS source; iOS build/release verification is not a W09 exit gate.
+- [x] Exact Git/repository operations were requested and authorized in the W09 execution prompt.
+- [x] Deleting the old `MSCWEB/` or repository-root `supabase/` copy remains a separate destructive cleanup requiring explicit authorization.
 
 ## Controlled rollout sequence
 
@@ -131,3 +131,9 @@ Required: all unresolved business/legal/brand inputs, exact production Supabase/
 Append approvals verbatim by scope, operations/results, rollback checkpoints, smoke evidence, repository outcome, remaining risks, and next item.
 
 - 23 August 2026 — Product owner decided that native iOS is discontinued as a release target. W09 now requires the standalone MSCWEB repository to become the sole owner of the web application, Cloudflare deployment, and the complete canonical Supabase migration/Function history. The former iOS repository becomes a non-deployable archive. Documentation only; no Git operation, file transfer, deployment, CI mutation, or deletion was performed.
+
+- 24 August 2026 — W09 completed end-to-end under the owner's pasted execution authorization. A copy-only standalone candidate was built outside the old working tree, and the complete canonical root `supabase/` chain was transferred without squash/rebaseline/rename/selective copy. Source comparison passed for 48 migration files (aggregate manifest SHA-256 `61f88ba6ab3b93201038be19cfe5c41dc38f7bc550f3b1e8bb7a9b53561cb616`) and 25 Function/shared files (`d010f5f27c16a7fbac7b5d05ecbeb98fc07fe8ae5e36d177f16fcaf0867674e4`).
+- Local/standalone verification passed: Node 22 clean install, typecheck, lint, 213 unit tests, production build/PWA/bundle/performance/environment/Worker dry-run, secret/private/path/symlink scan, clean 48-migration local rebuild, local lint/advisors, 423 pgTAP/RLS assertions, 9 integration tests, and 13 local Function runtime checks. One canonical defect was fixed forward-only by migration `20260823161016_w09_admin_archive_idempotency_columns.sql`; historical tests were updated to current W07.4/W08 contracts and timezone-safe fixtures.
+- Production rollout passed: migration history advanced 47→48 with no destructive SQL; 13/13 Edge Functions are ACTIVE; candidate Worker `978d2eef-5fbc-4ffe-8c4d-f5dd87867796`; production Worker `3fd4a02a-6ea2-4fd7-8fea-4293d9ec15c8`; rollback Worker `a3cf6d4a-bb12-4588-b6b3-e22e7d6f95e7`. Apex/deep links/legal/PWA return 200, unknown returns 404, and `www` remains a 308 redirect preserving path/query. No DNS or secret mutation occurred.
+- Non-mutating production smoke `w09-nonmutating-20260823-171415805-c50504ee` passed with zero created records/objects, no real transfer, no real user data/media, cleanup `NOT_REQUIRED_ZERO_MUTATION`, and residual `ZERO_BY_DESIGN`. Aggregate production counts remained unchanged except the expected migration-history increment. Hosted Supabase was not reset, restored, truncated, or recreated.
+- Authority: `https://github.com/RanggaRijasa/MSCWEB.git` is the sole web/Cloudflare/Supabase deployment authority. The former repository retains both source copies as a non-deployable archive; no iOS source, branch, remote, credential, or history was removed. Next phase: W10 protected-main CI/CD automation.

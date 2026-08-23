@@ -1,8 +1,14 @@
 # MSCWEB — paket spesifikasi
 
+> **Arsip setelah W09.** Folder ini bukan lagi deployment authority untuk
+> MSCWEB, Cloudflare, atau Supabase. Seluruh pekerjaan dan deployment web
+> berikutnya dilakukan dari repository standalone
+> [RanggaRijasa/MSCWEB](https://github.com/RanggaRijasa/MSCWEB). Lihat
+> [ARCHIVE_HANDOFF.md](./ARCHIVE_HANDOFF.md).
+
 Status: `Draft 1 — baseline untuk spec-driven development`  
 Tanggal baseline: `12 Agustus 2026`  
-Revisi terakhir: `23 Agustus 2026 — W10 CI/CD direncanakan setelah W09 standalone-repository cutover`
+Revisi terakhir: `24 Agustus 2026 — W09 selesai; folder ini menjadi arsip non-deployable`
 Produk: `MSC Body Transformation Web App / PWA`
 
 Folder ini berisi spesifikasi untuk memindahkan kemampuan aplikasi iPhone MSC Body Transformation ke web app/PWA yang terasa seperti aplikasi mobile, tanpa pembayaran App Store. Folder ini belum berisi implementasi aplikasi web.

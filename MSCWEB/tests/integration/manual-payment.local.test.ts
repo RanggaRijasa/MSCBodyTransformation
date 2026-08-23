@@ -21,15 +21,18 @@ it.runIf(canRun)('enforces free and paid W05 enrollment, private evidence, atomi
   const retentionProgramId = randomUUID();
   const qrisPath = `destinations/${suffix}/qris.jpg`;
   const users: string[] = [];
+  const coachApplicationIds: string[] = [];
   const orderIds: string[] = [];
   const objectPaths: string[] = [];
 
   try {
-    const [adminA, adminB, participantA, participantB] = await Promise.all([
+    const [adminA, adminB, participantA, participantB, coachA, coachB] = await Promise.all([
       createIdentity(service, `w05-admin-a-${suffix}@test.invalid`, `W05-A-${suffix}!`, users),
       createIdentity(service, `w05-admin-b-${suffix}@test.invalid`, `W05-B-${suffix}!`, users),
       createIdentity(service, `w05-participant-a-${suffix}@test.invalid`, `W05-C-${suffix}!`, users),
       createIdentity(service, `w05-participant-b-${suffix}@test.invalid`, `W05-D-${suffix}!`, users),
+      createIdentity(service, `w05-coach-a-${suffix}@test.invalid`, `W05-E-${suffix}!`, users),
+      createIdentity(service, `w05-coach-b-${suffix}@test.invalid`, `W05-F-${suffix}!`, users),
     ]);
     expect((await service.from('profiles').update({ role: 'admin', display_name: 'Admin W05 A', onboarding_status: 'active', provisional_expires_at: null, finalized_at: new Date().toISOString() }).eq('user_id', adminA.id)).error).toBeNull();
     expect((await service.from('profiles').update({ role: 'admin', display_name: 'Admin W05 B', onboarding_status: 'active', provisional_expires_at: null, finalized_at: new Date().toISOString() }).eq('user_id', adminB.id)).error).toBeNull();
@@ -37,11 +40,13 @@ it.runIf(canRun)('enforces free and paid W05 enrollment, private evidence, atomi
       expect((await service.from('profiles').update({ role: 'participant', display_name: name, onboarding_status: 'active', provisional_expires_at: null, finalized_at: new Date().toISOString() }).eq('user_id', participant.id)).error).toBeNull();
     }
 
-    const { data: coaches, error: coachError } = await service.from('profiles').select('user_id,coach_qr_identifier').eq('role', 'coach').eq('coach_is_approved', true).not('coach_qr_identifier', 'is', null).limit(2);
-    expect(coachError).toBeNull();
-    const coachId = coaches?.[0]?.user_id as string;
-    const coachQr = coaches?.[0]?.coach_qr_identifier as string;
-    const otherCoachQr = coaches?.[1]?.coach_qr_identifier as string;
+    const coachQr = `w05-coach-a-${suffix}`;
+    const otherCoachQr = `w05-coach-b-${suffix}`;
+    coachApplicationIds.push(
+      await activateCoachFixture(service, coachA.id, adminA.id, 'Coach W05 A', coachQr),
+      await activateCoachFixture(service, coachB.id, adminA.id, 'Coach W05 B', otherCoachQr),
+    );
+    const coachId = coachA.id;
     expect(coachId).toBeTruthy();
     expect(coachQr.length).toBeGreaterThanOrEqual(16);
 
@@ -229,6 +234,11 @@ it.runIf(canRun)('enforces free and paid W05 enrollment, private evidence, atomi
     await service.from('programs').delete().in('id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId, retentionProgramId]);
     await service.from('payment_destinations').delete().eq('account_name', 'FIXTURE W05');
     await service.storage.from('payment-destination-assets').remove([qrisPath]);
+    if (coachApplicationIds.length) {
+      await service.from('coach_access_entitlements').delete().in('application_id', coachApplicationIds);
+      await service.from('coach_payment_records').delete().in('application_id', coachApplicationIds);
+      await service.from('coach_applications').delete().in('id', coachApplicationIds);
+    }
     for (const userId of users) await service.auth.admin.deleteUser(userId);
   }
 });
@@ -245,6 +255,61 @@ async function signIn(url: string, key: string, email: string, password: string)
   const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   expect((await client.auth.signInWithPassword({ email, password })).error).toBeNull();
   return client;
+}
+
+async function activateCoachFixture(
+  service: SupabaseClient,
+  coachId: string,
+  adminId: string,
+  displayName: string,
+  coachQr: string,
+) {
+  const applicationId = randomUUID();
+  const paymentRecordId = randomUUID();
+  expect((await service.from('profiles').update({
+    role: 'coach',
+    display_name: displayName,
+    coach_qr_identifier: coachQr,
+    coach_is_approved: true,
+    coach_is_public: true,
+    onboarding_status: 'active',
+    provisional_expires_at: null,
+    finalized_at: new Date().toISOString(),
+  }).eq('user_id', coachId)).error).toBeNull();
+  expect((await service.from('coach_applications').insert({
+    id: applicationId,
+    applicant_user_id: coachId,
+    participant_profile_id: coachId,
+    display_name_snapshot: displayName,
+    phone_number_snapshot: '+6281200000505',
+    member_level_snapshot: 'sc',
+    has_completed_hom_sts: true,
+    has_completed_ict: true,
+    terms_version: 'w05-test-v1',
+    status: 'active',
+    draft_idempotency_key: `w05-coach-${applicationId}`,
+    submitted_at: new Date().toISOString(),
+    decided_at: new Date().toISOString(),
+    decided_by: adminId,
+  })).error).toBeNull();
+  expect((await service.from('coach_payment_records').insert({
+    id: paymentRecordId,
+    application_id: applicationId,
+    state: 'verified',
+    price_band: 'entry',
+    amount_minor_units: 100_000,
+    provider_reference: `w05-payment-${paymentRecordId}`,
+    verified_at: new Date().toISOString(),
+  })).error).toBeNull();
+  expect((await service.from('coach_access_entitlements').insert({
+    application_id: applicationId,
+    payment_record_id: paymentRecordId,
+    coach_user_id: coachId,
+    status: 'active',
+    starts_at: new Date(Date.now() - 60_000).toISOString(),
+    ends_at: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+  })).error).toBeNull();
+  return applicationId;
 }
 
 async function prepareUploadSubmit(client: SupabaseClient, orderId: string, idempotencyKey: string, body: Buffer, paths: string[]) {
