@@ -36,7 +36,8 @@ Produce final release evidence, obtain explicit production authorizations, perfo
 - complete transfer inventory for web source, Cloudflare configuration, and the canonical repository-root `supabase/` tree;
 - standalone MSCWEB repository as the sole Supabase and Cloudflare deployment authority;
 - archived former iOS repository with no active web/backend deployment path;
-- standalone CI/build/test/docs after authorized split.
+- standalone build/test/release commands and documentation after authorized split;
+- explicit W10 handoff; recurring GitHub Actions production automation is not implemented inside W09.
 
 ## Pre-production checklist
 
@@ -68,7 +69,7 @@ Produce final release evidence, obtain explicit production authorizations, perfo
 - [ ] The standalone repository uses one root `supabase/` directory as the only deployable migration/Function authority.
 - [ ] Tests and scripts that currently resolve `../supabase/` or another parent-only path are updated to resolve the standalone repository root.
 - [ ] Fresh-clone Supabase checks prove that the local and linked migration inventories match the expected canonical history before deployment authority is switched.
-- [ ] Cloudflare and Supabase CI/deployment configuration exists only in the standalone repository after cutover.
+- [ ] Any legacy Cloudflare/Supabase auto-deployment path is disabled at cutover; W09 initial rollout remains explicitly authorized/manual and W10 owns recurring GitHub Actions automation.
 - [ ] The former iOS repository is marked archival and its web/backend deployment automation, scheduled deploy jobs, and production-write credentials are removed or disabled.
 - [ ] Any temporary safety copy in the former repository is explicitly non-deployable and retained only until rollback and standalone validation gates pass.
 - [ ] Dry-run path scan and fresh-clone-equivalent build succeed.
@@ -118,6 +119,7 @@ Production external actions remain primary-agent controlled and require exact au
 - The standalone MSCWEB repository is the documented sole owner of the web app, Cloudflare deployment, and complete canonical Supabase deployment history when cutover is performed.
 - The former iOS repository is archival and has no active web/backend deployment authority after cutover.
 - Supabase migration authority is singular; no second deployable history, selective rebaseline, or independently writable copy exists.
+- W10 is the documented next phase for protected-main CI/CD; routine deployment is not represented as automated before W10 passes.
 - No action is claimed without command/result evidence and authorization.
 
 ## User input or authorization

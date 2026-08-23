@@ -19,6 +19,7 @@ The following are authorized local, non-destructive actions within the approved 
 - implement W08 minimum media launch safety against local Supabase: private/RLS evidence, payment-proof retention/orphan cleanup, opaque Coach-media gateway, and cache invalidation tests;
 - perform local security, privacy, concurrency, cache, offline, and responsive testing;
 - prepare Cloudflare/Supabase production configuration files with placeholders and dry-run validation;
+- after W09, implement W10 release scripts, PR CI, production workflow, redaction/negative-path tests, and local/dry-run rehearsals without activating or executing production deployment;
 - produce release checklists, runbooks, and migration plans.
 
 ## Work requiring one-time setup or permission
@@ -36,6 +37,7 @@ The following are authorized local, non-destructive actions within the approved 
 | Optional OpenRouter runtime secret | one synthetic provider smoke; not required for deterministic W06.5 completion | 06.5 |
 | Colima/Supabase local plus synthetic media fixtures | W08 minimum media launch-safety integration tests | 08 |
 | Existing local Google OAuth and browser camera permission | optional real callback/QR smoke after deterministic W07.4 tests | 07.4 |
+| Standalone GitHub repository with Actions enabled | W10 workflow implementation and dry-run evidence | 10 |
 
 The user has already granted conceptual permission for iOS Simulator inspection and sub-agent use. System-level approval prompts may still appear when the local host requires them.
 
@@ -58,6 +60,7 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 | Notification channel/provider | Payment/operations | In-app status can proceed; external notifications deferred |
 | Production AI provider/model, spend/rate limit, and secret owner | Food insight release | Yes; W06.5 can complete with fake provider, but production activation cannot |
 | Production Trash auto-purge period, program-evidence retention/appeal, worker operator/alerts | Deferred W07.6 Image Storage release | Yes for first deployment; required only before post-launch Admin deletion activation |
+| GitHub repository visibility/plan, production approval owner, and required-reviewer availability | W10 release-gate selection | Repository workflow files can be drafted; external gate cannot be finalized |
 
 ## Actions requiring explicit authorization at execution time
 
@@ -74,7 +77,9 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 - run destructive reset/delete/seed against any non-local environment;
 - run `git add`, commit, push, branch operations, tags, PRs, or repository transfer;
 - move MSCWEB into a new repository or change backend migration authority;
-- publish a production release.
+- publish a production release;
+- create/change GitHub Environments, repository secrets/variables, branch protection, required reviewers, or workflow activation;
+- execute the first or any later production GitHub Actions release; after W10 activation, the owner approves through the configured Environment or manual-dispatch gate rather than delegating routine deploy to GPT/MCP;
 - run production smoke flows that create/mutate accounts, applications, roles, payments, proof/media, entitlements, enrollments, scoring, or audit records; these need a separate exact scope and cleanup authorization even after deploy approval.
 
 ## Recommended permission sequence
@@ -88,6 +93,7 @@ The user has already granted conceptual permission for iOS Simulator inspection 
 7. W08: verify minimum media launch safety locally; confirm payment-proof retention/orphan-cleanup schedule/operator and Coach-media cache/rollback policy.
 8. W08: authorize a noindex Cloudflare preview for real routing/CSP validation, or explicitly record a rollout-blocking waiver.
 9. W09: separately authorize production Supabase/Auth onboarding, payment-proof cleanup activation, AI provider/secret activation, Cloudflare/domain, production smoke-test mutations/cleanup, and exact Git/repository operations. Sales reads and Admin media deletion are excluded from first-launch scope.
+10. W10: after the standalone repository exists, select the GitHub-plan gate, enter production secrets directly in GitHub, authorize branch/environment protection and workflow activation, then separately approve the first production pipeline run.
 
 ## Deferred automatic work
 

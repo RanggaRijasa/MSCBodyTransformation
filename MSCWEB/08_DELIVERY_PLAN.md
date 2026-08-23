@@ -6,6 +6,7 @@ Active launch sequence per [`ADR-0010`](./decisions/0010-defer-admin-analytics-a
 
 ```text
 W07.4 complete → W08 PWA/Cloudflare hardening → W09 authorized deployment
+                                               → W10 CI/CD automation
                                       ↓ after launch by new priority
                               W07.5 Sales → W07.6 Image Storage
 ```
@@ -182,6 +183,18 @@ Exit: release gates pada QA spec lulus; production deploy masih memerlukan izin 
 - repository iOS dibekukan sebagai arsip tanpa deployment authority.
 
 Exit: release/split dilakukan dan diverifikasi hanya dalam authorization yang tepat, atau tetap jelas belum dilakukan dengan blocker terdokumentasi.
+
+## W10 — CI/CD and production release automation
+
+- local/`feature/*` development menggunakan Supabase lokal;
+- pull request ke `main` menjalankan full CI, rebuild/test canonical migrations, dan Cloudflare dry run tanpa production secret;
+- protected `main` menjadi satu-satunya production source;
+- GitHub Environment approval atau fallback `workflow_dispatch` menjadi release gate;
+- production deploy berurutan migration → Functions → Worker → synthetic smoke;
+- GitHub Actions menggantikan deployment rutin melalui GPT/MCP;
+- baseline tidak membuat hosted staging, branch `develop`, atau automatic PR Worker yang memakai Supabase production.
+
+Exit: workflow production fail-closed, terserialisasi, menjaga secret, memiliki evidence/rollback runbook, dan telah menjalankan satu release yang diotorisasi; atau tetap incomplete dengan external blocker yang tepat.
 
 ## Safe repository split checkpoint
 

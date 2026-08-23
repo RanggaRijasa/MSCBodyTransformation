@@ -22,6 +22,7 @@ These workplans translate the product specs into ordered, verifiable implementat
 | W07.4 | [Registration onboarding remediation](./PHASE_07_4_REGISTRATION_ONBOARDING_REMEDIATION.md) | first-login Participant/Coach-intent parity and provisional security | automatic locally; OAuth/camera smoke conditional |
 | W08 | [PWA and Cloudflare hardening](./PHASE_08_PWA_AND_CLOUDFLARE.md) | installable, secure, performant production candidate plus minimum media launch safety | local automatic; external preview/production permission required |
 | W09 | [Release and repository split](./PHASE_09_RELEASE_AND_REPOSITORY_SPLIT.md) | release evidence plus sole web/Cloudflare/Supabase authority in a standalone repo; iOS archived | explicit external/Git decisions required |
+| W10 | [CI/CD and production release automation](./PHASE_10_CI_CD_AND_PRODUCTION_RELEASE_AUTOMATION.md) | protected-main PR checks and approval-gated GitHub Actions deployment; no routine GPT/MCP deploy | automatic repository work after W09; external GitHub setup and first production run require approval |
 | W07.5 | [Admin Sales Overview](./PHASE_07_5_ADMIN_SALES_OVERVIEW.md) | deferred post-launch ledger-reconciled sales analytics | not a launch dependency; resume by owner priority |
 | W07.6 | [Admin Image Storage](./PHASE_07_6_ADMIN_IMAGE_STORAGE.md) | deferred post-launch inventory, Trash, restore, and purge | not a launch dependency; destructive production authorization required |
 
@@ -43,6 +44,7 @@ See [AUTOMATION_AND_PERMISSIONS.md](./AUTOMATION_AND_PERMISSIONS.md) for the con
 | W07.4 | `PROD-ONB-*`, `ARCH-ONB-*`, `UX-ONB-*`, `SEC-ONB-*`, `QA-ONB-*`, `QA-JRN-014/015` |
 | W08 | `PWA-*`, `DS-MOT-*`, `DS-GLS-*`, `PROD-MED-011`, `ARCH-MED-007`, `UX-MED-012`, `SEC-STO-013/014` launch subset, accessibility/performance/release `QA-*` |
 | W09 | first-launch `PROD-SUC-*` except deferred `009/010`, QA release gates, safe repository split criteria |
+| W10 | `REL-CI-001…017`, deterministic PR checks, protected production release, secret isolation, evidence, and rollback controls |
 | W07.5 (post-launch) | `PROD-SLS-*`, `PROD-SUC-009`, `ARCH-SLS-*`, `UX-SLS-*`, `SEC-DATA-009…011`, `QA-SLS-*`, `QA-JRN-012` |
 | W07.6 (post-launch) | remaining `PROD-MED-*`, `PROD-SUC-010`, `ARCH-MED-*`, `UX-MED-*`, `SEC-DATA-012…014`, `SEC-STO-008…012/014`, `SEC-OP-006/007`, `QA-MED-*`, `QA-JRN-013` |
 
