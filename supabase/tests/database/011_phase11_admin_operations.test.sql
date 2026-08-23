@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(33);
+select extensions.plan(35);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -221,12 +221,43 @@ select extensions.lives_ok(
   ) $$,
   'Admin can keep a paid program as draft'
 );
+reset role;
+update public.payment_destinations set status = 'retired';
+set local role authenticated;
+set local "request.jwt.claims" =
+  '{"sub":"fa000000-0000-0000-0000-000000000001","role":"authenticated"}';
 select extensions.throws_like(
   $$ select public.publish_program(
     'fb000000-0000-0000-0000-000000000003', 'admin-paid-publish-phase11'
   ) $$,
-  'phase12_payment_handoff',
-  'paid publish stops at the explicit Phase 12 handoff'
+  'program_paid_not_ready',
+  'paid publish requires a current manual-payment destination'
+);
+
+reset role;
+insert into public.payment_destinations(
+  id, version, bank_code, bank_name, account_name, account_reference,
+  effective_from, status, created_by, instructions
+) values (
+  'fb000000-0000-0000-0000-000000000099', 999, 'TST', 'Bank Uji',
+  'FIXTURE PGTAP', '0000000000', statement_timestamp() - interval '1 minute',
+  'active', 'fa000000-0000-0000-0000-000000000001',
+  'Jangan melakukan pembayaran nyata.'
+);
+set local role authenticated;
+set local "request.jwt.claims" =
+  '{"sub":"fa000000-0000-0000-0000-000000000001","role":"authenticated"}';
+select extensions.lives_ok(
+  $$ select public.publish_program(
+    'fb000000-0000-0000-0000-000000000003', 'admin-paid-publish-ready-phase12'
+  ) $$,
+  'paid program publishes after its destination becomes ready'
+);
+select extensions.is(
+  (select status from public.programs
+   where id = 'fb000000-0000-0000-0000-000000000003'),
+  'scheduled',
+  'future paid program becomes scheduled'
 );
 
 reset role;

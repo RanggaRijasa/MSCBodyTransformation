@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "expo start --web",
-    "build": "expo export --platform web --clear && node scripts/prepare-production-output.mjs",
+    "build": "node scripts/build-production.mjs",
+    "build:preview": "expo export --platform web --clear && node scripts/prepare-production-output.mjs",
     "export": "npm run build",
     "serve": "node scripts/serve-production.mjs",
     "lint": "expo lint",
@@ -18,7 +19,16 @@
     "e2e": "playwright test",
     "icons": "sh scripts/generate-pwa-icons.sh",
     "verify:bundle": "node scripts/verify-bundle.mjs",
-    "verify:pwa": "node scripts/verify-pwa-assets.mjs"
+    "verify:performance": "node scripts/verify-performance-budget.mjs",
+    "verify:production-env": "node scripts/verify-production-environment.mjs",
+    "verify:pwa": "node scripts/verify-pwa-assets.mjs",
+    "worker:types": "CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler types worker-configuration.d.ts --strict-vars=false",
+    "worker:types:check": "CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler types worker-configuration.d.ts --strict-vars=false --check",
+    "worker:dry-run": "npm run build && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler deploy --env preview --dry-run --outdir .wrangler/dry-run",
+    "worker:production:dry-run": "npm run build && npm run verify:production-env && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler deploy --env= --dry-run --outdir .wrangler/production-dry-run",
+    "worker:candidate:dry-run": "npm run build && npm run verify:production-env && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler deploy --env candidate --dry-run --outdir .wrangler/candidate-dry-run",
+    "deploy:candidate": "npm run build && npm run verify:production-env && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler deploy --env candidate",
+    "deploy:preview": "npm run build:preview && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler deploy --env preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.3",
@@ -54,6 +64,7 @@
     "eslint-config-expo": "57.0.1",
     "react-test-renderer": "19.2.3",
     "typescript": "6.0.3",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "4.125.0"
   }
 }

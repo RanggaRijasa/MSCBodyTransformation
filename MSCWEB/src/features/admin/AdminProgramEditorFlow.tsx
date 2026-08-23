@@ -12,9 +12,10 @@ import { Button, Dialog, InlineMessage, SegmentedControl, StateView } from '@/sh
 import { AdminProgramContentFlow } from './AdminProgramContentFlow';
 import { editorStyles, FormSection, FormTextInput, GroupDivider, LabeledValueRow, NavigationRow, ProgramEditorScaffold, StatusLine, ToggleRow, TopTextAction } from './AdminProgramEditorShared';
 import type { AdminProgram, AdminProgramStatus } from './admin-models';
-import { useAdminClosure, useAdminMutation, useAdminProgram, useAdminWinnerPreview } from './admin-queries';
+import { useAdminClosure, useAdminMutation, useAdminPaymentDestinationReadiness, useAdminProgram, useAdminWinnerPreview } from './admin-queries';
 import { adminStatusLabel, completedAdminStages, validateAdminProgram, type AdminProgramStage } from './admin-policy';
 import { getAdminRepository } from './admin-repository';
+import { openWebNativePicker } from './web-native-picker';
 
 export type AdminProgramSection = 'overview' | 'settings' | 'info' | 'schedule' | 'rules' | 'content' | 'day' | 'step' | 'questions' | 'question' | 'review' | 'preview' | 'publication';
 
@@ -26,7 +27,7 @@ export function AdminProgramDetailExperience({ authorized, programId, params }: 
   if (query.isPending || !query.data) return <StateView kind="loading" />;
   if (query.isError) return <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void query.refetch()} />} />;
   const section = isSection(params.section) ? params.section : 'overview';
-  if (isContentSection(section)) return <AdminProgramContentFlow program={query.data} section={section} dayId={params.dayId} stepId={params.stepId} questionId={params.questionId} />;
+  if (isContentSection(section)) return <AdminProgramContentFlow key={`${query.data.id}:${query.data.updated_at}`} program={query.data} section={section} dayId={params.dayId} stepId={params.stepId} questionId={params.questionId} />;
   if (section === 'settings') return <SettingsHub program={query.data} />;
   if (section === 'info') return <ProgramInformation program={query.data} />;
   if (section === 'schedule') return <ProgramSchedule program={query.data} />;
@@ -163,12 +164,26 @@ function ProgramRules({ program: initial }: { program: AdminProgram }) {
 }
 
 function ProgramReview({ program }: { program: AdminProgram }) {
-  const { colors } = useAppTheme(); const mutation = useAdminMutation(); const issues = validateAdminProgram(program);
+  const { colors } = useAppTheme(); const mutation = useAdminMutation(); const issues = validateAdminProgram(program); const paymentReadiness = useAdminPaymentDestinationReadiness(program.pricing_mode === 'paid');
+  const paymentChecking = program.pricing_mode === 'paid' && paymentReadiness.isPending;
+  const paymentBlocked = program.pricing_mode === 'paid' && !paymentChecking && (!paymentReadiness.data || paymentReadiness.isError);
+  const publish = async () => {
+    try {
+      await mutation.mutateAsync({ kind: 'publishProgram', programId: program.id });
+      router.replace(`/admin/programs/${program.id}` as never);
+    } catch {
+      // React Query exposes the localized failure below and keeps this screen open.
+    }
+  };
   return <ProgramEditorScaffold title="Tinjau & terbitkan" onBack={() => router.back()} testID="admin.program.review-publish">
     <FormSection title="Pratinjau"><NavigationRow title="Pratinjau program" subtitle="Periksa tampilan Peserta dan Coach sebelum diterbitkan" icon="info" onPress={() => router.push(programHref(program.id, 'preview') as never)} testID="admin.program.editor.open.preview" /></FormSection>
     <FormSection title="Validasi">{issues.length === 0 ? <StatusLine label="Semua bagian siap diterbitkan." /> : issues.map((issue, index) => <View key={`${issue.stage}-${index}`}><StatusLine label={issue.message} tone="warning" />{index < issues.length - 1 ? <GroupDivider /> : null}</View>)}</FormSection>
     <FormSection title="Ringkasan"><LabeledValueRow label="Nama" value={program.title} /><GroupDivider /><LabeledValueRow label="Hari" value={numberFormatter.format(program.days.length)} /><GroupDivider /><LabeledValueRow label="Langkah" value={numberFormatter.format(program.days.flatMap((day) => day.steps).length)} /><GroupDivider /><LabeledValueRow label="Pertanyaan" value={numberFormatter.format(program.days.flatMap((day) => day.steps).flatMap((step) => step.questions).length)} /></FormSection>
-    <Button label="Terbitkan program" disabled={issues.length > 0} loading={mutation.isPending} onPress={() => void mutation.mutateAsync({ kind: 'publishProgram', programId: program.id }).then(() => router.replace(`/admin/programs/${program.id}` as never))} testID="admin.editor.publish" />
+    {program.pricing_mode === 'paid' && paymentReadiness.isPending ? <InlineMessage title="Memeriksa pembayaran" message="Tujuan pembayaran sedang diperiksa." /> : null}
+    {program.pricing_mode === 'paid' && paymentReadiness.data === false ? <InlineMessage title="Tujuan pembayaran belum siap" message="Program berbayar baru dapat diterbitkan setelah rekening bank atau QRIS tujuan pembayaran dikonfigurasi oleh Admin." tone="warning" /> : null}
+    {paymentReadiness.isError ? <InlineMessage title="Pemeriksaan pembayaran gagal" message="Tujuan pembayaran belum dapat diperiksa. Muat ulang lalu coba lagi." tone="destructive" /> : null}
+    <Button label="Terbitkan program" disabled={issues.length > 0 || paymentBlocked || paymentChecking} loading={mutation.isPending} onPress={() => void publish()} testID="admin.editor.publish" />
+    {mutation.error instanceof Error ? <InlineMessage title="Program belum diterbitkan" message={mutation.error.message} tone="destructive" /> : null}
     {issues.length > 0 ? <Text style={[editorStyles.caption, { color: colors.secondaryText, textAlign: 'center' }]}>Lengkapi bagian yang ditandai sebelum menerbitkan program.</Text> : null}
   </ProgramEditorScaffold>;
 }
@@ -200,13 +215,13 @@ function ProgramPublication({ program }: { program: AdminProgram }) {
 function WebDateRow({ label, value, min, disabled, onChange }: { label: string; value: string; min?: string; disabled: boolean; onChange: (value: string) => void }) {
   const { colors } = useAppTheme();
   if (Platform.OS !== 'web') return <FormTextInput label={label} value={value} editable={!disabled} onChangeText={onChange} />;
-  return <View style={styles.controlRow}><Text style={[editorStyles.body, { color: colors.primaryText }]}>{label}</Text><label style={webPickerShellStyle(colors.secondaryBackground, colors.primaryText, colors.border)}><span>{formatDate(value)} ▾</span><input aria-label={label} type="date" value={value} min={min} disabled={disabled} onChange={(event) => onChange(event.currentTarget.value)} style={webInvisiblePickerStyle} /></label></View>;
+  return <View style={styles.controlRow}><Text style={[editorStyles.body, { color: colors.primaryText }]}>{label}</Text><label style={webPickerShellStyle(colors.secondaryBackground, colors.primaryText, colors.border)}><span>{formatDate(value)} ▾</span><input aria-label={label} type="date" value={value} min={min} disabled={disabled} onClick={(event) => openWebNativePicker(event.currentTarget)} onChange={(event) => onChange(event.currentTarget.value)} style={webInvisiblePickerStyle} /></label></View>;
 }
 
 function WebDateTimeRow({ label, value, timeZone, disabled, onChange }: { label: string; value: string; timeZone: string; disabled: boolean; onChange: (value: string) => void }) {
   const { colors } = useAppTheme(); const localValue = value.slice(0, 16);
   if (Platform.OS !== 'web') return <FormTextInput label={label} value={value} editable={!disabled} onChangeText={onChange} />;
-  return <View style={styles.controlRow}><Text style={[editorStyles.body, { color: colors.primaryText }]}>{label}</Text><label style={webPickerShellStyle(colors.secondaryBackground, colors.primaryText, colors.border)}><span>{formatLocalDateTime(localValue)} ▾</span><input aria-label={label} type="datetime-local" value={localValue} disabled={disabled} onChange={(event) => onChange(`${event.currentTarget.value}:00${timeZoneOffset(timeZone)}`)} style={webInvisiblePickerStyle} /></label></View>;
+  return <View style={styles.controlRow}><Text style={[editorStyles.body, { color: colors.primaryText }]}>{label}</Text><label style={webPickerShellStyle(colors.secondaryBackground, colors.primaryText, colors.border)}><span>{formatLocalDateTime(localValue)} ▾</span><input aria-label={label} type="datetime-local" value={localValue} disabled={disabled} onClick={(event) => openWebNativePicker(event.currentTarget)} onChange={(event) => onChange(`${event.currentTarget.value}:00${timeZoneOffset(timeZone)}`)} style={webInvisiblePickerStyle} /></label></View>;
 }
 
 function WebSelectRow({ label, value, options, disabled, onChange }: { label: string; value: string; options: readonly { label: string; value: string }[]; disabled: boolean; onChange: (value: string) => void }) {

@@ -73,10 +73,10 @@ export default function ProgramDetailRoute() {
               <Card>
                 <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>Coach pendamping</Text>
                 <View style={styles.coachRow}>
-                  <UserAvatar uri={assignedCoach.data.provider_avatar_url ?? undefined} label={assignedCoach.data.display_name} />
+                  <UserAvatar uri={assignedCoach.data.photo_reference ?? undefined} label={assignedCoach.data.display_name} />
                   <View style={styles.flexCopy}>
                     <Text style={[styles.heading, { color: colors.primaryText }]}>{assignedCoach.data.display_name}</Text>
-                    <Text style={[styles.body, { color: colors.secondaryText }]}>{assignedCoach.data.city || 'Lokasi belum dicantumkan'}</Text>
+                    <Text style={[styles.body, { color: colors.secondaryText }]}>{[assignedCoach.data.professional_headline, assignedCoach.data.city].filter(Boolean).join(' · ') || 'Lokasi belum dicantumkan'}</Text>
                   </View>
                 </View>
               </Card>

@@ -26,11 +26,11 @@ export function FoodInsightCard({ submissionId, allowCorrection = false }: { sub
       ) : insight.data?.result ? (
         <ResultContent result={insight.data.result} allowCorrection={allowCorrection} />
       ) : insight.data && ['queued', 'processing', 'retry_scheduled'].includes(insight.data.job.status) ? (
-        <InlineMessage title="Analisis sedang diproses" message="Jawaban sudah terkirim. Hasil AI akan muncul otomatis tanpa menahan pemeriksaan Coach." />
+        <InlineMessage title="Analisis sedang diproses" />
       ) : insight.data?.job.status === 'unavailable' ? (
         <InlineMessage title="Insight tidak tersedia" message="Layanan AI belum kompatibel atau belum dikonfigurasi. Pengiriman, persetujuan, dan poin tidak terpengaruh." tone="warning" />
       ) : (
-        <InlineMessage title="Analisis belum berhasil" message="Kami akan mencoba lagi bila memungkinkan. Bukti dan status program tetap aman." tone="warning" />
+        <InlineMessage title="Analisis belum berhasil" tone="warning" />
       )}
     </Card>
   );

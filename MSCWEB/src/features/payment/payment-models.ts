@@ -48,7 +48,7 @@ export const paymentAttemptSchema = z.object({
   byte_size: z.number().int().nullable(),
   pixel_width: z.number().int().nullable(),
   pixel_height: z.number().int().nullable(),
-  status: z.enum(['prepared', 'submitted', 'approved', 'rejected']),
+  status: z.enum(['prepared', 'submitted', 'approved', 'rejected', 'deleting', 'deleted']),
   prepared_at: z.string(),
   submitted_at: z.string().nullable(),
   reviewed_at: z.string().nullable(),

@@ -22,6 +22,7 @@ export interface CoachReviewRepository {
   listReviews(): Promise<CoachReviewItem[]>;
   decide(command: { submissionId: string; decision: 'approved' | 'rejected'; reason?: string; idempotencyKey: string }): Promise<void>;
   createPhotoUrl(objectPath: string): Promise<{ url: string; expiresAt: Date }>;
+  createVideoUrl(objectPath: string): Promise<{ url: string; expiresAt: Date }>;
 }
 
 export class SupabaseCoachReviewRepository implements CoachReviewRepository {
@@ -44,7 +45,7 @@ export class SupabaseCoachReviewRepository implements CoachReviewRepository {
     const [enrollments, steps, answers, quizResults] = await Promise.all([
       this.client.from('program_enrollments').select('id,program_id,participant_id').in('id', enrollmentIds),
       this.client.from('program_steps').select('id,program_day_id,title,instructions,content_kind,verification_mode').in('id', stepIds),
-      this.client.from('step_submission_answers').select('id,submission_id,question_id,text_value,number_value,selected_option_ids,private_photo_path').in('submission_id', submissionIds),
+      this.client.from('step_submission_answers').select('id,submission_id,question_id,text_value,number_value,selected_option_ids,private_photo_path,private_video_path').in('submission_id', submissionIds),
       this.client.from('quiz_attempt_results').select('submission_id,correct_count,total_count,percentage,passed,awarded_points').in('submission_id', submissionIds),
     ]);
     assertResponses(enrollments, steps, answers, quizResults);
@@ -114,6 +115,10 @@ export class SupabaseCoachReviewRepository implements CoachReviewRepository {
 
   createPhotoUrl(objectPath: string) {
     return this.privateMedia.createSignedUrl({ bucket: 'question-photos', objectPath });
+  }
+
+  createVideoUrl(objectPath: string) {
+    return this.privateMedia.createSignedUrl({ bucket: 'question-videos', objectPath });
   }
 }
 

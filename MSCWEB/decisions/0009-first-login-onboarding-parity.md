@@ -13,7 +13,7 @@ Google OAuth selalu membuat Auth identity sebelum aplikasi mengetahui apakah use
 
 ## Decision
 
-- Tambahkan W07.4 remediation setelah completed W07 dan sebelum W07.5/W07.6/W08.
+- Tambahkan W07.4 remediation setelah completed W07 dan sebelum W08. W07.5/W07.6 kemudian ditunda pascapeluncuran oleh ADR-0010 tanpa mengubah onboarding authority ini.
 - Google OAuth user baru mempunyai Auth identity + profile provisional, bukan active app account. Copy web memakai `akun MSC belum aktif`.
 - Auth/session context membedakan guest, onboarding, cleanup, dan active; role Participant saja tidak cukup untuk private access.
 - New provisional user diarahkan ke `/onboarding/profile` untuk Nama, HP, Level Member, dan purpose. Purpose Coach adalah application intent, bukan role selection.

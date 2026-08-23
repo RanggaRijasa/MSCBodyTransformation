@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { CoachCard, ProgramCard, publicScreenStyles, RankingRow, Section } from '@/features/public/PublicComponents';
-import { useCoaches, useLeaderboard, usePrograms, useWinnerPosters, useWinners } from '@/features/public/public-queries';
+import { CoachCard, LeaderboardTopFive, ProgramCard, publicScreenStyles, Section } from '@/features/public/PublicComponents';
+import { useCoaches, useLeaderboard, usePrograms, useWinnerPosters } from '@/features/public/public-queries';
+import { readLeaderboardProgramId, selectLeaderboardProgram } from '@/features/leaderboard/leaderboard-state';
 import {
   useParticipantAssignedCoach,
   useParticipantDayAccess,
@@ -19,7 +19,7 @@ import { numberFormatter } from '@/shared/design/formatters';
 import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { AppShell } from '@/shared/navigation/AppShell';
-import { Button, Card, InlineMessage, ProgressBar, StateView, UserAvatar } from '@/shared/ui/primitives';
+import { Button, Card, InlineMessage, ProgressBar, StateView, StatusBadge, UserAvatar } from '@/shared/ui/primitives';
 
 export default function PublicHomeRoute() {
   const { state } = useAuth();
@@ -50,10 +50,8 @@ function ParticipantHome() {
   const focusAccess = relevantDayAccess(activeAccesses);
   const focusDay = activeProgram?.program_days.find((day) => day.id === focusAccess?.program_day_id);
   const activeScore = scores.data?.find((score) => score.enrollment_id === activeEnrollment?.id);
-  const leaderboard = useLeaderboard(activeProgram?.id);
-  const winners = useWinners(activeProgram?.id);
-  const carousel = useRef<ScrollView>(null);
-  const [carouselIndex, setCarouselIndex] = useState(0);
+  const selectedLeaderboardProgram = selectLeaderboardProgram(programs.data, readLeaderboardProgramId());
+  const leaderboard = useLeaderboard(selectedLeaderboardProgram?.id);
   const privateQueries = [profile, enrollments, accesses, submissions, scores, assignedCoach];
   const privateError = privateQueries.find((query) => query.error)?.error;
 
@@ -85,34 +83,16 @@ function ParticipantHome() {
       </Card>
       <Section title="Program" intro={joined.length ? 'Program yang sedang kamu jalani.' : 'Pilih program untuk memulai perjalananmu.'}>
         {joined.length ? (
-          <View style={styles.carouselGroup}>
-            <ScrollView
-              ref={carousel}
-              horizontal
-              accessibilityLabel="Program yang diikuti"
-              showsHorizontalScrollIndicator={false}
-              snapToInterval={304}
-              decelerationRate="fast"
-              contentContainerStyle={styles.carousel}
-            >
-              {joined.map((program) => <View key={program.id} style={styles.carouselCard}><ProgramCard program={program} /></View>)}
-            </ScrollView>
-            {joined.length > 1 ? (
-              <View style={styles.carouselActions}>
-                <Button label="Program sebelumnya" tone="secondary" disabled={carouselIndex === 0} onPress={() => {
-                  const next = Math.max(0, carouselIndex - 1);
-                  setCarouselIndex(next);
-                  carousel.current?.scrollTo({ x: next * 304, animated: true });
-                }} />
-                <Text style={[styles.numericLabel, { color: colors.secondaryText }]}>{numberFormatter.format(carouselIndex + 1)} dari {numberFormatter.format(joined.length)}</Text>
-                <Button label="Program berikutnya" tone="secondary" disabled={carouselIndex === joined.length - 1} onPress={() => {
-                  const next = Math.min(joined.length - 1, carouselIndex + 1);
-                  setCarouselIndex(next);
-                  carousel.current?.scrollTo({ x: next * 304, animated: true });
-                }} />
-              </View>
-            ) : null}
-          </View>
+          <ScrollView
+            horizontal
+            accessibilityLabel="Program yang diikuti"
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={304}
+            decelerationRate="fast"
+            contentContainerStyle={styles.carousel}
+          >
+            {joined.map((program) => <View key={program.id} style={styles.carouselCard}><ProgramCard program={program} /></View>)}
+          </ScrollView>
         ) : <Card><Text style={[styles.cardTitle, { color: colors.primaryText }]}>Belum mengikuti program</Text><Text style={[styles.body, { color: colors.secondaryText }]}>Jelajahi program yang tersedia dan pilih yang sesuai dengan tujuanmu.</Text><Button label="Jelajahi program" onPress={() => router.push('/app/programs?segment=available')} /></Card>}
       </Section>
 
@@ -129,11 +109,11 @@ function ParticipantHome() {
         ) : <StateView kind="empty" />}
       </Section>
 
-      <Section title="Leaderboard Top 5" intro={activeProgram?.title ?? 'Program aktif'}>
-        {leaderboard.isPending && activeProgram ? <StateView kind="loading" /> : leaderboard.data?.length ? (
-          <View style={publicScreenStyles.stack}>{leaderboard.data.slice(0, 5).map((row) => <RankingRow key={row.id} row={row} isCurrent={row.participant_id === profile.data?.public_profile_id} winner={winners.data?.find((winner) => winner.participant_id === row.participant_id)} />)}</View>
+      <Section title="Leaderboard Top 5" intro={selectedLeaderboardProgram?.title ?? 'Program'}>
+        {leaderboard.isPending && selectedLeaderboardProgram ? <StateView kind="loading" /> : leaderboard.data?.length ? (
+          <LeaderboardTopFive rows={leaderboard.data} currentParticipantId={profile.data?.public_profile_id} />
         ) : <StateView kind="empty" />}
-        <Button label="Lihat semua" tone="secondary" onPress={() => router.push('/app/leaderboard')} />
+        <Button label="Lihat semua" tone="secondary" onPress={() => router.push(selectedLeaderboardProgram ? `/app/leaderboard?programId=${selectedLeaderboardProgram.id}` as never : '/app/leaderboard')} />
       </Section>
 
       <Section title="Pemenang terbaru">
@@ -144,10 +124,12 @@ function ParticipantHome() {
         {assignedCoach.data ? (
           <Card>
             <View style={styles.coachRow}>
-              <UserAvatar uri={assignedCoach.data.provider_avatar_url ?? undefined} label={assignedCoach.data.display_name} />
+              <UserAvatar uri={assignedCoach.data.photo_reference ?? undefined} label={assignedCoach.data.display_name} />
               <View style={styles.flexCopy}>
+                {assignedCoach.data.is_verified ? <StatusBadge label="Coach terverifikasi" tone="success" /> : null}
                 <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{assignedCoach.data.display_name}</Text>
-                <Text style={[styles.body, { color: colors.secondaryText }]}>{assignedCoach.data.city || 'Lokasi belum dicantumkan'} · Coach-mu</Text>
+                <Text style={[styles.body, { color: colors.secondaryText }]}>{[assignedCoach.data.professional_headline, assignedCoach.data.city, 'Coach-mu'].filter(Boolean).join(' · ')}</Text>
+                {assignedCoach.data.biography ? <Text numberOfLines={2} style={[styles.body, { color: colors.secondaryText }]}>{assignedCoach.data.biography}</Text> : null}
               </View>
             </View>
           </Card>
@@ -162,8 +144,8 @@ function GuestHome() {
   const { state } = useAuth();
   const programs = usePrograms();
   const coaches = useCoaches();
-  const featuredProgram = programs.data?.find((program) => program.status === 'active') ?? programs.data?.[0];
-  const leaderboard = useLeaderboard(featuredProgram?.id);
+  const selectedLeaderboardProgram = selectLeaderboardProgram(programs.data, readLeaderboardProgramId());
+  const leaderboard = useLeaderboard(selectedLeaderboardProgram?.id);
 
   return (
     <ScrollView contentContainerStyle={publicScreenStyles.content}>
@@ -171,7 +153,7 @@ function GuestHome() {
       <Card><Text accessibilityRole="header" style={[styles.heroTitle, { color: colors.primaryText }]}>Perubahan nyata dimulai dari langkah yang konsisten.</Text><Text style={[styles.body, { color: colors.secondaryText }]}>Ikuti program harian dan tumbuh bersama dukungan Coach MSC.</Text><Button label="Jelajahi program" onPress={() => router.push('/app/programs')} /></Card>
       <Section title="Program pilihan">{programs.data?.length ? <View style={publicScreenStyles.grid}>{programs.data.slice(0, 3).map((program) => <View key={program.id} style={publicScreenStyles.gridItem}><ProgramCard program={program} /></View>)}</View> : <StateView kind={programs.isPending ? 'loading' : 'empty'} />}</Section>
       <Section title="Fokusmu hari ini"><Card><Text style={[styles.cardTitle, { color: colors.primaryText }]}>Data pribadi tetap terlindungi</Text><Text style={[styles.body, { color: colors.secondaryText }]}>Masuk untuk melihat aktivitas dan progres pribadimu.</Text><Button label="Masuk untuk melanjutkan" onPress={() => router.push('/login?returnTo=/app/home')} /></Card></Section>
-      <Section title="Peringkat teratas">{leaderboard.data?.length ? <View style={publicScreenStyles.stack}>{leaderboard.data.slice(0, 5).map((row) => <RankingRow key={row.id} row={row} />)}</View> : <StateView kind="empty" />}</Section>
+      <Section title="Leaderboard Top 5" intro={selectedLeaderboardProgram?.title}>{leaderboard.data?.length ? <LeaderboardTopFive rows={leaderboard.data} /> : <StateView kind="empty" />}<Button label="Lihat semua" tone="secondary" onPress={() => router.push(selectedLeaderboardProgram ? `/app/leaderboard?programId=${selectedLeaderboardProgram.id}` as never : '/app/leaderboard')} /></Section>
       <Section title="Coach publik">{coaches.data?.length ? <View style={publicScreenStyles.grid}>{coaches.data.slice(0, 3).map((coach) => <View key={coach.id} style={publicScreenStyles.gridItem}><CoachCard coach={coach} /></View>)}</View> : <StateView kind="empty" />}</Section>
     </ScrollView>
   );
@@ -181,11 +163,8 @@ const styles = StyleSheet.create({
   heroTitle: typographyTokens.titleLarge,
   body: typographyTokens.body,
   cardTitle: typographyTokens.headline,
-  numericLabel: { ...typographyTokens.label, fontVariant: ['tabular-nums'] },
-  carouselGroup: { gap: primitiveTokens.space.small },
   carousel: { gap: primitiveTokens.space.medium, paddingRight: primitiveTokens.space.large },
   carouselCard: { width: 288 },
-  carouselActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: primitiveTokens.space.small },
   coachRow: { flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium },
   flexCopy: { flex: 1, minWidth: 0, gap: primitiveTokens.space.xxSmall },
 });

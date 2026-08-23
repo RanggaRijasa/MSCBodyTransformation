@@ -12,6 +12,27 @@ type OrphanObject = {
   object_name: string;
 };
 
+type CleanupTarget = {
+  bucket: "question-photos" | "question-videos";
+  listRPC: "list_orphan_question_photos" | "list_orphan_question_videos";
+  auditRPC:
+    | "record_orphan_question_photo_cleanup"
+    | "record_orphan_question_video_cleanup";
+};
+
+const cleanupTargets: CleanupTarget[] = [
+  {
+    bucket: "question-photos",
+    listRPC: "list_orphan_question_photos",
+    auditRPC: "record_orphan_question_photo_cleanup",
+  },
+  {
+    bucket: "question-videos",
+    listRPC: "list_orphan_question_videos",
+    auditRPC: "record_orphan_question_video_cleanup",
+  },
+];
+
 const jsonHeaders = {
   "Content-Type": "application/json",
   "Cache-Control": "no-store",
@@ -93,48 +114,47 @@ export default {
       if (!Number.isInteger(olderThanHours) || olderThanHours < 1 || !reason) {
         throw new Error("cleanup_request_invalid");
       }
-      const listResponse = await checkedFetch(
-        new URL("/rest/v1/rpc/list_orphan_question_photos", projectURL),
-        {
-          method: "POST",
-          headers: operationHeaders,
-          body: JSON.stringify({ older_than: `${olderThanHours} hours` }),
-        },
-        "orphan_list_failed",
-      );
-      const candidates = await listResponse.json() as OrphanObject[];
-      const names = candidates.map((candidate) => candidate.object_name);
-      if (names.length === 0) {
-        return jsonResponse(200, { deleted_count: 0 });
+      let deletedCount = 0;
+      for (const target of cleanupTargets) {
+        const listResponse = await checkedFetch(
+          new URL(`/rest/v1/rpc/${target.listRPC}`, projectURL),
+          {
+            method: "POST",
+            headers: operationHeaders,
+            body: JSON.stringify({ older_than: `${olderThanHours} hours` }),
+          },
+          "orphan_list_failed",
+        );
+        const candidates = await listResponse.json() as OrphanObject[];
+        const names = candidates.map((candidate) => candidate.object_name);
+        if (names.length === 0) continue;
+
+        await checkedFetch(
+          new URL(`/storage/v1/object/${target.bucket}`, projectURL),
+          {
+            method: "DELETE",
+            headers: serviceHeaders,
+            body: JSON.stringify({ prefixes: names }),
+          },
+          "orphan_storage_delete_failed",
+        );
+
+        await checkedFetch(
+          new URL(`/rest/v1/rpc/${target.auditRPC}`, projectURL),
+          {
+            method: "POST",
+            headers: operationHeaders,
+            body: JSON.stringify({
+              deleted_object_names: names,
+              cleanup_reason: reason,
+            }),
+          },
+          "orphan_audit_failed",
+        );
+        deletedCount += names.length;
       }
 
-      await checkedFetch(
-        new URL("/storage/v1/object/question-photos", projectURL),
-        {
-          method: "DELETE",
-          headers: serviceHeaders,
-          body: JSON.stringify({ prefixes: names }),
-        },
-        "orphan_storage_delete_failed",
-      );
-
-      await checkedFetch(
-        new URL(
-          "/rest/v1/rpc/record_orphan_question_photo_cleanup",
-          projectURL,
-        ),
-        {
-          method: "POST",
-          headers: operationHeaders,
-          body: JSON.stringify({
-            deleted_object_names: names,
-            cleanup_reason: reason,
-          }),
-        },
-        "orphan_audit_failed",
-      );
-
-      return jsonResponse(200, { deleted_count: names.length });
+      return jsonResponse(200, { deleted_count: deletedCount });
     } catch (error) {
       const code = error instanceof Error
         ? error.message

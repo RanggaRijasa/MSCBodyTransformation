@@ -121,6 +121,8 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 
 ### 4.6 Ringkasan penjualan Admin
 
+Status delivery: seluruh `PROD-SLS-*` dipertahankan sebagai kontrak pascapeluncuran dan tidak memblokir deployment pertama. Rilis pertama tidak menampilkan quick action atau route Sales Overview. Lihat [`ADR-0010`](./decisions/0010-defer-admin-analytics-and-storage-management.md).
+
 - `PROD-SLS-001` Admin MUST dapat membuka `Ringkasan penjualan` dari `Akses cepat` Dashboard tanpa menambah destination baru pada bottom navigation/sidebar utama.
 - `PROD-SLS-002` Penjualan web manual MUST dihitung dari ledger uang authoritative: `verified` sebagai penjualan terverifikasi dan revenue `reversal` yang terhubung ke verified entry sebagai pengurang revenue. Status order `approved` tanpa ledger MUST NOT dihitung sebagai revenue.
 - `PROD-SLS-003` Ringkasan minimum MUST menampilkan penjualan terverifikasi bruto, pembalikan, penjualan bersih, jumlah order terverifikasi, rata-rata nilai order bruto, tren harian, jenis pembelian, program terlaris, dan pelanggan teratas.
@@ -134,6 +136,8 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-SLS-011` Setiap order MUST memiliki privacy-safe `customer_reporting_key` server-controlled yang bertahan setelah profile deletion tanpa menyimpan contact snapshot. Sales groups by key; `person_id` hanya dikembalikan bila profil masih ada. Legacy null-owner order yang tidak dapat direkonstruksi MUST dipisah per order dan ditandai unknown, tidak digabung menjadi satu pelanggan.
 
 ### 4.7 Pengelolaan gambar unggahan pengguna
+
+Status delivery: inventory/usage/Trash/restore/purge Admin dipertahankan sebagai kontrak pascapeluncuran dan tidak memblokir deployment pertama. `PROD-MED-011` serta keamanan bucket privat, retensi bukti pembayaran, orphan cleanup, dan cache/log media tetap launch-critical di W08. Rilis pertama tidak menampilkan quick action atau route Image Storage. Lihat [`ADR-0010`](./decisions/0010-defer-admin-analytics-and-storage-management.md).
 
 - `PROD-MED-001` Admin MUST dapat membuka `Penyimpanan gambar` dari `Akses cepat` Dashboard dan melihat penggunaan gambar pengguna yang dikelola MSC, bukan angka paket/quota Supabase yang di-hardcode.
 - `PROD-MED-002` Baseline inventory MUST mencakup bucket user-uploaded `question-photos`, `payment-evidence`, dan `coach-public-media`. Manual Trash/restore/purge hanya untuk eligible `question-photos` dan `coach-public-media`; `payment-evidence` inventory bersifat read-only dan tetap dihapus otomatis oleh kontrak retensi pembayaran. `public-media`, `payment-destination-assets`, PWA/brand assets, video, dan file non-gambar berada di luar scope deletion baseline.
@@ -198,3 +202,5 @@ Admin mengelola program, orang, konten, review pembayaran, eligibility Coach, ko
 - `PROD-SUC-009` Admin dapat merekonsiliasi Ringkasan penjualan manual web ke payment ledger untuk periode WITA tanpa pending/rejected/double-counted commerce atau private payment data.
 - `PROD-SUC-010` Admin dapat melihat penggunaan gambar pengguna dan trash/restore/purge media eligible melalui Storage API, sementara protected/shared/unknown media tetap utuh dan domain history/poin/ledger tetap tersedia.
 - `PROD-SUC-011` User Google baru selalu menyelesaikan onboarding Peserta/Coach intent; Participant aktif hanya setelah QR valid, sedangkan applicant Coach tetap Participant sampai Admin approval tanpa akses provisional bocor.
+
+`PROD-SUC-009` dan `PROD-SUC-010` adalah success criteria pascapeluncuran. Keduanya tidak termasuk first-deployment success gate; statusnya tetap belum selesai sampai W07.5/W07.6 benar-benar diimplementasikan.

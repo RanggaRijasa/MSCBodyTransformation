@@ -101,13 +101,15 @@ test.describe('W04 private evidence and Coach review', () => {
     await installSession(page, participantSession);
     await page.goto(`/app/programs/${programId}?step=${stepId}`);
     await expect(page.getByTestId('participant.submission.form')).toBeVisible();
-    const input = page.getByLabel('Ambil atau pilih foto');
+    await expect(page.getByText('Bukti foto diperlukan')).toHaveCount(0);
+    const input = page.getByLabel('Pilih sumber foto');
+    await expect(input).not.toHaveAttribute('capture');
     await input.setInputFiles({ name: 'bukti.png', mimeType: 'image/png', buffer: onePixelPng() });
     await expect(page.getByLabel('Pratinjau bukti foto')).toBeVisible();
     await page.getByRole('button', { name: 'Kirim jawaban' }).click();
     await expect(page.getByRole('heading', { name: 'Kirim jawaban sekarang?' })).toBeVisible();
     await page.getByRole('button', { name: 'Kirim sekarang' }).click();
-    await expect(page.getByText('Menunggu tinjauan')).toBeVisible();
+    await expect(page.getByText('Menunggu tinjauan', { exact: true })).toBeVisible();
 
     const { data: submissions } = await service.from('step_submissions').select('id,status').eq('enrollment_id', enrollmentId);
     expect(submissions).toHaveLength(1);
@@ -117,6 +119,7 @@ test.describe('W04 private evidence and Coach review', () => {
     const objectPath = answers?.[0]?.private_photo_path as string;
     expect(objectPath).toContain(`${participantId}/${enrollmentId}/${submissionId}/`);
     await expect(page.getByText('Analisis sedang diproses')).toBeVisible();
+    await expect(page.getByText('Jawaban sudah terkirim. Hasil AI akan muncul otomatis tanpa menahan pemeriksaan Coach.')).toHaveCount(0);
     await expect.poll(async () => (await service.from('food_insight_jobs').select('id').eq('submission_id', submissionId)).data?.length).toBe(1);
     const claimed = await service.rpc('claim_food_insight_job', { lease_seconds: 90, target_submission_id: submissionId });
     const foodJob = claimed.data as { id: string; lease_token: string };
@@ -125,7 +128,7 @@ test.describe('W04 private evidence and Coach review', () => {
     await expect(page.getByText('410 kkal')).toBeVisible();
 
     await page.goto(`/app/programs/${programId}?step=${unavailableStepId}`);
-    await page.getByLabel('Ambil atau pilih foto').setInputFiles({ name: 'gagal.png', mimeType: 'image/png', buffer: onePixelPng() });
+    await page.getByLabel('Pilih sumber foto').setInputFiles({ name: 'gagal.png', mimeType: 'image/png', buffer: onePixelPng() });
     await page.getByRole('button', { name: 'Kirim jawaban' }).click();
     await page.getByRole('button', { name: 'Kirim sekarang' }).click();
     await expect.poll(async () => (await service.from('step_submissions').select('id').eq('step_id', unavailableStepId).maybeSingle()).data?.id).not.toBeUndefined();
@@ -178,6 +181,12 @@ test.describe('W04 private evidence and Coach review', () => {
     expect(browserLog.join('\n')).not.toContain(objectPath);
     expect(browserLog.join('\n')).not.toMatch(/FOOD_AI_|sk-or-/u);
     expect(pageErrors).toEqual([]);
+
+    await page.evaluate(() => globalThis.localStorage.clear());
+    await installSession(page, participantSession);
+    await page.goto(`/app/programs/${programId}?step=${stepId}`);
+    await expect(page.getByText('Aktivitas sudah selesai')).toBeVisible();
+    await expect(page.getByText('Jawaban aktivitas sudah tercatat. Kamu tidak perlu mengirim ulang.')).toHaveCount(0);
   });
 
   test('Coach rejection requires a reason and Participant can see actionable feedback', async ({ page }) => {
@@ -187,7 +196,7 @@ test.describe('W04 private evidence and Coach review', () => {
     await page.getByLabel('Apa yang sudah dilakukan?').fill('Saya menyelesaikan aktivitas hari ini.');
     await page.getByRole('button', { name: 'Kirim jawaban' }).click();
     await page.getByRole('button', { name: 'Kirim sekarang' }).click();
-    await expect(page.getByText('Menunggu tinjauan')).toBeVisible();
+    await expect(page.getByText('Menunggu tinjauan', { exact: true })).toBeVisible();
 
     await page.evaluate(() => globalThis.localStorage.clear());
     await installSession(page, coachSession);

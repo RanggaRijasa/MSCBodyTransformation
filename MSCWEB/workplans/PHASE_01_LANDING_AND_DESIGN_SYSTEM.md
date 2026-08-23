@@ -144,3 +144,35 @@ Append dated entries with simulator evidence, reference comparison, files, comma
 - Visual comparison: accepted desktop/mobile concept and refreshed 1440/390 renders were inspected together. Hero rhythm, bold palette, editorial photography, section alternation, typography, and install emphasis remain coherent; removing the invented program catalog is an intentional user-approved deviation.
 - Manual Xcode step: none. No native source/project, deployment, production Supabase, package manifest, or Git operation changed.
 - Next unchecked item: W02 Auth and public Participant shell; final real-browser PWA install/device matrix remains W08.
+
+### 2026-08-23 — Supplied editorial redesign and licensed modest-sports photography
+
+- User revision: the landing was rebuilt to follow the supplied `msc-landing-page` composition—condensed editorial hero, red/yellow marquees, alternating light/dark sections, five-step flow, program/Coach/progress story, privacy, manual payment, and final install CTA. The existing default MSC icon remains the logo.
+- Functional contract preserved: every `Pasang aplikasi` action still uses `data-install-app` with `/cara-memasang` fallback; every `Masuk MSC` action still routes to `/app`; the existing `/kebijakan-privasi`, `/ketentuan`, `/bantuan-pembayaran`, and `/cara-memasang` pages and content remain intact.
+- Photography: replaced the prior candidate imagery with four locally hosted Unsplash images depicting women in modest sportswear. Source pages, authors, and the Unsplash license are recorded in `public/images/README.md`; no remote image hotlinks or named-result claims were added.
+- Files: `public/landing.html`, `public/landing.css`, `public/images/README.md`, four files under `public/images/landing/`, focused landing unit/E2E assertions, 1440/390 visual baselines, and this progress entry.
+- Checks: `npm run typecheck` — passed; `npm run lint` — passed; `npm test -- --run` — 205 passed, 9 skipped; `npm run build` — passed with 48 route bundles; `npm run verify:bundle` — passed; `npm run verify:pwa` — passed; focused Playwright run — 34 passed across desktop and compact Chromium; `git diff --check` for the landing slice — clean.
+- Accessibility/browser evidence: meaningful `h1` accessible name, keyboard skip link, native install-prompt probe, 200% text zoom, no horizontal overflow across 320–1440 px, and production in-app-browser inspection at 1280 px. The production response is HTTP 200; `www` remains an HTTP 308 redirect to apex.
+- Production deployment: Worker version `fa9a2e0e-4df1-42f5-9d8e-b85c8038681c` is active at 100%. No DNS, Supabase configuration/data, secret, or migration was changed.
+- Manual Xcode step: none. No native source/project or Git operation changed.
+- Next unchecked item: the W08 physical-device PWA install matrix; W01 awaits only the user's visual review of this replacement design.
+
+### 2026-08-23 — Mixed modest-sports imagery and hero overlap correction
+
+- User revision: retained the approved hijab runner exclusively in the hero, replaced the remaining landing photography with modest non-hijab women and men, removed the black square/star decoration from all five step cards, and reduced/rebalanced the desktop hero image so it no longer covers the `Transformasi` headline.
+- Photography: added two locally hosted Unsplash images by Vitaly Gariev and Gordon Cowie plus one generated Southeast Asian woman in opaque long-sleeve gymwear and full-length loose athletic pants. Source pages, license, and the exact generated-image brief are recorded in `public/images/README.md`; none of the images make named-result claims.
+- Files: `public/landing.html`, `public/landing.css`, `public/images/README.md`, three assets under `public/images/landing/`, focused landing unit/E2E assertions, refreshed 1440/390 visual baselines, and this progress entry.
+- Checks: `npm run typecheck` — passed; `npm run lint` — passed; `npm test -- --run` — 205 passed, 9 skipped; `npm run build` — passed with 48 route bundles; `npm run verify:bundle` — passed with 50 JavaScript files; `npm run verify:pwa` — passed; focused Playwright run — 34 passed across desktop and compact Chromium; `git diff --check -- MSCWEB` — clean.
+- Browser evidence: desktop hero measurement showed the headline right edge at `725.148px` and image left edge at `840px` with no overlap; only one rendered landing image references `modest-gym.jpg`; step-card pseudo-icon content resolves to `none`; desktop and compact visual baselines load every lazy image before capture.
+- Production deployment: Worker version `449160e9-c965-4639-b8cd-ebb38946bd69` is active at 100%. Apex and the three new media assets return HTTP 200; `www` remains an HTTP 308 redirect. No DNS, Supabase configuration/data, secret, migration, native source/project, or Git operation was changed.
+- Next unchecked item: the W08 physical-device PWA install matrix; W01 awaits only the user's visual review of this image revision.
+
+### 2026-08-23 — Mobile hero containment correction
+
+- Bug and cause: at widths just above 390 px, the mobile hero title used `18.3vw`; its min-content width expanded the single-column grid beyond the shell, clipping the title, body copy, actions, stats, and hero media even though root overflow clipping hid the document scrollbar.
+- Fix: added `min-width: 0` to the hero copy grid item, changed the mobile title scale to `clamp(2.8rem, 13.5vw, 4.2rem)`, removed the conflicting 390 px override, and revised the stylesheet cache key in `public/landing.html`.
+- Regression coverage: the E2E viewport matrix now includes 405 px and asserts that the hero copy, heading, lede, actions, stats, and media each remain inside `window.innerWidth`; visual baseline image loading also uses explicit `HTMLImageElement` narrowing so typecheck remains clean.
+- Checks: `npm test -- --run` — 206 passed, 9 skipped; `npm run typecheck` — passed; `npm run lint` — passed; `npm run build` — passed; `npm run verify:bundle` — passed; `npm run verify:pwa` — passed; focused Playwright suite — 34 passed across desktop and compact Chromium; dedicated containment regression — 2 passed; `git diff --check -- MSCWEB` — clean.
+- Browser evidence: 320/375/390/405/430 px each reported document width equal to viewport width and every tested hero surface inside the shell. At 405 px the title changed from `74.115px` with a `454.969px` grid item to `54.675px` with a `373px` grid item. The mobile menu interaction remained functional; desktop 1280 px retained a `114.852px` gap between heading and media with no overlap.
+- Production deployment: Worker version `8d873aab-34bd-44ed-bcdd-88dc5c6fee32` is active at 100%. Production browser inspection at 405 px returned the new stylesheet key, no console warnings/errors, no horizontal overflow, and a functioning mobile menu. No DNS, Supabase configuration/data, secret, migration, native source/project, or Git operation was changed.
+- Next unchecked item: the W08 physical-device PWA install matrix.

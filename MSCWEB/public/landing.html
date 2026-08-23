@@ -3,132 +3,220 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#000000" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
-    <meta name="description" content="Ikuti program MSC Body Transformation dengan langkah terarah, dukungan Coach, dan progres yang mudah dipantau." />
+    <meta name="theme-color" content="#0d0c0b" />
+    <meta name="description" content="Ikuti program MSC Body Transformation dengan aktivitas harian, dukungan Coach, dan progres yang mudah dipantau." />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="id_ID" />
     <meta property="og:title" content="MSC Body Transformation" />
-    <meta property="og:description" content="Program terarah, dukungan Coach, dan progres yang terasa setiap hari." />
-    <meta property="og:image" content="/images/landing-hero.jpg" />
-    <link rel="canonical" href="/" />
+    <meta property="og:description" content="Transformasi tidak perlu sendirian. Program terarah, dukungan Coach, dan progres yang terasa setiap hari." />
+    <meta property="og:image" content="/images/landing/modest-gym.jpg" />
+    <link rel="canonical" href="https://msc-body-transformation.com/" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png" />
-    <link rel="preload" as="image" href="/images/landing-hero.jpg" fetchpriority="high" />
-    <link rel="stylesheet" href="/landing.css?v=20260812-program-install" />
+    <link rel="preload" as="image" href="/images/landing/modest-gym.jpg" fetchpriority="high" />
+    <link rel="stylesheet" href="/landing.css?v=20260823-w08-lighthouse" />
+    <script src="/register-sw.js" defer></script>
     <script src="/install-pwa.js?v=20260812" defer></script>
-    <title>MSC Body Transformation — Program terarah dengan dukungan Coach</title>
+    <title>MSC Body Transformation — Transformasi tidak perlu sendirian</title>
   </head>
-  <body>
+  <body class="landing-page">
     <a class="skip-link" href="#konten">Lewati ke konten</a>
     <header class="site-header">
       <a class="brand" href="/" aria-label="MSC Body Transformation, beranda">
-        <img src="/icons/icon-192.png" alt="" width="52" height="52" />
-        <span>MSC Body Transformation</span>
+        <img src="/icons/icon-192.png" alt="" width="44" height="44" />
+        <span>MSC</span>
       </a>
-      <nav aria-label="Navigasi landing">
+      <nav class="desktop-nav" aria-label="Navigasi landing">
         <a href="#cara-kerja">Cara kerja</a>
         <a href="#program">Program</a>
         <a href="#coach">Coach</a>
-        <a class="button button-small" href="/app">Masuk</a>
+        <a href="#progres">Progres</a>
+        <a href="#privasi">Privasi</a>
       </nav>
+      <div class="header-actions">
+        <a class="button button-secondary button-small" href="/app">Masuk MSC</a>
+        <a class="button button-small" href="/cara-memasang" data-install-app><span aria-hidden="true">↓</span> Pasang aplikasi</a>
+      </div>
       <details class="mobile-menu">
         <summary aria-label="Buka menu">Menu</summary>
         <div>
           <a href="#cara-kerja">Cara kerja</a>
           <a href="#program">Program</a>
           <a href="#coach">Coach</a>
-          <a href="/app">Masuk</a>
+          <a href="#progres">Progres</a>
+          <a href="#privasi">Privasi</a>
+          <a href="/app">Masuk MSC</a>
+          <a href="/cara-memasang" data-install-app>Pasang aplikasi</a>
         </div>
       </details>
     </header>
 
     <main id="konten" tabindex="-1">
-      <section class="hero" aria-labelledby="hero-title">
-        <img class="hero-image" src="/images/landing-hero.jpg" alt="Dua orang berlatih dengan pendampingan di pusat kebugaran" width="1920" height="1201" />
-        <div class="hero-copy shell">
-          <h1 id="hero-title">Transformasi tubuh, langkah demi langkah.</h1>
-          <p>Program terarah, dukungan Coach, dan progres yang terasa setiap hari.</p>
-          <div class="actions">
-            <a class="button" href="/cara-memasang" data-install-app>Unduh aplikasi</a>
-            <a class="button button-secondary button-dark" href="/app/programs">Lihat program</a>
+      <section class="hero grain" aria-labelledby="hero-title">
+        <div class="shell hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">MSC Body Transformation</p>
+            <h1 id="hero-title" aria-label="Transformasi tidak perlu sendirian.">Transformasi<br /><span class="highlight">tidak perlu</span><br /><span class="outline">sendirian</span><span class="dot">.</span></h1>
+            <p class="hero-lede">Ikuti program harian, catat progres, dan dapatkan pendampingan Coach dalam satu pengalaman—dari langkah pertama sampai pencapaianmu.</p>
+            <div class="actions">
+              <a class="button button-large" href="/cara-memasang" data-install-app><span aria-hidden="true">↓</span> Pasang aplikasi</a>
+              <a class="button button-secondary button-large" href="/app">Masuk MSC <span aria-hidden="true">→</span></a>
+            </div>
+            <p class="install-note">Pasang MSC untuk akses lebih cepat, atau gunakan langsung di browser.</p>
+            <p class="install-status" data-install-status aria-live="polite"></p>
+            <div class="hero-stats" aria-label="Ringkasan pengalaman MSC">
+              <div><strong>Terarah</strong><span>Aktivitas yang jelas</span></div>
+              <div><strong>Terpantau</strong><span>Progres dalam satu tempat</span></div>
+              <div><strong>Ditemani</strong><span>Dukungan Coach</span></div>
+            </div>
           </div>
-          <p class="install-status" data-install-status aria-live="polite"></p>
+          <div class="hero-media">
+            <div class="hero-photo"><img src="/images/landing/modest-gym.jpg" alt="Perempuan berhijab berlatih di pusat kebugaran" width="1600" height="2400" /></div>
+            <div class="floating-card floating-card-top"><span aria-hidden="true">◎</span><div><strong>Coach mendampingi</strong><small>Arah tetap jelas</small></div></div>
+            <div class="floating-card floating-card-bottom"><span aria-hidden="true">★</span><div><strong>Progres tercatat</strong><small>Hari demi hari</small></div></div>
+          </div>
         </div>
       </section>
+
+      <div class="marquee marquee-yellow" aria-hidden="true"><div><span>Aktivitas harian</span><b>★</b><span>Coach di setiap langkah</span><b>★</b><span>Papan peringkat</span><b>★</b><span>Bukti progres</span><b>★</b><span>Aktivitas harian</span><b>★</b><span>Coach di setiap langkah</span><b>★</b></div></div>
+      <div class="marquee marquee-red" aria-hidden="true"><div><span>Kamu tidak sendirian</span><b>★</b><span>Mulai hari ini</span><b>★</b><span>Pasang MSC</span><b>★</b><span>Coach mendampingimu</span><b>★</b><span>Kamu tidak sendirian</span><b>★</b></div></div>
 
       <section class="section light" id="cara-kerja" aria-labelledby="cara-title">
         <div class="shell">
           <div class="section-heading">
-            <h2 id="cara-title">Cara kerja</h2>
-            <p>Satu alur yang jelas untuk membangun kebiasaan harian dan memantau progres.</p>
+            <p class="eyebrow eyebrow-red">Cara kerja</p>
+            <h2 id="cara-title">Lima langkah untuk tetap bergerak.</h2>
+            <p>Semuanya dirancang supaya kamu selalu tahu apa yang harus dilakukan berikutnya.</p>
           </div>
           <ol class="steps">
-            <li><span aria-hidden="true">1</span><div><h3>Pilih program</h3><p>Lihat program publik dan pilih yang sesuai dengan tujuanmu.</p></div></li>
-            <li><span aria-hidden="true">2</span><div><h3>Ikuti aktivitas harian</h3><p>Jalani langkah program sesuai jadwal dan petunjuk yang dipublikasikan.</p></div></li>
-            <li><span aria-hidden="true">3</span><div><h3>Pantau progres</h3><p>Lihat status aktivitas dan perkembanganmu dalam satu tempat.</p></div></li>
+            <li><span>01</span><div><h3>Pilih program</h3><p>Lihat program publik dan pilih yang sesuai dengan tujuanmu.</p></div></li>
+            <li><span>02</span><div><h3>Daftar lewat QR Coach</h3><p>Pindai QR Coach untuk mendaftar tanpa mengetik kode manual.</p></div></li>
+            <li><span>03</span><div><h3>Jalani aktivitas harian</h3><p>Ikuti langkah program sesuai jadwal dan petunjuk.</p></div></li>
+            <li><span>04</span><div><h3>Kirim progres dan bukti</h3><p>Dokumentasikan aktivitas yang memang meminta jawaban.</p></div></li>
+            <li><span>05</span><div><h3>Pantau poin dan peringkat</h3><p>Lihat status aktivitas dan perkembanganmu dalam satu tempat.</p></div></li>
           </ol>
         </div>
       </section>
 
-      <section class="section dark" id="program" aria-labelledby="program-title">
-        <div class="shell program-layout">
-          <div class="section-heading">
-            <h2 id="program-title">Program yang membantumu tetap terarah</h2>
-            <p>MSC Body Transformation dirancang untuk membantu Peserta membangun rutinitas kebugaran melalui tujuan yang jelas, aktivitas bertahap, dan dukungan Coach dalam satu pengalaman.</p>
-          </div>
-          <ol class="program-story" aria-label="Pengalaman program MSC">
-            <li><span aria-hidden="true">01</span><div><h3>Tujuan yang jelas</h3><p>Pahami fokus, jadwal, dan aktivitas program sebelum memutuskan untuk ikut.</p></div></li>
-            <li><span aria-hidden="true">02</span><div><h3>Langkah yang terstruktur</h3><p>Jalani aktivitas harian secara bertahap dengan petunjuk yang mudah dipahami.</p></div></li>
-            <li><span aria-hidden="true">03</span><div><h3>Dukungan yang terhubung</h3><p>Pantau progres dan dapatkan pendampingan Coach sesuai ruang lingkup program.</p></div></li>
-          </ol>
-        </div>
-      </section>
-
-      <section class="section light coach" id="coach" aria-labelledby="coach-title">
-        <div class="shell coach-grid">
-          <img src="/images/coach-support.jpg" alt="Coach mendampingi gerakan latihan peserta" width="1400" height="1050" loading="lazy" />
-          <div>
-            <h2 id="coach-title">Dukungan Coach di setiap langkah</h2>
-            <p>Coach membantu memberi arahan dan memantau aktivitas sesuai program. Pendaftaran Peserta menggunakan QR Coach—tanpa kolom kode manual.</p>
-            <ul class="check-list">
-              <li>Pendampingan yang sesuai scope program</li>
-              <li>Status aktivitas yang jelas</li>
-              <li>Privasi data Peserta tetap dijaga</li>
+      <section class="section dark program-section grain" id="program" aria-labelledby="program-title">
+        <div class="shell program-grid">
+          <div class="program-copy">
+            <div class="section-heading">
+              <p class="eyebrow">Program</p>
+              <h2 id="program-title">Terarah dari hari pertama sampai selesai.</h2>
+              <p>Setiap program MSC mempunyai tujuan, jadwal, dan aktivitas yang jelas sebelum kamu memutuskan untuk ikut.</p>
+            </div>
+            <ul class="feature-list">
+              <li><span>✓</span><div><strong>Tujuan yang jelas</strong><p>Pahami fokus program sejak awal.</p></div></li>
+              <li><span>✓</span><div><strong>Langkah yang terstruktur</strong><p>Jalani aktivitas secara bertahap.</p></div></li>
+              <li><span>✓</span><div><strong>Dukungan yang terhubung</strong><p>Coach memantau sesuai ruang lingkup program.</p></div></li>
             </ul>
+            <a class="text-link text-link-yellow" href="/app/programs">Lihat program yang tersedia <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="program-cards" aria-label="Sorotan pengalaman program">
+            <article class="photo-card photo-card-tall">
+              <img src="/images/landing/man-gym-pullup.jpg" alt="Laki-laki berlatih pull-up dengan pakaian olahraga tertutup" width="1600" height="1993" loading="lazy" />
+              <div><span>Konsistensi</span><h3>Bangun ritme yang realistis</h3><p>Aktivitas harian yang mudah dipahami.</p></div>
+            </article>
+            <article class="photo-card">
+              <img src="/images/landing/woman-gym-generated.jpg" alt="Perempuan non-hijab dengan pakaian olahraga tertutup di pusat kebugaran" width="1536" height="1024" loading="lazy" />
+              <div><span>Progres</span><h3>Catat langkah kecilmu</h3><p>Status program selalu tersedia.</p></div>
+            </article>
+            <article class="photo-card">
+              <img src="/images/landing/man-gym-coach.jpg" alt="Laki-laki dengan kaus olahraga di pusat kebugaran" width="1600" height="900" loading="lazy" />
+              <div><span>Semangat</span><h3>Tetap aktif dengan caramu</h3><p>Bergerak bersama tujuan yang jelas.</p></div>
+            </article>
           </div>
         </div>
       </section>
 
-      <section class="section payment" aria-labelledby="payment-title">
+      <section class="section light coach-section" id="coach" aria-labelledby="coach-title">
+        <div class="shell coach-grid">
+          <div class="coach-collage">
+            <img class="coach-main-photo" src="/images/landing/woman-gym-generated.jpg" alt="Perempuan non-hijab dengan pakaian olahraga tertutup di pusat kebugaran" width="1536" height="1024" loading="lazy" />
+            <img class="coach-secondary-photo" src="/images/landing/man-gym-coach.jpg" alt="Laki-laki dengan kaus olahraga di pusat kebugaran" width="1600" height="900" loading="lazy" />
+            <div class="coach-badge"><span aria-hidden="true">◎</span><div><strong>Dukungan Coach</strong><small>Pendampingan sesuai program</small></div></div>
+          </div>
+          <div>
+            <div class="section-heading">
+              <p class="eyebrow eyebrow-red">Dukungan Coach</p>
+              <h2 id="coach-title">Ada orang yang peduli dengan progresmu.</h2>
+              <p>Coach membantu memberi arahan dan memantau aktivitas sesuai ruang lingkup program—dengan pendekatan yang suportif dan tidak menghakimi.</p>
+            </div>
+            <div class="coach-points">
+              <article><span>01</span><div><h3>Arah yang jelas</h3><p>Lihat apa yang perlu kamu kerjakan berikutnya.</p></div></article>
+              <article><span>02</span><div><h3>Akuntabilitas suportif</h3><p>Aktivitas dipantau tanpa membuka data privat ke publik.</p></div></article>
+              <article><span>03</span><div><h3>Pendampingan berkelanjutan</h3><p>Dukungan tersedia selama periode program.</p></div></article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section dark progress-section grain" id="progres" aria-labelledby="progres-title">
+        <div class="shell progress-grid">
+          <div>
+            <div class="section-heading">
+              <p class="eyebrow">Progres dan pencapaian</p>
+              <h2 id="progres-title">Bukti bahwa kamu bergerak, hari demi hari.</h2>
+              <p>Aktivitas, poin, dan posisi peringkat tersaji dalam satu pengalaman yang mudah dipantau.</p>
+            </div>
+            <div class="progress-chips"><span>✓ Aktivitas harian</span><span>★ Poin program</span><span>♜ Papan peringkat</span></div>
+          </div>
+          <div class="app-preview" role="img" aria-label="Ilustrasi antarmuka MSC yang menampilkan aktivitas, progres, dan peringkat">
+            <div class="preview-head"><img src="/icons/icon-192.png" alt="" width="36" height="36" /><strong>MSC</strong><span>Hari ini</span></div>
+            <div class="preview-welcome"><small>Program aktif</small><h3>Tetap konsisten hari ini.</h3></div>
+            <div class="preview-progress"><div><strong>Aktivitas hari ini</strong><span>2 dari 3</span></div><i><b></b></i><ul><li>✓ Aktivitas selesai</li><li>✓ Progres tercatat</li><li>○ Satu langkah lagi</li></ul></div>
+            <div class="preview-stats"><div><small>Poin</small><strong>1.280</strong></div><div><small>Peringkat</small><strong>#3</strong></div></div>
+            <p>Ilustrasi antarmuka. Berat badan tidak ditampilkan pada papan peringkat.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section light privacy-section" id="privasi" aria-labelledby="privasi-title">
         <div class="shell">
           <div class="section-heading">
-            <h2 id="payment-title">Pembayaran diperiksa manual</h2>
-            <p>Untuk program berbayar, aktivasi tidak berlangsung seketika. Bukti pembayaran diperiksa Admin sebelum akses program diberikan.</p>
+            <p class="eyebrow eyebrow-red">Privasi dan kepercayaan</p>
+            <h2 id="privasi-title">Progresmu itu pribadi. Kami menjaganya.</h2>
+            <p>Transparansi untuk semangat, privasi untuk data sensitif.</p>
           </div>
-          <ol class="payment-flow">
-            <li><span>1</span><div><h3>Lihat instruksi</h3><p>Periksa tujuan pembayaran dan nominal pada permintaanmu.</p></div></li>
-            <li><span>2</span><div><h3>Transfer atau QRIS</h3><p>Gunakan metode aktif yang ditampilkan aplikasi.</p></div></li>
-            <li><span>3</span><div><h3>Unggah bukti</h3><p>Kirim foto bukti untuk pemeriksaan visual Admin.</p></div></li>
-          </ol>
-          <a class="text-link" href="/bantuan-pembayaran">Baca bantuan pembayaran <span aria-hidden="true">→</span></a>
+          <div class="privacy-grid">
+            <article><span aria-hidden="true">▣</span><h3>Berat badan tetap privat</h3><p>Nilai berat badan tidak tampil di papan peringkat publik.</p></article>
+            <article><span aria-hidden="true">◉</span><h3>Bukti aktivitas terjaga</h3><p>Foto dan bukti aktivitas tidak dipublikasikan ke peserta lain.</p></article>
+            <article><span aria-hidden="true">♜</span><h3>Peringkat tanpa data sensitif</h3><p>Papan peringkat menampilkan poin, posisi, nama, dan foto profil.</p></article>
+            <article><span aria-hidden="true">◇</span><h3>Kontrol yang jelas</h3><p>Data digunakan sesuai kebutuhan layanan dan kebijakan yang berlaku.</p></article>
+          </div>
+          <a class="text-link" href="/kebijakan-privasi">Baca kebijakan privasi <span aria-hidden="true">→</span></a>
         </div>
       </section>
 
-      <section class="section trust" aria-labelledby="trust-title">
-        <div class="shell trust-grid">
-          <div>
-            <h2 id="trust-title">Data pribadi tetap pribadi</h2>
-            <p>Berat badan, bukti aktivitas, bukti pembayaran, dan identitas QR Coach diperlakukan sebagai data privat. Papan peringkat publik tidak menampilkan berat badan.</p>
-            <a class="text-link" href="/kebijakan-privasi">Baca kebijakan privasi <span aria-hidden="true">→</span></a>
+      <section class="section payment-section" aria-labelledby="payment-title">
+        <div class="shell payment-grid">
+          <div class="section-heading">
+            <p class="eyebrow">Pembayaran manual</p>
+            <h2 id="payment-title">Pembayaran diperiksa sebelum akses aktif.</h2>
+            <p>Untuk program berbayar, bukti pembayaran diperiksa Admin. Pengiriman bukti tidak langsung mengaktifkan akses.</p>
           </div>
-          <div class="install-panel" id="install">
-            <img src="/icons/icon-192.png" alt="" width="72" height="72" loading="lazy" />
-            <div><h2>Pasang MSC di layar utama</h2><p>Aplikasi tetap dapat digunakan di browser. Instalasi PWA adalah pilihan untuk akses yang lebih cepat.</p></div>
-            <a class="button" href="/cara-memasang" data-install-app>Pasang aplikasi</a>
+          <ol>
+            <li><span>01</span><div><h3>Lihat instruksi</h3><p>Periksa tujuan pembayaran aktif dan nominal di aplikasi.</p></div></li>
+            <li><span>02</span><div><h3>Transfer atau QRIS</h3><p>Gunakan metode yang ditampilkan pada permintaanmu.</p></div></li>
+            <li><span>03</span><div><h3>Unggah bukti</h3><p>Kirim bukti untuk pemeriksaan visual Admin.</p></div></li>
+          </ol>
+          <a class="text-link text-link-yellow" href="/bantuan-pembayaran">Baca bantuan pembayaran <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="final-cta grain" aria-labelledby="final-title">
+        <img src="/images/landing/man-gym-pullup.jpg" alt="" aria-hidden="true" width="1600" height="1993" loading="lazy" />
+        <div class="shell final-content">
+          <span>Siap dimulai?</span>
+          <h2 id="final-title">Langkah pertamamu dimulai dari sini.</h2>
+          <p>Pasang MSC di layar utama atau masuk sekarang untuk melihat program dan Coach yang tersedia.</p>
+          <div class="actions">
+            <a class="button button-large" href="/cara-memasang" data-install-app><span aria-hidden="true">↓</span> Pasang aplikasi</a>
+            <a class="button button-secondary button-large" href="/app">Masuk MSC <span aria-hidden="true">→</span></a>
           </div>
         </div>
       </section>
@@ -136,14 +224,25 @@
 
     <footer>
       <div class="shell footer-grid">
-        <a class="brand" href="/"><img src="/icons/icon-192.png" alt="" width="48" height="48" /><span>MSC Body Transformation</span></a>
+        <div class="footer-brand">
+          <a class="brand" href="/"><img src="/icons/icon-192.png" alt="" width="48" height="48" /><span>MSC</span></a>
+          <p>Program transformasi tubuh dengan aktivitas terarah, dukungan Coach, dan progres yang mudah dipantau.</p>
+        </div>
+        <nav aria-label="Jelajahi">
+          <strong>Jelajahi</strong>
+          <a href="#cara-kerja">Cara kerja</a>
+          <a href="#program">Program</a>
+          <a href="#coach">Dukungan Coach</a>
+          <a href="#progres">Progres</a>
+        </nav>
         <nav aria-label="Tautan bantuan dan legal">
+          <strong>Legal dan bantuan</strong>
           <a href="/kebijakan-privasi">Kebijakan privasi</a>
           <a href="/ketentuan">Ketentuan</a>
           <a href="/bantuan-pembayaran">Bantuan pembayaran</a>
           <a href="/cara-memasang">Cara memasang</a>
         </nav>
-        <p>© 2026 MSC Body Transformation.</p>
+        <p class="copyright">© 2026 MSC Body Transformation.</p>
       </div>
     </footer>
   </body>

@@ -1,8 +1,10 @@
 # MSCWEB W07.6 — Admin Image Storage Management
 
-Status: `Not started`  
+Status: `Deferred post-launch — Admin inventory/Trash is not a first-deployment dependency (owner decision 21 August 2026)`
 Autonomy: `A` against local Supabase fixtures; `C` for production retention overrides; `D` for hosted deploy or production deletion  
-Depends on: W07.5 Quick Access grid/reporting boundary, W04 private media, W05 payment evidence, W06 Coach public media, and W06.5 food jobs
+Depends on when resumed: W08 minimum media launch safety, W07.5 for the final Quick Access grid, W04 private media, W05 payment evidence, W06 Coach public media, and W06.5 food jobs
+
+Scheduling authority: [`ADR-0010`](../decisions/0010-defer-admin-analytics-and-storage-management.md). Admin inventory, usage, Trash, restore, purge, registry/backfill, and deletion worker remain deferred. The launch-critical private Coach-media gateway and automatic payment-proof retention are reassigned to W08 and MUST not wait for this phase.
 
 ## Objective
 
@@ -78,8 +80,7 @@ Allowlisted user-uploaded image categories:
 - [ ] Backfill existing Storage objects and references deterministically; record `unknown` for unclassified objects and never auto-delete them.
 - [ ] Reconciliation handles upload-before-reference, lost client response, replacement, rollback, existing orphan, already-missing object, and duplicate/shared path.
 - [ ] Future successful uploads/replacements register/reconcile without making UI upload depend on Admin screen availability.
-- [ ] Migrate `coach-public-media` from public to private, backfill opaque public asset IDs, update Guest/Coach/Admin projections and current public URL consumers, and remove raw `photo_reference`/`media_object_path` from public responses.
-- [ ] Add controlled public Coach media gateway/Edge Function that validates published reference + active asset state per opaque ID and uses `Cache-Control: no-store` in W07.6.
+- [ ] Verify the W08 private `coach-public-media` cutover, opaque public asset IDs, safe projections, and controlled gateway remain intact before enabling Admin deletion.
 
 ### Authority and protected-state policy
 
@@ -93,7 +94,7 @@ Allowlisted user-uploaded image categories:
 - [ ] Evidence/payment domain rows retain decision/point/ledger/audit and expose explicit `media_deleted` tombstone state.
 - [ ] Tighten direct owner/Admin Storage DELETE paths for managed referenced objects; browser cannot bypass the authoritative operations.
 - [ ] Existing automatic orphan/retention/account cleanup jobs remain separate server operations and must interoperate with registry/job idempotency.
-- [ ] `payment-evidence` is rejected by Admin trash/purge RPC. Its row shows `Dikelola otomatis · retensi 30 hari`; inventory reconciles cleanup outcome and deterministic cleanup-vs-reconciliation races.
+- [ ] `payment-evidence` is rejected by Admin trash/purge RPC. Its row shows `Dikelola otomatis · retensi 30 hari`; inventory reconciles the W08-verified automatic cleanup outcome and deterministic cleanup-vs-reconciliation races.
 
 ### Worker and permanent deletion
 

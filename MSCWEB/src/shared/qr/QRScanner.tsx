@@ -1,6 +1,6 @@
 import { CameraView, type BarcodeScanningResult } from 'expo-camera';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Button, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { primitiveTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
@@ -27,7 +27,21 @@ export function QRScanner({
 }: QRScannerProps) {
   const { colors } = useAppTheme();
   const [state, setState] = useState<QrScannerState>({ kind: 'loading' });
+  const [cameraReady, setCameraReady] = useState(false);
   const hasScanned = useRef(false);
+  const cameraHost = useRef<View>(null);
+
+  const prepareReadyState = useCallback(async (
+    isAvailable: boolean,
+    permission: Awaited<ReturnType<QrCameraAdapter['getPermission']>>,
+  ): Promise<QrScannerState> => {
+    const nextState = resolveQrScannerState(isAvailable, permission);
+    if (nextState.kind === 'ready' && Platform.OS === 'web') {
+      const { prepareWebQrDecoder } = await import('./web-qr-decoder');
+      await prepareWebQrDecoder();
+    }
+    return nextState;
+  }, []);
 
   const loadCamera = useCallback(async () => {
     setState({ kind: 'loading' });
@@ -39,11 +53,11 @@ export function QRScanner({
       }
 
       const permission = await cameraAdapter.getPermission();
-      setState(resolveQrScannerState(isAvailable, permission));
+      setState(await prepareReadyState(isAvailable, permission));
     } catch {
       setState({ kind: 'error' });
     }
-  }, [cameraAdapter]);
+  }, [cameraAdapter, prepareReadyState]);
 
   useEffect(() => {
     let isMounted = true;
@@ -58,7 +72,8 @@ export function QRScanner({
         }
 
         const permission = await cameraAdapter.getPermission();
-        if (isMounted) setState(resolveQrScannerState(isAvailable, permission));
+        const nextState = await prepareReadyState(isAvailable, permission);
+        if (isMounted) setState(nextState);
       } catch {
         if (isMounted) setState({ kind: 'error' });
       }
@@ -68,26 +83,65 @@ export function QRScanner({
     return () => {
       isMounted = false;
     };
-  }, [cameraAdapter]);
+  }, [cameraAdapter, prepareReadyState]);
 
   const requestPermission = useCallback(async () => {
     setState({ kind: 'loading' });
     try {
       const permission = await cameraAdapter.requestPermission();
-      setState(resolveQrScannerState(true, permission));
+      setState(await prepareReadyState(true, permission));
     } catch {
       setState({ kind: 'error' });
     }
-  }, [cameraAdapter]);
+  }, [cameraAdapter, prepareReadyState]);
+
+  const commitPayload = useCallback((payload: string) => {
+    if (hasScanned.current || payload.length === 0) return;
+    hasScanned.current = true;
+    onScan(payload);
+  }, [onScan]);
 
   const handleScan = useCallback(
     (result: BarcodeScanningResult) => {
-      if (hasScanned.current || result.type !== 'qr') return;
-      hasScanned.current = true;
-      onScan(result.data);
+      if (result.type !== 'qr') return;
+      commitPayload(result.data);
     },
-    [onScan],
+    [commitPayload],
   );
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || state.kind !== 'ready' || !cameraReady) return undefined;
+    const isIosWebKit = typeof navigator !== 'undefined' && (
+      /iPad|iPhone|iPod/iu.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
+    if (!isIosWebKit) return undefined;
+
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const scan = async () => {
+      try {
+        const host = cameraHost.current as unknown as HTMLElement | null;
+        const video = host?.querySelector('video');
+        if (video && !hasScanned.current) {
+          const { scanIosWebQrFrame } = await import('./web-qr-decoder');
+          const payload = await scanIosWebQrFrame(video);
+          if (payload) commitPayload(payload);
+        }
+      } catch {
+        // Expo's normal scanner remains active; retry a fresh frame on iOS.
+      } finally {
+        if (!cancelled && !hasScanned.current) {
+          timer = setTimeout(() => { void scan(); }, 450);
+        }
+      }
+    };
+    timer = setTimeout(() => { void scan(); }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [cameraReady, commitPayload, state.kind]);
 
   if (state.kind === 'loading') {
     return (
@@ -153,15 +207,18 @@ export function QRScanner({
       <Text style={[styles.instructions, { color: colors.primaryText }]}>
         Arahkan kamera ke QR Coach.
       </Text>
-      <CameraView
-        active
-        accessibilityLabel="Pemindai QR Coach"
-        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-        facing="back"
-        onBarcodeScanned={handleScan}
-        onMountError={() => setState({ kind: 'error' })}
-        style={styles.camera}
-      />
+      <View ref={cameraHost} style={styles.camera}>
+        <CameraView
+          active
+          accessibilityLabel="Pemindai QR Coach"
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          facing="back"
+          onBarcodeScanned={handleScan}
+          onCameraReady={() => setCameraReady(true)}
+          onMountError={() => { setCameraReady(false); setState({ kind: 'error' }); }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       <Button color={colors.primaryAction} title="Tutup" onPress={onClose} />
     </View>
   );

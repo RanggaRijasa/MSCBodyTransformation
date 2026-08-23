@@ -116,11 +116,15 @@ Then job retry/berakhir aman, UI menampilkan `Analisis belum tersedia`, tidak ad
 
 ### `QA-JRN-012` Admin melihat penjualan bersih
 
+Status: journey pascapeluncuran W07.5; tidak termasuk first-deployment release gate.
+
 Given fixture memiliki penjualan program, akses Coach, order pending/rejected, dan satu reversal
 When Admin membuka `Ringkasan penjualan` untuk 30 hari WITA
 Then bruto hanya menjumlah verified ledger, reversal ditampilkan terpisah, net adalah bruto dikurangi reversal, pending/rejected tidak menjadi revenue, dan tidak ada double count dari commerce projection.
 
 ### `QA-JRN-013` Admin menghapus gambar pengguna dengan aman
+
+Status: journey pascapeluncuran W07.6; tidak termasuk first-deployment release gate.
 
 Given satu gambar eligible, satu gambar masih protected, dan satu path dipakai lebih dari satu reference
 When Admin memindahkan eligible image ke Sampah lalu mengonfirmasi purge
@@ -205,10 +209,12 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - `QA-AI-011` Insight dan alasan rating menggunakan Bahasa Indonesia yang natural dan non-diagnostik, label `Perkiraan dari foto`, icon bintang Phosphor, dan tidak memberi klaim keamanan/medis dari foto.
 - `QA-AI-012` Output provider berbahasa Inggris, campuran yang tidak layak, raw JSON, atau istilah teknis provider MUST tidak dirender langsung; validator menggunakan retry terbatas atau fallback Bahasa Indonesia deterministic.
 - `QA-AI-013` Structured output MUST berisi satu atau dua `insightSentences`; setiap item maksimal 80 karakter dan total maksimal 160 karakter. Output kosong, tiga kalimat, overlong, atau kalimat terpotong MUST gagal validasi dan menggunakan fallback valid.
-- `QA-AI-014` Request OpenRouter memakai `FOOD_AI_MODEL=google/gemma-4-31b-it:free` sebagai default, `reasoning.effort=none`, `reasoning.exclude=true`, dan output-token cap. Reasoning response tidak disimpan.
-- `QA-AI-015` Mengganti `FOOD_AI_MODEL` ke compatible OpenRouter fixture/model tidak memerlukan perubahan feature/domain/adapter; model tanpa image, structured response, atau reasoning-off gagal aman tanpa memengaruhi submission, approval, atau poin.
+- `QA-AI-014` Request OpenRouter memakai `FOOD_AI_MODELS=["google/gemma-4-26b-a4b-it","google/gemma-3-12b-it"]`, tanpa parameter reasoning yang tidak didukung fallback, serta memakai output-token cap, price sorting, dan price cap. Reasoning response tidak disimpan.
+- `QA-AI-015` Mengganti `FOOD_AI_MODELS` ke daftar compatible OpenRouter tidak memerlukan perubahan feature/domain/adapter; model tanpa image, structured response, atau reasoning-off gagal aman tanpa memengaruhi submission, approval, atau poin.
 
-## 6.3 Sales overview acceptance
+## 6.3 Sales overview acceptance — pascapeluncuran
+
+Seluruh `QA-SLS-*` dijalankan ketika W07.5 diaktifkan dan tidak memblokir W08/W09 pertama.
 
 - `QA-SLS-001` Admin-only RPC accepts inclusive `from_at`, exclusive `to_at`, allowlisted timezone, and rejects invalid or range over 366 days; Guest/Participant/Coach fail closed.
 - `QA-SLS-002` Gross = sum verified ledger, reversal = sum reversal ledger, net = gross − reversal, order count is distinct verified order, dan average memakai gross verified/order count dengan zero-safe behavior.
@@ -223,7 +229,9 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - `QA-SLS-011` Program/customer top lists each return at most five rows, group by immutable ID, and tie-break by net desc, gross desc, verified-order count desc, stable ID asc. Duplicate names remain distinct; null/deleted owner is `Pengguna dihapus` with safe/non-navigable behavior when needed.
 - `QA-SLS-012` Two customers with multiple orders retain distinct `customer_group_id` after both profiles are deleted; `person_id` becomes null and no contact snapshot remains. Legacy pre-key null-owner orders are separate per-order unknown groups and never merge.
 
-## 6.4 Image storage management acceptance
+## 6.4 Image storage management acceptance — pascapeluncuran
+
+Seluruh `QA-MED-*` dijalankan ketika W07.6 diaktifkan dan tidak memblokir W08/W09 pertama. Launch media safety menggunakan `QA-MED-LCH-*` di bawah.
 
 - `QA-MED-001` Inventory reconciles all objects/references in `question-photos`, `payment-evidence`, and `coach-public-media`; unknown objects fail closed. Out-of-scope buckets cannot be requested through forged input.
 - `QA-MED-002` Usage equals sum of Storage metadata byte size for managed user-image buckets. Trash remains counted until purge; quota is absent unless trusted server config supplies it.
@@ -239,6 +247,14 @@ Wajib dimasukkan pada fixtures/tests yang relevan:
 - `QA-MED-012` Clean migration-chain test reproduces every referenced media column/RPC/policy before deletion is enabled; generated database types match committed migrations.
 - `QA-MED-013` Final W07.6 Dashboard has four Quick Access cards in 2 × 2 compact/up-to-four-wide layout; first two actions preserve order/alignment and Activity remains reachable above bottom navigation.
 - `QA-MED-014` Automatic payment cleanup racing inventory reconciliation on the same proof results in one deleted/tombstoned inventory state; Image Storage never claims ownership of the delete or offers restore/purge controls.
+
+### 6.4.1 Minimum media launch acceptance — W08
+
+- `QA-MED-LCH-001` `question-photos` dan `payment-evidence` tetap private; least-privilege owner/reviewer/Admin checks lulus dan browser/build/cache/log tidak memuat service-role key, raw path, atau reusable private URL.
+- `QA-MED-LCH-002` Automatic payment-proof retention/orphan cleanup idempotent, melindungi `under_review`/correction/dispute, lalu menghapus bytes sesuai kebijakan tanpa menghapus order, ledger, decision, atau audit metadata.
+- `QA-MED-LCH-003` `coach-public-media` private dan public read model hanya memberi opaque media ID; gateway memvalidasi current published reference, active Coach entitlement, moderation, dan active media state pada setiap delivery decision.
+- `QA-MED-LCH-004` Draft, hidden, pending/rejected moderation, superseded, unpublished, avatar-replaced, dan entitlement-revoked media gagal aman; known legacy direct Storage URL tidak menjadi fallback.
+- `QA-MED-LCH-005` Cache invalidation/versioning lulus untuk publish/edit/unpublish/moderation/entitlement/media replacement, sementara `/admin/sales`, `/admin/image-storage`, dan quick action terkait tidak ada pada launch navigation/build.
 
 ## 6.5 Registration and first-login onboarding acceptance
 
@@ -281,8 +297,8 @@ Core screenshot set:
 - profil Coach publik/edit/share dengan field minimum dan lengkap;
 - insight makanan pending/available/unavailable serta rating 1–5;
 - Admin Dashboard, Program, People, payment/Coach review;
-- Admin Ringkasan penjualan dengan zero/normal/reversal-only periods;
-- Admin Penyimpanan gambar: Gambar, Sampah, protected, trash confirmation, failed job, dan purge complete;
+- pascapeluncuran W07.5: Admin Ringkasan penjualan dengan zero/normal/reversal-only periods;
+- pascapeluncuran W07.6: Admin Penyimpanan gambar, Sampah, protected, confirmation, failed job, dan purge complete;
 - first-login profile purpose choice, Participant QR unconfirmed/confirmed, Coach eligibility/payment/pending/correction, cancel/resume;
 - compact light/dark dan wide Admin;
 - loading/empty/error/offline;
@@ -300,8 +316,9 @@ Visual regression threshold tidak boleh menyembunyikan large layout drift. Perub
 - dependency audit ditinjau;
 - no secret scan lulus;
 - RLS negative tests lulus;
-- sales ledger reconciliation dan media deletion race/retry/tombstone suite lulus;
+- minimum media launch suite `QA-MED-LCH-*` lulus;
 - first-login provisional route/RLS/finalization/cancellation/expiry suite lulus;
 - SOP pembayaran/retention/dispute telah diputuskan;
-- production media deletion policy, protected-state matrix, worker schedule, dan operator/rollback procedure telah disetujui;
+- payment-proof retention/orphan-cleanup schedule/operator dan Coach public-media gateway/cache rollback procedure telah disetujui;
+- W07.5/W07.6 routes/actions tidak ada pada launch build dan statusnya tetap deferred, bukan complete;
 - production Supabase/Cloudflare deployment mendapat authorization eksplisit.

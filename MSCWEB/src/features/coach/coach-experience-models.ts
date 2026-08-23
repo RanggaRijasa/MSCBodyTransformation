@@ -96,6 +96,8 @@ const coachParticipantEnrollmentSchema = z.object({
   rank: z.number().int().positive().nullable(),
   last_activity_at: z.string(),
   completed_step_count: z.number().int().nonnegative(),
+  due_step_count: z.number().int().nonnegative(),
+  completed_due_step_count: z.number().int().nonnegative(),
   total_step_count: z.number().int().nonnegative(),
   evidence_count: z.number().int().nonnegative(),
   active_day_count: z.number().int().nonnegative(),
@@ -167,6 +169,7 @@ export const coachParticipantDetailSchema = z.object({
       text_value: z.string().nullable(),
       number_value: z.coerce.number().nullable(),
       private_photo_path: z.string().nullable(),
+      private_video_path: z.string().nullable().optional().transform((value) => value ?? null),
     })),
   })),
   days: z.array(z.object({
@@ -241,6 +244,7 @@ export const coachLeaderboardEntrySchema = z.object({
   participant_id: z.string().uuid(),
   participant_display_name: z.string(),
   avatar_url: z.string().nullable(),
+  avatar_reference: z.string().uuid().nullable().optional(),
   rank: z.number().int().positive(),
   progress_percentage: z.number().min(0).max(100),
   total_points: z.number().int(),
@@ -254,6 +258,8 @@ export const coachWorkspaceSchema = z.object({
   profile: z.object({
     display_name: z.string(),
     city: z.string(),
+    professional_headline: z.string().nullable().optional(),
+    photo_reference: z.string().uuid().nullable().optional(),
     provider_avatar_url: z.string().nullable(),
     profile_avatar_path: z.string().nullable(),
   }),
@@ -289,6 +295,7 @@ export const coachProfileDraftSchema = z.object({
   draft: z.object({
     public_handle: z.string(),
     profile_photo_object_path: z.string().nullable(),
+    profile_photo_preview_url: z.string().url().optional(),
     professional_headline: z.string(),
     biography: z.string(),
     service_area: z.string(),
@@ -311,7 +318,7 @@ export const publicCoachProfileSchema = z.object({
   handle: z.string(),
   display_name: z.string(),
   photo_kind: z.literal('storage'),
-  photo_reference: z.string(),
+  photo_reference: z.string().uuid(),
   professional_headline: z.string().optional(),
   biography: z.string().optional(),
   service_area: z.string().optional(),
@@ -325,7 +332,7 @@ export const publicCoachProfileSchema = z.object({
     kind: z.enum(['testimonial', 'before_after']),
     title: z.string(),
     body: z.string().optional(),
-    media_object_path: z.string().optional(),
+    media_object_path: z.string().uuid().optional(),
   })),
 });
 

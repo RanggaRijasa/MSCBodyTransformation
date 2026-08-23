@@ -169,7 +169,7 @@ Buckets minimum:
 | `payment-destinations` | read-controlled | QRIS static image |
 | `coach-public-media` | private; controlled public gateway | avatar dan media profil yang secara eksplisit dipublikasikan |
 
-W07.6 managed-image allowlist uses the actual implemented buckets `question-photos`, `payment-evidence`, and `coach-public-media`. Conceptual name `program-evidence` maps to `question-photos`; it is not a second bucket.
+W07.6 post-launch managed-image allowlist uses the actual implemented buckets `question-photos`, `payment-evidence`, and `coach-public-media`. Conceptual name `program-evidence` maps to `question-photos`; it is not a second bucket. W08 launch scope secures delivery/retention only and does not create general-purpose inventory or deletion authority.
 
 - `SEC-STO-001` Private bucket object MUST diakses melalui authenticated download atau short-lived signed URL.
 - `SEC-STO-002` Policy pada `storage.objects` MUST mengikat bucket, owner/scope, request status, dan object path convention.
@@ -183,8 +183,8 @@ W07.6 managed-image allowlist uses the actual implemented buckets `question-phot
 - `SEC-STO-010` Immediately before remove, worker MUST lock/claim the job and recompute references/protected state. List-then-delete without recheck is unsafe.
 - `SEC-STO-011` Trashed assets MUST be denied to normal owner/Coach/public read policies. Admin-only Trash preview must be no-store and must not create shareable signed URL.
 - `SEC-STO-012` Permanent delete result MUST record count/bytes/category/path hash, not raw path. Partial/missing-object/finalization failures remain retryable and idempotent.
-- `SEC-STO-013` `coach-public-media` MUST be private; RLS alone cannot revoke an object from a public bucket. Public delivery MUST use opaque asset ID and controlled server gateway that checks active published profile/item reference plus non-trashed asset state. Draft, pending/rejected moderation, superseded, and trashed media MUST not be publicly readable through current or legacy direct path.
-- `SEC-STO-014` `payment-evidence` remains inventory-only in Admin Image Storage. Existing automatic orphan/30-day retention worker owns deletion; Admin media trash/purge RPC MUST reject this bucket. Inventory reconciliation and automatic cleanup must be idempotent when racing on the same object.
+- `SEC-STO-013` `coach-public-media` MUST be private before production launch; RLS alone cannot revoke an object from a public bucket. Public delivery MUST use opaque asset ID and controlled server gateway that checks active published profile/item reference plus active media state. Draft, hidden, pending/rejected moderation, superseded, unpublished, entitlement-revoked, and—after W07.6—trashed media MUST not be publicly readable through current or legacy direct path.
+- `SEC-STO-014` Existing automatic orphan/30-day retention worker owns deletion of `payment-evidence` and MUST be production-ready in W08; under-review/correction/dispute protection and transaction/ledger/audit preservation remain mandatory. When W07.6 launches later, this bucket is inventory-only and every Admin trash/purge RPC MUST reject it; cleanup-vs-inventory reconciliation must remain idempotent.
 
 Referensi resmi: [Supabase Storage access control](https://supabase.com/docs/guides/storage/security/access-control) dan [Supabase private downloads/signed URLs](https://supabase.com/docs/guides/storage/serving/downloads).
 
@@ -240,6 +240,8 @@ Setiap operation:
 - `SEC-OP-005` Sales RPC is stable/read-only, validates Admin and bounded date range, and returns no reconciliation/bank/proof/private-media fields.
 - `SEC-OP-006` Trash/restore/purge operations MUST validate Admin, expected asset version, current reference fingerprint, allowlisted category, protected state, reason, and idempotency key.
 - `SEC-OP-007` Storage API calls MUST occur outside a long-running database transaction. Worker lease/finalization follows short-transaction retry-safe saga semantics.
+
+`SEC-OP-005…007` remain mandatory when their post-launch W07.5/W07.6 operations are implemented, but they are not first-deployment release gates. Existing feature-owned retention/cleanup operations remain subject to `SEC-OP-001…004`, Storage rules, idempotency, audit, and W08 launch-media acceptance.
 
 ## 6. Authentication security
 
@@ -307,12 +309,21 @@ Operational log MAY mencatat opaque request ID, event type, redacted actor ID, s
 - browser bundle tidak mengandung `FOOD_AI_API_KEY` atau provider prompt;
 - food-disabled submission tidak pernah membuat job AI;
 - job AI idempotent, outage tidak memengaruhi submission/poin, dan rating 1–2 gagal bila favorable guard tidak terpenuhi.
+- `coach-public-media` private/opaque gateway menolak draft, hidden, unpublish, moderation-rejected, superseded, dan entitlement-revoked media serta legacy direct URL;
+- automatic payment-proof retention/orphan cleanup melindungi review/correction/dispute aktif, idempotent, dan mempertahankan payment/ledger/audit metadata;
+- browser/cache/log tidak memuat raw media path, reusable private URL, image bytes, atau service credential;
+
+Post-launch W07.5/W07.6 security tests—tidak termasuk first-deployment release gate:
+
 - Participant/Coach/Guest tidak dapat memanggil sales overview atau memperoleh aggregate response;
 - sales response tidak memuat identity/contact/bank/reconciliation/proof/path fields dan tidak double-count ledger/commerce;
 - referenced/protected/unknown media gagal dipurge dan concurrent new reference wins over deletion;
 - direct browser/SQL delete referenced media ditolak; Storage API worker retry menghasilkan satu tombstone/audit;
 - trashed media tidak dapat diakses normal, restore bekerja sebelum purge, dan purged media tidak dapat dipulihkan;
-- media audit/log/browser tidak memuat raw path, signed URL, weight, image bytes, atau service credential.
+- media deletion audit/log/browser tidak memuat raw path, signed URL, weight, image bytes, atau service credential.
+
+Launch security tests continue:
+
 - provisional user cannot query active Participant/Coach/Admin private data or bypass onboarding by deep link;
 - forged role/purpose/member level/onboarding status/QR cannot activate account or Coach role;
 - Participant QR finalization and Coach proof-to-Participant finalization are idempotent under concurrent tabs/retries;

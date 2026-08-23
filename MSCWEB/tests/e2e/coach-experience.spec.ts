@@ -36,7 +36,7 @@ test.describe('W06 Coach experience', () => {
     adminId = admin.id; coachId = coach.id; participantId = participant.id;
     await updateProfile(adminId, { role: 'admin', display_name: 'Admin Browser W06' });
     await updateProfile(coachId, { role: 'coach', display_name: 'Coach Lestari', city: 'Denpasar', phone_number: '+628111111111', coach_is_approved: true, coach_qr_identifier: rawQr, provider_avatar_url: 'https://example.com/avatar.jpg' });
-    await updateProfile(participantId, { role: 'participant', display_name: 'Peserta Binaan W06', city: 'Badung' });
+    await updateProfile(participantId, { role: 'participant', display_name: 'Peserta Binaan W06', city: 'Badung', provider_avatar_url: 'https://example.com/participant-avatar.jpg' });
     const application = await service.from('coach_applications').insert({ applicant_user_id: coachId, participant_profile_id: coachId, display_name_snapshot: 'Coach Lestari', phone_number_snapshot: '+628111111111', member_level_snapshot: 'sc', has_completed_hom_sts: true, has_completed_ict: true, terms_version: 'coach-web-v1', status: 'active', draft_idempotency_key: `fixture-${suffix}`, submit_idempotency_key: `submit-${suffix}`, decision_idempotency_key: `approve-${suffix}`, submitted_at: new Date().toISOString(), decided_at: new Date().toISOString(), decided_by: adminId }).select('id').single();
     expect(application.error).toBeNull(); applicationId = application.data?.id as string;
     const payment = await service.from('coach_payment_records').insert({ application_id: applicationId, state: 'verified', price_band: 'entry', amount_minor_units: 100000, duration_months: 3, provider_reference: `BROWSER-${suffix.slice(0, 8)}`, verified_at: new Date().toISOString(), period_sequence: 1 }).select('id').single();
@@ -84,6 +84,12 @@ test.describe('W06 Coach experience', () => {
 
   test('Coach uses all six parity actions and raw QR never enters visible HTML', async ({ page }) => {
     test.skip(!canRun || !coachSession, 'Memerlukan Supabase lokal.');
+    await page.route('https://example.com/participant-avatar.jpg', (route) => route.fulfill({
+      status: 200,
+      contentType: 'image/jpeg',
+      headers: { 'access-control-allow-origin': '*' },
+      body: providerJpeg,
+    }));
     await installSession(page, coachSession);
     await page.goto('/coach');
     await expect(page.getByTestId('coach.dashboard')).toBeVisible();
@@ -138,12 +144,15 @@ test.describe('W06 Coach experience', () => {
     await expect(page.getByTestId('coach.participant.detail')).toContainText('Peserta Binaan W06');
     await page.goto(`/coach/leaderboard?programId=${programId}`);
     await expect(page.getByTestId('leaderboard.podium')).toBeVisible();
+    await expect(page.getByTestId('leaderboard.podium').getByRole('img', { name: 'Peserta Binaan W06' })).toBeVisible();
     await expect(page.getByTestId('coach.leaderboard')).toContainText('Pesertamu');
+    await expect(page.getByTestId('coach.leaderboard')).toContainText('Berlangsung');
+    await expect(page.getByTestId('coach.leaderboard')).not.toContainText('Nilai berat badan tetap privat.');
     await page.getByRole('button', { name: 'Rincian poin Peserta Binaan W06' }).click();
     await expect(page.getByRole('heading', { name: 'Rincian poin' }).first()).toBeVisible();
     await expect(page.getByText('Poin langkah')).toBeVisible();
     await expect(page.getByText('Poin penurunan berat badan')).toBeVisible();
-    await expect(page.getByText('Rincian hanya menampilkan poin dan progres. Nilai berat badan tetap privat.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Rincian hanya menampilkan poin dan progres. Nilai berat badan tetap privat.', { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Tutup' }).click();
     await page.goto('/coach/programs');
     await expect(page.getByTestId('participant.program.catalog')).toBeVisible();
@@ -198,6 +207,7 @@ test.describe('W06 Coach experience', () => {
 
   test('public handle renders only toggled fields and unknown handle is safe', async ({ page }) => {
     test.skip(!canRun, 'Memerlukan Supabase lokal.');
+    await page.emulateMedia({ colorScheme: 'light' });
     await page.goto(`/c/${handle}`);
     await expect(page.getByTestId('public.coach.profile')).toContainText('Coach Lestari');
     await expect(page.getByText('Coach terverifikasi')).toBeVisible();
@@ -205,6 +215,11 @@ test.describe('W06 Coach experience', () => {
     const body = await page.locator('body').innerText();
     expect(body).not.toContain('Instagram'); expect(body).not.toContain('+628111111111'); expect(body).not.toContain('+628122222222');
     expect(await page.content()).not.toContain(rawQr); expect(await page.content()).not.toContain(coachId);
+    const lightHero = await page.getByTestId('public.coach.profile.hero').evaluate((element) => getComputedStyle(element).backgroundColor);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await expect(page.getByRole('heading', { name: 'Coach Lestari' })).toBeVisible();
+    const darkHero = await page.getByTestId('public.coach.profile.hero').evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(darkHero).toBe(lightHero);
     await page.goto('/c/tidak-ada-w06');
     await expect(page.getByText('Belum ada konten')).toBeVisible();
   });

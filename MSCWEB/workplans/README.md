@@ -1,6 +1,6 @@
 # MSCWEB phased workplans
 
-Status: `Ready for execution`  
+Status: `W08 ready for execution; W07.5/W07.6 deferred post-launch`
 Primary executor: Codex  
 Sub-agent default: `gpt-5.6-sol`, reasoning `high`
 
@@ -20,10 +20,10 @@ These workplans translate the product specs into ordered, verifiable implementat
 | W06.5 | [Async food insight](./PHASE_06_5_ASYNC_FOOD_INSIGHT.md) | non-blocking macro insight and favorable AI stars | automatic with fake provider; real key optional |
 | W07 | [Admin experience](./PHASE_07_ADMIN_EXPERIENCE.md) | program/people/content/operations parity | mostly automatic locally |
 | W07.4 | [Registration onboarding remediation](./PHASE_07_4_REGISTRATION_ONBOARDING_REMEDIATION.md) | first-login Participant/Coach-intent parity and provisional security | automatic locally; OAuth/camera smoke conditional |
-| W07.5 | [Admin Sales Overview](./PHASE_07_5_ADMIN_SALES_OVERVIEW.md) | ledger-reconciled manual-web sales analytics | automatic locally; production read permission required |
-| W07.6 | [Admin Image Storage](./PHASE_07_6_ADMIN_IMAGE_STORAGE.md) | safe image inventory, Trash, restore, and server purge | automatic with local fixtures; production deletion authorization required |
-| W08 | [PWA and Cloudflare hardening](./PHASE_08_PWA_AND_CLOUDFLARE.md) | installable, secure, performant production candidate | preview automatic; production permission required |
-| W09 | [Release and repository split](./PHASE_09_RELEASE_AND_REPOSITORY_SPLIT.md) | release evidence and safe standalone repo | explicit external/Git decisions required |
+| W08 | [PWA and Cloudflare hardening](./PHASE_08_PWA_AND_CLOUDFLARE.md) | installable, secure, performant production candidate plus minimum media launch safety | local automatic; external preview/production permission required |
+| W09 | [Release and repository split](./PHASE_09_RELEASE_AND_REPOSITORY_SPLIT.md) | release evidence plus sole web/Cloudflare/Supabase authority in a standalone repo; iOS archived | explicit external/Git decisions required |
+| W07.5 | [Admin Sales Overview](./PHASE_07_5_ADMIN_SALES_OVERVIEW.md) | deferred post-launch ledger-reconciled sales analytics | not a launch dependency; resume by owner priority |
+| W07.6 | [Admin Image Storage](./PHASE_07_6_ADMIN_IMAGE_STORAGE.md) | deferred post-launch inventory, Trash, restore, and purge | not a launch dependency; destructive production authorization required |
 
 See [AUTOMATION_AND_PERMISSIONS.md](./AUTOMATION_AND_PERMISSIONS.md) for the consolidated manual-input and authorization matrix.
 
@@ -41,10 +41,10 @@ See [AUTOMATION_AND_PERMISSIONS.md](./AUTOMATION_AND_PERMISSIONS.md) for the con
 | W06.5 | `PROD-AI-*`, `ARCH-AI-*`, `UX-AI-*`, `SEC-PRV-005…010`, `QA-AI-*`, `QA-JRN-010/011` |
 | W07 | `PROD-ADM-*`, `PROD-OPS-003…005`, scoring/winner/profile-moderation/AI-operations requirements, Admin `QA-*` |
 | W07.4 | `PROD-ONB-*`, `ARCH-ONB-*`, `UX-ONB-*`, `SEC-ONB-*`, `QA-ONB-*`, `QA-JRN-014/015` |
-| W07.5 | `PROD-SLS-*`, `ARCH-SLS-*`, `UX-SLS-*`, `SEC-DATA-009…011`, `QA-SLS-*`, `QA-JRN-012` |
-| W07.6 | `PROD-MED-*`, `ARCH-MED-*`, `UX-MED-*`, `SEC-DATA-012…014`, `SEC-STO-008…014`, `SEC-OP-006/007`, `QA-MED-*`, `QA-JRN-013` |
-| W08 | `PWA-*`, `DS-MOT-*`, `DS-GLS-*`, accessibility/performance/release `QA-*` |
-| W09 | `PROD-SUC-*`, QA release gates, safe repository split criteria |
+| W08 | `PWA-*`, `DS-MOT-*`, `DS-GLS-*`, `PROD-MED-011`, `ARCH-MED-007`, `UX-MED-012`, `SEC-STO-013/014` launch subset, accessibility/performance/release `QA-*` |
+| W09 | first-launch `PROD-SUC-*` except deferred `009/010`, QA release gates, safe repository split criteria |
+| W07.5 (post-launch) | `PROD-SLS-*`, `PROD-SUC-009`, `ARCH-SLS-*`, `UX-SLS-*`, `SEC-DATA-009…011`, `QA-SLS-*`, `QA-JRN-012` |
+| W07.6 (post-launch) | remaining `PROD-MED-*`, `PROD-SUC-010`, `ARCH-MED-*`, `UX-MED-*`, `SEC-DATA-012…014`, `SEC-STO-008…012/014`, `SEC-OP-006/007`, `QA-MED-*`, `QA-JRN-013` |
 
 Every slice must list the exact individual requirement IDs selected from these families before implementation starts.
 

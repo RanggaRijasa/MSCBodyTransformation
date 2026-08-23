@@ -181,8 +181,8 @@ Route group dapat disembunyikan oleh Expo Router. URL publik harus stabil, machi
 | `/app/coach` | Coach Participant / Coach root sesuai guard |
 | `/app/profile` | profil |
 | `/c/:handle` | profil Coach publik yang dapat dibagikan |
-| `/admin/sales` | ringkasan penjualan manual web Admin |
-| `/admin/image-storage` | inventory, Sampah, restore, dan purge gambar pengguna |
+| `/admin/sales` | pascapeluncuran: ringkasan penjualan manual web Admin; tidak tersedia pada rilis pertama |
+| `/admin/image-storage` | pascapeluncuran: inventory, Sampah, restore, dan purge; tidak tersedia pada rilis pertama |
 | `/admin/*` | Admin-only surface |
 | `/privacy`, `/terms`, `/payment-help` | legal/support public |
 
@@ -210,12 +210,11 @@ FoodVisionProvider.analyze(normalizedImage, programRubric)
 Konfigurasi server-side minimum:
 
 ```text
-FOOD_AI_PROVIDER=openrouter
+FOOD_AI_PROVIDER=openai_compatible
 FOOD_AI_BASE_URL=https://openrouter.ai/api/v1
 FOOD_AI_API_KEY=<server secret>
-FOOD_AI_MODEL=google/gemma-4-31b-it:free
-FOOD_AI_REASONING_EFFORT=none
-FOOD_AI_MAX_OUTPUT_TOKENS=256
+FOOD_AI_MODELS=["google/gemma-4-26b-a4b-it","google/gemma-3-12b-it"]
+FOOD_AI_MODEL=google/gemma-4-26b-a4b-it
 FOOD_AI_PROMPT_VERSION=<version>
 FOOD_AI_OUTPUT_POLICY_VERSION=food_insight_output_v1
 ```
@@ -223,11 +222,11 @@ FOOD_AI_OUTPUT_POLICY_VERSION=food_insight_output_v1
 Contoh pergantian model di OpenRouter tanpa perubahan kode:
 
 ```text
-# default free
-FOOD_AI_MODEL=google/gemma-4-31b-it:free
+# primary dan fallback production
+FOOD_AI_MODELS=["google/gemma-4-26b-a4b-it","google/gemma-3-12b-it"]
 
-# contoh pindah ke endpoint berbayar dari model yang sama
-FOOD_AI_MODEL=google/gemma-4-31b-it
+# kompatibilitas adapter lama memakai satu model
+FOOD_AI_MODEL=google/gemma-4-26b-a4b-it
 ```
 
 API key dan base URL tetap sama selama provider-nya OpenRouter. Slug model lain juga dapat dipakai bila lulus capability preflight.
@@ -239,10 +238,12 @@ API key dan base URL tetap sama selama provider-nya OpenRouter. Slug model lain 
 - `ARCH-AI-005` Server validator MUST memverifikasi schema, rentang macro/rating/confidence, reason code, dan favorable-rating guard sebelum menyimpan hasil.
 - `ARCH-AI-006` Hasil MUST menyimpan provider/model alias, prompt/rubric version, status, attempt count, dan timestamps untuk reproducibility tanpa menyimpan raw request/response provider.
 - `ARCH-AI-007` Provider prompt/schema MUST meminta array `insightSentences` berisi satu atau dua kalimat Bahasa Indonesia, masing-masing maksimal 80 karakter. Server menggabungkannya menjadi `insightText` untuk UI dan MUST menolak, meregenerasi secara terbatas, atau mengganti output invalid/non-Indonesia dengan fallback Indonesia tervalidasi; client MUST tidak menerjemahkan atau memotong raw output secara ad hoc.
-- `ARCH-AI-008` Request OpenRouter MUST mengirim model dari `FOOD_AI_MODEL`, `reasoning: { effort: "none", exclude: true }`, output-token cap, dan structured `response_format`. Reasoning content yang tetap muncul MUST diabaikan dan tidak disimpan.
-- `ARCH-AI-009` Mengganti model dalam OpenRouter SHOULD hanya memerlukan perubahan `FOOD_AI_MODEL` dan restart/redeploy server. Preflight/health check MUST memastikan model baru menerima image input, menghasilkan text, mendukung structured response, dan tidak mewajibkan reasoning; model incompatible gagal aman tanpa memengaruhi submission/poin.
+- `ARCH-AI-008` Request OpenRouter MUST mengirim daftar prioritas dari `FOOD_AI_MODELS`, output-token cap, structured `response_format`, `require_parameters: true`, pengurutan harga, dan price cap. Parameter reasoning tidak dikirim karena fallback Gemma 3 12B tidak mendukungnya; reasoning content yang tetap muncul MUST diabaikan dan tidak disimpan.
+- `ARCH-AI-009` Mengganti model dalam OpenRouter SHOULD hanya memerlukan perubahan `FOOD_AI_MODELS` dan restart/redeploy server. `FOOD_AI_MODEL` tetap menjadi fallback kompatibilitas satu model. Preflight/health check MUST memastikan model baru menerima image input, menghasilkan text, mendukung structured response, dan tidak mewajibkan reasoning; model incompatible gagal aman tanpa memengaruhi submission/poin.
 
 ## 8. Admin sales reporting boundary
+
+Status delivery: boundary ini tetap authoritative untuk W07.5, tetapi implementasinya ditunda sampai pascapeluncuran dan bukan dependency W08/W09. Lihat `ADR-0010`.
 
 ```text
 Admin Sales screen
@@ -265,6 +266,8 @@ Admin Sales screen
 
 ## 9. Managed media inventory and deletion boundary
 
+Status delivery: registry, inventory, Trash, restore, purge, dan deletion worker ditunda sampai W07.6 pascapeluncuran. Private Coach-media delivery dan automatic payment-proof retention/orphan cleanup adalah boundary launch W08, bukan bukti bahwa W07.6 selesai.
+
 ```text
 Admin Image Storage screen
   → fixed safe inventory RPC (opaque media ID)
@@ -283,7 +286,7 @@ Admin Image Storage screen
 - `ARCH-MED-004` Reuse the existing leased table-job pattern: claim with short transaction and `FOR UPDATE SKIP LOCKED`; perform Storage API call outside database lock; then finalize idempotently. Missing object after a successful prior delete MUST complete the tombstone instead of retrying forever.
 - `ARCH-MED-005` Worker MUST recompute references, protected state, and reference fingerprint immediately before removal. A changed/new reference returns safe conflict and leaves the object intact.
 - `ARCH-MED-006` Permanent deletion MUST call Supabase Storage API. Direct SQL mutation of `storage.objects`, browser service-role use, and direct feature calls to `.remove()` for managed referenced assets MUST be prohibited.
-- `ARCH-MED-007` `coach-public-media` MUST be private before managed deletion launches. Public Coach media is served through an opaque-ID gateway/Edge Function that verifies current published reference and active asset state on every request; W07.6 uses `Cache-Control: no-store` until W08 introduces a proven versioned cache/invalidation contract. Normal user/public reads deny trashed/purge states; Admin-only preview is no-store and revokes browser object URLs.
+- `ARCH-MED-007` `coach-public-media` MUST be private before first production launch. Public Coach media is served through an opaque-ID gateway/Edge Function that verifies current published reference and active asset state on every request; W08 owns a proven versioned/no-store cache and invalidation contract. Normal user/public reads deny hidden, pending/rejected moderation, superseded, unpublished, or entitlement-revoked media. W07.6 later extends this boundary with trashed/purge states and Admin-only preview.
 - `ARCH-MED-008` Storage summary derives bytes/count from `storage.objects.metadata` through a server projection. Plan quota/limit appears only when supplied by a trusted server configuration; it is never hardcoded from a screenshot or product plan assumption.
 
 ## 10. Rendering strategy
@@ -314,7 +317,7 @@ offline | timeout | rateLimited | storageRejected | unknown
 - [Expo: Publish websites](https://docs.expo.dev/guides/publishing-websites/)
 - [Supabase: Google Auth](https://supabase.com/docs/guides/auth/social-login/auth-google)
 - [Cloudflare: Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
-- [OpenRouter: Gemma 4 31B free](https://openrouter.ai/google/gemma-4-31b-it%3Afree/api)
+- [OpenRouter: Gemma 4 26B A4B](https://openrouter.ai/google/gemma-4-26b-a4b-it/api)
 - [OpenRouter: Quickstart and model field](https://openrouter.ai/docs/quickstart)
 - [OpenRouter: Reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens)
 - [Supabase: Storage size usage](https://supabase.com/docs/guides/platform/manage-your-usage/storage-size)

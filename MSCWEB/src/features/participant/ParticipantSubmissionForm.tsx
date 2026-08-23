@@ -10,6 +10,8 @@ import { componentTokens, primitiveTokens, typographyTokens } from '@/shared/des
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { Button, Card, InlineMessage, ProgressBar } from '@/shared/ui/primitives';
 import { FoodInsightCard } from '@/features/food-insight/FoodInsightCard';
+import { getPublicRepository } from '@/features/public/public-repository';
+import { isFoodInsightEnabledForStep } from './participant-program-policy';
 
 type DraftAnswer = ParticipantQuestionAnswer & { previewUrl?: string };
 
@@ -34,8 +36,10 @@ export function ParticipantSubmissionForm({
   const objectUrlCleanups = useRef(new Map<string, () => void>());
   const idempotencyKey = useRef(`web-${step.id}-${crypto.randomUUID()}`);
   const isWeight = ['initial_weigh_in', 'daily_weigh_in', 'final_weigh_in'].includes(step.content_kind);
+  const isRecorded = submission?.status === 'pending' || submission?.status === 'approved';
+  const foodInsightEnabled = isFoodInsightEnabledForStep(step);
   const mutation = isWeight ? submitWeight : submitAnswers;
-  const error = mutation.error instanceof Error ? mutation.error.message : undefined;
+  const error = !isRecorded && mutation.error instanceof Error ? mutation.error.message : undefined;
 
   useEffect(() => () => {
     objectUrlCleanups.current.forEach((cleanup) => cleanup());
@@ -54,7 +58,7 @@ export function ParticipantSubmissionForm({
     }));
   };
 
-  const selectPhoto = (question: PublicProgramQuestion, file?: File) => {
+  const selectMedia = (question: PublicProgramQuestion, kind: 'photo' | 'video', file?: File) => {
     if (!file) return;
     objectUrlCleanups.current.get(question.id)?.();
     const previewUrl = URL.createObjectURL(file);
@@ -63,7 +67,7 @@ export function ParticipantSubmissionForm({
       URL.revokeObjectURL(previewUrl);
       unregister();
     });
-    setAnswer(question, { photo: file, previewUrl });
+    setAnswer(question, kind === 'photo' ? { photo: file, previewUrl } : { video: file, previewUrl });
   };
 
   const submit = async () => {
@@ -93,7 +97,17 @@ export function ParticipantSubmissionForm({
 
   return (
     <View style={styles.stack} testID="participant.submission.form">
-      {isWeight ? (
+      {isRecorded ? (
+        <InlineMessage
+          title={isWeight ? 'Berat badan sudah dicatat' : submission.status === 'pending' ? 'Jawaban sudah dikirim' : 'Aktivitas sudah selesai'}
+          message={isWeight
+            ? 'Data timbang tersimpan secara privat. Kamu tidak perlu mengisi atau mengirim ulang.'
+            : submission.status === 'pending'
+              ? 'Jawaban sedang menunggu tinjauan Coach. Kamu tidak perlu mengirim ulang.'
+              : undefined}
+          tone={submission.status === 'approved' ? 'success' : 'warning'}
+        />
+      ) : isWeight ? (
         <Card>
           <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>Catat berat badan</Text>
           <TextInput
@@ -112,20 +126,21 @@ export function ParticipantSubmissionForm({
         <Card>
           <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>{step.content_kind === 'quiz' ? 'Kuis' : 'Jawaban aktivitas'}</Text>
           {step.content_kind === 'quiz' ? <InlineMessage title="Satu kesempatan" message="Periksa semua jawaban sebelum mengirim." tone="warning" /> : null}
-          {interactiveQuestions(step).map((question) => (
+          {step.program_questions.map((question) => (
             <QuestionInput
               key={question.id}
               question={question}
               answer={answers[question.id]}
               disabled={disabled || mutation.isPending}
               onChange={(patch) => setAnswer(question, patch)}
-              onPhoto={(file) => selectPhoto(question, file)}
+              onPhoto={(file) => selectMedia(question, 'photo', file)}
+              onVideo={(file) => selectMedia(question, 'video', file)}
             />
           ))}
         </Card>
       )}
 
-      {interactiveQuestions(step).some((question) => question.analysis_mode === 'food') ? (
+      {foodInsightEnabled ? (
         <>
           {!submission ? <InlineMessage title="Analisis foto dengan AI" message="Foto makanan ini akan dianalisis otomatis oleh layanan AI. Hindari wajah dan dokumen pribadi di dalam foto." tone="warning" /> : null}
           <FoodInsightCard submissionId={submission?.id} />
@@ -138,16 +153,16 @@ export function ParticipantSubmissionForm({
         </View>
       ) : null}
       {error ? <InlineMessage title="Belum dapat dikirim" message={error} tone="destructive" /> : null}
-      {confirmationVisible ? (
+      {!isRecorded && confirmationVisible ? (
         <Card>
           <Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>Kirim jawaban sekarang?</Text>
-          <Text style={[styles.body, { color: colors.secondaryText }]}>Pastikan jawaban dan foto sudah sesuai petunjuk program.</Text>
+          <Text style={[styles.body, { color: colors.secondaryText }]}>Pastikan jawaban dan media sudah sesuai petunjuk program.</Text>
           <View style={styles.actionRow}>
             <View style={styles.flex}><Button label="Periksa lagi" tone="secondary" onPress={() => setConfirmationVisible(false)} /></View>
             <View style={styles.flex}><Button label="Kirim sekarang" loading={mutation.isPending} onPress={() => void submit()} /></View>
           </View>
         </Card>
-      ) : (
+      ) : !isRecorded ? (
         <Button
           label={submission?.status === 'rejected' ? 'Kirim perbaikan' : 'Kirim jawaban'}
           icon="upload"
@@ -156,7 +171,7 @@ export function ParticipantSubmissionForm({
           onPress={() => setConfirmationVisible(true)}
           testID="participant.submission.confirm"
         />
-      )}
+      ) : null}
     </View>
   );
 }
@@ -167,30 +182,65 @@ function QuestionInput({
   disabled,
   onChange,
   onPhoto,
+  onVideo,
 }: {
   question: PublicProgramQuestion;
   answer?: DraftAnswer;
   disabled: boolean;
   onChange: (patch: Partial<DraftAnswer>) => void;
   onPhoto: (file?: File) => void;
+  onVideo: (file?: File) => void;
 }) {
   const { colors } = useAppTheme();
+  if (question.kind === 'heading' || question.kind === 'text') {
+    return <View style={styles.questionGroup}><QuestionPrompt question={question} heading={question.kind === 'heading'} /></View>;
+  }
   if (question.kind === 'photo_upload') {
     return (
       <View style={styles.questionGroup}>
-        <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{question.prompt}</Text>
+        <QuestionPrompt question={question} />
         {answer?.previewUrl ? (
           <Image accessibilityLabel="Pratinjau bukti foto" resizeMode="contain" source={{ uri: answer.previewUrl }} style={[styles.preview, { backgroundColor: colors.secondaryBackground }]} />
-        ) : <InlineMessage title="Bukti foto diperlukan" message="Ambil foto dengan kamera atau pilih dari perangkat. Lokasi dan metadata lain akan dihapus." />}
+        ) : null}
         {Platform.OS === 'web' ? (
           <label style={{ display: 'block' }}>
-            <span style={fileButtonStyle(colors.primaryAction, disabled)}>Ambil atau pilih foto</span>
+            <span style={fileButtonStyle(colors.primaryAction, disabled)}>Pilih sumber foto</span>
             <input
-              aria-label="Ambil atau pilih foto"
+              aria-label="Pilih sumber foto"
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-              capture="environment"
               disabled={disabled}
-              onChange={(event) => onPhoto(event.currentTarget.files?.[0])}
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = '';
+                onPhoto(file);
+              }}
+              style={visuallyHiddenInputStyle}
+              type="file"
+            />
+          </label>
+        ) : null}
+      </View>
+    );
+  }
+  if (question.kind === 'video_upload') {
+    return (
+      <View style={styles.questionGroup}>
+        <QuestionPrompt question={question} />
+        {answer?.previewUrl ? (
+          <video aria-label="Pratinjau bukti video" controls preload="metadata" src={answer.previewUrl} style={answerVideoStyle} />
+        ) : <InlineMessage title="Bukti video diperlukan" message="Pilih dari pustaka atau file, atau rekam video dengan kamera. Ukuran maksimal 50 MB dan video disimpan privat." />}
+        {Platform.OS === 'web' ? (
+          <label style={{ display: 'block' }}>
+            <span style={fileButtonStyle(colors.primaryAction, disabled)}>Pilih sumber video</span>
+            <input
+              aria-label="Pilih sumber video"
+              accept="video/mp4,video/quicktime,video/webm"
+              disabled={disabled}
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = '';
+                onVideo(file);
+              }}
               style={visuallyHiddenInputStyle}
               type="file"
             />
@@ -204,7 +254,7 @@ function QuestionInput({
     const isSingle = question.kind === 'single_choice' || question.kind === 'image_choice';
     return (
       <View style={styles.questionGroup}>
-        <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{question.prompt}</Text>
+        <QuestionPrompt question={question} />
         {question.program_question_options.map((option) => {
           const checked = selected.includes(option.id);
           return (
@@ -225,7 +275,7 @@ function QuestionInput({
   }
   return (
     <View style={styles.questionGroup}>
-      <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{question.prompt}</Text>
+      <QuestionPrompt question={question} />
       <TextInput
         accessibilityLabel={question.prompt}
         editable={!disabled}
@@ -241,6 +291,16 @@ function QuestionInput({
   );
 }
 
+function QuestionPrompt({ question, heading = false }: { question: PublicProgramQuestion; heading?: boolean }) {
+  const { colors } = useAppTheme();
+  const url = getPublicRepository().questionPromptMediaUrl(question.media_path);
+  return <>
+    <Text accessibilityRole={heading ? 'header' : undefined} style={[heading ? styles.heading : styles.cardTitle, { color: colors.primaryText }]}>{question.prompt}</Text>
+    {url && question.media_kind === 'image' ? <Image accessibilityLabel={question.media_alt_text || 'Gambar panduan pertanyaan'} resizeMode="contain" source={{ uri: url }} style={[styles.promptMedia, { backgroundColor: colors.secondaryBackground }]} /> : null}
+    {url && question.media_kind === 'video' ? <video aria-label={question.media_alt_text || 'Video panduan pertanyaan'} controls preload="metadata" src={url} style={promptVideoStyle} /> : null}
+  </>;
+}
+
 function interactiveQuestions(step: PublicProgramStep): PublicProgramQuestion[] {
   return step.program_questions.filter((question) => question.kind !== 'heading' && question.kind !== 'text');
 }
@@ -248,12 +308,15 @@ function interactiveQuestions(step: PublicProgramStep): PublicProgramQuestion[] 
 function answerIsComplete(question: PublicProgramQuestion, answer?: DraftAnswer): boolean {
   if (!answer) return false;
   if (question.kind === 'photo_upload') return answer.photo !== undefined;
+  if (question.kind === 'video_upload') return answer.video !== undefined;
   if (question.kind === 'number') return answer.numberValue !== undefined && Number.isFinite(answer.numberValue);
   if (question.program_question_options.length > 0) return (answer.selectedOptionIds?.length ?? 0) > 0;
   return (answer.textValue?.trim().length ?? 0) > 0;
 }
 
 const visuallyHiddenInputStyle = { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap' } as const;
+const promptVideoStyle = { width: '100%', maxHeight: 420, borderRadius: 14, backgroundColor: '#000000' } as const;
+const answerVideoStyle = { width: '100%', maxHeight: 420, borderRadius: 14, backgroundColor: '#000000' } as const;
 
 function fileButtonStyle(backgroundColor: string, disabled: boolean) {
   return {
@@ -282,6 +345,7 @@ const styles = StyleSheet.create({
   option: { minHeight: componentTokens.minimumTouchTarget, borderWidth: 2, borderRadius: primitiveTokens.radius.medium, padding: primitiveTokens.space.medium, justifyContent: 'center' },
   answerField: { minHeight: 72, borderWidth: 1, borderRadius: primitiveTokens.radius.medium, padding: primitiveTokens.space.medium, ...typographyTokens.body, textAlignVertical: 'top' },
   preview: { width: '100%', height: 260, borderRadius: primitiveTokens.radius.large },
+  promptMedia: { width: '100%', height: 320, borderRadius: primitiveTokens.radius.large },
   actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: primitiveTokens.space.small },
   flex: { flex: 1, minWidth: 180 },
 });

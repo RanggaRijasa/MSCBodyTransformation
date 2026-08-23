@@ -13,6 +13,7 @@ let enrollmentId: string | undefined;
 let programId: string | undefined;
 let programDayId: string | undefined;
 let programStepId: string | undefined;
+let weighInStepId: string | undefined;
 let session: Session | undefined;
 
 test.describe('W03 Participant program experience', () => {
@@ -35,6 +36,7 @@ test.describe('W03 Participant program experience', () => {
     programId = randomUUID();
     programDayId = randomUUID();
     programStepId = randomUUID();
+    weighInStepId = randomUUID();
     expect(coachId).toBeTruthy();
     expect(adminId).toBeTruthy();
 
@@ -61,12 +63,16 @@ test.describe('W03 Participant program experience', () => {
       created_by: adminId as string,
     })).error).toBeNull();
     expect((await service.from('program_days').insert({ id: programDayId, program_id: programId, day_number: 1, title: 'Hari pertama', scheduled_on: localDate(0) })).error).toBeNull();
-    expect((await service.from('program_steps').insert({ id: programStepId, program_day_id: programDayId, step_order: 1, title: 'Unggah Foto', instructions: 'Unggah foto jawaban.', content_kind: 'form', completion_policy: 'answer_all_questions', verification_mode: 'coach_review' })).error).toBeNull();
+    expect((await service.from('program_steps').insert([
+      { id: programStepId, program_day_id: programDayId, step_order: 1, title: 'Unggah Foto', instructions: 'Unggah foto jawaban.', content_kind: 'form', completion_policy: 'answer_all_questions', verification_mode: 'coach_review' },
+      { id: weighInStepId, program_day_id: programDayId, step_order: 2, title: 'Timbang Awal', instructions: 'Catat berat awal secara privat.', content_kind: 'initial_weigh_in', completion_policy: 'submit_weigh_in', verification_mode: 'automatic' },
+    ])).error).toBeNull();
     expect((await service.from('program_questions').insert({ step_id: programStepId, question_order: 1, prompt: 'Unggah foto jawaban', kind: 'photo_upload' })).error).toBeNull();
 
     expect((await service.from('profiles').update({
       role: 'participant',
       display_name: 'Peserta Browser W03',
+      provider_avatar_url: 'https://example.com/participant-avatar.jpg',
       current_coach_id: coachId,
       onboarding_status: 'active',
       provisional_expires_at: null,
@@ -146,6 +152,15 @@ test.describe('W03 Participant program experience', () => {
       key: `sb-${new URL(localUrl as string).hostname.split('.')[0]}-auth-token`,
       value: JSON.stringify(session),
     });
+    await page.addInitScript((selectedProgramId) => {
+      globalThis.localStorage.setItem('msc:leaderboard-program:v1', selectedProgramId);
+    }, programId);
+    await page.route('https://example.com/participant-avatar.jpg', (route) => route.fulfill({
+      status: 200,
+      contentType: 'image/jpeg',
+      headers: { 'access-control-allow-origin': '*' },
+      body: Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EB//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EB//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EB//2Q==', 'base64'),
+    }));
 
     await page.goto('/app/home');
     await expect(page.getByTestId('participant.home')).toBeVisible();
@@ -153,6 +168,10 @@ test.describe('W03 Participant program experience', () => {
     const sectionOrder = ['Program', 'Fokus hari ini', 'Leaderboard Top 5', 'Pemenang terbaru', 'Coach'].map((label) => headings.indexOf(label));
     expect(sectionOrder.every((position) => position >= 0)).toBe(true);
     expect([...sectionOrder].sort((left, right) => left - right)).toEqual(sectionOrder);
+    await expect(page.getByLabel('Lima peringkat teratas').getByRole('img', { name: 'Peserta Browser W03' })).toBeVisible();
+
+    await page.goto(`/app/leaderboard?programId=${programId}`);
+    await expect(page.getByTestId('leaderboard.podium').getByRole('img', { name: 'Peserta Browser W03' })).toBeVisible();
 
     await page.getByRole('link', { name: 'Program', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/programs/);
@@ -160,7 +179,16 @@ test.describe('W03 Participant program experience', () => {
     const programLink = page.getByRole('link').filter({ hasText: 'Program Integration Storage' });
     await expect(programLink).toBeVisible();
     await programLink.click();
-    await expect(page.getByTestId('participant.program.activity')).toBeVisible();
+    const activity = page.getByTestId('participant.program.activity');
+    await expect(activity).toBeVisible();
+    await expect(activity.getByText('Asia/Makassar')).toHaveCount(0);
+    const compactDate = activity.getByText(/^\d{1,2}(?:–\d{1,2})? [A-Za-z]+(?:–\d{1,2} [A-Za-z]+)? \d{4}$/u).first();
+    await expect(compactDate).toBeVisible();
+    const dateLineCount = await compactDate.evaluate((element) => {
+      const lineHeight = Number.parseFloat(globalThis.getComputedStyle(element).lineHeight);
+      return Math.round(element.getBoundingClientRect().height / lineHeight);
+    });
+    expect(dateLineCount).toBe(1);
     await expect(page.getByRole('heading', { name: 'Aktivitas program' })).toBeVisible();
 
     const step = page.getByRole('button', { name: /Unggah Foto/ });
@@ -169,7 +197,9 @@ test.describe('W03 Participant program experience', () => {
     await expect(page.getByTestId('participant.step.renderer')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Jawaban aktivitas' })).toBeVisible();
     await expect(page.getByTestId('participant.submission.form').getByText('Unggah foto jawaban')).toBeVisible();
-    await expect(page.getByLabel('Ambil atau pilih foto')).toBeEnabled();
+    const photoPicker = page.getByLabel('Pilih sumber foto');
+    await expect(photoPicker).toBeEnabled();
+    await expect(photoPicker).not.toHaveAttribute('capture');
     expect(await page.locator('body').innerText()).not.toContain('coach_qr_identifier');
     expect(await page.locator('body').innerText()).not.toContain('Berat awal');
 
@@ -177,6 +207,27 @@ test.describe('W03 Participant program experience', () => {
     await expect(page.getByTestId('participant.program.activity')).toBeVisible();
     await page.goBack();
     await expect(page.getByTestId('participant.program.catalog')).toBeVisible();
+  });
+
+  test('Participant sees an existing weigh-in as completed and cannot submit it twice', async ({ page }) => {
+    test.skip(!canRunAuthenticated || session === undefined || programId === undefined || weighInStepId === undefined, 'Memerlukan Supabase lokal.');
+    await page.addInitScript(({ key, value }) => globalThis.localStorage.setItem(key, value), {
+      key: `sb-${new URL(localUrl as string).hostname.split('.')[0]}-auth-token`,
+      value: JSON.stringify(session),
+    });
+
+    await page.goto(`/app/programs/${programId}?step=${weighInStepId}`);
+    await page.getByLabel('Berat dalam kilogram').fill('72,5');
+    await page.getByRole('button', { name: 'Kirim jawaban' }).click();
+    await page.getByRole('button', { name: 'Kirim sekarang' }).click();
+    await expect(page.getByText('Berat badan sudah dicatat')).toBeVisible();
+    await expect(page.getByText('Selesai')).toBeVisible();
+    await expect(page.getByLabel('Berat dalam kilogram')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Kirim jawaban' })).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByText('Berat badan sudah dicatat')).toBeVisible();
+    await expect(page.getByText('Selesai')).toBeVisible();
   });
 });
 

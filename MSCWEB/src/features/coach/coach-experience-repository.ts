@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 import { normalizeBrowserImageOffMainThread } from '@/shared/media/image-normalization';
+import { publicCoachMediaUrl } from '@/shared/media/public-coach-media';
 import { SupabasePrivateMediaAdapter } from '@/shared/media/supabase-private-media-adapter';
 import { getSupabaseBrowserClient } from '@/shared/supabase/client';
 import { paymentAttemptSchema, type PaymentAttempt } from '@/features/payment/payment-models';
@@ -266,7 +267,10 @@ export class SupabaseCoachExperienceRepository {
       result_offset: 0,
     });
     if (response.error) throw mapCoachError(response.error);
-    return parse(response.data ?? [], z.array(coachLeaderboardEntrySchema));
+    return parse(response.data ?? [], z.array(coachLeaderboardEntrySchema)).map((row) => ({
+      ...row,
+      avatar_url: publicCoachMediaUrl(row.avatar_reference) ?? row.avatar_url,
+    }));
   }
 
   async getParticipantDirectory(): Promise<CoachParticipantDirectory> {
@@ -284,13 +288,30 @@ export class SupabaseCoachExperienceRepository {
       target_enrollment_id: enrollmentId ?? null,
     });
     if (response.error) throw mapCoachError(response.error);
-    return parse(response.data, coachParticipantDetailSchema);
+    const detail = parse(response.data, coachParticipantDetailSchema);
+    const submissionIds = detail.submissions.map((submission) => submission.id);
+    if (submissionIds.length === 0) return detail;
+    const videos = await this.client.rpc('list_my_coach_submission_videos', { target_submission_ids: submissionIds });
+    if (videos.error) throw mapCoachError(videos.error);
+    const parsedVideos = parse(videos.data ?? [], z.array(z.object({ answer_id: z.string().uuid(), private_video_path: z.string() })));
+    const videoByAnswer = new Map(parsedVideos.map((video) => [video.answer_id, video.private_video_path]));
+    return { ...detail, submissions: detail.submissions.map((submission) => ({ ...submission, answers: submission.answers.map((answer) => ({ ...answer, private_video_path: videoByAnswer.get(answer.id) ?? answer.private_video_path })) })) };
   }
 
   async getMyPublicProfileDraft(): Promise<CoachProfileDraft> {
     const response = await this.client.rpc('get_my_coach_public_profile_draft');
     if (response.error) throw mapCoachError(response.error);
-    return parse(response.data, coachProfileDraftSchema);
+    const profile = parse(response.data, coachProfileDraftSchema);
+    const objectPath = profile.draft?.profile_photo_object_path;
+    if (!profile.draft || !objectPath) return profile;
+    const preview = await this.privateMedia.createSignedUrl({
+      bucket: 'coach-public-media',
+      objectPath,
+    });
+    return {
+      ...profile,
+      draft: { ...profile.draft, profile_photo_preview_url: preview.url },
+    };
   }
 
   async savePublicProfileDraft(command: CoachProfileDraftCommand): Promise<void> {
@@ -366,8 +387,8 @@ export class SupabaseCoachExperienceRepository {
     return parse(response.data, publicCoachProfileSchema);
   }
 
-  publicMediaUrl(objectPath: string): string {
-    return this.rawClient.storage.from('coach-public-media').getPublicUrl(objectPath).data.publicUrl;
+  publicMediaUrl(assetId: string): string {
+    return publicCoachMediaUrl(assetId) ?? '';
   }
 }
 

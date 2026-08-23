@@ -8,6 +8,8 @@ import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { useResponsiveLayout } from '@/shared/design/useResponsiveLayout';
 import { MSCIcon, type MSCIconName } from '@/shared/icons/MSCIcon';
+import { publicCoachMediaUrl } from '@/shared/media/public-coach-media';
+import { isQrDarkModule } from '@/shared/qr/qr-matrix';
 import { Button, Card, InlineMessage, StateView, StatusBadge, UserAvatar } from '@/shared/ui/primitives';
 import { useCoachWorkspace } from './coach-experience-queries';
 import type { CoachWorkspace } from './coach-experience-models';
@@ -44,7 +46,7 @@ function CoachDashboard({ workspace }: { workspace: CoachWorkspace }) {
       <Pressable accessibilityRole="button" onPress={() => router.push('/coach/profile')}>
         <Card>
           <View style={styles.identityRow}>
-            <UserAvatar uri={workspace.profile.provider_avatar_url ?? undefined} label={workspace.profile.display_name} size={72} />
+            <UserAvatar uri={publicCoachMediaUrl(workspace.profile.photo_reference) ?? workspace.profile.provider_avatar_url ?? undefined} label={workspace.profile.display_name} size={72} />
             <View style={styles.flexCopy}><Text style={[styles.caption, { color: colors.secondaryText }]}>Selamat datang</Text><Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>{workspace.profile.display_name}</Text><StatusBadge label="Coach terverifikasi" tone="success" /></View>
           </View>
         </Card>
@@ -117,7 +119,7 @@ function CoachIdentifier({ payload }: { payload: string }) {
       }
     } catch { setMessage('QR belum dapat dibagikan. Coba lagi.'); }
   };
-  return <ScrollView contentContainerStyle={styles.content} testID="coach.qr"><BackButton /><Card><Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>QR pendaftaran</Text><View style={styles.qrFrame}><Svg accessibilityLabel="QR pendaftaran Coach" width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}><Rect width={size} height={size} fill="#ffffff" />{[...matrix].map((value, index) => value === 0 ? <Rect key={index} x={(index % extent) + quietZone} y={Math.floor(index / extent) + quietZone} width="1" height="1" fill="#000000" /> : null)}</Svg></View><Text style={[styles.body, { color: colors.secondaryText }]}>Minta Peserta memindai QR ini saat memilih program. Kode internal tidak ditampilkan atau dapat disalin.</Text><Button label="Bagikan QR Coach" icon="qr" onPress={() => void share()} />{message ? <Text style={[styles.caption, { color: colors.secondaryText }]}>{message}</Text> : null}</Card></ScrollView>;
+  return <ScrollView contentContainerStyle={styles.content} testID="coach.qr"><BackButton /><Card><Text accessibilityRole="header" style={[styles.heading, { color: colors.primaryText }]}>QR pendaftaran</Text><View style={styles.qrFrame}><Svg accessibilityLabel="QR pendaftaran Coach" width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}><Rect width={size} height={size} fill="#ffffff" />{[...matrix].map((value, index) => isQrDarkModule(value) ? <Rect key={index} x={(index % extent) + quietZone} y={Math.floor(index / extent) + quietZone} width="1" height="1" fill="#000000" /> : null)}</Svg></View><Text style={[styles.body, { color: colors.secondaryText }]}>Minta Peserta memindai QR ini saat memilih program. Kode internal tidak ditampilkan atau dapat disalin.</Text><Button label="Bagikan QR Coach" icon="qr" onPress={() => void share()} />{message ? <Text style={[styles.caption, { color: colors.secondaryText }]}>{message}</Text> : null}</Card></ScrollView>;
 }
 
 function BackButton() { return <Button label="Kembali ke dashboard" tone="secondary" icon="back" onPress={() => router.back()} />; }
@@ -165,7 +167,7 @@ async function renderQrPng(matrix: Uint8Array, extent: number, quietZone: number
   if (!context) throw new Error('canvas_unavailable');
   context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = '#000000';
-  matrix.forEach((value, index) => { if (value === 0) context.fillRect(((index % extent) + quietZone) * scale, (Math.floor(index / extent) + quietZone) * scale, scale, scale); });
+  matrix.forEach((value, index) => { if (isQrDarkModule(value)) context.fillRect(((index % extent) + quietZone) * scale, (Math.floor(index / extent) + quietZone) * scale, scale, scale); });
   return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('png_unavailable')), 'image/png'));
 }
 

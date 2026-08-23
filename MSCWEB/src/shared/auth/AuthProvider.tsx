@@ -201,14 +201,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const signOut = useCallback(async () => {
     manualSignOutRef.current = true;
     purgePrivateCaches(queryClient);
-    const { error } = await client.auth.signOut();
-    if (error) {
-      manualSignOutRef.current = false;
-      throw new Error('Tidak dapat keluar. Periksa koneksi lalu coba lagi.');
-    }
+    const { error } = await client.auth.signOut({ scope: 'local' });
     accountIdRef.current = null;
     setState({ status: 'guest' });
-    router.replace('/app/home');
+    router.replace('/login');
+    if (error) throw new Error('Sesi lokal sudah ditutup, tetapi server belum dapat dihubungi.');
   }, [client, queryClient]);
 
   const requireAuthentication = useCallback((returnRoute: string) => {

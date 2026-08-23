@@ -186,3 +186,50 @@ Append backend readiness, migrations, auth scenario, simulator evidence, command
   stable geometry after selecting Program, and selected-state semantics.
 - Sub-agents: none. Remaining blockers: none. Next unchecked workplan remains
   W03 Participant Program.
+
+### 2026-08-23 — Public Coach card simplification
+
+- Files changed: `src/features/public/PublicComponents.tsx`,
+  `src/app/app/coaches.tsx`, `src/app/app/coaches/[coachId].tsx`, and focused
+  Playwright coverage in `tests/e2e/public-auth.spec.ts`.
+- Behavior: the Coach directory no longer shows the blue verification
+  explanation, directory cards omit biography text, and the public Coach
+  detail no longer shows the blue program-enrollment explanation. The card
+  remains one link and the full biography remains available on the detail
+  page.
+- Verification: `npm run typecheck`, `npm run lint -- --no-cache`, focused
+  public-model Vitest (4 passed), full Vitest (202 passed, 9
+  environment-skipped), the focused compact Playwright directory-to-detail
+  flow, production build, production-environment scan, bundle verification,
+  PWA verification, and Wrangler production dry-run all passed.
+- Production QA: deployed Worker version
+  `637d1f16-92bc-4d00-836b-dd4adb470476`; the in-app browser verified the
+  directory and detail routes, target-card navigation, absence of all three
+  requested elements, meaningful content, and no console warning/error. No
+  DNS, Supabase production, secret, migration, native/Xcode, or Git mutation
+  occurred. Next unchecked workplan remains W03 Participant Program.
+
+### 2026-08-23 — Logout akun dan pemilih akun Google
+
+- Files changed: `src/shared/auth/AuthProvider.tsx`,
+  `src/shared/auth/supabase-google-oauth-adapter.ts`, shared logout control
+  `src/shared/auth/AccountSignOutButton.tsx`, Participant profile, Coach
+  profile editor, Admin settings, and focused unit/Playwright auth coverage.
+- Behavior: `Keluar` now removes the current Supabase browser session with an
+  explicit local scope, purges private caches through the existing auth
+  boundary, and returns to `/login`. Participant, Coach, and Admin use the
+  same logout control. Every new Google OAuth request includes
+  `prompt=select_account`, so a retained Google browser session cannot silently
+  choose the last MSC account.
+- Verification: `npm run typecheck` and `npm run lint` passed; focused auth
+  Vitest passed 26/26; full Vitest passed 205 tests with 9
+  environment-dependent skips; production build, production-environment scan,
+  50-file bundle verification, PWA verification, Wrangler dry-run, and compact
+  public-auth Playwright passed 7/7. Browser smoke reached Google from both the
+  local production build and production domain and confirmed
+  `prompt=select_account` without completing a real login.
+- Production QA: deployed Worker version
+  `be4cc1e9-d2ef-4563-8f9c-7b7bc63fc00b` at 100%. Apex `/login` returned 200
+  with `no-store`; `www` retained its 308 redirect to apex. No DNS, Supabase
+  production, secret, migration, real Google account, native/Xcode, or Git
+  mutation occurred. Next unchecked workplan remains W03 Participant Program.

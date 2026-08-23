@@ -2,6 +2,14 @@
 
 Dokumen ini adalah delivery overview. Workplan eksekusi rinci, checklist, sub-agent plan, exit criteria, dan permission matrix berada di [`workplans/`](./workplans/README.md). Penamaan `W00–W09` digunakan untuk membedakan fase MSCWEB dari fase native iOS pada repository induk.
 
+Active launch sequence per [`ADR-0010`](./decisions/0010-defer-admin-analytics-and-storage-management.md):
+
+```text
+W07.4 complete → W08 PWA/Cloudflare hardening → W09 authorized deployment
+                                      ↓ after launch by new priority
+                              W07.5 Sales → W07.6 Image Storage
+```
+
 ## Prinsip delivery
 
 - Kerjakan vertical slice kecil end-to-end.
@@ -9,6 +17,7 @@ Dokumen ini adalah delivery overview. Workplan eksekusi rinci, checklist, sub-ag
 - iOS tidak diubah untuk membuat web lebih mudah.
 - Setiap phase berakhir dengan build/test/demo evidence dan spec delta.
 - Repository tetap menyatu sampai checkpoint pemisahan aman.
+- Sesuai [`ADR-0011`](./decisions/0011-web-only-repository-and-supabase-authority.md), setelah W09 cutover repository MSCWEB menjadi satu-satunya authority aplikasi web, Cloudflare, dan seluruh canonical Supabase deployment history; repository iOS menjadi arsip non-deployable.
 
 ## W00 — feasibility spikes
 
@@ -123,7 +132,9 @@ Exit: semua Admin iPhone capabilities memiliki parity evidence atau accepted def
 
 Exit: new Google user tidak dapat membuka private app sebelum onboarding authoritative; Participant memerlukan QR valid, applicant Coach tetap Participant sampai Admin approval, dan abandoned provisional identity dibersihkan aman.
 
-## W07.5 — Admin Sales Overview
+## W07.5 — Admin Sales Overview (`Deferred post-launch`)
+
+Tidak menjadi dependency atau release gate deployment pertama. Workplan dan requirement berikut tetap authoritative ketika fase ini diaktifkan setelah launch.
 
 - Dashboard Quick Access `Ringkasan penjualan` dan route `/admin/sales`;
 - ledger-authoritative gross/reversal/net/order metrics;
@@ -133,7 +144,9 @@ Exit: new Google user tidak dapat membuka private app sebelum onboarding authori
 
 Exit: semua angka dapat direkonsiliasi ke payment ledger tanpa double count commerce, pending tidak menjadi revenue, dan response tidak memuat private payment/customer data.
 
-## W07.6 — Admin Image Storage
+## W07.6 — Admin Image Storage (`Deferred post-launch`)
+
+Inventory/usage/Trash/restore/purge Admin tidak menjadi dependency deployment pertama. Private Coach-media gateway dan automatic payment-proof retention/orphan cleanup dipindahkan ke launch gate W08.
 
 - fourth Quick Access `Penyimpanan gambar` dan route `/admin/image-storage`;
 - managed usage/inventory untuk user-uploaded question, payment, dan Coach-profile images;
@@ -154,7 +167,8 @@ Exit: Admin dapat menghapus eligible synthetic local image tanpa merusak domain 
 - observability redaction;
 - production runbooks dan policy blockers.
 - canonical/Open Graph/cache behavior untuk profil Coach publik.
-- sales/inventory cache isolation dan public-media deletion invalidation.
+- minimum media launch safety: private evidence/RLS, payment-proof retention/orphan cleanup, opaque Coach-media gateway, dan cache invalidation.
+- launch build tidak merender route/action W07.5 atau W07.6 yang masih deferred.
 
 Exit: release gates pada QA spec lulus; production deploy masih memerlukan izin eksplisit.
 
@@ -163,13 +177,15 @@ Exit: release gates pada QA spec lulus; production deploy masih memerlukan izin 
 - requirement-to-evidence traceability dan unresolved-risk register;
 - authorized production Supabase/AI provider/Cloudflare rollout bila diminta;
 - controlled production smoke scope;
-- safe repository split dengan satu authority migration Supabase.
+- safe repository split yang membawa seluruh canonical root `supabase/` ke repository MSCWEB;
+- cutover Cloudflare dan Supabase deployment authority hanya ke repository MSCWEB;
+- repository iOS dibekukan sebagai arsip tanpa deployment authority.
 
 Exit: release/split dilakukan dan diverifikasi hanya dalam authorization yang tepat, atau tetap jelas belum dilakukan dengan blocker terdokumentasi.
 
 ## Safe repository split checkpoint
 
-Pindahkan `MSCWEB` ke repository sendiri setelah W01, hanya bila semua kondisi ini benar:
+Pindahkan `MSCWEB` ke repository sendiri pada W09 setelah W08 menghasilkan production candidate, hanya bila semua kondisi ini benar:
 
 - Expo project dapat install, lint, typecheck, test, export, dan serve sendiri dari folder `MSCWEB`;
 - tidak mengimpor source Swift atau path runtime dari parent;
@@ -177,15 +193,17 @@ Pindahkan `MSCWEB` ke repository sendiri setelah W01, hanya bila semua kondisi i
 - specs/ADRs ikut terbawa;
 - environment examples tidak memuat secret;
 - CI commands dan lockfile berada di folder;
-- kebutuhan shared Supabase migration ownership sudah diputuskan;
-- parent iOS tetap build tanpa dependency ke `MSCWEB`;
+- seluruh root `supabase/`—migration history, Functions/shared modules, tests, config, dan runbook—masuk transfer inventory tanpa squash, rebaseline, renumber, atau selective copy;
+- test/script yang masih memakai `../supabase/` atau parent-only path sudah memakai path root repository standalone;
+- repository iOS ditetapkan sebagai arsip dan tidak memiliki pipeline/credential deployment web atau backend aktif;
 - moving-folder dry run menunjukkan tidak ada broken relative path.
 
 Pilihan yang direkomendasikan setelah split:
 
-- repository web memiliki source frontend, tests, specs, dan Cloudflare config;
-- satu repository harus menjadi authority migration Supabase. Selama transisi, authority tetap repo induk; jangan menduplikasi migration history di dua repo yang dapat deploy;
-- kontrak backend bersama dipublikasikan sebagai versioned schema/types/artifact, bukan symlink filesystem.
+- repository MSCWEB memiliki source frontend, tests, specs, Cloudflare config, dan satu root `supabase/` yang memuat seluruh canonical deployment history;
+- hanya repository MSCWEB yang dapat deploy Cloudflare dan Supabase setelah cutover;
+- salinan sementara pada repository lama hanya menjadi safety backup non-deployable selama validation/rollback window;
+- repository iOS tetap utuh sebagai arsip sampai owner memberi izin destruktif terpisah untuk menghapus salinan lama.
 
 ## Spec-driven workflow per slice
 
@@ -204,7 +222,8 @@ Pilihan yang direkomendasikan setelah split:
 - SLA review pembayaran dan notification channel;
 - expiry, resubmission, dispute/refund, reconciliation SOP;
 - retention/deletion policy untuk bukti program dan pembayaran;
-- production Trash/purge period, media protected-state policy, worker/operator/alert, dan cache invalidation runbook;
+- payment-proof retention/orphan-cleanup schedule dan responsible operator;
+- private/opaque Coach public-media delivery serta cache invalidation/rollback runbook;
 - daftar Admin/reviewer production dan least-privilege process;
 - privacy policy/terms/support contact;
 - exact Supabase hosted project authorization dan Google OAuth credentials;

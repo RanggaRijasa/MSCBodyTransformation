@@ -18,6 +18,7 @@ it.runIf(canRun)('enforces free and paid W05 enrollment, private evidence, atomi
   const freeProgramId = randomUUID();
   const fullProgramId = randomUUID();
   const inactiveProgramId = randomUUID();
+  const retentionProgramId = randomUUID();
   const qrisPath = `destinations/${suffix}/qris.jpg`;
   const users: string[] = [];
   const orderIds: string[] = [];
@@ -49,6 +50,7 @@ it.runIf(canRun)('enforces free and paid W05 enrollment, private evidence, atomi
       programFixture(freeProgramId, 'Program gratis W05', 'free', adminA.id),
       { ...programFixture(fullProgramId, 'Program penuh W05', 'paid', adminA.id), participant_limit: 1 },
       { ...programFixture(inactiveProgramId, 'Program nonaktif W05', 'paid', adminA.id), status: 'draft', published_at: null },
+      programFixture(retentionProgramId, 'Program retensi W08', 'paid', adminA.id),
     ])).error).toBeNull();
     expect((await service.storage.from('payment-destination-assets').upload(qrisPath, jpeg, { contentType: 'image/jpeg', upsert: false })).error).toBeNull();
 
@@ -112,7 +114,91 @@ it.runIf(canRun)('enforces free and paid W05 enrollment, private evidence, atomi
     expect(transaction.data).toEqual([expect.objectContaining({ platform: 'web', provider: 'manual_transfer', status: 'verified' })]);
     expect(ledger.data).toHaveLength(1);
     expect(audit.data).toHaveLength(1);
+
     expect((await clientA.rpc('create_program_payment_order', { target_program_id: paidProgramId, coach_qr_payload: coachQr, payment_method: 'bank_transfer', request_idempotency_key: `w05-duplicate-${suffix}` })).error?.message).toContain('already_enrolled');
+
+    const retentionOrderResponse = await clientB.rpc('create_program_payment_order', {
+      target_program_id: retentionProgramId,
+      coach_qr_payload: coachQr,
+      payment_method: 'bank_transfer',
+      request_idempotency_key: `w08-retention-${suffix}`,
+    });
+    expect(retentionOrderResponse.error).toBeNull();
+    const retentionOrder = row(retentionOrderResponse.data) as { id: string };
+    orderIds.push(retentionOrder.id);
+    const retentionPrepare = await clientB.rpc('prepare_payment_evidence_attempt', {
+      target_order_id: retentionOrder.id,
+      request_idempotency_key: `w08-retention-upload-${suffix}`,
+    });
+    expect(retentionPrepare.error).toBeNull();
+    const retentionAttempt = row(retentionPrepare.data) as { id: string; object_path: string };
+    objectPaths.push(retentionAttempt.object_path);
+    expect((await clientB.storage.from('payment-evidence').upload(
+      retentionAttempt.object_path,
+      jpeg,
+      { contentType: 'image/jpeg', upsert: false },
+    )).error).toBeNull();
+    const oldSubmittedAt = new Date(Date.now() - 31 * 86_400_000).toISOString();
+    expect((await service.from('payment_evidence_attempts').update({
+      status: 'approved',
+      submitted_at: oldSubmittedAt,
+      reviewed_at: oldSubmittedAt,
+      reviewed_by: adminA.id,
+      mime_type: 'image/jpeg',
+      byte_size: jpeg.byteLength,
+      pixel_width: 1,
+      pixel_height: 1,
+      sha256_hex: createHash('sha256').update(jpeg).digest('hex'),
+    }).eq('id', retentionAttempt.id)).error).toBeNull();
+    expect((await service.from('payment_orders').update({ status: 'approved' })
+      .eq('id', retentionOrder.id)).error).toBeNull();
+
+    const retentionCandidates = await service.rpc('list_payment_evidence_retention_candidates', {
+      batch_size: 100,
+      dry_run: true,
+    });
+    expect(retentionCandidates.error).toBeNull();
+    expect(retentionCandidates.data).toContainEqual(expect.objectContaining({
+      attempt_id: retentionAttempt.id,
+      object_name: retentionAttempt.object_path,
+      is_dry_run: true,
+    }));
+    expect((await service.from('payment_orders').update({ status: 'under_review' })
+      .eq('id', retentionOrder.id)).error).toBeNull();
+    expect((await service.rpc('list_payment_evidence_retention_candidates', {
+      batch_size: 100,
+      dry_run: true,
+    })).data).not.toContainEqual(expect.objectContaining({ attempt_id: retentionAttempt.id }));
+    expect((await service.from('payment_orders').update({ status: 'approved' })
+      .eq('id', retentionOrder.id)).error).toBeNull();
+
+    const firstRetentionClaim = await service.rpc('claim_payment_evidence_retention', {
+      target_attempt_id: retentionAttempt.id,
+    });
+    expect(firstRetentionClaim.error).toBeNull();
+    expect(firstRetentionClaim.data).toBe(true);
+    const releasedRetentionClaim = await service.rpc('release_payment_evidence_retention', {
+      target_attempt_id: retentionAttempt.id,
+    });
+    expect(releasedRetentionClaim.error).toBeNull();
+    expect(releasedRetentionClaim.data).toBe(true);
+    const finalRetentionClaim = await service.rpc('claim_payment_evidence_retention', {
+      target_attempt_id: retentionAttempt.id,
+    });
+    expect(finalRetentionClaim.error).toBeNull();
+    expect(finalRetentionClaim.data).toBe(true);
+    expect((await service.storage.from('payment-evidence').remove([
+      retentionAttempt.object_path,
+    ])).error).toBeNull();
+    const completedRetention = await service.rpc('complete_payment_evidence_retention', {
+      target_attempt_id: retentionAttempt.id,
+    });
+    expect(completedRetention.error).toBeNull();
+    expect(completedRetention.data).toBe(true);
+    expect((await service.from('payment_evidence_attempts').select('status,deleted_at')
+      .eq('id', retentionAttempt.id).single()).data).toEqual(
+        expect.objectContaining({ status: 'deleted', deleted_at: expect.any(String) }),
+      );
 
     const raceOrderResponse = await clientB.rpc('create_program_payment_order', { target_program_id: paidProgramId, coach_qr_payload: coachQr, payment_method: 'static_qris', request_idempotency_key: `w05-race-${suffix}` });
     expect(raceOrderResponse.error).toBeNull();
@@ -134,13 +220,13 @@ it.runIf(canRun)('enforces free and paid W05 enrollment, private evidence, atomi
       await service.from('payment_ledger').delete().in('order_id', orderIds);
       await service.from('payment_events').delete().in('order_id', orderIds);
       await service.from('payment_evidence_attempts').delete().in('order_id', orderIds);
-      await service.from('program_entitlements').delete().in('program_id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId]);
-      await service.from('commerce_transactions').delete().in('program_id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId]);
+      await service.from('program_entitlements').delete().in('program_id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId, retentionProgramId]);
+      await service.from('commerce_transactions').delete().in('program_id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId, retentionProgramId]);
       await service.from('payment_orders').delete().in('id', orderIds);
     }
     if (objectPaths.length) await service.storage.from('payment-evidence').remove(objectPaths);
-    await service.from('program_enrollments').delete().in('program_id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId]);
-    await service.from('programs').delete().in('id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId]);
+    await service.from('program_enrollments').delete().in('program_id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId, retentionProgramId]);
+    await service.from('programs').delete().in('id', [paidProgramId, freeProgramId, fullProgramId, inactiveProgramId, retentionProgramId]);
     await service.from('payment_destinations').delete().eq('account_name', 'FIXTURE W05');
     await service.storage.from('payment-destination-assets').remove([qrisPath]);
     for (const userId of users) await service.auth.admin.deleteUser(userId);

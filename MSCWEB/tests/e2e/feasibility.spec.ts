@@ -4,11 +4,11 @@ test.describe('W00 production routing and risk probes', () => {
   test('static landing opens the public application shell', async ({ page }) => {
     const response = await page.goto('/');
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole('heading', { name: 'Transformasi tubuh, langkah demi langkah.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Transformasi tidak perlu sendirian/ })).toBeVisible();
     const html = await response?.text();
     expect(html).not.toContain('/_expo/static/js');
 
-    await page.getByRole('link', { name: 'Lihat program' }).click();
+    await page.getByRole('link', { name: 'Lihat program yang tersedia' }).click();
     await expect(page).toHaveURL(/\/app\/programs$/);
     await expect(page.getByRole('heading', { name: 'Program' }).first()).toBeVisible();
   });
@@ -44,10 +44,10 @@ test.describe('W00 production routing and risk probes', () => {
 test.describe('W01 landing and metadata', () => {
   test('all approved sections and product-safe copy are readable', async ({ page }) => {
     await page.goto('/');
-    for (const heading of ['Cara kerja', 'Program yang membantumu tetap terarah', 'Dukungan Coach di setiap langkah', 'Pembayaran diperiksa manual', 'Data pribadi tetap pribadi', 'Pasang MSC di layar utama']) {
+    for (const heading of ['Lima langkah untuk tetap bergerak.', 'Terarah dari hari pertama sampai selesai.', 'Ada orang yang peduli dengan progresmu.', 'Bukti bahwa kamu bergerak, hari demi hari.', 'Progresmu itu pribadi. Kami menjaganya.', 'Pembayaran diperiksa sebelum akses aktif.']) {
       await expect(page.getByRole('heading', { name: heading })).toBeVisible();
     }
-    await expect(page.getByText('aktivasi tidak berlangsung seketika')).toBeVisible();
+    await expect(page.getByText('Pengiriman bukti tidak langsung mengaktifkan akses.')).toBeVisible();
     await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', '/manifest.webmanifest');
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', '/');
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'MSC Body Transformation');
@@ -55,7 +55,7 @@ test.describe('W01 landing and metadata', () => {
 
   test('primary hero CTA opens PWA installation guidance', async ({ page }) => {
     await page.goto('/');
-    const installAction = page.getByRole('link', { name: 'Unduh aplikasi' });
+    const installAction = page.getByRole('link', { name: 'Pasang aplikasi' }).first();
     await expect(installAction).toHaveAttribute('href', '/cara-memasang');
     await installAction.click();
     await expect(page).toHaveURL(/\/cara-memasang$/);
@@ -80,20 +80,20 @@ test.describe('W01 landing and metadata', () => {
       window.dispatchEvent(event);
     });
 
-    await page.getByRole('link', { name: 'Unduh aplikasi' }).click();
+    await page.getByRole('link', { name: 'Pasang aplikasi' }).first().click();
     await expect.poll(() => page.evaluate(() => (window as Window & { __installPromptCalls?: number }).__installPromptCalls)).toBe(1);
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByText('Permintaan pemasangan dikirim ke browser.')).toBeVisible();
   });
 
-  test('landing uses bold brand color blocks instead of muted accents', async ({ page }) => {
+  test('landing uses the approved editorial brand palette', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Unduh aplikasi' })).toHaveCSS('background-color', 'rgb(215, 25, 32)');
-    await expect(page.locator('.payment')).toHaveCSS('background-color', 'rgb(215, 25, 32)');
-    await expect(page.locator('.install-panel')).toHaveCSS('background-color', 'rgb(255, 212, 0)');
+    await expect(page.getByRole('link', { name: 'Pasang aplikasi' }).first()).toHaveCSS('background-color', 'rgb(255, 212, 0)');
+    await expect(page.locator('.payment-section')).toHaveCSS('background-color', 'rgb(215, 25, 32)');
+    await expect(page.locator('.hero')).toHaveCSS('background-color', 'rgb(13, 12, 11)');
   });
 
-  test('legal, payment-help, and install shells resolve with manifest metadata', async ({ request }) => {
+  test('legal, payment-help, and install pages resolve with manifest metadata', async ({ request }) => {
     for (const path of ['/kebijakan-privasi', '/ketentuan', '/bantuan-pembayaran', '/cara-memasang']) {
       const response = await request.get(path);
       expect(response.status()).toBe(200);
@@ -101,7 +101,8 @@ test.describe('W01 landing and metadata', () => {
     }
   });
 
-  test('keyboard reaches skip link and primary action', async ({ page }) => {
+  test('keyboard reaches skip link and primary action', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('webkit'), 'Safari keyboard navigation follows the macOS full-keyboard-access setting and is covered by the accepted physical-device check.');
     await page.goto('/');
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Lewati ke konten' })).toBeFocused();
@@ -110,12 +111,20 @@ test.describe('W01 landing and metadata', () => {
   });
 
   test('landing has no horizontal overflow across required viewport matrix', async ({ page }) => {
-    for (const width of [320, 375, 390, 430, 768, 1024, 1440]) {
+    for (const width of [320, 375, 390, 405, 430, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: width < 768 ? 844 : 900 });
       await page.goto('/');
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
       expect(overflow, `overflow at ${width}px`).toBe(false);
-      await expect(page.getByRole('link', { name: 'Unduh aplikasi' })).toBeVisible();
+      const heroContentIsContained = await page.evaluate(() => {
+        const selectors = ['.hero-copy', '.hero h1', '.hero-lede', '.hero .actions', '.hero-stats', '.hero-media'];
+        return selectors.every((selector) => {
+          const bounds = document.querySelector(selector)?.getBoundingClientRect();
+          return bounds != null && bounds.left >= 0 && bounds.right <= window.innerWidth;
+        });
+      });
+      expect(heroContentIsContained, `hero content exceeds viewport at ${width}px`).toBe(true);
+      await expect(page.getByRole('link', { name: 'Pasang aplikasi' }).first()).toBeVisible();
     }
   });
 
@@ -123,8 +132,35 @@ test.describe('W01 landing and metadata', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
     await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
-    await expect(page.getByRole('link', { name: 'Unduh aplikasi' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Cara kerja' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Pasang aplikasi' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lima langkah untuk tetap bergerak.' })).toBeVisible();
+  });
+
+  test('semantic landmarks remain readable for screen-reader navigation', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await expect(page.getByRole('banner')).toBeVisible();
+    await expect(page.getByRole('main')).toBeVisible();
+    await expect(page.getByRole('contentinfo')).toBeVisible();
+    if (testInfo.project.name === 'chromium-compact') {
+      const menuSummary = page.locator('summary[aria-label="Buka menu"]');
+      await expect(menuSummary).toBeVisible();
+      await expect(menuSummary).toHaveAttribute('aria-label', 'Buka menu');
+    } else {
+      await expect(page.getByRole('navigation', { name: 'Navigasi landing' })).toBeVisible();
+    }
+    expect(await page.getByRole('heading').count()).toBeGreaterThanOrEqual(6);
+    expect(await page.getByRole('link').count()).toBeGreaterThanOrEqual(8);
+  });
+
+  test('forced colors and reduced motion preserve focus and primary action', async ({ page }, testInfo) => {
+    test.skip(!/^(chromium|edge)/u.test(testInfo.project.name), 'Forced-colors emulation uses Chromium.');
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    await page.goto('/');
+    const action = page.getByRole('link', { name: 'Pasang aplikasi' }).first();
+    await action.focus();
+    await expect(action).toBeVisible();
+    expect(await action.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe('none');
+    expect(Number.parseFloat(await action.evaluate((element) => getComputedStyle(element).transitionDuration))).toBeLessThanOrEqual(0.000001);
   });
 });
 
@@ -224,6 +260,15 @@ test.describe('W01 role shells and accessibility', () => {
     const compact = testInfo.project.name.includes('compact');
     await page.setViewportSize(compact ? { width: 390, height: 844 } : { width: 1440, height: 900 });
     await page.goto('/');
+    await page.locator('img[loading="lazy"]').evaluateAll((images) => {
+      for (const image of images) (image as HTMLImageElement).loading = 'eager';
+    });
+    await expect.poll(() => page.locator('img').evaluateAll((images) =>
+      images.every((image) => {
+        const renderedImage = image as HTMLImageElement;
+        return renderedImage.complete && renderedImage.naturalWidth > 0;
+      }),
+    )).toBe(true);
     await expect(page).toHaveScreenshot(compact ? 'landing-390.png' : 'landing-1440.png', { fullPage: true, animations: 'disabled' });
   });
 });

@@ -6,12 +6,20 @@ import { useCoachLeaderboard, useCoachWorkspace } from '@/features/coach/coach-e
 import type { CoachLeaderboardEntry } from '@/features/coach/coach-experience-models';
 import { useParticipantProfile } from '@/features/participant/participant-queries';
 import type { PublicLeaderboardRow, PublicProgram } from '@/features/public/public-models';
-import { useLeaderboard, useProgram, usePrograms, useWinners } from '@/features/public/public-queries';
+import { useLeaderboard, usePrograms, useWinners } from '@/features/public/public-queries';
 import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { useResponsiveLayout } from '@/shared/design/useResponsiveLayout';
 import { MSCIcon } from '@/shared/icons/MSCIcon';
 import { Button, StateView, UserAvatar } from '@/shared/ui/primitives';
+import {
+  isLeaderboardPending,
+  leaderboardProgramState,
+  readLeaderboardProgramId,
+  saveLeaderboardProgramId,
+  selectLeaderboardProgram,
+  type LeaderboardProgramState,
+} from './leaderboard-state';
 
 type LeaderboardRole = 'participant' | 'coach';
 
@@ -32,9 +40,8 @@ type LeaderboardEntry = Readonly<{
 export function ParticipantLeaderboardExperience({ enabled }: { enabled: boolean }) {
   const programs = usePrograms();
   const route = useLocalSearchParams<{ programId?: string }>();
-  const routedProgram = useProgram(route.programId ?? '');
-  const [requestedProgramId, setRequestedProgramId] = useState<string | undefined>(route.programId);
-  const selectedProgram = routedProgram.data ?? selectProgram(programs.data, requestedProgramId);
+  const [requestedProgramId, setRequestedProgramId] = useState<string | undefined>(() => route.programId ?? readLeaderboardProgramId());
+  const selectedProgram = selectLeaderboardProgram(programs.data, requestedProgramId);
   const leaderboard = useLeaderboard(selectedProgram?.id);
   const winners = useWinners(selectedProgram?.id);
   const profile = useParticipantProfile(enabled);
@@ -50,13 +57,21 @@ export function ParticipantLeaderboardExperience({ enabled }: { enabled: boolean
       selectedProgram={selectedProgram}
       entries={entries}
       currentParticipantId={profile.data?.public_profile_id}
-      isPending={programs.isPending || (route.programId !== undefined && routedProgram.isPending) || leaderboard.isPending}
-      isError={programs.isError || (route.programId !== undefined && routedProgram.isError) || leaderboard.isError}
+      isPending={isLeaderboardPending({
+        programsPending: programs.isPending,
+        routedProgramRequested: false,
+        routedProgramPending: false,
+        selectedProgramId: selectedProgram?.id,
+        leaderboardPending: leaderboard.isPending,
+      })}
+      isError={programs.isError || leaderboard.isError}
       isLocked={(winners.data?.length ?? 0) > 0}
-      onSelectProgram={setRequestedProgramId}
+      onSelectProgram={(programId) => {
+        saveLeaderboardProgramId(programId);
+        setRequestedProgramId(programId);
+      }}
       onRetry={() => {
         void programs.refetch();
-        void routedProgram.refetch();
         void leaderboard.refetch();
       }}
     />
@@ -67,9 +82,8 @@ export function CoachLeaderboardExperience({ authorized }: { authorized: boolean
   const programs = usePrograms();
   const workspace = useCoachWorkspace(authorized);
   const route = useLocalSearchParams<{ programId?: string }>();
-  const routedProgram = useProgram(route.programId ?? '');
-  const [requestedProgramId, setRequestedProgramId] = useState<string | undefined>(route.programId);
-  const selectedProgram = routedProgram.data ?? selectProgram(
+  const [requestedProgramId, setRequestedProgramId] = useState<string | undefined>(() => route.programId ?? readLeaderboardProgramId());
+  const selectedProgram = selectLeaderboardProgram(
     programs.data,
     requestedProgramId,
     workspace.data?.programs.map((program) => program.program_id),
@@ -85,13 +99,22 @@ export function CoachLeaderboardExperience({ authorized }: { authorized: boolean
       programs={programs.data ?? []}
       selectedProgram={selectedProgram}
       entries={leaderboard.data?.map(normalizeCoachEntry) ?? []}
-      isPending={programs.isPending || (route.programId !== undefined && routedProgram.isPending) || workspace.isPending || leaderboard.isPending}
-      isError={programs.isError || (route.programId !== undefined && routedProgram.isError) || workspace.isError || leaderboard.isError}
+      isPending={isLeaderboardPending({
+        programsPending: programs.isPending,
+        routedProgramRequested: false,
+        routedProgramPending: false,
+        prerequisitePending: workspace.isPending,
+        selectedProgramId: selectedProgram?.id,
+        leaderboardPending: leaderboard.isPending,
+      })}
+      isError={programs.isError || workspace.isError || leaderboard.isError}
       isLocked={(winners.data?.length ?? 0) > 0}
-      onSelectProgram={setRequestedProgramId}
+      onSelectProgram={(programId) => {
+        saveLeaderboardProgramId(programId);
+        setRequestedProgramId(programId);
+      }}
       onRetry={() => {
         void programs.refetch();
-        void routedProgram.refetch();
         void workspace.refetch();
         void leaderboard.refetch();
       }}
@@ -123,7 +146,7 @@ function LeaderboardSurface({
   onRetry: () => void;
 }) {
   const { colors } = useAppTheme();
-  const [historyVisible, setHistoryVisible] = useState(false);
+  const [programPicker, setProgramPicker] = useState<'all' | 'history'>();
   const [detailEntry, setDetailEntry] = useState<LeaderboardEntry>();
   const sortedEntries = useMemo(
     () => [...entries].sort((left, right) => left.rank - right.rank || right.totalPoints - left.totalPoints || left.name.localeCompare(right.name, 'id-ID')),
@@ -148,6 +171,9 @@ function LeaderboardSurface({
   if (isError) return <StateView kind="error" action={<Button label="Coba lagi" onPress={onRetry} />} />;
   if (!selectedProgram) return <StateView kind="empty" />;
 
+  const programState = leaderboardProgramState(selectedProgram);
+  const statusPresentation = leaderboardStatusPresentation(programState, colors);
+
   const openDetails = role === 'coach'
     ? (entry: LeaderboardEntry) => {
         if (entry.assignedToCoach) setDetailEntry(entry);
@@ -161,20 +187,20 @@ function LeaderboardSurface({
           <Button label="Kembali ke dashboard" tone="secondary" icon="back" onPress={() => router.replace('/coach')} />
         ) : null}
 
-        <ProgramSummary program={selectedProgram} />
+        <ProgramSummary program={selectedProgram} onPress={() => setProgramPicker('all')} />
 
         <View style={styles.statusRow}>
           <View style={[styles.statusPill, { backgroundColor: colors.secondaryBackground }]}>
-            <MSCIcon name={selectedProgram.status === 'active' ? 'activity' : 'approved'} color={selectedProgram.status === 'active' ? colors.info : colors.success} size="small" />
-            <Text style={[styles.statusPillText, { color: selectedProgram.status === 'active' ? colors.info : colors.success }]}>
-              {selectedProgram.status === 'active' ? 'Berlangsung' : 'Selesai'}
+            <MSCIcon name={statusPresentation.icon} color={statusPresentation.color} size="small" />
+            <Text style={[styles.statusPillText, { color: statusPresentation.color }]}>
+              {statusPresentation.label}
             </Text>
           </View>
           {completedPrograms.length > 0 ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Riwayat peringkat"
-              onPress={() => setHistoryVisible(true)}
+              onPress={() => setProgramPicker('history')}
               style={({ pressed }) => [styles.historyButton, { backgroundColor: pressed ? colors.primaryTintSurface : colors.secondaryBackground }]}
             >
               <MSCIcon name="history" color={colors.primaryAction} size="small" />
@@ -185,14 +211,12 @@ function LeaderboardSurface({
 
         <View style={styles.statusCopy}>
           <Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.primaryText }]}>
-            {isLocked ? 'Hasil akhir' : selectedProgram.status === 'active' ? 'Peringkat sementara' : 'Program selesai'}
+            {isLocked ? 'Hasil akhir' : statusPresentation.heading}
           </Text>
           <Text style={[styles.body, { color: colors.secondaryText }]}>
             {isLocked
               ? 'Peringkat program sudah dikunci.'
-              : selectedProgram.status === 'active'
-                ? 'Urutan dapat berubah sampai program selesai.'
-                : 'Program telah berakhir. Peringkat menunggu penguncian hasil akhir.'}
+              : statusPresentation.description}
           </Text>
         </View>
 
@@ -235,21 +259,19 @@ function LeaderboardSurface({
               </View>
             ) : null}
 
-            <Text style={[styles.privacyNote, { color: colors.secondaryText }]}>
-              Peringkat hanya menampilkan poin dan progres. Nilai berat badan tetap privat.
-            </Text>
           </>
         )}
       </ScrollView>
 
-      <ProgramHistorySheet
-        visible={historyVisible}
-        programs={completedPrograms}
+      <ProgramPickerSheet
+        visible={programPicker !== undefined}
+        title={programPicker === 'history' ? 'Riwayat peringkat' : 'Pilih program'}
+        programs={programPicker === 'history' ? completedPrograms : programs}
         selectedProgramId={selectedProgram.id}
-        onClose={() => setHistoryVisible(false)}
+        onClose={() => setProgramPicker(undefined)}
         onSelect={(programId) => {
           onSelectProgram(programId);
-          setHistoryVisible(false);
+          setProgramPicker(undefined);
         }}
       />
       <ScoreDetailSheet entry={detailEntry} onClose={() => setDetailEntry(undefined)} />
@@ -257,10 +279,15 @@ function LeaderboardSurface({
   );
 }
 
-function ProgramSummary({ program }: { program: PublicProgram }) {
+function ProgramSummary({ program, onPress }: { program: PublicProgram; onPress: () => void }) {
   const { colors } = useAppTheme();
   return (
-    <View style={[styles.programCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Ganti program leaderboard"
+      onPress={onPress}
+      style={({ pressed }) => [styles.programCard, { backgroundColor: pressed ? colors.secondaryBackground : colors.surface, borderColor: colors.border }]}
+    >
       <View style={[styles.trophyBox, { backgroundColor: colors.podiumGoldSurface }]}>
         <MSCIcon name="trophy" color={colors.podiumGold} size="large" weight="fill" />
       </View>
@@ -269,7 +296,11 @@ function ProgramSummary({ program }: { program: PublicProgram }) {
         <Text accessibilityRole="header" style={[styles.cardTitle, { color: colors.primaryText }]}>{program.title}</Text>
         <Text style={[styles.caption, { color: colors.secondaryText }]}>{formatProgramDate(program)}</Text>
       </View>
-    </View>
+      <View style={styles.changeProgram}>
+        <Text style={[styles.changeProgramText, { color: colors.primaryAction }]}>Ganti</Text>
+        <MSCIcon name="chevron" color={colors.primaryAction} size="small" />
+      </View>
+    </Pressable>
   );
 }
 
@@ -338,7 +369,7 @@ function TieMarker() {
   return <View style={styles.marker}><MSCIcon name="tie" color={colors.warning} size="small" /><Text style={[styles.markerText, { color: colors.warning }]}>Poin sama</Text></View>;
 }
 
-function ProgramHistorySheet({ visible, programs, selectedProgramId, onClose, onSelect }: { visible: boolean; programs: PublicProgram[]; selectedProgramId: string; onClose: () => void; onSelect: (programId: string) => void }) {
+function ProgramPickerSheet({ visible, title, programs, selectedProgramId, onClose, onSelect }: { visible: boolean; title: string; programs: PublicProgram[]; selectedProgramId: string; onClose: () => void; onSelect: (programId: string) => void }) {
   const { colors } = useAppTheme();
   const layout = useResponsiveLayout();
   return (
@@ -347,7 +378,7 @@ function ProgramHistorySheet({ visible, programs, selectedProgramId, onClose, on
         <View accessibilityViewIsModal style={[styles.sheet, layout !== 'compact' && styles.sheetWide, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <View style={styles.sheetHeader}>
             <Button label="Tutup" tone="secondary" onPress={onClose} />
-            <Text accessibilityRole="header" style={[styles.sheetTitle, { color: colors.primaryText }]}>Riwayat peringkat</Text>
+            <Text accessibilityRole="header" style={[styles.sheetTitle, { color: colors.primaryText }]}>{title}</Text>
           </View>
           <ScrollView contentContainerStyle={styles.sheetList}>
             {programs.length === 0 ? <StateView kind="empty" /> : programs.map((program) => (
@@ -393,7 +424,6 @@ function ScoreDetailSheet({ entry, onClose }: { entry?: LeaderboardEntry; onClos
                 <DetailLine label="Penyesuaian" value={formatNumber(entry.adjustmentPoints ?? 0)} />
                 <DetailLine label="Progres" value={`${Math.round(entry.progress)}%`} last />
               </View>
-              <Text style={[styles.privacyNote, { color: colors.secondaryText }]}>Rincian hanya menampilkan poin dan progres. Nilai berat badan tetap privat.</Text>
             </ScrollView>
           ) : null}
         </View>
@@ -407,19 +437,8 @@ function DetailLine({ label, value, last = false }: { label: string; value: stri
   return <View style={[styles.detailLine, !last && { borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}><Text style={[styles.body, { color: colors.primaryText }]}>{label}</Text><Text style={[styles.detailValue, { color: colors.primaryText }]}>{value}</Text></View>;
 }
 
-function selectProgram(programs: PublicProgram[] | undefined, requestedId: string | undefined, preferredIds: string[] = []) {
-  if (!programs?.length) return undefined;
-  return programs.find((program) => program.id === requestedId)
-    ?? programs.find((program) => preferredIds.includes(program.id) && program.status === 'active')
-    ?? programs.find((program) => preferredIds.includes(program.id))
-    ?? programs.find((program) => program.status === 'active')
-    ?? programs.find((program) => program.status === 'scheduled')
-    ?? programs.find((program) => program.status === 'completed')
-    ?? programs[0];
-}
-
 function normalizePublicEntry(row: PublicLeaderboardRow): LeaderboardEntry {
-  return { id: row.id, participantId: row.participant_id, name: row.participant_display_name, avatarUrl: null, rank: row.rank, progress: row.progress_percentage, totalPoints: row.total_points, assignedToCoach: false, stepPoints: null, weightPoints: null, adjustmentPoints: null };
+  return { id: row.id, participantId: row.participant_id, name: row.participant_display_name, avatarUrl: row.avatar_url, rank: row.rank, progress: row.progress_percentage, totalPoints: row.total_points, assignedToCoach: false, stepPoints: null, weightPoints: null, adjustmentPoints: null };
 }
 
 function normalizeCoachEntry(row: CoachLeaderboardEntry): LeaderboardEntry {
@@ -430,6 +449,22 @@ function markerFor(entry: LeaderboardEntry, role: LeaderboardRole, currentPartic
   if (role === 'coach' && entry.assignedToCoach) return 'Pesertamu';
   if (entry.participantId === currentParticipantId) return 'Kamu';
   return undefined;
+}
+
+function leaderboardStatusPresentation(
+  state: LeaderboardProgramState,
+  colors: ReturnType<typeof useAppTheme>['colors'],
+) {
+  if (state === 'running') {
+    return { label: 'Berlangsung', heading: 'Peringkat sementara', description: 'Urutan dapat berubah sampai program selesai.', icon: 'activity' as const, color: colors.info };
+  }
+  if (state === 'upcoming') {
+    return { label: 'Akan datang', heading: 'Program belum dimulai', description: 'Peringkat akan diperbarui saat program berlangsung.', icon: 'program' as const, color: colors.info };
+  }
+  if (state === 'awaiting_completion') {
+    return { label: 'Menunggu hasil', heading: 'Program berakhir', description: 'Peringkat menunggu penguncian hasil akhir.', icon: 'pending' as const, color: colors.warning };
+  }
+  return { label: 'Selesai', heading: 'Program selesai', description: 'Peringkat menunggu penguncian hasil akhir.', icon: 'approved' as const, color: colors.success };
 }
 
 function podiumPalette(rank: number, colors: ReturnType<typeof useAppTheme>['colors']) {
@@ -450,6 +485,8 @@ const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 720, alignSelf: 'center', padding: primitiveTokens.space.large, paddingBottom: 140, gap: primitiveTokens.space.large },
   programCard: { borderWidth: 1, borderRadius: primitiveTokens.radius.large, padding: primitiveTokens.space.medium, flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium },
   trophyBox: { width: 58, height: 58, borderRadius: primitiveTokens.radius.medium, alignItems: 'center', justifyContent: 'center' },
+  changeProgram: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.xxSmall },
+  changeProgramText: typographyTokens.label,
   flexCopy: { flex: 1, minWidth: 0, gap: primitiveTokens.space.xxSmall },
   caption: typographyTokens.caption,
   body: typographyTokens.body,
@@ -483,7 +520,6 @@ const styles = StyleSheet.create({
   rowPoints: { fontSize: 19, lineHeight: 23, fontWeight: '900', fontVariant: ['tabular-nums'] },
   marker: { flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.xxSmall },
   markerText: typographyTokens.caption,
-  privacyNote: typographyTokens.caption,
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
   sheet: { width: '100%', maxHeight: '88%', minHeight: '58%', borderTopWidth: 1, borderTopLeftRadius: primitiveTokens.radius.prominent, borderTopRightRadius: primitiveTokens.radius.prominent, padding: primitiveTokens.space.large, gap: primitiveTokens.space.large },
   sheetWide: { width: 640, maxHeight: '82%', alignSelf: 'center', borderWidth: 1, borderBottomWidth: 0 },

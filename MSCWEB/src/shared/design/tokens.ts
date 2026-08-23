@@ -62,6 +62,8 @@ export const lightSemanticTokens = {
   podiumSilverSurface: '#F0F1F3',
   podiumBronzeSurface: '#FFF0E2',
   primaryTintSurface: '#FFF0F1',
+  identitySurface: primitiveTokens.color.nearBlack,
+  onIdentitySurface: primitiveTokens.color.white,
 } as const;
 
 export const darkSemanticTokens = {
@@ -90,6 +92,8 @@ export const darkSemanticTokens = {
   podiumSilverSurface: '#292A2E',
   podiumBronzeSurface: '#352315',
   primaryTintSurface: '#351417',
+  identitySurface: primitiveTokens.color.nearBlack,
+  onIdentitySurface: primitiveTokens.color.white,
 } as const;
 
 export const componentTokens = {

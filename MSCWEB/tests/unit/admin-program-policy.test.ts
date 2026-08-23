@@ -33,6 +33,15 @@ describe('W07 Admin program validation', () => {
     program.days[0]!.steps = program.days[0]!.steps.filter((step) => step.content_kind !== 'final_weigh_in');
     expect(validateAdminProgram(program).some((issue) => issue.message.includes('tepat satu timbang awal'))).toBe(true);
   });
+
+  it('requires media accessibility copy and keeps uploads out of quizzes', () => {
+    const program = validProgram();
+    const quiz = program.days[1]!.steps[0]!;
+    quiz.questions[0] = { ...quiz.questions[0]!, kind: 'video_upload', media_kind: 'video', media_path: 'questions/example.mp4', media_alt_text: '' };
+    const issues = validateAdminProgram(program).map((issue) => issue.message).join(' | ');
+    expect(issues).toContain('deskripsi aksesibilitas');
+    expect(issues).toContain('Gunakan Form untuk unggah foto atau video');
+  });
 });
 
 function validProgram(): AdminProgram {

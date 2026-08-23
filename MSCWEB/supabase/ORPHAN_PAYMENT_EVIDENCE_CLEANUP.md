@@ -1,6 +1,7 @@
 # Pembersihan bukti pembayaran yatim
 
-Status produksi: kebijakan dan jadwal sudah final, tetapi belum diaktifkan karena deployment production belum diotorisasi.
+Status produksi: implementasi root sudah disiapkan untuk review dan verifikasi
+lokal; secret, cron, dan mode delete hosted belum diaktifkan.
 
 ## Kontrak aman
 
@@ -16,9 +17,15 @@ Status produksi: kebijakan dan jadwal sudah final, tetapi belum diaktifkan karen
 ## Dua jenis cleanup
 
 1. **Cleanup orphan** menghapus file upload yang tidak pernah berhasil direferensikan oleh record bukti. Kontrak aman di atas tetap memakai usia minimum 72 jam.
-2. **Cleanup retensi** menghapus file gambar bukti Participant dan Coach 30 hari setelah `submitted_at`. Record transaksi dan audit non-gambar tetap dipertahankan; implementasi perlu menandai attempt sebagai `deleted` dan menghilangkan referensi object tanpa menghapus jejak keputusan.
+2. **Cleanup retensi** menghapus file gambar bukti Participant dan Coach 30 hari setelah `submitted_at`. Record transaksi, object path non-publik, keputusan, ledger, dan audit non-gambar tetap dipertahankan; attempt ditandai `deleted` setelah Storage mengonfirmasi penghapusan.
 
 File berstatus `under_review` pada hari ke-30 dipertahankan sampai keputusan Admin. Setelah keputusan tercatat, file yang sudah melewati 30 hari segera menjadi kandidat penghapusan. Pengecualian ini mencegah hilangnya satu-satunya bukti sebelum pemeriksaan selesai.
+
+Sebelum penghapusan retensi, worker melakukan claim atomik dengan status
+sementara `deleting`. Claim hanya berhasil setelah database memeriksa ulang umur,
+status attempt, status order, dan keberadaan objek. Kegagalan Storage melepas
+claim ke status keputusan sebelumnya; claim macet lebih dari 15 menit dipulihkan
+di awal job berikutnya.
 
 ## Jadwal final
 
@@ -34,6 +41,11 @@ Eksekusi manual hanya untuk pemulihan darurat dan dilakukan operator teknis mela
 
 ## Verifikasi lokal
 
-Uji integrasi W05 membuat lima keadaan: objek tak direferensikan yang cukup tua, objek direferensikan, upload yang masih `prepared`, riwayat `rejected`, dan submit bersamaan. Dry-run harus hanya mengembalikan objek tak direferensikan; pemeriksaan kedua sebelum hapus harus mengeluarkan objek yang baru direferensikan.
+Uji integrasi membuat keadaan objek yatim, upload `prepared`, bukti final lebih
+muda dari 30 hari, bukti final yang melewati 30 hari, order `under_review`, claim
+gagal, pelepasan claim, dan penyelesaian `deleted`. Dry-run tidak mengubah data
+atau Storage.
 
-Jangan men-deploy fungsi, cron, secret, atau konfigurasi ini ke hosted Supabase sampai owner bisnis memberikan otorisasi deployment produksi secara eksplisit.
+Source deployment berada hanya di `supabase/migrations/` dan
+`supabase/functions/cleanup-orphan-payment-evidence/`. Deployment hosted tetap
+menunggu review legal, release gate W08, dan production-shaped preview.

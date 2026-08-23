@@ -28,6 +28,13 @@ export const submissionSchema = z.object({
   submitted_at: z.string().nullable(),
 });
 
+export const weighInCompletionSchema = z.object({
+  id: z.string().uuid(),
+  enrollment_id: z.string().uuid(),
+  step_id: z.string().uuid(),
+  recorded_at: z.string(),
+});
+
 export const scoreSchema = z.object({
   enrollment_id: z.string().uuid(),
   activity_points: z.number().int(),
@@ -42,11 +49,16 @@ export const scoreSchema = z.object({
 export const assignedCoachSchema = z.object({
   user_id: z.string().uuid(),
   public_profile_id: z.string().uuid(),
+  handle: z.string().nullable().optional(),
   display_name: z.string(),
-  city: z.string().nullable(),
-  provider_avatar_url: z.string().nullable(),
+  professional_headline: z.string().nullable().optional(),
+  biography: z.string().nullable().optional(),
+  city: z.string().nullable().optional().default(null),
+  photo_reference: z.string().nullable().optional(),
+  provider_avatar_url: z.string().nullable().optional().default(null),
   is_public: z.boolean(),
   is_approved: z.boolean(),
+  is_verified: z.boolean(),
 });
 
 export const participantProfileSchema = z.object({
@@ -59,6 +71,7 @@ export const participantProfileSchema = z.object({
 export type ParticipantEnrollment = z.infer<typeof enrollmentSchema>;
 export type ParticipantDayAccess = z.infer<typeof dayAccessSchema>;
 export type ParticipantSubmission = z.infer<typeof submissionSchema>;
+export type ParticipantWeighInCompletion = z.infer<typeof weighInCompletionSchema>;
 export type ParticipantScore = z.infer<typeof scoreSchema>;
 export type ParticipantAssignedCoach = z.infer<typeof assignedCoachSchema>;
 export type ParticipantProfile = z.infer<typeof participantProfileSchema>;

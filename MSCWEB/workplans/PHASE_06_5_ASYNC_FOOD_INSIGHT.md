@@ -51,8 +51,8 @@ Add asynchronous food-photo analysis that estimates macro values, writes support
 
 - [x] Define `FoodVisionProvider` in server/domain boundary without provider SDK types.
 - [x] Implement OpenRouter through `fetch` using server-only `FOOD_AI_PROVIDER`, `BASE_URL`, `API_KEY`, `MODEL`, and version config.
-- [x] Read the OpenRouter model slug only from `FOOD_AI_MODEL`; changing to another compatible OpenRouter model requires environment change and restart/redeploy, not feature/domain edits.
-- [x] Send `reasoning: { effort: "none", exclude: true }` and never store/forward reasoning content.
+- [x] Read prioritized OpenRouter slugs from `FOOD_AI_MODELS`, with `FOOD_AI_MODEL` as single-model compatibility fallback; changing compatible models requires environment change and restart/redeploy, not feature/domain edits.
+- [x] Omit the optional reasoning parameter so every configured fallback remains compatible; never store/forward reasoning content that a provider may still return.
 - [x] Add preflight/health validation for image input, text output, structured response, and optional/off reasoning; incompatible model fails only the secondary insight job.
 - [x] Keep actual key out of repository, browser bundle, logs, fixtures, screenshots, and local committed env files.
 - [x] Prove another fake OpenAI-compatible provider works by environment/config change only.
@@ -63,17 +63,17 @@ Add asynchronous food-photo analysis that estimates macro values, writes support
 - [x] Validate `food | drink | shake | not_food | uncertain`, optional macro values, 1–5 rating, confidence, allowlisted reason, and concise Indonesian insight.
 - [x] Prompt/schema requires `insightSentences` with one or two complete Bahasa Indonesia sentences, each at most 80 characters and at most 160 characters combined.
 - [x] Reject or replace overlong/non-Indonesian insight with a deterministic Indonesian fallback instead of truncating or exposing raw provider text.
-- [x] Use 4 as the normal default for a plausible food/drink/shake without a clear major mismatch.
-- [x] Use 5 only for strong rubric match and 3 for ambiguity/mixed evidence.
-- [x] Use server-owned versioned policy `food_rating_policy_v1`: confidence threshold `>= 0.90`; rating 1 only for `not_food_for_required_food`; rating 2 only for `severe_explicit_rubric_mismatch`; both require a published explicit rubric.
-- [x] Server clamps every other 1–2 outcome to 3/`uncertain`; model/provider output cannot change the threshold or reason allowlist.
+- [x] Derive rating from image classification only: food/drink/shake `4`, uncertain `3`, and not-food `1`; model-supplied rating/reason is not accepted.
+- [x] Use server-owned versioned policy `food_rating_policy_v2_image_only` and output policy `food_insight_output_v2_image_only`.
+- [x] Normalize every detected shake/protein shake to the approved estimate: protein `10 g`, carbohydrate `3 g`, fat `1 g`, and energy `100 kkal`.
+- [x] Reject provider copy that compares the image with a question, step, task, program, guide, rubric, target, or need.
 - [x] Never infer discipline, character, body shape, diagnosis, allergens, spoilage, or food safety from the image.
 - [x] Keep AI/corrected rating separate from step points, approval state, and leaderboard ledger.
 
 ### Privacy-minimal flow
 
 - [x] Reuse W04 orientation/resize/metadata-removal pipeline before provider delivery.
-- [x] Send image bytes plus the minimum allowlisted rubric; do not send identity, weight, free-form profile data, object path, or signed URL.
+- [x] Send image bytes only; do not send question/step/program/rubric content, identifiers, identity, weight, free-form profile data, object path, or signed URL.
 - [x] Show one disclosure before food-photo submission and ask users to avoid faces/documents; no separate consent checkbox.
 - [x] Follow existing submission retention/deletion lifecycle; no separate ZDR/DPIA/withdrawal feature is required for baseline.
 - [x] Reassess provider terms/data-use before production or when provider changes materially.
@@ -96,7 +96,7 @@ The primary agent owns schema/authority decisions, provider interface, prompt/ru
 
 ## Verification
 
-- unit/property/table tests for schema, ranges, `0.90` threshold, both severe reason codes, no-rubric behavior, and every rating clamp boundary;
+- unit/property/table tests for image-only schema/ranges, contextual-copy rejection, deterministic kind/rating mapping, and shake normalization;
 - crash-between-commit-and-enqueue recovery test proving reconciliation creates exactly one missing job;
 - provider contract tests with deterministic food/drink/shake/not-food/ambiguous/invalid fixtures;
 - language-contract tests for Indonesian output, mixed-language output, English-only output, and deterministic Indonesian fallback;
@@ -112,7 +112,7 @@ The primary agent owns schema/authority decisions, provider interface, prompt/ru
 
 - Eligible food submissions receive asynchronous macro/rating feedback locally.
 - Submission, approval, points, and leaderboard are independent of AI latency/failure.
-- Rating 1–2 cannot pass without the high-confidence allowlisted severe condition.
+- Rating/reason cannot be supplied by the provider and is derived from image classification only.
 - Browser/private logs contain no provider key or raw private media reference.
 - Provider contract can switch between OpenAI-compatible adapters via environment without feature/domain changes.
 
@@ -137,3 +137,13 @@ Append simulator evidence, migration/job versions, provider/model alias, prompt/
 - Commands passed: `npm run typecheck`; `npm run lint -- --no-cache`; `npm test` (`128` passed, `6` environment-skipped); explicit local `food-insight.local.test.ts` (`1` passed); `npm run build`; `npm run verify:bundle`; `npm run verify:pwa`; Playwright evidence review on `chromium-compact` and `chromium-desktop` (`4` passed). Browser inspection found no console warning/error; final bundles contain no provider credential marker or concrete private-media object path.
 - Local-only operation: the migration was applied to Supabase local and Colima/Supabase were left running. No real OpenRouter key, real-provider smoke, hosted Supabase deployment, production secret mutation, Git mutation, or native project change was performed. Real-provider smoke remains optional; hosted migration/function/secret deployment remains W09 authorization work.
 - Remaining W06.5 blockers: none. Next phase item: W07 Admin experience, including the authorized Admin correction UI over the W06.5 operation.
+
+### 2026-08-23 — Image-only policy v2 deployed
+
+- Files: updated the root-authority `process-food-insight` provider boundary, contracts, validator, worker, focused unit/integration tests, and added migration `20260823093724_food_insight_image_only_policy.sql`.
+- Privacy contract: `claim_food_insight_job` no longer returns submission/question/program/rubric identifiers or rubric text. The OpenRouter request receives one generic image-only instruction plus normalized JPEG bytes; it never receives the question, step, task, program, rubric, profile, weight, or private object path.
+- Output policy: model rating and reason fields were removed from the strict JSON schema. Server policy derives rating/reason from the detected image kind and replaces any contextual provider sentence with deterministic image-only Bahasa Indonesia copy.
+- Shake policy: every `shake` classification is normalized after provider validation to `10 g` protein, `3 g` carbohydrate, `1 g` fat, and `100 kkal`, independent of the model's macro estimate.
+- Verification passed: focused food insight tests (`34`), explicit local Supabase integration (`1`), full unit suite (`201` passed, `9` environment-skipped), `npm run typecheck`, `npm run lint -- --no-cache`, and `supabase db lint --local --level warning` with zero schema errors.
+- Production: migration `20260823093724` is present locally and remotely; Edge Function `process-food-insight` is `ACTIVE`, version `5`, deployment id `df357ba3-4267-4c16-b555-a17fe19d35f5`. No secrets changed and no existing production photo/job was invoked or reprocessed.
+- Remaining note: an already stored v1 result keeps its historical text and estimates until a separately authorized re-analysis or replacement flow is performed. New jobs use image-only policy v2.

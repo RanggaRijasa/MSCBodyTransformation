@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { PublicProgramQuestion, PublicProgramStep } from '@/features/public/public-models';
 import { normalizeBrowserImageOffMainThread } from '@/shared/media/image-normalization';
+import { publicCoachMediaUrl } from '@/shared/media/public-coach-media';
 import {
   SupabasePrivateMediaAdapter,
   type PrivateMediaObjectReference,
@@ -14,6 +15,7 @@ import {
   participantProfileSchema,
   scoreSchema,
   submissionSchema,
+  weighInCompletionSchema,
   type ParticipantAssignedCoach,
   type ParticipantDayAccess,
   type ParticipantEnrollment,
@@ -21,6 +23,7 @@ import {
   type ParticipantScore,
   type ParticipantSubmission,
 } from './participant-models';
+import { weighInCompletionSubmission } from './participant-program-policy';
 import { getSupabaseBrowserClient } from '@/shared/supabase/client';
 
 export type ParticipantRepositoryFailure =
@@ -55,6 +58,7 @@ export type ParticipantQuestionAnswer = Readonly<{
   numberValue?: number;
   selectedOptionIds?: string[];
   photo?: Blob;
+  video?: Blob;
 }>;
 
 export type ParticipantAnswerSubmissionCommand = Readonly<{
@@ -109,12 +113,20 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
   async listSubmissions(): Promise<ParticipantSubmission[]> {
     const enrollmentIds = (await this.listEnrollments()).map((enrollment) => enrollment.id);
     if (enrollmentIds.length === 0) return [];
-    const response = await this.client
-      .from('step_submissions')
-      .select('id, enrollment_id, step_id, attempt_sequence, status, review_note, submitted_at')
-      .in('enrollment_id', enrollmentIds)
-      .order('attempt_sequence', { ascending: false });
-    return parseRows(response.data, response.error, submissionSchema);
+    const [submissionResponse, weighInResponse] = await Promise.all([
+      this.client
+        .from('step_submissions')
+        .select('id, enrollment_id, step_id, attempt_sequence, status, review_note, submitted_at')
+        .in('enrollment_id', enrollmentIds)
+        .order('attempt_sequence', { ascending: false }),
+      this.client
+        .from('weigh_ins')
+        .select('id, enrollment_id, step_id, recorded_at')
+        .in('enrollment_id', enrollmentIds),
+    ]);
+    const submissions = parseRows(submissionResponse.data, submissionResponse.error, submissionSchema);
+    const weighIns = parseRows(weighInResponse.data, weighInResponse.error, weighInCompletionSchema);
+    return [...submissions, ...weighIns.map(weighInCompletionSubmission)];
   }
 
   async listScores(): Promise<ParticipantScore[]> {
@@ -128,8 +140,13 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
   }
 
   async getAssignedCoach(): Promise<ParticipantAssignedCoach | null> {
-    const response = await this.client.rpc('get_my_assigned_coach');
-    return parseRows(response.data, response.error, assignedCoachSchema)[0] ?? null;
+    const response = await this.client.rpc('get_my_assigned_coach_profile');
+    const coach = parseRows(response.data, response.error, assignedCoachSchema)[0];
+    if (!coach) return null;
+    return {
+      ...coach,
+      photo_reference: publicCoachMediaUrl(coach.photo_reference) ?? null,
+    };
   }
 
   async submitAnswers(command: ParticipantAnswerSubmissionCommand): Promise<ParticipantSubmission> {
@@ -160,6 +177,7 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
       for (const question of required) {
         const answer = answerByQuestion.get(question.id) as ParticipantQuestionAnswer;
         let privatePhotoPath: string | undefined;
+        let privateVideoPath: string | undefined;
         if (answer.photo) {
           command.onProgress?.(0.3, 'Memproses foto tanpa metadata');
           const normalized = await normalizeBrowserImageOffMainThread(answer.photo, { maxWidth: 1_600, maxHeight: 1_600 });
@@ -175,12 +193,31 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
           await this.privateMedia.upload(reference, normalized.blob, normalized.mimeType);
           uploaded.push(reference);
         }
+        if (answer.video) {
+          const extension = videoExtension(answer.video.type);
+          if (!extension || answer.video.size <= 0 || answer.video.size > MAX_QUESTION_VIDEO_BYTES) {
+            throw new ParticipantRepositoryError('validation');
+          }
+          command.onProgress?.(0.3, 'Menyiapkan video pribadi');
+          privateVideoPath = [
+            user.data.user.id,
+            command.enrollmentId,
+            submissionId,
+            question.id,
+            `${crypto.randomUUID()}.${extension}`,
+          ].join('/');
+          const reference = { bucket: 'question-videos' as const, objectPath: privateVideoPath };
+          command.onProgress?.(0.6, 'Mengunggah video pribadi');
+          await this.privateMedia.upload(reference, answer.video, answer.video.type);
+          uploaded.push(reference);
+        }
         payload.push({
           question_id: question.id,
           text_value: answer.textValue,
           number_value: answer.numberValue,
           selected_option_ids: answer.selectedOptionIds ?? [],
           private_photo_path: privatePhotoPath,
+          private_video_path: privateVideoPath,
         });
       }
       command.onProgress?.(0.85, 'Menyimpan jawaban');
@@ -195,7 +232,7 @@ export class SupabaseParticipantRepository implements ParticipantRepository {
       const row = Array.isArray(response.data) ? response.data[0] : response.data;
       const result = submissionSchema.safeParse(row);
       if (!result.success) throw new ParticipantRepositoryError('unknown');
-      if (required.some((question) => question.analysis_mode === 'food')) {
+      if (required.some((question) => question.kind === 'photo_upload' && question.analysis_mode === 'food')) {
         void (async () => {
           try {
             await this.client.rpc('enqueue_food_insight', {
@@ -248,11 +285,17 @@ function interactiveQuestions(step: PublicProgramStep): PublicProgramQuestion[] 
 function isCompleteAnswer(question: PublicProgramQuestion, answer?: ParticipantQuestionAnswer): boolean {
   if (!answer) return false;
   if (question.kind === 'photo_upload') return answer.photo !== undefined;
+  if (question.kind === 'video_upload') return answer.video !== undefined;
   if (question.kind === 'number') return answer.numberValue !== undefined;
   if (['single_choice', 'multiple_choice', 'image_choice'].includes(question.kind)) {
     return (answer.selectedOptionIds?.length ?? 0) > 0;
   }
   return (answer.textValue?.trim().length ?? 0) > 0;
+}
+
+const MAX_QUESTION_VIDEO_BYTES = 50 * 1_024 * 1_024;
+function videoExtension(contentType: string) {
+  return ({ 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' } as Record<string, string>)[contentType];
 }
 
 function parseRows<T>(

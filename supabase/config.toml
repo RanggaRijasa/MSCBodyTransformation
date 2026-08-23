@@ -95,3 +95,23 @@ entrypoint = "./functions/apple-commerce-reconciliation/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/legal/index.ts"
+
+[functions.cleanup-orphan-payment-evidence]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/cleanup-orphan-payment-evidence/index.ts"
+
+[functions.process-food-insight]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/process-food-insight/index.ts"
+
+[functions.process-provisional-cancellations]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/process-provisional-cancellations/index.ts"
+
+[functions.public-coach-media]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/public-coach-media/index.ts"

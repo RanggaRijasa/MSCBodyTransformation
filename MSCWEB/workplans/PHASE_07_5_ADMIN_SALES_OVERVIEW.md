@@ -1,8 +1,10 @@
 # MSCWEB W07.5 — Admin Sales Overview
 
-Status: `Not started`  
+Status: `Deferred post-launch — not a first-deployment dependency (owner decision 21 August 2026)`
 Autonomy: `A` against local Supabase; `D` for hosted deployment or production financial smoke  
-Depends on: completed W07 Admin experience, completed W07.4 onboarding remediation, and reproducible W05/W06 payment ledger/reversal contract
+Depends on when resumed: deployed core baseline, completed W07 Admin experience/W07.4 onboarding remediation, and reproducible W05/W06 payment ledger/reversal contract
+
+Scheduling authority: [`ADR-0010`](../decisions/0010-defer-admin-analytics-and-storage-management.md). This workplan remains the implementation authority after launch, but none of its unchecked items block W08/W09 or the first production deployment.
 
 ## Objective
 

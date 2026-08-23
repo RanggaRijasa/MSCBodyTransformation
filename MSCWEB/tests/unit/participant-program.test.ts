@@ -3,13 +3,16 @@ import { describe, expect, it } from 'vitest';
 
 import { publicProgramSchema } from '@/features/public/public-models';
 import type { ParticipantDayAccess, ParticipantEnrollment, ParticipantSubmission } from '@/features/participant/participant-models';
+import { formatProgramDateRange } from '@/shared/design/formatters';
 import {
   isRepeatableLocalTestProgram,
+  isFoodInsightEnabledForStep,
   latestSubmissionForStep,
   programsForSegment,
   relevantDayAccess,
   stepKindLabel,
   submissionPresentation,
+  weighInCompletionSubmission,
 } from '@/features/participant/participant-program-policy';
 
 const programId = '11111111-1111-4111-8111-111111111111';
@@ -48,6 +51,12 @@ const access: ParticipantDayAccess = {
 };
 
 describe('W03 Participant program policy', () => {
+  it('formats joined-program dates compactly without a timezone suffix', () => {
+    expect(formatProgramDateRange('2026-08-22', '2026-08-24')).toBe('22–24 Agustus 2026');
+    expect(formatProgramDateRange('2026-08-31', '2026-09-02')).toBe('31 Agustus–2 September 2026');
+    expect(formatProgramDateRange('2026-12-31', '2027-01-02')).toBe('31 Desember 2026–2 Januari 2027');
+  });
+
   it('separates joined, available, and history using server enrollment state', () => {
     const available = { ...program, id: '66666666-6666-4666-8666-666666666666', title: 'Program tersedia' };
     const completed = { ...program, id: '77777777-7777-4777-8777-777777777777', title: 'Program selesai', status: 'completed' as const };
@@ -119,10 +128,61 @@ describe('W03 Participant program policy', () => {
     expect(submissionPresentation('rejected')).toEqual({ label: 'Perlu diperbaiki', tone: 'destructive' });
   });
 
+  it('presents an existing private weigh-in as a completed step without exposing its value', () => {
+    const completion = weighInCompletionSubmission({
+      id: '17000000-0000-4000-8000-000000000000',
+      enrollment_id: enrollmentId,
+      step_id: stepId,
+      recorded_at: '2026-08-22T01:54:00Z',
+    });
+    expect(completion).toEqual(expect.objectContaining({
+      step_id: stepId,
+      status: 'approved',
+      submitted_at: '2026-08-22T01:54:00Z',
+    }));
+    expect(completion).not.toHaveProperty('weight_kg');
+    expect(submissionPresentation(completion.status)).toEqual({ label: 'Selesai', tone: 'success' });
+  });
+
   it('maps every published step kind to Indonesian product copy', () => {
     expect(['article', 'video', 'form', 'quiz', 'initial_weigh_in', 'daily_weigh_in', 'final_weigh_in'].map(stepKindLabel)).toEqual([
       'Artikel', 'Video', 'Formulir', 'Kuis', 'Timbang awal', 'Timbang harian', 'Timbang akhir',
     ]);
+  });
+
+  it('enables food insight only for an opted-in photo question', () => {
+    const baseStep = {
+      id: stepId,
+      step_order: 1,
+      title: 'Bukti',
+      instructions: null,
+      content_kind: 'form',
+      completion_policy: 'answer_all_questions',
+      verification_mode: 'automatic',
+      media_path: null,
+      media_alt_text: null,
+      video_required: false,
+      video_threshold: 100,
+      video_autoplay: false,
+      program_questions: [],
+    };
+    const question = {
+      id: '18181818-1818-4818-8818-181818181818',
+      question_order: 1,
+      kind: 'photo_upload',
+      prompt: 'Unggah foto makanan',
+      analysis_mode: 'none' as const,
+      analysis_rubric: null,
+      analysis_rubric_version: null,
+      media_kind: null,
+      media_path: null,
+      media_alt_text: null,
+      program_question_options: [],
+    };
+
+    expect(isFoodInsightEnabledForStep({ ...baseStep, program_questions: [question] })).toBe(false);
+    expect(isFoodInsightEnabledForStep({ ...baseStep, program_questions: [{ ...question, kind: 'video_upload', analysis_mode: 'food' }] })).toBe(false);
+    expect(isFoodInsightEnabledForStep({ ...baseStep, program_questions: [{ ...question, analysis_mode: 'food' }] })).toBe(true);
   });
 
   it('keeps all shared renderers and explicit states in one activity boundary', () => {
@@ -139,7 +199,10 @@ describe('W03 Participant program policy', () => {
     expect(source).toContain('scrollIntoView');
     expect(source).toContain('ParticipantSubmissionForm');
     expect(submissionSource).toContain('type="file"');
-    expect(submissionSource).toContain('capture="environment"');
+    expect(submissionSource).toContain('Pilih sumber foto');
+    expect(submissionSource).toContain('Pilih sumber video');
+    expect(submissionSource).not.toContain('capture="environment"');
+    expect(submissionSource).toContain('Berat badan sudah dicatat');
     expect(source).not.toContain('new Date().getDate');
   });
 });

@@ -132,6 +132,8 @@ Icon utama adalah Phosphor melalui SVG. Package baseline `phosphor-react-native`
 | `trash` | `Trash` |
 | `restore` | `ArrowCounterClockwise` |
 
+`salesOverview`, `imageStorage`, `trash`, dan `restore` tetap reserved semantic mappings untuk W07.5/W07.6 pascapeluncuran; tidak adanya pemakaian pada launch build bukan missing-icon defect.
+
 Final mapping harus diaudit berdampingan dengan screen iOS pada implementation phase. Nama semantic tetap stabil walau glyph dituning.
 
 ## 5. Components
@@ -167,6 +169,8 @@ Shared primitives minimum:
 - `DS-CMP-012` Destructive media action MUST memakai semantic destructive color hanya pada final confirmation/action, bukan pada seluruh inventory row atau usage chart.
 - `DS-CMP-013` Account-purpose cards MUST use actual radio semantics, visible selected indicator, label, and description; do not draw radio/check/icon with CSS `div`, emoji, or text glyph.
 - `DS-CMP-014` First-login onboarding MUST preserve the iOS hierarchy and shared tokens while using browser-safe history, camera, file input, keyboard, and scroll behavior; do not wrap the flow in desktop dashboard cards.
+
+`SalesMetric`, `AccessibleSalesChart`, `SalesBreakdownRow`, `StorageUsageSummary`, `MediaInventoryRow`, `MediaImpactDialog`, dan `DeletionJobStatus` adalah component contract pascapeluncuran. W08 tidak membuat placeholder atau dead route untuk komponen tersebut.
 
 ## 6. Motion
 

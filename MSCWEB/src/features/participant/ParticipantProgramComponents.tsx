@@ -21,7 +21,7 @@ import {
   stepKindLabel,
   submissionPresentation,
 } from './participant-program-policy';
-import { dateFormatter, numberFormatter, rupiahFormatter } from '@/shared/design/formatters';
+import { dateFormatter, formatProgramDateRange, numberFormatter, rupiahFormatter } from '@/shared/design/formatters';
 import { componentTokens, primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { MSCIcon } from '@/shared/icons/MSCIcon';
@@ -143,10 +143,10 @@ export function ProgramActivity({
           <View style={styles.flexCopy}>
             <Text style={[styles.eyebrow, { color: colors.primaryAction }]}>Program diikuti</Text>
             <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>{program.title}</Text>
-            <Text style={[styles.body, { color: colors.secondaryText }]}>{formatDate(program.starts_on)} – {formatDate(program.ends_on ?? program.starts_on)} · {program.timezone}</Text>
           </View>
           <StatusBadge label={enrollment.status === 'completed' ? 'Selesai' : 'Aktif'} tone="success" />
         </View>
+        <Text style={[styles.body, styles.programDate, { color: colors.secondaryText }]}>{formatProgramDateRange(program.starts_on, program.ends_on ?? program.starts_on)}</Text>
         {score ? <ProgressBar label="Progres program" value={score.progress_percentage / 100} /> : <InlineMessage title="Progres belum tersedia" message="Ringkasan akan tampil setelah server menghitung progres program." />}
         {score ? (
           <View style={styles.scoreRow}>
@@ -346,6 +346,7 @@ const styles = StyleSheet.create({
   heading: typographyTokens.headline,
   cardTitle: typographyTokens.bodyStrong,
   body: typographyTokens.body,
+  programDate: { fontVariant: ['tabular-nums'] },
   caption: typographyTokens.caption,
   eyebrow: typographyTokens.label,
   sectionHeading: { gap: primitiveTokens.space.xxSmall },

@@ -149,6 +149,8 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 
 ### 4.7 Akses cepat dan ringkasan penjualan Admin
 
+Status delivery: `UX-SLS-*` dan penambahan quick action Sales ditunda pascapeluncuran. Dashboard rilis pertama mempertahankan dua quick action W07 yang sudah ada; `/admin/sales` tidak dirender atau ditautkan. Lihat `ADR-0010`.
+
 - `UX-SLS-001` `Akses cepat` final MUST mempertahankan `Buat program` dan `Tambah poster`, lalu menambahkan `Ringkasan penjualan` dan `Penyimpanan gambar` sebagai intentional web-only extension.
 - `UX-SLS-002` Compact final memakai grid 2 × 2 dengan card/action semantics yang sama; wide MAY memakai empat kolom. Kartu tidak boleh dipadatkan menjadi empat kolom sempit pada ponsel atau menggeser `Aktivitas terbaru` ke balik bottom navigation.
 - `UX-SLS-003` `/admin/sales` membuka route detail dengan browser history/back dan `Dashboard` tetap menjadi active root; tidak menambah tab utama keenam.
@@ -160,6 +162,8 @@ Pada wide screen, bottom navigation diganti navigation rail/sidebar. Nama destin
 - `UX-SLS-009` Program dan pelanggan teratas masing-masing dibatasi lima item dengan tie-break stabil. Duplicate display name tetap menjadi row terpisah berdasarkan opaque ID; deleted/missing profile memakai label `Pengguna dihapus`.
 
 ### 4.8 Penyimpanan gambar Admin
+
+Status delivery: `UX-MED-001…011` ditunda pascapeluncuran. `UX-MED-012` tetap launch-critical untuk profil Coach publik di W08. Dashboard rilis pertama tidak menampilkan `Penyimpanan gambar` dan route-nya tidak tersedia.
 
 - `UX-MED-001` `/admin/image-storage` menampilkan heading `Penyimpanan gambar`, ringkasan bytes/count, breakdown `Bukti program`, `Bukti pembayaran`, dan `Media profil Coach`, lalu segment `Gambar`/`Sampah`.
 - `UX-MED-002` Ringkasan MUST dilabeli `Penggunaan gambar pengguna`. Jika quota server tidak tersedia, jangan tampilkan progress `digunakan dari X GB`; tampilkan total dan breakdown saja.

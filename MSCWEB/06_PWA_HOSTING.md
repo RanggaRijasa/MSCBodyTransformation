@@ -118,6 +118,14 @@ Baseline headers:
 - `PWA-SEC-002` Source wildcard luas dan `unsafe-eval` MUST tidak masuk production tanpa ADR/threat justification.
 - `PWA-SEC-003` OAuth popup/redirect dan Supabase realtime/storage endpoints yang dipakai MUST diuji di bawah CSP final.
 
+QR scanning pada iOS WebKit memakai fallback ZXing WebAssembly karena
+`BarcodeDetector` native tidak tersedia secara konsisten. Binary WASM MUST
+self-hosted pada origin aplikasi, dikunci dengan checksum saat build, memiliki
+nama ber-versi, dan dikirim sebagai `application/wasm`. CSP production MAY
+menambahkan token sempit `wasm-unsafe-eval` pada `script-src`; token JavaScript
+umum `unsafe-eval`, CDN runtime, dan wildcard source tetap dilarang. Perubahan
+versi decoder MUST memperbarui checksum serta nama aset sebelum deployment.
+
 ## 7. Performance budgets
 
 Budgets awal pada simulated mid-tier mobile, koneksi 4G:

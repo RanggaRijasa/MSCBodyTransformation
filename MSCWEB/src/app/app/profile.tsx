@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CompactStat, publicScreenStyles, Section } from '@/features/public/PublicComponents';
 import { useParticipantProfile, useParticipantScores } from '@/features/participant/participant-queries';
+import { AccountSignOutButton } from '@/shared/auth/AccountSignOutButton';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { dateFormatter } from '@/shared/design/formatters';
 import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
@@ -11,7 +12,7 @@ import { AppShell } from '@/shared/navigation/AppShell';
 import { Button, Card, InlineMessage, StateView, StatusBadge, UserAvatar } from '@/shared/ui/primitives';
 
 export default function PublicProfileRoute() {
-  const { state, signOut } = useAuth();
+  const { state } = useAuth();
   const { colors } = useAppTheme();
   const role = state.status === 'authenticated' ? state.account.role : 'guest';
   return (
@@ -45,7 +46,7 @@ export default function PublicProfileRoute() {
                 <Button label="Ajukan akses Coach" onPress={() => router.push('/app/coach-application')} />
               </Card>
             ) : null}
-            <Button label="Keluar" tone="destructive" onPress={() => void signOut()} />
+            <AccountSignOutButton />
           </>
         )}
       </ScrollView>

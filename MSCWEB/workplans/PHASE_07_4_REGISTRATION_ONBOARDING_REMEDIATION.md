@@ -211,8 +211,11 @@ Append requirement IDs, iOS/device/browser evidence, lifecycle/version diagram, 
   `scripts/run-local-provisional-cleanup.sh` memakai target lokal saja. Integration
   menjalankan runner worker aktual untuk receipt fixture: Storage remove → session
   revoke → Auth delete → receipt complete. Submitted proof/ledger selalu retained.
-- Migration replay: `scripts/apply-local-supabase-migrations.sh` berhasil memutar
-  ulang seluruh W05 → W07.4 pada shared local baseline tanpa target hosted.
+- Migration replay historis: `scripts/apply-local-supabase-migrations.sh` berhasil
+  memutar ulang seluruh W05 → W07.4 pada shared local baseline tanpa target
+  hosted. Sejak keputusan authority W08, script tersebut dihapus dan seluruh
+  migration/function deployment berada di root `supabase/`; gunakan Supabase CLI
+  dari repository root.
 - iOS parity: fresh Debug build/run pada iPhone 17, iOS 26.5; scenario
   `auth_profile_onboarding`, Member/ineligible, SC/eligible, payment success,
   pending Admin, Participant QR unconfirmed/confirmed, dan scanner unavailable.

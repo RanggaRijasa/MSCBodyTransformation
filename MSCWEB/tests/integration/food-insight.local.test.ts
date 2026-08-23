@@ -73,12 +73,14 @@ it.runIf(canRun)('reconciles one durable job, enforces RLS, retries safely, and 
 
     const claimed = await service.rpc('claim_food_insight_job', { lease_seconds: 90, target_submission_id: submissionA });
     expect(claimed.error).toBeNull();
-    const job = claimed.data as { id: string; submission_id: string; lease_token: string };
-    expect([submissionA, submissionB]).toContain(job.submission_id);
-    const completed = await service.rpc('complete_food_insight_job', { target_job_id: job.id, target_lease_token: job.lease_token, provider_name: 'fake', model_alias: 'deterministic-food-fixture-v1', validated_result: { detected_kind: 'food', protein_grams: 25, carbohydrate_grams: 40, fat_grams: 12, calorie_kcal: 390, rating: 4, confidence: 0.84, reason_code: 'plausible_food', insight_sentences: ['Pilihan tampak cukup sesuai dengan panduan program.'] } });
+    const job = claimed.data as { id: string; lease_token: string };
+    for (const forbidden of ['submission_id', 'question_id', 'analysis_version', 'rubric', 'rubric_version']) {
+      expect(claimed.data).not.toHaveProperty(forbidden);
+    }
+    const completed = await service.rpc('complete_food_insight_job', { target_job_id: job.id, target_lease_token: job.lease_token, provider_name: 'fake', model_alias: 'deterministic-food-fixture-v1', validated_result: { detected_kind: 'food', protein_grams: 25, carbohydrate_grams: 40, fat_grams: 12, calorie_kcal: 390, rating: 4, confidence: 0.84, reason_code: 'food_or_drink_detected', insight_sentences: ['Foto tampak menunjukkan satu porsi makanan.'] } });
     expect(completed.error).toBeNull();
-    expect((await service.from('food_insight_results').select('id').eq('submission_id', job.submission_id)).data).toHaveLength(1);
-    const completedSubmission = job.submission_id;
+    expect((await service.from('food_insight_results').select('id').eq('submission_id', submissionA)).data).toHaveLength(1);
+    const completedSubmission = submissionA;
     const completedEnrollment = completedSubmission === submissionA ? enrollmentA : enrollmentB;
     const owner = completedSubmission === submissionA ? participantA : participantB;
     const assignedCoach = completedSubmission === submissionA ? coachA : coachB;
@@ -108,6 +110,15 @@ it.runIf(canRun)('reconciles one durable job, enforces RLS, retries safely, and 
     const score = await service.from('program_scores').select('activity_points,quiz_points,weight_points,adjustment_points').eq('enrollment_id', completedEnrollment).single();
     expect(score.data).toEqual({ activity_points: 10, quiz_points: 0, weight_points: 0, adjustment_points: 0 });
 
+    expect((await service.from('program_questions').update({ analysis_mode: 'none', analysis_rubric: null, analysis_rubric_version: null }).eq('id', questionId)).error).toBeNull();
+    const disabledClaim = await service.rpc('claim_food_insight_job', { lease_seconds: 90, target_submission_id: submissionB });
+    expect(disabledClaim.error).toBeNull();
+    expect(disabledClaim.data).toBeNull();
+    expect((await service.rpc('reconcile_food_insight_jobs', { target_analysis_version: 'food_insight_v1' })).data).toBe(0);
+    expect((await service.from('food_insight_jobs').select('status,terminal_error_code').eq('submission_id', submissionB).single()).data).toEqual({ status: 'unavailable', terminal_error_code: 'configuration_invalid' });
+
+    expect((await service.from('program_questions').update({ analysis_mode: 'food', analysis_rubric: 'Foto harus menampilkan makanan dengan sumber protein dan sayur.', analysis_rubric_version: 'rubric_food_v1' }).eq('id', questionId)).error).toBeNull();
+    expect((await service.from('food_insight_jobs').update({ status: 'queued', terminal_error_code: null }).eq('submission_id', submissionB)).error).toBeNull();
     const second = await service.rpc('claim_food_insight_job', { lease_seconds: 90, target_submission_id: submissionB });
     const retryJob = second.data as { id: string; lease_token: string };
     expect((await service.rpc('fail_food_insight_job', { target_job_id: retryJob.id, target_lease_token: retryJob.lease_token, error_code: 'rate_limited', retryable: true })).data).toBe('retry_scheduled');

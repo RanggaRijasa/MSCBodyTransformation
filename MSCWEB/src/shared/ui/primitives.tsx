@@ -252,7 +252,7 @@ export function StateView({ kind, action }: { kind: StateKind; action?: ReactNod
   );
 }
 
-export function InlineMessage({ title, message, tone = 'info' }: { title: string; message: string; tone?: StatusTone }) {
+export function InlineMessage({ title, message, tone = 'info' }: { title: string; message?: string; tone?: StatusTone }) {
   const { colors } = useAppTheme();
   const toneColor = colors[tone];
   return (
@@ -260,7 +260,7 @@ export function InlineMessage({ title, message, tone = 'info' }: { title: string
       <MSCIcon name={statusIcons[tone]} color={toneColor} />
       <View style={styles.inlineCopy}>
         <Text style={[styles.inlineTitle, { color: colors.primaryText }]}>{title}</Text>
-        <Text style={[styles.supportingText, { color: colors.secondaryText }]}>{message}</Text>
+        {message ? <Text style={[styles.supportingText, { color: colors.secondaryText }]}>{message}</Text> : null}
       </View>
     </View>
   );

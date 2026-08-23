@@ -31,6 +31,8 @@ describe('kontrak pengalaman Coach W06', () => {
     expect(source).not.toContain('selectable>{payload}');
     expect(source).not.toContain('navigator.clipboard.writeText(payload)');
     expect(source).toContain('Kode internal tidak ditampilkan atau dapat disalin');
+    expect(source).toContain('isQrDarkModule(value)');
+    expect(source).not.toContain('value === 0');
   });
 
   it('ringkasan Dashboard Coach mengikuti tiga metrik iOS', () => {
@@ -51,7 +53,7 @@ describe('kontrak pengalaman Coach W06', () => {
     const paymentRoute = readFileSync('src/app/app/payments/[programId].tsx', 'utf8');
     const paymentFlow = readFileSync('src/features/payment/ParticipantPaymentFlow.tsx', 'utf8');
     const repository = readFileSync('src/features/participant/participant-repository.ts', 'utf8');
-    const migration = readFileSync('supabase/migrations/20260813062314_w06_coach_program_participation.sql', 'utf8');
+    const migration = readFileSync('../supabase/migrations/20260813062314_w06_coach_program_participation.sql', 'utf8');
 
     expect(coachRoute).toContain("export { default } from '../app/programs'");
     expect(catalogRoute).toContain("state.account.role === 'participant' || state.account.role === 'coach'");
@@ -67,7 +69,7 @@ describe('kontrak pengalaman Coach W06', () => {
   });
 
   it('migrasi mengaktifkan RLS, keputusan atomik, dan snapshot publik terpisah', () => {
-    const sql = readFileSync('supabase/migrations/20260813051840_w06_coach_experience.sql', 'utf8');
+    const sql = readFileSync('../supabase/migrations/20260813051840_w06_coach_experience.sql', 'utf8');
     expect(sql).toContain('alter table public.coach_public_profile_drafts enable row level security');
     expect(sql).toContain('approve_coach_payment_and_activate');
     expect(sql).toContain("statement_timestamp() + interval '3 months'");
@@ -100,7 +102,10 @@ describe('kontrak pengalaman Coach W06', () => {
 
   it('peserta saya mengikuti direktori, filter, detail privat, dan progres iOS', () => {
     const components = readFileSync('src/features/coach/CoachParticipantComponents.tsx', 'utf8');
-    const migration = readFileSync('supabase/migrations/20260813095648_w06_coach_participant_directory_detail.sql', 'utf8');
+    const migration = readFileSync('../supabase/migrations/20260813095648_w06_coach_participant_directory_detail.sql', 'utf8');
+    const weighInProgressMigration = readFileSync('../supabase/migrations/20260822024334_w08_coach_weigh_in_progress_read_model.sql', 'utf8');
+    const dueProgressMigration = readFileSync('../supabase/migrations/20260822040354_w08_coach_due_progress_attention.sql', 'utf8');
+    const attentionPolicy = readFileSync('src/features/coach/coach-participant-attention.ts', 'utf8');
 
     expect(Object.keys(coachParticipantDirectorySchema.shape)).toEqual(['participants', 'programs']);
     expect(Object.keys(coachParticipantDetailSchema.shape)).toEqual([
@@ -114,6 +119,9 @@ describe('kontrak pengalaman Coach W06', () => {
     expect(components).toContain('Lihat bukti');
     expect(components).toContain('Lihat progres');
     expect(components).toContain('Rincian progres');
+    expect(components).toContain('Muat bukti ${mediaLabel}');
+    expect(components).toContain('accessibilityState={{ expanded }}');
+    expect(components).toContain('if (!objectPath || !requested) return;');
     expect(migration).toContain('get_my_coach_participant_directory');
     expect(migration).toContain('get_my_coach_participant_detail');
     expect(migration).toContain('enrollment.coach_id = caller_id');
@@ -121,11 +129,22 @@ describe('kontrak pengalaman Coach W06', () => {
     expect(migration).toContain("raise exception 'permission_denied'");
     expect(migration).toContain('public.weigh_ins');
     expect(migration).toContain('private_photo_path');
+    expect(weighInProgressMigration).toContain('w08_coach_enrollment_progress_metrics');
+    expect(weighInProgressMigration).toContain("step.content_kind = 'initial_weigh_in' and weigh_in.kind = 'initial'");
+    expect(weighInProgressMigration).toContain("'completed_step_count'");
+    expect(weighInProgressMigration).toContain("'active_day_count'");
+    expect(weighInProgressMigration).toContain("'\"approved\"'::jsonb");
+    expect(dueProgressMigration).toContain("'due_step_count'");
+    expect(dueProgressMigration).toContain("'completed_due_step_count'");
+    expect(dueProgressMigration).toContain("target.pace = 'self_paced'");
+    expect(attentionPolicy).toContain('completed_due_step_count < enrollment.due_step_count');
+    expect(components).toContain('needsCoachAttention(enrollment)');
+    expect(components).not.toContain('progress_percentage < 50');
   });
 
   it('aktivitas terbaru mengikuti jenis, filter, tanggal, dan navigasi iOS', () => {
     const components = readFileSync('src/features/coach/CoachActivityComponents.tsx', 'utf8');
-    const migration = readFileSync('supabase/migrations/20260814031900_w06_coach_activity_feed.sql', 'utf8');
+    const migration = readFileSync('../supabase/migrations/20260814031900_w06_coach_activity_feed.sql', 'utf8');
 
     expect(Object.keys(coachActivityFeedSchema.shape)).toEqual(['items', 'programs']);
     expect(components).toContain('Filter aktivitas');
@@ -147,10 +166,11 @@ describe('kontrak pengalaman Coach W06', () => {
 
   it('peringkat bersama mengikuti podium iOS dan membatasi rincian Coach pada Pesertamu', () => {
     const components = readFileSync('src/features/leaderboard/LeaderboardExperience.tsx', 'utf8');
-    const migration = readFileSync('supabase/migrations/20260814040500_w06_shared_leaderboard.sql', 'utf8');
+    const migration = readFileSync('../supabase/migrations/20260814040500_w06_shared_leaderboard.sql', 'utf8');
 
     expect(Object.keys(coachLeaderboardEntrySchema.shape)).toEqual([
       'id', 'program_id', 'participant_id', 'participant_display_name', 'avatar_url',
+      'avatar_reference',
       'rank', 'progress_percentage', 'total_points', 'is_assigned_to_coach',
       'step_points', 'weight_points', 'adjustment_points',
     ]);

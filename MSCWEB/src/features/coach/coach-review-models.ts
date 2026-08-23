@@ -9,6 +9,7 @@ export const coachReviewAnswerSchema = z.object({
   selected_option_ids: z.array(z.string().uuid()),
   selected_option_titles: z.array(z.string()),
   private_photo_path: z.string().nullable(),
+  private_video_path: z.string().nullable(),
 });
 
 export const coachReviewItemSchema = z.object({

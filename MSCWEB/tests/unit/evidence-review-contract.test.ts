@@ -19,8 +19,10 @@ describe('W04 evidence, review, and scoring boundary', () => {
   it('uses an actual accessible picker and revokes preview object URLs', () => {
     const component = readFileSync('src/features/participant/ParticipantSubmissionForm.tsx', 'utf8');
     expect(component).toContain('type="file"');
-    expect(component).toContain('aria-label="Ambil atau pilih foto"');
-    expect(component).toContain('capture="environment"');
+    expect(component).toContain('aria-label="Pilih sumber foto"');
+    expect(component).toContain('aria-label="Pilih sumber video"');
+    expect(component).not.toContain('capture="environment"');
+    expect(component).toContain("event.currentTarget.value = ''");
     expect(component).toContain('URL.revokeObjectURL');
     expect(component).not.toContain('foto demo');
   });

@@ -18,6 +18,9 @@ const publicProgramQuestionSchema = z.object({
   analysis_mode: z.enum(['none', 'food']).default('none'),
   analysis_rubric: nullableText,
   analysis_rubric_version: nullableText,
+  media_kind: z.enum(['image', 'video']).nullable().optional(),
+  media_path: nullableText,
+  media_alt_text: nullableText,
   program_question_options: z.array(publicProgramQuestionOptionSchema).default([]),
 }).passthrough();
 
@@ -72,10 +75,13 @@ export const publicProgramSchema = z.object({
 
 export const publicCoachSchema = z.object({
   id: z.string().uuid(),
+  handle: z.string(),
   display_name: z.string(),
+  professional_headline: z.string().nullable().default(''),
   biography: z.string().nullable().default(''),
   city: z.string().nullable().default(''),
   photo_reference: z.string().nullable().optional(),
+  is_verified: z.boolean(),
 });
 
 export const publicLeaderboardRowSchema = z.object({
@@ -83,6 +89,8 @@ export const publicLeaderboardRowSchema = z.object({
   program_id: z.string().uuid(),
   participant_id: z.string().uuid(),
   participant_display_name: z.string(),
+  avatar_url: z.string().nullable().default(null),
+  avatar_reference: z.string().uuid().nullable().optional(),
   rank: z.number().int().positive(),
   progress_percentage: z.number(),
   total_points: z.number().int(),

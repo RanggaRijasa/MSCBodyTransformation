@@ -173,3 +173,10 @@ Append simulator area, compact/wide behavior, operations/tests, audit evidence, 
 - Urutan aktif direvisi menjadi W07.4 `Registration and First-login Onboarding Remediation`, W07.5 `Admin Sales Overview`, W07.6 `Admin Image Storage Management`, lalu W08 hardening.
 - Dua quick action baru adalah intentional web-only extension. Final Dashboard mempertahankan dua aksi native-derived pertama dan memakai grid 2 × 2 pada compact.
 - Tidak ada source/migration/runtime W07 yang diubah oleh planning entry ini; implementasi harus mengikuti workplan baru dan fresh simulator/web gates masing-masing.
+
+### 2026-08-21 — Launch-order revision
+
+- Owner menunda W07.5 Sales Overview dan W07.6 Admin Image Storage sampai pascapeluncuran agar W08/W09 dapat dimulai langsung setelah completed W07.4.
+- W07 tetap `Completed`; deferral tidak menghapus requirement atau mengubah evidence W07.
+- Minimum media safety—private evidence/RLS, automatic payment-proof retention/orphan cleanup, opaque Coach-media gateway, dan cache invalidation—menjadi launch gate W08. Admin inventory/Trash/restore/purge tetap belum diimplementasikan.
+- Decision authority: `ADR-0010`. Tidak ada source, migration, local/hosted runtime, credential, deployment, atau Git operation yang diubah oleh entry ini.

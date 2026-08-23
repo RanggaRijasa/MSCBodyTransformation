@@ -3,6 +3,8 @@
 Status: Accepted  
 Date: 20 August 2026
 
+Scheduling amendment: Admin inventory/Trash/restore/purge is deferred post-launch by [`ADR-0010`](./0010-defer-admin-analytics-and-storage-management.md). Private Coach-media delivery and automatic payment-proof retention remain first-launch safety work in W08.
+
 ## Context
 
 Admin membutuhkan inventory penggunaan gambar dan kemampuan menghapus gambar yang diunggah pengguna. Byte file berada di Supabase Storage; database hanya menyimpan metadata/reference. Direct delete dari browser atau SQL dapat meninggalkan domain reference rusak, menghapus shared asset, melewati audit, atau membuat Storage object yatim.
@@ -11,7 +13,7 @@ Current user-uploaded inventory scope adalah `question-photos`, `payment-evidenc
 
 ## Decision
 
-- Tambahkan W07.6 setelah Sales Overview dan sebelum W08.
+- W07.6 remains the implementation phase for Admin media management after W07.5, but its original pre-W08 placement is superseded by ADR-0010.
 - Route Admin `/admin/image-storage` dibuka dari quick action `Penyimpanan gambar`; video dan Admin/system-owned assets berada di luar baseline.
 - `payment-evidence` tetap inventory-only dengan label automatic 30-day retention. ADR ini tidak mengganti larangan Admin proof-cleanup button; manual Trash/restore/purge hanya untuk eligible `question-photos` dan `coach-public-media`.
 - `coach-public-media` dimigrasikan menjadi private. Public profile memakai opaque asset ID melalui controlled gateway yang memverifikasi current published reference dan active state; raw path/direct public bucket URL dihentikan.

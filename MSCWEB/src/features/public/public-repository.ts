@@ -13,6 +13,7 @@ import {
   type PublicWinnerPoster,
 } from './public-models';
 import { getSupabaseBrowserClient } from '@/shared/supabase/client';
+import { publicCoachMediaUrl } from '@/shared/media/public-coach-media';
 
 export class PublicRepositoryError extends Error {
   constructor() {
@@ -29,6 +30,7 @@ export interface PublicRepository {
   listLeaderboard(programId: string): Promise<PublicLeaderboardRow[]>;
   listWinners(programId: string): Promise<PublicWinner[]>;
   listWinnerPosters(): Promise<PublicWinnerPoster[]>;
+  questionPromptMediaUrl(path?: string | null): string | undefined;
 }
 
 export class SupabasePublicRepository implements PublicRepository {
@@ -57,7 +59,10 @@ export class SupabasePublicRepository implements PublicRepository {
       result_limit: 100,
       result_offset: 0,
     });
-    return parseRows(data, error, publicCoachSchema);
+    return parseRows(data, error, publicCoachSchema).map((coach) => ({
+      ...coach,
+      photo_reference: publicCoachMediaUrl(coach.photo_reference) ?? null,
+    }));
   }
 
   async getCoach(id: string): Promise<PublicCoach | null> {
@@ -70,7 +75,10 @@ export class SupabasePublicRepository implements PublicRepository {
       result_limit: 100,
       result_offset: 0,
     });
-    return parseRows(data, error, publicLeaderboardRowSchema);
+    return parseRows(data, error, publicLeaderboardRowSchema).map((row) => ({
+      ...row,
+      avatar_url: publicCoachMediaUrl(row.avatar_reference) ?? row.avatar_url,
+    }));
   }
 
   async listWinners(programId: string): Promise<PublicWinner[]> {
@@ -90,16 +98,26 @@ export class SupabasePublicRepository implements PublicRepository {
     return parseRows(data, error, publicWinnerPosterSchema);
   }
 
+  questionPromptMediaUrl(path?: string | null) {
+    return path ? this.client.storage.from('program-question-media').getPublicUrl(path).data.publicUrl : undefined;
+  }
+
   private async hydrateFoodQuestionConfigs(programs: PublicProgram[]): Promise<PublicProgram[]> {
     const questionIds = programs.flatMap((program) => program.program_days.flatMap((day) => day.program_steps.flatMap((step) => step.program_questions.map((question) => question.id))));
     if (questionIds.length === 0) return programs;
-    const response = await this.client.rpc('list_public_food_question_configs', { target_question_ids: questionIds });
-    if (response.error) throw new PublicRepositoryError();
-    const schema = z.array(z.object({ id: z.string().uuid(), analysis_mode: z.enum(['none', 'food']), analysis_rubric: z.string().nullable(), analysis_rubric_version: z.string().nullable() }));
-    const parsed = schema.safeParse(response.data ?? []);
-    if (!parsed.success) throw new PublicRepositoryError();
-    const configs = new Map(parsed.data.map((config) => [config.id, config]));
-    return programs.map((program) => ({ ...program, program_days: program.program_days.map((day) => ({ ...day, program_steps: day.program_steps.map((step) => ({ ...step, program_questions: step.program_questions.map((question) => ({ ...question, ...(configs.get(question.id) ?? {}) })) })) })) }));
+    const [foodResponse, mediaResponse] = await Promise.all([
+      this.client.rpc('list_public_food_question_configs', { target_question_ids: questionIds }),
+      this.client.rpc('list_public_question_media', { target_question_ids: questionIds }),
+    ]);
+    if (foodResponse.error || mediaResponse.error) throw new PublicRepositoryError();
+    const foodSchema = z.array(z.object({ id: z.string().uuid(), analysis_mode: z.enum(['none', 'food']), analysis_rubric: z.string().nullable(), analysis_rubric_version: z.string().nullable() }));
+    const mediaSchema = z.array(z.object({ id: z.string().uuid(), media_kind: z.enum(['image', 'video']).nullable(), media_path: z.string().nullable(), media_alt_text: z.string().nullable() }));
+    const food = foodSchema.safeParse(foodResponse.data ?? []);
+    const media = mediaSchema.safeParse(mediaResponse.data ?? []);
+    if (!food.success || !media.success) throw new PublicRepositoryError();
+    const configs = new Map(food.data.map((config) => [config.id, config]));
+    const mediaByQuestion = new Map(media.data.map((config) => [config.id, config]));
+    return programs.map((program) => ({ ...program, program_days: program.program_days.map((day) => ({ ...day, program_steps: day.program_steps.map((step) => ({ ...step, program_questions: step.program_questions.map((question) => ({ ...question, ...(configs.get(question.id) ?? {}), ...(mediaByQuestion.get(question.id) ?? {}) })) })) })) }));
   }
 }
 

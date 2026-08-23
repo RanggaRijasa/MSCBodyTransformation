@@ -1266,6 +1266,8 @@ export type Database = {
           pixel_width: number | null
           prepared_at: string
           rejection_reason: string | null
+          retention_cleanup_claimed_at: string | null
+          retention_previous_status: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           sha256_hex: string | null
@@ -1285,6 +1287,8 @@ export type Database = {
           pixel_width?: number | null
           prepared_at?: string
           rejection_reason?: string | null
+          retention_cleanup_claimed_at?: string | null
+          retention_previous_status?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           sha256_hex?: string | null
@@ -1304,6 +1308,8 @@ export type Database = {
           pixel_width?: number | null
           prepared_at?: string
           rejection_reason?: string | null
+          retention_cleanup_claimed_at?: string | null
+          retention_previous_status?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           sha256_hex?: string | null
@@ -1879,6 +1885,9 @@ export type Database = {
           analysis_rubric_version: string | null
           id: string
           kind: string
+          media_alt_text: string | null
+          media_kind: string | null
+          media_path: string | null
           prompt: string
           question_order: number
           step_id: string
@@ -1889,6 +1898,9 @@ export type Database = {
           analysis_rubric_version?: string | null
           id?: string
           kind: string
+          media_alt_text?: string | null
+          media_kind?: string | null
+          media_path?: string | null
           prompt: string
           question_order: number
           step_id: string
@@ -1899,6 +1911,9 @@ export type Database = {
           analysis_rubric_version?: string | null
           id?: string
           kind?: string
+          media_alt_text?: string | null
+          media_kind?: string | null
+          media_path?: string | null
           prompt?: string
           question_order?: number
           step_id?: string
@@ -2338,6 +2353,7 @@ export type Database = {
           id: string
           number_value: number | null
           private_photo_path: string | null
+          private_video_path: string | null
           question_id: string
           selected_option_ids: string[]
           submission_id: string
@@ -2347,6 +2363,7 @@ export type Database = {
           id?: string
           number_value?: number | null
           private_photo_path?: string | null
+          private_video_path?: string | null
           question_id: string
           selected_option_ids?: string[]
           submission_id: string
@@ -2356,6 +2373,7 @@ export type Database = {
           id?: string
           number_value?: number | null
           private_photo_path?: string | null
+          private_video_path?: string | null
           question_id?: string
           selected_option_ids?: string[]
           submission_id?: string
@@ -3068,6 +3086,10 @@ export type Database = {
         Args: { lease_seconds?: number; target_submission_id?: string }
         Returns: Json
       }
+      claim_payment_evidence_retention: {
+        Args: { target_attempt_id: string }
+        Returns: boolean
+      }
       claim_pending_apple_account_events: {
         Args: { batch_size?: number }
         Returns: Json[]
@@ -3124,6 +3146,10 @@ export type Database = {
           validated_result: Json
         }
         Returns: string
+      }
+      complete_payment_evidence_retention: {
+        Args: { target_attempt_id: string }
+        Returns: boolean
       }
       complete_program: {
         Args: {
@@ -3616,6 +3642,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_assigned_coach_profile: {
+        Args: never
+        Returns: Json[]
+      }
       get_my_coach_activity_feed: { Args: never; Returns: Json }
       get_my_coach_application: { Args: never; Returns: Json }
       get_my_coach_leaderboard: {
@@ -3667,6 +3697,10 @@ export type Database = {
       list_admin_profile_moderation_items: { Args: never; Returns: Json[] }
       list_coach_applications_for_admin: { Args: never; Returns: Json[] }
       list_my_assigned_participants: { Args: never; Returns: Json[] }
+      list_my_coach_submission_videos: {
+        Args: { target_submission_ids: string[] }
+        Returns: Json[]
+      }
       list_my_commerce_history: { Args: never; Returns: Json[] }
       list_my_pending_reviews: { Args: never; Returns: Json[] }
       list_my_program_day_access: {
@@ -3686,12 +3720,27 @@ export type Database = {
           object_name: string
         }[]
       }
+      list_orphan_question_videos: {
+        Args: { older_than?: string }
+        Returns: {
+          object_name: string
+        }[]
+      }
       list_payment_evidence_orphans: {
         Args: { batch_size?: number; dry_run?: boolean; minimum_age?: string }
         Returns: {
           is_dry_run: boolean
           object_created_at: string
           object_name: string
+        }[]
+      }
+      list_payment_evidence_retention_candidates: {
+        Args: { batch_size?: number; dry_run?: boolean }
+        Returns: {
+          attempt_id: string
+          is_dry_run: boolean
+          object_name: string
+          submitted_at: string
         }[]
       }
       list_public_coaches: {
@@ -3716,6 +3765,10 @@ export type Database = {
           result_offset?: number
           target_program_id?: string
         }
+        Returns: Json[]
+      }
+      list_public_question_media: {
+        Args: { target_question_ids: string[] }
         Returns: Json[]
       }
       list_public_winner_posters: {
@@ -3925,6 +3978,8 @@ export type Database = {
           pixel_width: number | null
           prepared_at: string
           rejection_reason: string | null
+          retention_cleanup_claimed_at: string | null
+          retention_previous_status: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           sha256_hex: string | null
@@ -4059,6 +4114,10 @@ export type Database = {
         Args: { target_analysis_version?: string }
         Returns: number
       }
+      reconcile_payment_evidence_retention_claims: {
+        Args: never
+        Returns: number
+      }
       record_apple_account_event: {
         Args: {
           target_apple_subject_hash: string
@@ -4129,6 +4188,10 @@ export type Database = {
         }
       }
       record_orphan_question_photo_cleanup: {
+        Args: { cleanup_reason: string; deleted_object_names: string[] }
+        Returns: undefined
+      }
+      record_orphan_question_video_cleanup: {
         Args: { cleanup_reason: string; deleted_object_names: string[] }
         Returns: undefined
       }
@@ -4205,6 +4268,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      release_payment_evidence_retention: {
+        Args: { target_attempt_id: string }
+        Returns: boolean
       }
       reopen_program: {
         Args: {
@@ -4334,6 +4401,10 @@ export type Database = {
       resolve_coach_qr_for_enrollment: {
         Args: { scanned_coach_qr: string }
         Returns: Json
+      }
+      resolve_public_coach_media_asset: {
+        Args: { target_asset_id: string }
+        Returns: string
       }
       resolve_purchase_intent_for_restore: {
         Args: {

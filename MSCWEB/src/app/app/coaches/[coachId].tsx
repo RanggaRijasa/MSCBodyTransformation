@@ -7,7 +7,7 @@ import { useAuth } from '@/shared/auth/AuthProvider';
 import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { AppShell } from '@/shared/navigation/AppShell';
-import { Button, Card, InlineMessage, StateView, UserAvatar } from '@/shared/ui/primitives';
+import { Button, Card, StateView, StatusBadge, UserAvatar } from '@/shared/ui/primitives';
 
 export default function CoachDetailRoute() {
   const params = useLocalSearchParams<{ coachId?: string }>();
@@ -25,12 +25,13 @@ export default function CoachDetailRoute() {
             <View style={styles.identityRow}>
               <UserAvatar uri={coach.data.photo_reference ?? undefined} label={coach.data.display_name} size={88} />
               <View style={styles.copy}>
+                {coach.data.is_verified ? <StatusBadge label="Coach terverifikasi" tone="success" /> : null}
                 <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>{coach.data.display_name}</Text>
+                <Text style={[styles.body, { color: colors.secondaryText }]}>{coach.data.professional_headline || 'Coach MSC'}</Text>
                 <Text style={[styles.body, { color: colors.secondaryText }]}>{coach.data.city || 'Lokasi belum dicantumkan'}</Text>
               </View>
             </View>
             <Text style={[styles.body, { color: colors.secondaryText }]}>{coach.data.biography || 'Coach ini belum menambahkan cerita profil.'}</Text>
-            <InlineMessage title="Pilih Coach melalui alur program" message="Pendaftaran program menggunakan pemindaian QR. Kode mentah tidak ditampilkan atau dapat diketik." />
           </Card>
         )}
       </ScrollView>

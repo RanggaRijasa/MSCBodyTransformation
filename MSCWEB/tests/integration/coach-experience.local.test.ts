@@ -119,23 +119,43 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
     expect((await service.from('programs').insert({ id: programId, title: 'Program cakupan Coach W06', summary: 'Fixture W06.', status: 'active', pace: 'scheduled', duration_mode: 'specific_dates', starts_on: localDate(-1), ends_on: localDate(5), timezone: 'Asia/Makassar', past_step_policy: 'read_only', future_step_policy: 'locked', wellness_disclaimer: 'Program wellness non-diagnostik.', points_per_activity: 10, points_per_weight_kg: 100, quiz_passing_percentage: 70, pricing_mode: 'free', desired_price: null, participant_limit: 20, published_at: new Date().toISOString(), created_by: admin.id })).error).toBeNull();
     const enrollment = await service.from('program_enrollments').insert({ program_id: programId, participant_id: leadership.id, coach_id: sc.id, status: 'active' }).select('id').single();
     expect(enrollment.error).toBeNull();
+    expect((await service.from('profiles').update({ current_coach_id: sc.id }).eq('user_id', leadership.id)).error).toBeNull();
     expect((await service.from('program_scores').insert({ enrollment_id: enrollment.data?.id, progress_percentage: 42, activity_points: 50, quiz_points: 5, weight_points: 20, adjustment_points: -2, rank: 1 })).error).toBeNull();
     const foreignEnrollment = await service.from('program_enrollments').insert({ program_id: programId, participant_id: member.id, coach_id: supervisor.id, status: 'active' }).select('id').single();
     expect(foreignEnrollment.error).toBeNull();
     expect((await service.from('program_scores').insert({ enrollment_id: foreignEnrollment.data?.id, progress_percentage: 30, activity_points: 35, quiz_points: 5, weight_points: 10, adjustment_points: 0, rank: 2 })).error).toBeNull();
     const programDay = await service.from('program_days').insert({ program_id: programId, day_number: 1, title: 'Mulai konsisten', scheduled_on: localDate(0) }).select('id').single();
     expect(programDay.error).toBeNull();
+    const futureProgramDay = await service.from('program_days').insert({ program_id: programId, day_number: 2, title: 'Besok konsisten', scheduled_on: localDate(1) }).select('id').single();
+    expect(futureProgramDay.error).toBeNull();
     const steps = await service.from('program_steps').insert([
       { program_day_id: programDay.data?.id, step_order: 1, title: 'Foto kebiasaan sehat', instructions: 'Kirim foto.', content_kind: 'form', completion_policy: 'answer_all_questions', verification_mode: 'coach_review' },
       { program_day_id: programDay.data?.id, step_order: 2, title: 'Gerak pagi', instructions: 'Tandai selesai.', content_kind: 'article', completion_policy: 'mark_complete', verification_mode: 'automatic' },
+      { program_day_id: programDay.data?.id, step_order: 3, title: 'Timbang awal', instructions: 'Catat berat awal.', content_kind: 'initial_weigh_in', completion_policy: 'submit_weigh_in', verification_mode: 'automatic' },
     ]).select('id,step_order');
     expect(steps.error).toBeNull();
+    expect((await service.from('program_steps').insert({
+      program_day_id: futureProgramDay.data?.id,
+      step_order: 1,
+      title: 'Aktivitas besok',
+      instructions: 'Selesaikan besok.',
+      content_kind: 'article',
+      completion_policy: 'mark_complete',
+      verification_mode: 'automatic',
+    })).error).toBeNull();
     const reviewStepId = steps.data?.find((step) => step.step_order === 1)?.id;
     const automaticStepId = steps.data?.find((step) => step.step_order === 2)?.id;
+    const initialWeighInStepId = steps.data?.find((step) => step.step_order === 3)?.id;
     expect((await service.from('step_submissions').insert([
       { enrollment_id: enrollment.data?.id, step_id: reviewStepId, status: 'pending' },
       { enrollment_id: enrollment.data?.id, step_id: automaticStepId, status: 'approved', reviewed_at: new Date().toISOString(), reviewer_id: sc.id },
     ])).error).toBeNull();
+    expect((await service.from('weigh_ins').insert({
+      enrollment_id: enrollment.data?.id,
+      step_id: initialWeighInStepId,
+      kind: 'initial',
+      weight_kg: 73,
+    })).error).toBeNull();
 
     const coachIdentifiers = await service.from('profiles')
       .select('user_id,coach_qr_identifier')
@@ -226,21 +246,52 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
     expect(scLeaderboard.error).toBeNull();
     expect(supervisorLeaderboard.error).toBeNull();
     const scLeaderboardRows = scLeaderboard.data as Record<string, unknown>[];
-    const publicProfiles = await service.from('profiles').select('user_id,public_profile_id').in('user_id', [leadership.id, member.id]);
+    const publicProfiles = await service.from('profiles').select('user_id,public_profile_id').in('user_id', [leadership.id, member.id, sc.id]);
     expect(publicProfiles.error).toBeNull();
     const leadershipPublicId = publicProfiles.data?.find((profile) => profile.user_id === leadership.id)?.public_profile_id;
     const memberPublicId = publicProfiles.data?.find((profile) => profile.user_id === member.id)?.public_profile_id;
+    const scPublicId = publicProfiles.data?.find((profile) => profile.user_id === sc.id)?.public_profile_id;
     const assignedScore = scLeaderboardRows.find((score) => score.participant_id === leadershipPublicId);
     const foreignScore = scLeaderboardRows.find((score) => score.participant_id === memberPublicId);
-    expect(assignedScore).toEqual(expect.objectContaining({ is_assigned_to_coach: true, step_points: 55, weight_points: 20, adjustment_points: -2 }));
-    expect(foreignScore).toEqual(expect.objectContaining({ is_assigned_to_coach: false, step_points: null, weight_points: null, adjustment_points: null, avatar_url: null }));
+    expect(assignedScore).toEqual(expect.objectContaining({ is_assigned_to_coach: true, step_points: 55, weight_points: 20, adjustment_points: -2, avatar_url: 'https://example.com/avatar.jpg' }));
+    expect(foreignScore).toEqual(expect.objectContaining({ is_assigned_to_coach: false, step_points: null, weight_points: null, adjustment_points: null, avatar_url: 'https://example.com/avatar.jpg' }));
     const supervisorRows = supervisorLeaderboard.data as Record<string, unknown>[];
     expect(supervisorRows.find((score) => score.participant_id === foreignScore?.participant_id)).toEqual(expect.objectContaining({ is_assigned_to_coach: true, step_points: 40 }));
     expect(supervisorRows.find((score) => score.participant_id === assignedScore?.participant_id)).toEqual(expect.objectContaining({ is_assigned_to_coach: false, step_points: null }));
+    const publicLeaderboard = await scClient.rpc('list_public_leaderboard', {
+      target_program_id: programId, result_limit: 100, result_offset: 0,
+    });
+    expect(publicLeaderboard.error).toBeNull();
+    expect(publicLeaderboard.data).toEqual(expect.arrayContaining([
+      expect.objectContaining({ participant_id: leadershipPublicId, avatar_url: 'https://example.com/avatar.jpg' }),
+      expect.objectContaining({ participant_id: memberPublicId, avatar_url: 'https://example.com/avatar.jpg' }),
+      expect.objectContaining({ participant_id: scPublicId, avatar_url: 'https://example.com/avatar.jpg' }),
+    ]));
     const scDirectory = await scClient.rpc('get_my_coach_participant_directory');
     const supervisorDirectory = await supervisorClient.rpc('get_my_coach_participant_directory');
     expect(scDirectory.error).toBeNull();
-    expect((row(scDirectory.data).participants as { participant_id: string }[]).map((participant) => participant.participant_id).sort()).toEqual([leadership.id, sc.id].sort());
+    const directoryParticipants = row(scDirectory.data).participants as {
+      participant_id: string;
+      enrollments: {
+        enrollment_id: string;
+        completed_step_count: number;
+        due_step_count: number;
+        completed_due_step_count: number;
+        total_step_count: number;
+        active_day_count: number;
+      }[];
+    }[];
+    expect(directoryParticipants.map((participant) => participant.participant_id).sort()).toEqual([leadership.id, sc.id].sort());
+    expect(directoryParticipants
+      .find((participant) => participant.participant_id === leadership.id)
+      ?.enrollments.find((item) => item.enrollment_id === enrollment.data?.id))
+      .toEqual(expect.objectContaining({
+        completed_step_count: 3,
+        due_step_count: 3,
+        completed_due_step_count: 3,
+        total_step_count: 4,
+        active_day_count: 1,
+      }));
     expect(supervisorDirectory.error).toBeNull();
     expect((row(supervisorDirectory.data).participants as { participant_id: string }[]).map((participant) => participant.participant_id)).toEqual([member.id]);
     const assignedDetail = await scClient.rpc('get_my_coach_participant_detail', {
@@ -249,7 +300,16 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
     });
     expect(assignedDetail.error).toBeNull();
     expect(row(assignedDetail.data).participant).toEqual(expect.objectContaining({ participant_id: leadership.id }));
-    expect((row(assignedDetail.data).summary as { progress_percentage: number }).progress_percentage).toBe(42);
+    expect(row(assignedDetail.data).summary).toEqual(expect.objectContaining({
+      progress_percentage: 42,
+      completed_step_count: 3,
+      active_day_count: 1,
+    }));
+    const detailDays = row(assignedDetail.data).days as {
+      steps: { id: string; status: string }[];
+    }[];
+    expect(detailDays.flatMap((day) => day.steps)
+      .find((step) => step.id === initialWeighInStepId)?.status).toBe('approved');
     expect((await supervisorClient.rpc('get_my_coach_participant_detail', {
       target_participant_id: leadership.id,
       target_enrollment_id: enrollment.data?.id,
@@ -290,7 +350,30 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
     expect(publicRead.error).toBeNull();
     const publicJson = JSON.stringify(publicRead.data);
     expect(row(publicRead.data).photo_kind).toBe('storage');
-    expect(row(publicRead.data).photo_reference).toBe(publicPhotoPath);
+    const publicPhotoAssetId = row(publicRead.data).photo_reference as string;
+    expect(publicPhotoAssetId).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(publicPhotoAssetId).not.toBe(publicPhotoPath);
+    expect(publicJson).not.toContain(publicPhotoPath);
+    const resolvedAsset = await service.rpc('resolve_public_coach_media_asset', {
+      target_asset_id: publicPhotoAssetId,
+    });
+    expect(resolvedAsset.error).toBeNull();
+    expect(resolvedAsset.data).toBe(publicPhotoPath);
+    expect((await guest.rpc('resolve_public_coach_media_asset', {
+      target_asset_id: publicPhotoAssetId,
+    })).error).not.toBeNull();
+    const directStorageUrl = guest.storage.from('coach-public-media')
+      .getPublicUrl(publicPhotoPath).data.publicUrl;
+    expect((await fetch(directStorageUrl)).ok).toBe(false);
+    const gatewayUrl = new URL(
+      `/functions/v1/public-coach-media/${publicPhotoAssetId}`,
+      localUrl as string,
+    );
+    const gatewayResponse = await fetch(gatewayUrl);
+    expect(gatewayResponse.status).toBe(200);
+    expect(gatewayResponse.headers.get('cache-control')).toBe('no-store, max-age=0');
+    expect(gatewayResponse.headers.get('content-type')).toContain('image/jpeg');
+    expect((await gatewayResponse.arrayBuffer()).byteLength).toBeGreaterThan(0);
     expect(publicJson).not.toContain('example.com/avatar.jpg');
     expect(publicJson).not.toContain(sc.id);
     expect(publicJson).toContain('Pendamping kebiasaan sehat');
@@ -300,12 +383,80 @@ it.runIf(canRun)('enforces W06 pricing, atomic Coach activation, scoped workspac
     expect(publicJson).not.toContain(row(scWorkspace.data).qr_payload as string);
     expect((await guest.rpc('get_public_coach_profile', { target_handle: 'tidak-ada' })).data).toBeNull();
 
+    const publicDirectory = await guest.rpc('list_public_coaches', {
+      result_limit: 100,
+      result_offset: 0,
+    });
+    expect(publicDirectory.error).toBeNull();
+    const directoryCoach = (publicDirectory.data as Record<string, unknown>[])
+      .find((coach) => coach.id === scPublicId);
+    expect(directoryCoach).toEqual(expect.objectContaining({
+      handle,
+      professional_headline: 'Pendamping kebiasaan sehat',
+      biography: 'Mendampingi perubahan kebiasaan secara bertahap.',
+      city: 'Denpasar',
+      photo_reference: publicPhotoAssetId,
+      is_verified: true,
+    }));
+    expect(JSON.stringify(directoryCoach)).not.toContain(publicPhotoPath);
+    expect(JSON.stringify(directoryCoach)).not.toContain('example.com/avatar.jpg');
+
+    const assignedPublishedCoach = await leadershipClient.rpc('get_my_assigned_coach_profile');
+    expect(assignedPublishedCoach.error).toBeNull();
+    expect(row(assignedPublishedCoach.data)).toEqual(expect.objectContaining({
+      user_id: sc.id,
+      handle,
+      professional_headline: 'Pendamping kebiasaan sehat',
+      biography: 'Mendampingi perubahan kebiasaan secara bertahap.',
+      city: 'Denpasar',
+      photo_reference: publicPhotoAssetId,
+      is_verified: true,
+    }));
+    expect((await guest.rpc('get_my_assigned_coach_profile')).error).not.toBeNull();
+
+    const refreshedCoachWorkspace = await scClient.rpc('get_my_coach_workspace');
+    expect(refreshedCoachWorkspace.error).toBeNull();
+    expect(row(refreshedCoachWorkspace.data).profile).toEqual(expect.objectContaining({
+      display_name: 'Coach Sari',
+      city: 'Denpasar',
+      professional_headline: 'Pendamping kebiasaan sehat',
+      photo_reference: publicPhotoAssetId,
+    }));
+    expect(JSON.stringify(row(refreshedCoachWorkspace.data).profile)).not.toContain(publicPhotoPath);
+
+    const adminDirectory = await adminClient.rpc('list_admin_people');
+    expect(adminDirectory.error).toBeNull();
+    const adminCoachRow = (adminDirectory.data as Record<string, unknown>[])
+      .find((person) => person.user_id === sc.id);
+    expect(adminCoachRow).toEqual(expect.objectContaining({
+      display_name: 'Coach Sari',
+      city: 'Denpasar',
+      professional_headline: 'Pendamping kebiasaan sehat',
+      photo_reference: publicPhotoAssetId,
+      profile_published: true,
+    }));
+    expect(JSON.stringify(adminCoachRow)).not.toContain(publicPhotoPath);
+
+    const adminCoachDetail = await adminClient.rpc('get_admin_person_detail', { target_user_id: sc.id });
+    expect(adminCoachDetail.error).toBeNull();
+    expect(row(adminCoachDetail.data)).toEqual(expect.objectContaining({
+      city: 'Denpasar',
+      professional_headline: 'Pendamping kebiasaan sehat',
+      coach_biography: 'Mendampingi perubahan kebiasaan secara bertahap.',
+      photo_reference: publicPhotoAssetId,
+    }));
+    expect(JSON.stringify(adminCoachDetail.data)).not.toContain(publicPhotoPath);
+
     const expiredUpdate = await service.from('coach_access_entitlements').update({
       starts_at: new Date(Date.now() - 100 * 86_400_000).toISOString(),
       ends_at: new Date(Date.now() - 1000).toISOString(),
     }).eq('coach_user_id', sc.id);
     expect(expiredUpdate.error).toBeNull();
     expect((await guest.rpc('get_public_coach_profile', { target_handle: handle })).data).toBeNull();
+    expect((await service.rpc('resolve_public_coach_media_asset', {
+      target_asset_id: publicPhotoAssetId,
+    })).data).toBeNull();
+    expect((await fetch(gatewayUrl)).status).toBe(404);
     expect((await scClient.rpc('get_my_coach_workspace')).error?.message).toContain('coach_entitlement_inactive');
   } finally {
     await service.from('program_scores').delete().in('enrollment_id', (await service.from('program_enrollments').select('id').eq('program_id', programId)).data?.map((row) => row.id) ?? []);

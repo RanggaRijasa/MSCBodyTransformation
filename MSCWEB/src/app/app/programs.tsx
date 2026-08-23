@@ -73,11 +73,10 @@ export default function PublicProgramsRoute() {
         ) : (
           <Section
             title={segment === 'joined' ? 'Program yang diikuti' : segment === 'history' ? 'Riwayat program' : 'Program yang tersedia'}
-            intro={segment === 'available' ? 'Pilih program untuk melihat tujuan, jadwal, biaya, dan status pendaftaran.' : undefined}
           >
             {visiblePrograms.length ? (
-              <View style={publicScreenStyles.grid}>
-                {visiblePrograms.map((program) => <View key={program.id} style={publicScreenStyles.gridItem}><ProgramCard program={program} /></View>)}
+              <View style={publicScreenStyles.stack}>
+                {visiblePrograms.map((program) => <ProgramCard key={program.id} program={program} />)}
               </View>
             ) : <StateView kind="empty" />}
           </Section>

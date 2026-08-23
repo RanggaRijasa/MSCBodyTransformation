@@ -28,15 +28,7 @@
         flex: 1;
       }
     </style>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/sw.js').catch(function () {
-            // App remains usable online when registration is unavailable.
-          });
-        });
-      }
-    </script>
+    <script src="/register-sw.js" defer></script>
   </head>
   <body>
     <noscript>

@@ -10,7 +10,7 @@ const canRun = Boolean(localUrl && publishableKey && secretKey);
 
 let service: SupabaseClient; let adminClient: SupabaseClient; let adminSession: Session;
 let adminId = ''; let participantId = ''; let coachId = ''; let draftProgramId = ''; let activeProgramId = ''; let moderationItemId = '';
-let completedProgramId = ''; let winnerSnapshotId = ''; let draftTitle = ''; let activeTitle = ''; let completedTitle = '';
+let completedProgramId = ''; let winnerSnapshotId = ''; let draftTitle = ''; let activeTitle = ''; let completedTitle = ''; let questionMediaPath = '';
 
 test.describe('W07 Admin experience', () => {
   test.beforeAll(async () => {
@@ -40,6 +40,7 @@ test.describe('W07 Admin experience', () => {
     if (!canRun || !service) return;
     const posterRows = await service.from('winner_posters').select('media_path').eq('program_id', completedProgramId);
     if (posterRows.data?.length) await service.storage.from('public-media').remove(posterRows.data.map((poster) => poster.media_path));
+    if (questionMediaPath) await service.storage.from('program-question-media').remove([questionMediaPath]);
     await service.from('winner_posters').delete().eq('program_id', completedProgramId);
     await service.from('winner_snapshots').delete().eq('program_id', completedProgramId);
     await service.from('programs').delete().eq('source_program_id', draftProgramId);
@@ -71,14 +72,62 @@ test.describe('W07 Admin experience', () => {
   });
 
   test('Draft preview uses the shared Participant renderer and publishes end-to-end', async ({ page }) => {
-    test.skip(!canRun || !adminSession, 'Memerlukan Supabase lokal.'); await installSession(page, adminSession); await page.goto(`/admin/programs/${draftProgramId}`);
+    test.skip(!canRun || !adminSession, 'Memerlukan Supabase lokal.');
+    await installSession(page, adminSession); await page.goto(`/admin/programs/${draftProgramId}`);
     await expect(page.getByText('Selesaikan 3 tahap')).toBeVisible(); await expect(page.getByRole('button', { name: /Pengaturan program/ })).toBeVisible(); await expect(page.getByRole('button', { name: /Konten program/ })).toBeVisible();
     await page.getByRole('button', { name: /Pengaturan program/ }).click(); await expect(page.getByRole('button', { name: /Info program/ })).toBeVisible(); await expect(page.getByRole('button', { name: /Jadwal dan peserta/ })).toBeVisible(); await expect(page.getByRole('button', { name: /Aturan dan poin/ })).toBeVisible();
     await page.getByRole('button', { name: /Info program/ }).click(); await expect(page.getByRole('tab', { name: 'Gratis' })).toBeVisible(); await expect(page.getByRole('tab', { name: 'Berbayar' })).toBeVisible(); await page.getByRole('tab', { name: 'Berbayar' }).click(); await expect(page.getByLabel('Harga yang diinginkan')).toBeVisible(); await page.goBack();
-    await page.getByRole('button', { name: /Jadwal dan peserta/ }).click(); await expect(page.getByLabel('Jenis durasi')).toHaveValue('specific_dates'); await expect(page.locator('input[aria-label="Mulai"]')).toHaveAttribute('type', 'date'); await expect(page.locator('input[aria-label="Selesai"]')).toHaveAttribute('type', 'date'); await page.getByLabel('Jenis durasi').selectOption('fixed_duration'); await expect(page.locator('input[aria-label="Tanggal acuan"]')).toHaveAttribute('type', 'date'); await expect(page.getByRole('button', { name: 'Tambah durasi' })).toBeVisible(); await page.getByLabel('Zona waktu').selectOption('Asia/Jakarta'); await page.getByRole('button', { name: 'Simpan' }).click(); await expect.poll(async () => (await service.from('programs').select('duration_mode,timezone').eq('id', draftProgramId).single()).data).toMatchObject({ duration_mode: 'fixed_duration', timezone: 'Asia/Jakarta' });
+    await page.getByRole('button', { name: /Jadwal dan peserta/ }).click(); await expect(page.getByLabel('Jenis durasi')).toHaveValue('specific_dates'); await expect(page.locator('input[aria-label="Mulai"]')).toHaveAttribute('type', 'date'); await expect(page.locator('input[aria-label="Selesai"]')).toHaveAttribute('type', 'date'); await page.evaluate(() => { const pickerCalls: string[] = []; Object.defineProperty(window, '__mscPickerCalls', { value: pickerCalls, configurable: true }); HTMLInputElement.prototype.showPicker = function showPicker() { pickerCalls.push(this.getAttribute('aria-label') ?? this.type); }; }); await page.getByLabel('Mulai').click(); await expect.poll(() => page.evaluate(() => (window as typeof window & { __mscPickerCalls?: string[] }).__mscPickerCalls ?? [])).toContain('Mulai'); await page.getByLabel('Jenis durasi').selectOption('fixed_duration'); await expect(page.locator('input[aria-label="Tanggal acuan"]')).toHaveAttribute('type', 'date'); await page.getByLabel('Tanggal acuan').click(); await expect.poll(() => page.evaluate(() => (window as typeof window & { __mscPickerCalls?: string[] }).__mscPickerCalls ?? [])).toContain('Tanggal acuan'); await expect(page.getByRole('button', { name: 'Tambah durasi' })).toBeVisible(); await page.getByLabel('Zona waktu').selectOption('Asia/Jakarta'); await page.getByRole('button', { name: 'Simpan' }).click(); await expect.poll(async () => (await service.from('programs').select('duration_mode,timezone').eq('id', draftProgramId).single()).data).toMatchObject({ duration_mode: 'fixed_duration', timezone: 'Asia/Jakarta' });
     await page.getByRole('button', { name: /Aturan dan poin/ }).click(); await expect(page.getByText('Nilai lulus kuis: 70%')).toBeVisible(); await page.getByRole('button', { name: 'Tambah nilai lulus kuis' }).click(); await expect(page.getByText('Nilai lulus kuis: 71%')).toBeVisible(); await page.getByLabel('Pemeriksaan default').selectOption('automatic'); await page.getByLabel('Langkah lampau').selectOption('read_only'); await page.getByLabel('Langkah mendatang').selectOption('available'); await page.getByRole('button', { name: 'Simpan' }).click(); await expect.poll(async () => (await service.from('programs').select('quiz_passing_percentage,default_verification_mode,past_step_policy,future_step_policy').eq('id', draftProgramId).single()).data).toMatchObject({ quiz_passing_percentage: 71, default_verification_mode: 'automatic', past_step_policy: 'read_only', future_step_policy: 'available' }); await page.goBack();
-    await page.getByRole('button', { name: /Konten program/ }).click(); await expect(page.getByText('Rentang jadwal', { exact: true })).toBeVisible(); await page.getByRole('button', { name: /Hari ke-1 · Hari pertama/ }).click(); await page.getByRole('button', { name: 'Tambah langkah' }).click(); await expect(page.getByRole('button', { name: 'Artikel', exact: true })).toBeVisible(); await expect(page.getByRole('button', { name: 'Timbang harian', exact: true })).toBeVisible(); await page.getByRole('button', { name: 'Video', exact: true }).click(); await expect(page.getByTestId('admin.step.editor')).toBeVisible(); await expect.poll(async () => { const days = await service.from('program_days').select('program_steps(content_kind,verification_mode)').eq('program_id', draftProgramId); return days.data?.flatMap((day) => day.program_steps).find((step) => step.content_kind === 'video')?.verification_mode; }).toBe('automatic'); await page.goBack(); await page.goBack(); await page.goBack();
-    await page.getByRole('button', { name: /Tinjau & terbitkan/ }).click(); await page.getByRole('button', { name: /Pratinjau program/ }).click(); await expect(page.getByRole('tab', { name: 'Peserta' })).toBeVisible(); await expect(page.getByText('Tampilan ini sama dengan yang dilihat Peserta.')).toBeVisible();
+    await page.getByRole('button', { name: /Konten program/ }).click(); await expect(page.getByText('Rentang jadwal', { exact: true })).toBeVisible(); await page.getByRole('button', { name: /Hari ke-1 · Hari pertama/ }).click(); await page.getByRole('button', { name: 'Tambah langkah' }).click(); await expect(page.getByRole('button', { name: 'Artikel', exact: true })).toBeVisible(); await expect(page.getByRole('button', { name: 'Timbang harian', exact: true })).toBeVisible(); await page.getByRole('button', { name: 'Video', exact: true }).click(); await expect(page.getByTestId('admin.step.editor')).toBeVisible(); await expect.poll(async () => { const days = await service.from('program_days').select('program_steps(content_kind,verification_mode)').eq('program_id', draftProgramId); return days.data?.flatMap((day) => day.program_steps).find((step) => step.content_kind === 'video')?.verification_mode; }).toBe('automatic');
+    await page.goBack();
+    await page.getByRole('button', { name: 'Tambah langkah' }).click();
+    await page.getByRole('button', { name: 'Form', exact: true }).click();
+    await page.getByTestId('admin.step.questions.open').click();
+    await page.getByRole('button', { name: 'Tambah pertanyaan' }).click();
+    await page.getByRole('button', { name: 'Unggah foto', exact: true }).click();
+    await page.getByLabel('Isi pertanyaan').fill('Unggah foto panduan awal');
+    await page.getByLabel('Tambah gambar pertanyaan').setInputFiles('public/images/coach-support.jpg');
+    await expect(page.getByLabel('Deskripsi media untuk aksesibilitas')).toHaveValue('Gambar panduan untuk pertanyaan: Unggah foto panduan awal');
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect(page.getByText('Unggah foto panduan awal')).toBeVisible();
+    await expect.poll(async () => {
+      const response = await service.from('program_questions').select('media_path,media_alt_text,program_steps!inner(program_days!inner(program_id))').eq('program_steps.program_days.program_id', draftProgramId).not('media_path', 'is', null).single();
+      questionMediaPath = response.data?.media_path ?? '';
+      return response.data;
+    }).toMatchObject({ media_alt_text: 'Gambar panduan untuk pertanyaan: Unggah foto panduan awal' });
+    await page.getByText('Unggah foto panduan awal').click();
+    await expect(page.getByRole('img', { name: 'Gambar panduan untuk pertanyaan: Unggah foto panduan awal' })).toBeVisible();
+    await page.screenshot({ path: '/tmp/w08-question-media-persisted.png', fullPage: true });
+    await page.goBack();
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect(page.getByTestId('admin.step.questions.open')).toContainText('1 pertanyaan');
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect(page.getByText('Form · 1 pertanyaan')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Tambah langkah' }).click();
+    await page.getByRole('button', { name: 'Kuis', exact: true }).click();
+    await expect(page.getByTestId('admin.step.editor')).toBeVisible();
+    await page.getByTestId('admin.step.questions.open').click();
+    await page.getByRole('button', { name: 'Tambah pertanyaan' }).click();
+    await page.getByRole('button', { name: 'Pilihan tunggal' }).click();
+    await expect(page.getByTestId('admin.question.editor')).toBeVisible();
+    await page.getByLabel('Isi pertanyaan').fill('Apa kebiasaan utama hari ini?');
+    await page.getByLabel('Pilihan 1').fill('Bergerak aktif');
+    await page.getByLabel('Pilihan 2').fill('Tidak bergerak');
+    await page.getByRole('button', { name: 'Pilih', exact: true }).first().click();
+    await expect(page.getByRole('button', { name: 'Benar', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect(page.getByText('Apa kebiasaan utama hari ini?')).toBeVisible();
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect(page.getByTestId('admin.step.questions.open')).toContainText('1 pertanyaan');
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect(page.getByText('Kuis · 1 pertanyaan')).toBeVisible();
+    await expect.poll(async () => (await service.from('program_questions').select('id,program_steps!inner(program_days!inner(program_id))').eq('program_steps.program_days.program_id', draftProgramId)).data?.length).toBe(2);
+    await page.goBack();
+    await expect(page.getByText('4 langkah · 2 pertanyaan', { exact: true })).toBeVisible();
+    await page.goBack();
+    await page.getByRole('button', { name: /Tinjau & terbitkan/ }).click(); await expect(page.getByText('Semua bagian siap diterbitkan.')).toBeVisible(); await page.getByRole('button', { name: /Pratinjau program/ }).click(); await expect(page.getByRole('tab', { name: 'Peserta' })).toBeVisible(); await expect(page.getByText('Tampilan ini sama dengan yang dilihat Peserta.')).toBeVisible();
     await expect(page.getByTestId('admin.program.preview.shared-renderer')).toBeVisible(); await page.getByRole('tab', { name: 'Coach' }).click(); await expect(page.getByText('Tampilan ini sama dengan yang dilihat Coach.')).toBeVisible(); await page.goBack();
     await page.getByRole('button', { name: 'Terbitkan program' }).click(); await expect(page).toHaveURL(new RegExp(`/admin/programs/${draftProgramId}$`)); await expect(page.getByRole('heading', { name: 'Program sudah diterbitkan' }).first()).toBeVisible();
     expect((await service.from('programs').select('status').eq('id', draftProgramId).single()).data?.status).toBe('scheduled');

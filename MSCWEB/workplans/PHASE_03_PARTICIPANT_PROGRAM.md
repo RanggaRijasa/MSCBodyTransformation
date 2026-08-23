@@ -152,3 +152,24 @@ Append requirement IDs, simulator scenario/screens, files, tests, visual/accessi
   production Supabase, Git, native source, or Xcode project mutation occurred.
   Next unchecked workplan: W04 private evidence, Coach review, and
   authoritative scoring operations.
+
+### 2026-08-23 — Joined-program card date compaction
+
+- Files changed: `src/shared/design/formatters.ts`,
+  `src/features/participant/ParticipantProgramComponents.tsx`, and focused
+  unit/Playwright coverage. Only the joined-program activity card changed;
+  program offer/detail timezone disclosure remains unchanged.
+- Behavior: the card no longer renders its timezone and uses a compact
+  Indonesian range such as `22–24 Agustus 2026`, including cross-month and
+  cross-year ranges.
+- Verification: `npm run typecheck`, `npm run lint -- --no-cache`, and
+  `npm test` passed (202 passed, 9 environment-skipped). The focused
+  `chromium-compact` authenticated Playwright flow passed and measured the
+  rendered date as exactly one line. Production shell identity, the Program
+  tab interaction, and URL-backed segment change were inspected in the in-app
+  browser.
+- Deployment: production Worker version
+  `958bf023-5359-4979-af30-ce7c0bf6966a` was deployed to the existing apex and
+  `www` routes. No DNS, production Supabase, secrets, or production data were
+  changed. Synthetic local data and temporary session material were removed;
+  local Supabase and Colima were left running.

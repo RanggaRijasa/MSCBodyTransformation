@@ -15,6 +15,7 @@ import {
   useCoachParticipantDetail,
   useCoachParticipantDirectory,
 } from './coach-experience-queries';
+import { needsCoachAttention } from './coach-participant-attention';
 import type {
   CoachParticipantDetail,
   CoachParticipantDirectory,
@@ -92,7 +93,7 @@ function ParticipantDirectory({ data }: { data: CoachParticipantDirectory }) {
 
   const attentionCount = data.participants.filter((participant) => {
     const enrollment = selectedEnrollment(participant, null);
-    return enrollment ? needsAttention(enrollment) : false;
+    return enrollment ? needsCoachAttention(enrollment) : false;
   }).length;
 
   return (
@@ -180,7 +181,7 @@ function SummaryMetric({ icon, value, label, attention = false }: { icon: 'parti
 
 function ParticipantRow({ participant, enrollment }: { participant: DirectoryParticipant; enrollment: DirectoryEnrollment }) {
   const { colors } = useAppTheme();
-  const attention = needsAttention(enrollment);
+  const attention = needsCoachAttention(enrollment);
   return (
     <Pressable
       accessibilityRole="button"
@@ -406,17 +407,23 @@ function EvidenceCard({ submission, timeZone }: { submission: CoachParticipantDe
 
 function EvidenceAnswer({ answer }: { answer: CoachParticipantDetail['submissions'][number]['answers'][number] }) {
   const { colors } = useAppTheme();
+  const [requested, setRequested] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [url, setUrl] = useState<string>();
   const [failed, setFailed] = useState(false);
   useEffect(() => {
-    if (!answer.private_photo_path) return;
+    const objectPath = answer.private_photo_path ?? answer.private_video_path;
+    if (!objectPath || !requested) return;
     let active = true;
-    void getCoachReviewRepository().createPhotoUrl(answer.private_photo_path)
+    void (answer.private_video_path ? getCoachReviewRepository().createVideoUrl(objectPath) : getCoachReviewRepository().createPhotoUrl(objectPath))
       .then((result) => { if (active) setUrl(result.url); })
       .catch(() => { if (active) setFailed(true); });
     return () => { active = false; };
-  }, [answer.private_photo_path]);
-  return <View style={styles.answerBlock}><Text style={[styles.bodyStrong, { color: colors.primaryText }]}>{answer.prompt}</Text>{url ? <Image accessibilityLabel={`Bukti foto, ${answer.prompt}`} resizeMode="cover" source={{ uri: url }} style={[styles.evidenceImage, { backgroundColor: colors.secondaryBackground }]} /> : failed ? <InlineMessage title="Foto tidak dapat dimuat" message="Muat ulang halaman untuk mencoba kembali." tone="destructive" /> : answer.private_photo_path ? <StateView kind="loading" /> : <Text style={[styles.body, { color: colors.secondaryText }]}>{answer.text_value ?? answer.number_value?.toLocaleString('id-ID') ?? 'Jawaban tersimpan'}</Text>}</View>;
+  }, [answer.private_photo_path, answer.private_video_path, requested, retryCount]);
+  const hasPrivateMedia = Boolean(answer.private_photo_path || answer.private_video_path);
+  const mediaLabel = answer.private_video_path ? 'video' : 'foto';
+  return <View style={styles.answerBlock}><Text style={[styles.bodyStrong, { color: colors.primaryText }]}>{answer.prompt}</Text>{url && answer.private_video_path ? <video aria-label={`Bukti video, ${answer.prompt}`} controls playsInline preload="metadata" src={url} style={participantEvidenceVideoStyle} /> : url ? <Pressable accessibilityRole="button" accessibilityLabel={expanded ? 'Perkecil bukti foto' : 'Perbesar bukti foto'} accessibilityState={{ expanded }} onPress={() => setExpanded((value) => !value)}><Image accessibilityLabel={`Bukti foto, ${answer.prompt}`} resizeMode={expanded ? 'contain' : 'cover'} source={{ uri: url }} style={[styles.evidenceImage, expanded && styles.evidenceImageExpanded, { backgroundColor: colors.secondaryBackground }]} /><Text style={[styles.caption, { color: colors.secondaryText }]}>{expanded ? 'Ketuk untuk memperkecil' : 'Ketuk untuk memperbesar'}</Text></Pressable> : failed ? <View style={styles.answerBlock}><InlineMessage title="Media tidak dapat dimuat" message="Coba muat bukti sekali lagi." tone="destructive" /><Button label={`Muat ulang bukti ${mediaLabel}`} tone="secondary" onPress={() => { setUrl(undefined); setFailed(false); setRetryCount((value) => value + 1); }} /></View> : hasPrivateMedia && requested ? <StateView kind="loading" /> : hasPrivateMedia ? <Button label={`Muat bukti ${mediaLabel}`} tone="secondary" onPress={() => setRequested(true)} /> : <Text style={[styles.body, { color: colors.secondaryText }]}>{answer.text_value ?? answer.number_value?.toLocaleString('id-ID') ?? 'Jawaban tersimpan'}</Text>}</View>;
 }
 
 function ProgressDay({ day, initiallyExpanded }: { day: CoachParticipantDetail['days'][number]; initiallyExpanded: boolean }) {
@@ -437,15 +444,11 @@ function selectedEnrollment(participant: DirectoryParticipant, programId: string
   return participant.enrollments.find((enrollment) => enrollment.enrollment_status === 'active') ?? participant.enrollments[0];
 }
 
-function needsAttention(enrollment: DirectoryEnrollment): boolean {
-  return enrollment.enrollment_status !== 'completed' && enrollment.progress_percentage < 50;
-}
-
 function matchesCompletion(enrollment: DirectoryEnrollment, filter: CompletionFilter): boolean {
   if (filter === 'all') return true;
   if (filter === 'complete') return enrollment.enrollment_status === 'completed' || enrollment.progress_percentage === 100;
-  if (filter === 'attention') return needsAttention(enrollment);
-  return enrollment.enrollment_status === 'active' && !needsAttention(enrollment);
+  if (filter === 'attention') return needsCoachAttention(enrollment);
+  return enrollment.enrollment_status === 'active' && !needsCoachAttention(enrollment);
 }
 
 function compareRows(left: { participant: DirectoryParticipant; enrollment: DirectoryEnrollment }, right: { participant: DirectoryParticipant; enrollment: DirectoryEnrollment }, sort: ParticipantSort): number {
@@ -507,6 +510,8 @@ function stepKindIcon(kind: string): 'activity' | 'content' | 'program' {
   return 'program';
 }
 
+const participantEvidenceVideoStyle = { width: '100%', maxHeight: 420, borderRadius: 14, backgroundColor: '#000000' } as const;
+
 const styles = StyleSheet.create({
   screen: { flex: 1, minHeight: 0 },
   directoryControls: { width: '100%', maxWidth: 900, alignSelf: 'center', gap: primitiveTokens.space.medium, padding: primitiveTokens.space.medium },
@@ -556,6 +561,7 @@ const styles = StyleSheet.create({
   detailRow: { minHeight: 82, flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium, paddingVertical: primitiveTokens.space.small },
   answerBlock: { gap: primitiveTokens.space.xSmall },
   evidenceImage: { width: '100%', height: 280, borderRadius: primitiveTokens.radius.large },
+  evidenceImageExpanded: { height: 600 },
   dayCard: { borderWidth: 1, borderRadius: primitiveTokens.radius.large, overflow: 'hidden' },
   dayHeader: { minHeight: 110, flexDirection: 'row', alignItems: 'center', gap: primitiveTokens.space.medium, padding: primitiveTokens.space.medium },
   daySteps: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: primitiveTokens.space.medium },

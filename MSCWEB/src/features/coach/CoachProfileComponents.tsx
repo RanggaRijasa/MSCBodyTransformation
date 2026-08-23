@@ -1,6 +1,7 @@
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AccountSignOutButton } from '@/shared/auth/AccountSignOutButton';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
@@ -47,7 +48,7 @@ export function CoachProfileEditor({ authorized }: { authorized: boolean }) {
   }, [profile.data]);
 
   const identityPhoto = profile.data?.draft?.profile_photo_object_path
-    ? getCoachExperienceRepository().publicMediaUrl(profile.data.draft.profile_photo_object_path)
+    ? profile.data.draft.profile_photo_preview_url
     : profile.data?.identity.provider_avatar_url ?? undefined;
 
   if (!authorized) return <StateView kind="forbidden" />;
@@ -132,6 +133,7 @@ export function CoachProfileEditor({ authorized }: { authorized: boolean }) {
       <Button label="Simpan draf" loading={save.isPending || photoBusy} disabled={form.handle.length < 3} onPress={() => void saveDraft()} />
       <Button label={profile.data.published ? 'Perbarui profil publik' : 'Terbitkan profil'} tone="secondary" loading={publish.isPending} onPress={() => void publishProfile()} />
       {profile.data.published ? <Button label="Bagikan profil" icon="copy" tone="secondary" onPress={() => void shareProfile()} /> : null}
+      <AccountSignOutButton />
     </ScrollView>
   );
 }
@@ -173,11 +175,11 @@ export function PublicCoachProfileView({ profile }: { profile: PublicCoachProfil
     profile.phone_number && { label: 'Telepon', href: `tel:${profile.phone_number}` },
   ].filter(Boolean) as { label: string; href: string }[], [profile]);
   const share = async () => {
-    const url = window.location.href;
+    const url = `${window.location.origin}/c/${profile.handle}`;
     if (navigator.share) await navigator.share({ title: `Profil Coach ${profile.display_name}`, url });
     else await navigator.clipboard.writeText(url);
   };
-  return <ScrollView contentContainerStyle={styles.publicContent} testID="public.coach.profile"><View style={[styles.publicHero, { backgroundColor: colors.primaryText }]}><UserAvatar uri={photo} label={profile.display_name} size={112} /><StatusBadge label="Coach terverifikasi" tone="success" /><Text accessibilityRole="header" style={[styles.publicTitle, { color: '#ffffff' }]}>{profile.display_name}</Text>{profile.professional_headline ? <Text style={[styles.publicHeadline, { color: '#ffffff' }]}>{profile.professional_headline}</Text> : null}{profile.service_area ? <Text style={[styles.body, { color: '#ffffff' }]}>{profile.service_area}</Text> : null}<Button label="Bagikan profil" icon="copy" onPress={() => void share()} /></View>{profile.biography ? <Card><Text accessibilityRole="header" style={[styles.cardTitle, { color: colors.primaryText }]}>Tentang Coach</Text><Text style={[styles.body, { color: colors.secondaryText }]}>{profile.biography}</Text></Card> : null}{contacts.length ? <Card><Text accessibilityRole="header" style={[styles.cardTitle, { color: colors.primaryText }]}>Hubungi</Text><View style={styles.kindRow}>{contacts.map((contact) => <Button key={contact.label} label={contact.label} tone="secondary" onPress={() => void Linking.openURL(contact.href)} />)}</View></Card> : null}{profile.items.length ? <View style={styles.itemGrid}>{profile.items.map((item, index) => <Card key={`${item.kind}-${index}`}><Text style={[styles.cardTitle, { color: colors.primaryText }]}>{item.title}</Text>{item.media_object_path ? <UserAvatar uri={getCoachExperienceRepository().publicMediaUrl(item.media_object_path)} label={item.title} size={96} /> : null}{item.body ? <Text style={[styles.body, { color: colors.secondaryText }]}>{item.body}</Text> : null}</Card>)}</View> : null}</ScrollView>;
+  return <ScrollView contentContainerStyle={styles.publicContent} testID="public.coach.profile"><View testID="public.coach.profile.hero" style={[styles.publicHero, { backgroundColor: colors.identitySurface }]}><UserAvatar uri={photo} label={profile.display_name} size={112} /><StatusBadge label="Coach terverifikasi" tone="success" /><Text accessibilityRole="header" style={[styles.publicTitle, { color: colors.onIdentitySurface }]}>{profile.display_name}</Text>{profile.professional_headline ? <Text style={[styles.publicHeadline, { color: colors.onIdentitySurface }]}>{profile.professional_headline}</Text> : null}{profile.service_area ? <Text style={[styles.body, { color: colors.onIdentitySurface }]}>{profile.service_area}</Text> : null}<Button label="Bagikan profil" icon="copy" onPress={() => void share()} /></View>{profile.biography ? <Card><Text accessibilityRole="header" style={[styles.cardTitle, { color: colors.primaryText }]}>Tentang Coach</Text><Text style={[styles.body, { color: colors.secondaryText }]}>{profile.biography}</Text></Card> : null}{contacts.length ? <Card><Text accessibilityRole="header" style={[styles.cardTitle, { color: colors.primaryText }]}>Hubungi</Text><View style={styles.kindRow}>{contacts.map((contact) => <Button key={contact.label} label={contact.label} tone="secondary" onPress={() => void Linking.openURL(contact.href)} />)}</View></Card> : null}{profile.items.length ? <View style={styles.itemGrid}>{profile.items.map((item, index) => <Card key={`${item.kind}-${index}`}><Text style={[styles.cardTitle, { color: colors.primaryText }]}>{item.title}</Text>{item.media_object_path ? <UserAvatar uri={getCoachExperienceRepository().publicMediaUrl(item.media_object_path)} label={item.title} size={96} /> : null}{item.body ? <Text style={[styles.body, { color: colors.secondaryText }]}>{item.body}</Text> : null}</Card>)}</View> : null}</ScrollView>;
 }
 
 function slugify(value: string) { return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/gu, '').replace(/[^a-z0-9]+/gu, '-').replace(/^-|-$/gu, '').slice(0, 48); }

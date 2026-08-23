@@ -115,6 +115,7 @@ export class SupabaseGoogleOAuthAdapter {
         provider: 'google',
         options: {
           redirectTo: callbackWithIntent.toString(),
+          queryParams: { prompt: 'select_account' },
         },
       }));
     } catch {

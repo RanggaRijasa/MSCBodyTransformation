@@ -6,8 +6,10 @@ export const DEFAULT_SIGNED_MEDIA_TTL_SECONDS = 60;
 
 export type PrivateMediaBucket =
   | 'question-photos'
+  | 'question-videos'
   | 'payment-evidence'
-  | 'payment-destination-assets';
+  | 'payment-destination-assets'
+  | 'coach-public-media';
 
 export type PrivateMediaObjectReference = Readonly<{
   bucket: PrivateMediaBucket;
@@ -25,10 +27,10 @@ export type PrivateMediaErrorCode =
 const PRIVATE_MEDIA_ERROR_MESSAGES: Record<PrivateMediaErrorCode, string> = {
   unauthenticated: 'Sesi Anda berakhir. Masuk lagi untuk melanjutkan.',
   invalidReference: 'Referensi media tidak valid. Muat ulang halaman lalu coba lagi.',
-  uploadRejected: 'Foto tidak dapat diunggah. Periksa koneksi lalu coba lagi.',
-  downloadRejected: 'Foto tidak dapat dimuat. Periksa koneksi lalu coba lagi.',
-  deleteRejected: 'Foto sementara tidak dapat dibersihkan. Coba lagi.',
-  signedUrlRejected: 'Akses foto tidak dapat dibuat. Muat ulang halaman lalu coba lagi.',
+  uploadRejected: 'Media tidak dapat diunggah. Periksa koneksi lalu coba lagi.',
+  downloadRejected: 'Media tidak dapat dimuat. Periksa koneksi lalu coba lagi.',
+  deleteRejected: 'Media sementara tidak dapat dibersihkan. Coba lagi.',
+  signedUrlRejected: 'Akses media tidak dapat dibuat. Muat ulang halaman lalu coba lagi.',
 };
 
 export class PrivateMediaError extends Error {

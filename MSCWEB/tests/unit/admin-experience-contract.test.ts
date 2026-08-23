@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const migration = readFileSync('supabase/migrations/20260817014822_w07_admin_experience.sql', 'utf8');
-const verificationMigration = readFileSync('supabase/migrations/20260817090704_w07_admin_program_default_verification.sql', 'utf8');
+const migration = readFileSync('../supabase/migrations/20260817014822_w07_admin_experience.sql', 'utf8');
+const verificationMigration = readFileSync('../supabase/migrations/20260817090704_w07_admin_program_default_verification.sql', 'utf8');
+const questionMediaMigration = readFileSync('../supabase/migrations/20260821055430_w08_question_video_and_prompt_media.sql', 'utf8');
+const paidPublishMigration = readFileSync('../supabase/migrations/20260821072405_w08_paid_program_publish_handoff.sql', 'utf8');
 const dashboard = readFileSync('src/features/admin/AdminDashboardComponents.tsx', 'utf8');
 const programs = [
   'src/features/admin/AdminProgramComponents.tsx',
@@ -13,6 +15,7 @@ const people = readFileSync('src/features/admin/AdminPeopleComponents.tsx', 'utf
 const content = readFileSync('src/features/admin/AdminContentComponents.tsx', 'utf8');
 const settings = readFileSync('src/features/admin/AdminSettingsComponents.tsx', 'utf8');
 const repository = readFileSync('src/features/admin/admin-repository.ts', 'utf8');
+const queries = readFileSync('src/features/admin/admin-queries.ts', 'utf8');
 const coachRepository = readFileSync('src/features/coach/coach-experience-repository.ts', 'utf8');
 const coachApplications = readFileSync('src/features/coach/AdminCoachApplicationComponents.tsx', 'utf8');
 
@@ -28,7 +31,11 @@ describe('W07 Admin contract', () => {
     expect(programs).toContain("from '@/features/participant/ParticipantProgramComponents'");
     expect(programs).toContain('ProgramDefinitionPreview');
     for (const kind of ['article', 'video', 'form', 'quiz', 'initial_weigh_in', 'daily_weigh_in', 'final_weigh_in']) expect(programs).toContain(`'${kind}'`);
-    for (const kind of ['short_answer', 'long_answer', 'number', 'single_choice', 'multiple_choice', 'image_choice', 'photo_upload', 'heading', 'text']) expect(programs).toContain(`'${kind}'`);
+    for (const kind of ['short_answer', 'long_answer', 'number', 'single_choice', 'multiple_choice', 'image_choice', 'photo_upload', 'video_upload', 'heading', 'text']) expect(programs).toContain(`'${kind}'`);
+    for (const copy of ['Media panduan (opsional)', "picker('image')", "picker('video')", 'Aktifkan analisis AI makanan']) expect(programs).toContain(copy);
+    expect(questionMediaMigration).toContain("'question-videos'");
+    expect(questionMediaMigration).toContain("'program-question-media'");
+    expect(questionMediaMigration).toContain('private_video_path');
   });
 
   it('persists the program verification default and exposes explicit day policies', () => {
@@ -44,6 +51,22 @@ describe('W07 Admin contract', () => {
     expect(migration).toContain("'before_status'");
     expect(migration).toContain("'after_status'");
     expect(migration).toContain("'content_version'");
+  });
+
+  it('publishes paid programs only after manual-payment readiness and surfaces failures', () => {
+    expect(paidPublishMigration).toContain("target.pricing_mode = 'paid'");
+    expect(paidPublishMigration).toContain('private.current_payment_destination()');
+    expect(paidPublishMigration).toContain("raise exception 'program_paid_not_ready'");
+    expect(programs).toContain('Tujuan pembayaran belum siap');
+    expect(programs).toContain('Program belum diterbitkan');
+    expect(queries).toContain('publicQueryKeys.programs');
+  });
+
+  it('updates the full program cache after a nested editor save', () => {
+    expect(queries).toContain("command.kind === 'saveProgram'");
+    expect(queries).toContain('cacheSavedAdminProgram(queryClient, command.program)');
+    expect(queries).toContain('queryClient.setQueryData(adminKeys.program(program.id), program)');
+    expect(programs).toContain('key={`${query.data.id}:${query.data.updated_at}`}');
   });
 
   it('preserves protected profile fields and redacts AI operations', () => {

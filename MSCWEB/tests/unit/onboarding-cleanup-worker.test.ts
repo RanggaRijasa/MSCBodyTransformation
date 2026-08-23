@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const worker = readFileSync('supabase/functions/process-provisional-cancellations/index.ts', 'utf8');
+const worker = readFileSync('../supabase/functions/process-provisional-cancellations/index.ts', 'utf8');
 const localWorker = readFileSync('scripts/process-local-provisional-cancellations.mjs', 'utf8');
-const migration = readFileSync('supabase/migrations/20260820115825_w07_4_registration_onboarding_remediation.sql', 'utf8');
+const migration = readFileSync('../supabase/migrations/20260820115825_w07_4_registration_onboarding_remediation.sql', 'utf8');
 
 describe('W07.4 cancellation worker contract', () => {
   it('uses leased receipt claims, Storage API removal, session revocation, Auth deletion, and durable completion', () => {
@@ -17,6 +17,8 @@ describe('W07.4 cancellation worker contract', () => {
     expect(migration).toContain("status in ('queued', 'failed', 'processing')");
     expect(localWorker).toContain("CLEANUP_RECEIPT_ID");
     expect(localWorker).toContain("auth.admin.deleteUser");
+    expect(migration.indexOf('create or replace function public.cancel_payment_order'))
+      .toBeLessThan(migration.indexOf("rename to w074_cancel_payment_order"));
   });
 
   it('does not log identity, proof paths, tokens, or service credentials', () => {

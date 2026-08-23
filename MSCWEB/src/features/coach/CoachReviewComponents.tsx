@@ -370,7 +370,7 @@ export function CoachReviewDetail({ submissionId }: { submissionId: string }) {
           {item.answers.length === 0 ? <Text style={[styles.body, { color: colors.secondaryText }]}>Belum ada jawaban yang dapat ditampilkan.</Text> : item.answers.map((answer) => (
             <Card key={answer.id}>
               <Text style={[styles.cardTitle, { color: colors.primaryText }]}>{answer.prompt}</Text>
-              {answer.private_photo_path ? <PrivateReviewImage objectPath={answer.private_photo_path} /> : (
+              {answer.private_photo_path ? <PrivateReviewImage objectPath={answer.private_photo_path} /> : answer.private_video_path ? <PrivateReviewVideo objectPath={answer.private_video_path} /> : (
                 <Text style={[styles.body, { color: colors.primaryText }]}>{answer.text_value ?? answer.number_value?.toLocaleString('id-ID') ?? (answer.selected_option_titles.length ? answer.selected_option_titles.join(', ') : 'Belum dijawab')}</Text>
               )}
             </Card>
@@ -481,6 +481,23 @@ function PrivateReviewImage({ objectPath }: { objectPath: string }) {
   );
 }
 
+function PrivateReviewVideo({ objectPath }: { objectPath: string }) {
+  const [url, setUrl] = useState<string>();
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void getCoachReviewRepository().createVideoUrl(objectPath).then((result) => {
+      if (active) setUrl(result.url);
+    }).catch(() => {
+      if (active) setFailed(true);
+    });
+    return () => { active = false; };
+  }, [objectPath]);
+  if (failed) return <InlineMessage title="Video tidak dapat dimuat" message="Muat ulang sebelum mengambil keputusan." tone="destructive" />;
+  if (!url) return <StateView kind="loading" />;
+  return <video aria-label="Bukti video peserta" controls playsInline preload="metadata" src={url} style={reviewVideoStyle} />;
+}
+
 function needsCoachAction(item: CoachReviewItem): boolean {
   return item.step.verification_mode === 'coach_review' && item.status === 'pending';
 }
@@ -531,6 +548,8 @@ function formatDateTime(value: string, timeZone: string): string {
     timeZoneName: 'short',
   }).format(new Date(value));
 }
+
+const reviewVideoStyle = { width: '100%', maxHeight: 520, borderRadius: 14, backgroundColor: '#000000' } as const;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, minHeight: 0 },

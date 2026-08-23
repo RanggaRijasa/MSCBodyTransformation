@@ -15,6 +15,8 @@ test.describe('W02 public application and auth gate', () => {
     await expect(page).toHaveURL(/\/login\?returnTo=%2Fapp%2Fprograms%2F/);
     await expect(page.getByRole('heading', { name: 'Masuk ke MSC' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Lanjutkan dengan Google' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'MSC Body Transformation' })).toHaveAttribute('src', '/icons/icon-192.png');
+    await expect(page.getByTestId('google-login').locator('img')).toHaveAttribute('src', '/images/sign-in-with-google-light-pill.png');
 
     await page.getByRole('button', { name: 'Kembali' }).click();
     await expect(page).toHaveURL(detailUrl);
@@ -50,6 +52,39 @@ test.describe('W02 public application and auth gate', () => {
       expect(content).not.toContain('Berat awal');
       expect(content).not.toContain('Berat akhir');
     }
+  });
+
+  test('Coach directory and detail keep public profile cards concise', async ({ page }) => {
+    const coachId = '22222222-2222-4222-8222-222222222222';
+    await page.route('**/rest/v1/rpc/list_public_coaches', (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify([{
+        id: coachId,
+        handle: 'coach-ringkas',
+        display_name: 'Coach Ringkas',
+        professional_headline: 'Coach',
+        biography: 'Biografi panjang hanya boleh muncul di detail profil.',
+        city: 'Makassar',
+        photo_reference: null,
+        is_verified: true,
+      }]),
+    }));
+
+    await page.goto('/app/coaches');
+    await expect(page.getByText('Profil publik terverifikasi')).toHaveCount(0);
+    await expect(page.getByText('Biografi panjang hanya boleh muncul di detail profil.')).toHaveCount(0);
+
+    const coachLink = page.getByRole('link').filter({ has: page.getByRole('heading', { name: 'Coach Ringkas' }) });
+    await expect(coachLink).toBeVisible();
+    const directoryLines = (await coachLink.innerText()).split('\n').map((line) => line.trim()).filter(Boolean);
+    expect(directoryLines.length).toBeLessThanOrEqual(3);
+    await coachLink.click();
+
+    await expect(page).toHaveURL(`/app/coaches/${coachId}`);
+    await expect(page.getByText('Biografi panjang hanya boleh muncul di detail profil.')).toBeVisible();
+    await expect(page.getByText('Pilih Coach melalui alur program')).toHaveCount(0);
   });
 
   test('Guest profile renders a gate without hydrating personal account data', async ({ page }) => {

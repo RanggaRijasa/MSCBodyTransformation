@@ -3,6 +3,8 @@
 Status: Accepted  
 Date: 20 August 2026
 
+Scheduling amendment: implementation is deferred post-launch by [`ADR-0010`](./0010-defer-admin-analytics-and-storage-management.md). The reporting contract remains accepted; only its release order changed.
+
 ## Context
 
 Admin membutuhkan analytics penjualan yang dapat dibuka dari `Akses cepat`. MSCWEB memiliki beberapa projection commerce: order manual, append-only payment ledger, dan commerce transaction lintas platform. Menjumlahkan order `approved` atau ledger bersama commerce transaction dapat menghasilkan revenue yang salah/dobel.
@@ -11,7 +13,7 @@ Screenshot referensi menunjukkan hierarchy top item/source/customer, tetapi kate
 
 ## Decision
 
-- Tambahkan W07.5 setelah W07 dan sebelum W07.6/W08.
+- W07.5 is the implementation phase for this contract. Its original pre-W08 placement is superseded by ADR-0010; it now runs after the first deployment when reprioritized.
 - Route Admin adalah `/admin/sales`, dibuka dari quick action `Ringkasan penjualan`; lima destination utama Admin tidak berubah.
 - Baseline hanya melaporkan manual web sales untuk program dan akses Coach.
 - `payment_ledger` adalah recognized-revenue authority: satu `verified` entry per order membentuk gross; beberapa idempotent `reversal` entry MAY mengurangi verified amount secara kumulatif sampai nol. Setiap reversal terkait ke verified entry dan diakui pada timestamp reversal.

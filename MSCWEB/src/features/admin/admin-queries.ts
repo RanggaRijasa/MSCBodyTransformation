@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { getAdminRepository } from './admin-repository';
+import { publicQueryKeys } from '@/features/public/public-queries';
 import type { AdminFoodOperation, AdminModerationItem, AdminProgram } from './admin-models';
 
 export const adminKeys = {
@@ -19,6 +20,7 @@ export const adminKeys = {
   winners: (id: string) => ['private', 'admin', 'winner-preview', id] as const,
   posters: ['private', 'admin', 'posters'] as const,
   winnerSnapshots: ['private', 'admin', 'winner-snapshots'] as const,
+  paymentDestinationReadiness: ['private', 'admin', 'payment-destination-readiness'] as const,
 };
 
 export function useAdminDashboard(enabled: boolean) { return useQuery({ queryKey: adminKeys.dashboard, queryFn: () => getAdminRepository().getDashboard(), enabled }); }
@@ -35,6 +37,7 @@ export function useAdminClosure(programId: string, enabled = true) { return useQ
 export function useAdminWinnerPreview(programId: string, enabled = true) { return useQuery({ queryKey: adminKeys.winners(programId), queryFn: () => getAdminRepository().previewWinners(programId), enabled: enabled && Boolean(programId) }); }
 export function useAdminPosters(enabled = true) { return useQuery({ queryKey: adminKeys.posters, queryFn: () => getAdminRepository().listPosters(), enabled }); }
 export function useAdminWinnerSnapshots(enabled = true) { return useQuery({ queryKey: adminKeys.winnerSnapshots, queryFn: () => getAdminRepository().listWinnerSnapshots(), enabled }); }
+export function useAdminPaymentDestinationReadiness(enabled = true) { return useQuery({ queryKey: adminKeys.paymentDestinationReadiness, queryFn: () => getAdminRepository().hasCurrentPaymentDestination(), enabled }); }
 
 export function useAdminMutation() {
   const queryClient = useQueryClient();
@@ -58,8 +61,16 @@ export function useAdminMutation() {
         case 'archivePoster': await repository.archivePoster(command.posterId, command.reason); return command.posterId;
       }
     },
-    onSuccess: async () => queryClient.invalidateQueries({ queryKey: adminKeys.root }),
+    onSuccess: async (_result, command) => {
+      if (command.kind === 'saveProgram') cacheSavedAdminProgram(queryClient, command.program);
+      await queryClient.invalidateQueries({ queryKey: adminKeys.root });
+      if (command.kind === 'publishProgram') await queryClient.invalidateQueries({ queryKey: publicQueryKeys.programs });
+    },
   });
+}
+
+export function cacheSavedAdminProgram(queryClient: QueryClient, program: AdminProgram): void {
+  queryClient.setQueryData(adminKeys.program(program.id), program);
 }
 
 export type AdminCommand =

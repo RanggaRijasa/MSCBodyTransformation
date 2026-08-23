@@ -22,6 +22,8 @@ export function validateAdminProgram(program: AdminProgram): AdminProgramIssue[]
       if (['form', 'quiz'].includes(step.content_kind) && step.questions.length === 0) issues.push({ stage: 'content', message: `${step.title || 'Langkah'} belum memiliki pertanyaan.` });
       for (const question of step.questions) {
         if (question.prompt.trim().length === 0) issues.push({ stage: 'content', message: 'Pertanyaan belum memiliki teks.' });
+        if (question.media_path && !question.media_alt_text?.trim()) issues.push({ stage: 'content', message: `${question.prompt || 'Media pertanyaan'} memerlukan deskripsi aksesibilitas.` });
+        if (step.content_kind === 'quiz' && !['number', 'single_choice', 'multiple_choice', 'image_choice'].includes(question.kind)) issues.push({ stage: 'content', message: `${question.prompt || 'Pertanyaan kuis'} harus berupa pertanyaan objektif. Gunakan Form untuk unggah foto atau video.` });
         if (['single_choice', 'multiple_choice', 'image_choice'].includes(question.kind) && question.options.length < 2) issues.push({ stage: 'content', message: `${question.prompt || 'Pertanyaan pilihan'} memerlukan minimal dua pilihan.` });
         if (step.content_kind === 'quiz' && ['single_choice', 'multiple_choice', 'image_choice'].includes(question.kind) && !question.answer_key?.selected_option_ids.length) issues.push({ stage: 'content', message: `${question.prompt || 'Pertanyaan kuis'} belum memiliki kunci jawaban.` });
       }
@@ -50,4 +52,3 @@ export function adminStatusTone(status: AdminProgramStatus): 'warning' | 'info' 
 function validDateRange(start: string, end: string) {
   return /^\d{4}-\d{2}-\d{2}$/u.test(start) && /^\d{4}-\d{2}-\d{2}$/u.test(end) && end >= start;
 }
-

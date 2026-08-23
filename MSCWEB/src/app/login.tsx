@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/shared/auth/AuthProvider';
+import { GoogleOAuthButton } from '@/shared/auth/GoogleOAuthButton';
 import { sanitizeInternalReturnRoute } from '@/shared/auth/internal-return-route';
 import { OAuthAdapterError } from '@/shared/auth/supabase-google-oauth-adapter';
 import { PublicEnvironmentError } from '@/shared/config/public-environment';
@@ -10,6 +11,8 @@ import { componentTokens, primitiveTokens, typographyTokens } from '@/shared/des
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { MSCIcon } from '@/shared/icons/MSCIcon';
 import { Button, Card, InlineMessage } from '@/shared/ui/primitives';
+
+const mscAppIcon = { uri: '/icons/icon-192.png' } as const;
 
 export default function LoginRoute() {
   const params = useLocalSearchParams<{ returnTo?: string }>();
@@ -38,15 +41,17 @@ export default function LoginRoute() {
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <Card>
         <Button label="Kembali" tone="secondary" onPress={() => router.back()} />
-        <View style={[styles.brand, { backgroundColor: colors.primaryText }]}>
-          <Text style={[styles.brandText, { color: colors.accent }]}>MSC</Text>
-        </View>
+        <Image
+          accessibilityLabel="MSC Body Transformation"
+          source={mscAppIcon}
+          style={styles.brand}
+        />
         <View style={styles.copy}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.primaryText }]}>Masuk ke MSC</Text>
           <Text style={[styles.body, { color: colors.secondaryText }]}>Gunakan akun Google untuk melanjutkan. Akun baru akan melengkapi profil lalu memilih lanjut sebagai Peserta atau mengajukan Coach.</Text>
         </View>
         {errorMessage ? <InlineMessage title="Tidak dapat masuk" message={errorMessage} tone="destructive" /> : null}
-        <Button label="Lanjutkan dengan Google" loading={isStarting} onPress={() => void startGoogleLogin()} testID="google-login" />
+        <GoogleOAuthButton loading={isStarting} onPress={() => void startGoogleLogin()} />
         <View style={styles.assuranceRow}>
           <MSCIcon name="forbidden" color={colors.secondaryText} />
           <Text style={[styles.assurance, { color: colors.secondaryText }]}>Pilihan tujuan akun bukan pemilihan role. Kewenangan awal tetap Peserta; Coach hanya aktif setelah syarat, pembayaran, dan persetujuan Admin.</Text>
@@ -58,8 +63,7 @@ export default function LoginRoute() {
 
 const styles = StyleSheet.create({
   page: { flexGrow: 1, justifyContent: 'center', width: '100%', maxWidth: componentTokens.readingMaxWidth, alignSelf: 'center', padding: primitiveTokens.space.large },
-  brand: { width: 72, height: 72, borderRadius: primitiveTokens.radius.large, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-  brandText: { fontSize: 24, lineHeight: 30, fontWeight: '900', fontStyle: 'italic' },
+  brand: { width: 96, height: 96, borderRadius: primitiveTokens.radius.large, alignSelf: 'center' },
   copy: { gap: primitiveTokens.space.xSmall, alignItems: 'center' },
   title: typographyTokens.titleLarge,
   body: { ...typographyTokens.body, textAlign: 'center' },

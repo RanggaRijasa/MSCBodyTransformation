@@ -1,22 +1,48 @@
-# Rantai migrasi Supabase lokal MSCWEB
+# Authority migrasi dan Function Supabase MSCWEB
 
-Supabase lokal memakai dua sumber migrasi yang berurutan:
+Satu-satunya deployment authority adalah folder repository-root `supabase/`.
+Migrasi web berada di `supabase/migrations/` dan Edge Function web berada di
+`supabase/functions/`. Folder `MSCWEB/supabase/` hanya memuat dokumentasi,
+konfigurasi lokal yang diabaikan Git, serta utilitas development non-deployment.
 
-1. migrasi shared baseline di `../supabase/migrations` melalui `supabase db reset` dari root repository;
-2. migrasi khusus web di `MSCWEB/supabase/migrations` melalui script berikut.
+Gunakan perintah Supabase CLI hanya dari repository root:
 
 ```sh
-MSCWEB/scripts/apply-local-supabase-migrations.sh
+supabase migration list --local
+supabase db reset --local
+supabase db push --linked --dry-run
 ```
 
-Script menolak URL selain `127.0.0.1` atau `localhost`, mengambil kredensial
-langsung dari `supabase status`, lalu menerapkan seluruh file web menurut urutan
-nama. Hosted `main` tidak pernah menjadi target script ini.
+`supabase db reset --local` bersifat destruktif untuk database lokal dan hanya
+boleh dijalankan setelah target lokal diverifikasi serta owner mengizinkan reset.
+Hosted `main` tidak boleh menerima file SQL melalui script ad-hoc atau `psql`;
+semua deployment harus melalui history migration root yang telah direview.
 
-Worker receipt cancellation lokal dijalankan dengan:
+## W09 standalone-repository cutover
+
+Sesuai `decisions/0011-web-only-repository-and-supabase-authority.md`, iOS tidak
+lagi menjadi release target. Pada W09, seluruh repository-root `supabase/`
+dipindahkan sebagai satu unit ke root repository MSCWEB standalone. Pemindahan
+mencakup seluruh migration history, Edge Functions dan shared modules, database
+tests, `config.toml`, serta runbook operasional. Migration lama tidak boleh
+di-squash, di-rebaseline, dinomori ulang, atau dipilih sebagian selama split.
+
+Setelah cutover, hanya repository MSCWEB yang boleh menjalankan deployment
+Supabase. Repository iOS menjadi arsip tanpa pipeline atau credential production
+aktif. Salinan sementara selama validation window adalah backup non-deployable,
+bukan migration authority kedua.
+
+Sebelum W09 cutover, Worker receipt cancellation lokal dijalankan dari
+monorepo dengan:
 
 ```sh
 MSCWEB/scripts/run-local-provisional-cleanup.sh
+```
+
+Setelah cutover ke repository MSCWEB standalone, path-nya menjadi:
+
+```sh
+scripts/run-local-provisional-cleanup.sh
 ```
 
 Script tersebut juga menolak target non-lokal, menghapus objek melalui Storage
@@ -26,6 +52,5 @@ supervisor lokal terjadwal. Aktivasi hosted scheduler/Edge Function tetap butuh
 otorisasi production terpisah.
 
 Untuk membuktikan schema bersih tanpa memengaruhi data pengembangan utama,
-gunakan stack Supabase lokal terpisah atau lakukan reset hanya setelah pengguna
-secara eksplisit menyetujui penghapusan data lokal. W07.4 tidak menjalankan
-`supabase db reset` secara otomatis.
+gunakan stack Supabase lokal terpisah. Tidak ada lagi script yang menerapkan
+rantai migrasi web kedua.

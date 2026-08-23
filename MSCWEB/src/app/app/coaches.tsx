@@ -4,7 +4,7 @@ import { CoachCard, publicScreenStyles, Section } from '@/features/public/Public
 import { useCoaches } from '@/features/public/public-queries';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { AppShell } from '@/shared/navigation/AppShell';
-import { Button, InlineMessage, StateView } from '@/shared/ui/primitives';
+import { Button, StateView } from '@/shared/ui/primitives';
 
 export default function PublicCoachesRoute() {
   const coaches = useCoaches();
@@ -13,7 +13,6 @@ export default function PublicCoachesRoute() {
   return (
     <AppShell role={role} activeRoute="coaches" title="Coach" subtitle="Direktori profil publik">
       <ScrollView contentContainerStyle={publicScreenStyles.content}>
-        <InlineMessage title="Profil publik terverifikasi" message="Hanya Coach aktif yang memilih profil publik yang muncul. Kode QR dan hubungan peserta tidak pernah ditampilkan." />
         <Section title="Temukan Coach">
           {coaches.isPending ? <StateView kind="loading" /> : coaches.isError ? <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void coaches.refetch()} />} /> : coaches.data?.length ? <View style={publicScreenStyles.grid}>{coaches.data.map((coach) => <View key={coach.id} style={publicScreenStyles.gridItem}><CoachCard coach={coach} /></View>)}</View> : <StateView kind="empty" />}
         </Section>

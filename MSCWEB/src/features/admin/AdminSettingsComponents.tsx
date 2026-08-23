@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AccountSignOutButton } from '@/shared/auth/AccountSignOutButton';
 import { componentTokens, primitiveTokens, typographyTokens } from '@/shared/design/tokens';
 import { useAppTheme } from '@/shared/design/useAppTheme';
 import { MSCIcon } from '@/shared/icons/MSCIcon';
@@ -12,7 +13,7 @@ export function AdminSettingsExperience({ authorized }: { authorized: boolean })
   if (!authorized) return <StateView kind="forbidden" />;
   if (audit.isPending) return <StateView kind="loading" />;
   if (audit.isError) return <StateView kind="error" action={<Button label="Coba lagi" onPress={() => void audit.refetch()} />} />;
-  return <ScrollView contentContainerStyle={styles.content} testID="admin.settings"><Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.primaryText }]}>Konfigurasi lokal</Text><Card><Setting label="Zona waktu default" value="Asia/Makassar" /><Setting label="Locale aplikasi" value="id-ID" /><Setting label="Mode data" value="Supabase lokal" /><Setting label="Credential" value="Dikelola server · tidak ditampilkan" /></Card><Pressable accessibilityRole="button" onPress={() => router.push('/admin/audit' as never)} style={[styles.auditLink, { borderColor: colors.border, backgroundColor: colors.surface }]}><View style={styles.flex}><Text style={[styles.cardTitle, { color: colors.primaryText }]}>Jejak audit</Text><Text style={[styles.body, { color: colors.secondaryText }]}>{audit.data?.length ?? 0} aktivitas terbaru tersedia untuk Admin.</Text></View><MSCIcon name="chevron" color={colors.secondaryText} /></Pressable><Text style={[styles.caption, { color: colors.secondaryText }]}>Pengaturan browser tidak pernah menampilkan atau mengubah API key, service role, secret provider, atau credential deployment.</Text></ScrollView>;
+  return <ScrollView contentContainerStyle={styles.content} testID="admin.settings"><Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.primaryText }]}>Konfigurasi lokal</Text><Card><Setting label="Zona waktu default" value="Asia/Makassar" /><Setting label="Locale aplikasi" value="id-ID" /><Setting label="Mode data" value="Supabase lokal" /><Setting label="Credential" value="Dikelola server · tidak ditampilkan" /></Card><Pressable accessibilityRole="button" onPress={() => router.push('/admin/audit' as never)} style={[styles.auditLink, { borderColor: colors.border, backgroundColor: colors.surface }]}><View style={styles.flex}><Text style={[styles.cardTitle, { color: colors.primaryText }]}>Jejak audit</Text><Text style={[styles.body, { color: colors.secondaryText }]}>{audit.data?.length ?? 0} aktivitas terbaru tersedia untuk Admin.</Text></View><MSCIcon name="chevron" color={colors.secondaryText} /></Pressable><Text style={[styles.caption, { color: colors.secondaryText }]}>Pengaturan browser tidak pernah menampilkan atau mengubah API key, service role, secret provider, atau credential deployment.</Text><AccountSignOutButton /></ScrollView>;
 }
 
 export function AdminAuditExperience({ authorized }: { authorized: boolean }) {

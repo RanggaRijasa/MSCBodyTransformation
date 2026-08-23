@@ -175,7 +175,10 @@ describe('Supabase Google OAuth adapter', () => {
     expect(store.saved).toBe('/app');
     expect(signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: 'http://localhost:8081/auth/callback?returnTo=%2Fapp#returnTo=%2Fapp' },
+      options: {
+        redirectTo: 'http://localhost:8081/auth/callback?returnTo=%2Fapp#returnTo=%2Fapp',
+        queryParams: { prompt: 'select_account' },
+      },
     });
   });
 

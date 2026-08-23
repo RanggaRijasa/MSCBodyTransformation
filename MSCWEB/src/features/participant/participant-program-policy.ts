@@ -3,6 +3,7 @@ import type {
   ParticipantDayAccess,
   ParticipantEnrollment,
   ParticipantSubmission,
+  ParticipantWeighInCompletion,
 } from './participant-models';
 
 export type ProgramSegment = 'joined' | 'available' | 'history';
@@ -53,6 +54,20 @@ export function latestSubmissionForStep(
     .sort((left, right) => right.attempt_sequence - left.attempt_sequence)[0];
 }
 
+export function weighInCompletionSubmission(
+  completion: ParticipantWeighInCompletion,
+): ParticipantSubmission {
+  return {
+    id: completion.id,
+    enrollment_id: completion.enrollment_id,
+    step_id: completion.step_id,
+    attempt_sequence: 1,
+    status: 'approved',
+    review_note: null,
+    submitted_at: completion.recorded_at,
+  };
+}
+
 export function relevantDayAccess(accesses: ParticipantDayAccess[]): ParticipantDayAccess | undefined {
   return accesses.find((access) => access.is_current_day)
     ?? accesses.find((access) => access.access_state === 'available')
@@ -70,6 +85,12 @@ export function stepKindLabel(kind: PublicProgramStep['content_kind']): string {
     daily_weigh_in: 'Timbang harian',
     final_weigh_in: 'Timbang akhir',
   } as Record<string, string>)[kind] ?? 'Aktivitas';
+}
+
+export function isFoodInsightEnabledForStep(step: PublicProgramStep): boolean {
+  return step.program_questions.some((question) => (
+    question.kind === 'photo_upload' && question.analysis_mode === 'food'
+  ));
 }
 
 export function submissionPresentation(status?: ParticipantSubmission['status']): {

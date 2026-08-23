@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { participantQueryKeys } from '@/features/participant/participant-queries';
+import { publicQueryKeys } from '@/features/public/public-queries';
 import { getCoachExperienceRepository, type CoachApplicationDraftCommand, type CoachProfileDraftCommand } from './coach-experience-repository';
 
 export const coachExperienceQueryKeys = {
@@ -132,7 +134,11 @@ export function usePublishCoachProfile() {
     mutationFn: () => getCoachExperienceRepository().publishPublicProfile(),
     onSuccess: async (profile) => Promise.all([
       client.invalidateQueries({ queryKey: coachExperienceQueryKeys.profileDraft }),
+      client.invalidateQueries({ queryKey: coachExperienceQueryKeys.workspace }),
       client.invalidateQueries({ queryKey: coachExperienceQueryKeys.publicProfile(profile.handle) }),
+      client.invalidateQueries({ queryKey: publicQueryKeys.coaches }),
+      client.invalidateQueries({ queryKey: ['public', 'coach'] }),
+      client.invalidateQueries({ queryKey: participantQueryKeys.coach }),
     ]),
   });
 }

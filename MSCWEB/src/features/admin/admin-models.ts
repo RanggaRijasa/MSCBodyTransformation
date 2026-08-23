@@ -21,7 +21,8 @@ export const adminAnswerKeySchema = z.object({
 export const adminQuestionSchema = z.object({
   id: z.string().uuid(), question_order: z.number().int().positive(), kind: z.string(), prompt: z.string(),
   analysis_mode: z.enum(['none', 'food']).default('none'), analysis_rubric: nullableText,
-  analysis_rubric_version: nullableText, options: z.array(adminQuestionOptionSchema).default([]),
+  analysis_rubric_version: nullableText, media_kind: z.enum(['image', 'video']).nullable().optional(),
+  media_path: nullableText, media_alt_text: nullableText, options: z.array(adminQuestionOptionSchema).default([]),
   answer_key: adminAnswerKeySchema.nullable().optional(),
 });
 
@@ -66,7 +67,7 @@ export type AdminDashboard = z.infer<typeof adminDashboardSchema>;
 
 export const adminPersonSchema = z.object({
   user_id: z.string().uuid(), role: z.enum(['participant', 'coach', 'admin']), display_name: z.string(), email: z.string().nullable().optional(),
-  city: nullableText, phone_number: nullableText, provider_avatar_url: nullableText, member_level: nullableText,
+  city: nullableText, phone_number: nullableText, professional_headline: nullableText.optional(), photo_reference: z.string().uuid().nullable().optional(), provider_avatar_url: nullableText, member_level: nullableText,
   current_coach_id: z.string().uuid().nullable().optional(), current_coach_name: nullableText,
   coach_is_approved: z.boolean().nullable().optional(), coach_is_public: z.boolean().nullable().optional(), coach_biography: nullableText,
   application_id: z.string().uuid().nullable().optional(), application_status: nullableText,
@@ -82,7 +83,7 @@ export type AdminEvidence = z.infer<typeof adminEvidenceSchema>;
 
 export const adminModerationItemSchema = z.object({
   id: z.string().uuid(), coach_user_id: z.string().uuid(), coach_name: z.string(), item_kind: z.enum(['testimonial', 'before_after']),
-  title: z.string(), body: z.string(), media_object_path: nullableText, includes_third_party: z.boolean(), permission_attested: z.boolean(),
+  title: z.string(), body: z.string(), media_object_path: nullableText, media_preview_url: z.string().url().optional(), includes_third_party: z.boolean(), permission_attested: z.boolean(),
   moderation_status: z.enum(['pending', 'approved', 'rejected']), content_version: z.number().int().positive(),
   moderation_version: z.number().int().positive(), moderation_note: nullableText, submitted_at: z.string(), moderated_at: nullableText,
 });

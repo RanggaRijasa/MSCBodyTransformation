@@ -1,5 +1,6 @@
 import type { Json } from '@/shared/supabase/database.types';
 import { normalizeBrowserImageOffMainThread } from '@/shared/media/image-normalization';
+import { SupabasePrivateMediaAdapter } from '@/shared/media/supabase-private-media-adapter';
 import { getSupabaseBrowserClient } from '@/shared/supabase/client';
 
 import {
@@ -26,6 +27,7 @@ import {
   type AdminWinnerPreview,
   type AdminWinnerSnapshot,
 } from './admin-models';
+import { normalizeQuestionPromptMedia } from './admin-question-media';
 
 export class AdminRepositoryError extends Error {
   constructor(readonly code = 'unknown') {
@@ -50,7 +52,7 @@ const programGraphSelect = `
       id,step_order,title,instructions,content_kind,completion_policy,verification_mode,media_path,media_alt_text,
       video_required,video_threshold,video_autoplay,
       program_questions(
-        id,question_order,kind,prompt,analysis_mode,analysis_rubric,analysis_rubric_version,
+        id,question_order,kind,prompt,analysis_mode,analysis_rubric,analysis_rubric_version,media_kind,media_path,media_alt_text,
         program_question_options(id,option_order,title,media_path,media_alt_text),
         program_answer_keys(question_id,accepted_text_values,number_value,selected_option_ids,matching_mode)
       )
@@ -64,11 +66,13 @@ export interface AdminRepository {
   saveProgram(program: AdminProgram): Promise<string>;
   createProgram(): Promise<string>;
   duplicateProgram(program: AdminProgram): Promise<string>;
+  hasCurrentPaymentDestination(): Promise<boolean>;
   publishProgram(programId: string): Promise<void>;
   archiveProgram(programId: string, reason: string): Promise<void>;
   uploadPublicImage(file: Blob, namespace: 'programs' | 'winners'): Promise<string>;
+  uploadQuestionPromptMedia(file: Blob): Promise<{ mediaKind: 'image' | 'video'; mediaPath: string }>;
   publicMediaUrl(path?: string | null): string | undefined;
-  coachMediaUrl(path?: string | null): string | undefined;
+  questionPromptMediaUrl(path?: string | null): string | undefined;
   listPeople(): Promise<AdminPerson[]>;
   getPerson(personId: string): Promise<AdminPerson>;
   getPersonOperations(participantId: string): Promise<AdminPersonOperations>;
@@ -93,6 +97,7 @@ export interface AdminRepository {
 
 export class SupabaseAdminRepository implements AdminRepository {
   private readonly client = getSupabaseBrowserClient();
+  private readonly privateMedia = new SupabasePrivateMediaAdapter(this.client);
 
   async getDashboard() {
     const response = await this.client.rpc('get_admin_dashboard');
@@ -136,6 +141,21 @@ export class SupabaseAdminRepository implements AdminRepository {
     return targetId;
   }
 
+  async hasCurrentPaymentDestination() {
+    const now = new Date().toISOString();
+    const response = await this.client
+      .from('payment_destinations')
+      .select('id')
+      .in('status', ['active', 'scheduled'])
+      .lte('effective_from', now)
+      .or(`effective_until.is.null,effective_until.gt.${now}`)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (response.error) throw mapError(response.error);
+    return response.data !== null;
+  }
+
   async publishProgram(programId: string) {
     const response = await this.client.rpc('publish_program', { target_program_id: programId, request_idempotency_key: operationKey('admin-program-publish') });
     if (response.error) throw mapError(response.error);
@@ -154,12 +174,33 @@ export class SupabaseAdminRepository implements AdminRepository {
     return path;
   }
 
+  async uploadQuestionPromptMedia(file: Blob) {
+    const mediaKind = file.type.startsWith('image/') ? 'image' : 'video';
+    let body = file;
+    let contentType = file.type;
+    let extension = videoExtension(file.type);
+    if (mediaKind === 'image') {
+      const normalized = await normalizeBrowserImageOffMainThread(file, { maxWidth: 1_600, maxHeight: 1_600 });
+      body = normalized.blob;
+      contentType = normalized.mimeType;
+      extension = 'jpg';
+    } else if (!extension || file.size <= 0 || file.size > MAX_QUESTION_VIDEO_BYTES) {
+      throw new AdminRepositoryError('question_media_invalid');
+    }
+    const mediaPath = `questions/${crypto.randomUUID()}.${extension}`;
+    const response = await this.client.storage.from('program-question-media').upload(mediaPath, body, {
+      contentType, cacheControl: '31536000', upsert: false,
+    });
+    if (response.error) throw mapError(response.error);
+    return { mediaKind, mediaPath } as const;
+  }
+
   publicMediaUrl(path?: string | null) {
     return path ? this.client.storage.from('public-media').getPublicUrl(path).data.publicUrl : undefined;
   }
 
-  coachMediaUrl(path?: string | null) {
-    return path ? this.client.storage.from('coach-public-media').getPublicUrl(path).data.publicUrl : undefined;
+  questionPromptMediaUrl(path?: string | null) {
+    return path ? this.client.storage.from('program-question-media').getPublicUrl(path).data.publicUrl : undefined;
   }
 
   async listPeople() {
@@ -219,7 +260,15 @@ export class SupabaseAdminRepository implements AdminRepository {
 
   async listModeration() {
     const response = await this.client.rpc('list_admin_profile_moderation_items');
-    return parseMany(response.data, response.error, adminModerationItemSchema);
+    const items = parseMany(response.data, response.error, adminModerationItemSchema);
+    return Promise.all(items.map(async (item) => {
+      if (!item.media_object_path) return item;
+      const preview = await this.privateMedia.createSignedUrl({
+        bucket: 'coach-public-media',
+        objectPath: item.media_object_path,
+      });
+      return { ...item, media_preview_url: preview.url };
+    }));
   }
 
   async moderateItem(item: AdminModerationItem, decision: 'approved' | 'rejected', note: string) {
@@ -295,7 +344,7 @@ export class SupabaseAdminRepository implements AdminRepository {
   }
 }
 
-function normalizeProgramGraph(value: unknown) {
+export function normalizeProgramGraph(value: unknown) {
   const row = value as Record<string, unknown>;
   return {
     ...row,
@@ -306,11 +355,16 @@ function normalizeProgramGraph(value: unknown) {
         questions: ((step.program_questions as Record<string, unknown>[] | null) ?? []).map((question) => ({
           ...question,
           options: (question.program_question_options as unknown[]) ?? [],
-          answer_key: ((question.program_answer_keys as unknown[]) ?? [])[0] ?? null,
+          answer_key: normalizeSingleRelation(question.program_answer_keys),
         })).sort(byOrder('question_order')),
       })).sort(byOrder('step_order')),
     })).sort(byOrder('day_number')),
   };
+}
+
+function normalizeSingleRelation(value: unknown) {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value && typeof value === 'object' ? value : null;
 }
 
 function byOrder(key: string) {
@@ -320,7 +374,13 @@ function byOrder(key: string) {
 function toProgramPayload(program: AdminProgram): Json {
   return JSON.parse(JSON.stringify({
     ...program,
-    days: program.days.map((day) => ({ ...day, steps: day.steps.map((step) => ({ ...step, questions: step.questions })) })),
+    days: program.days.map((day) => ({
+      ...day,
+      steps: day.steps.map((step) => ({
+        ...step,
+        questions: step.questions.map(normalizeQuestionPromptMedia),
+      })),
+    })),
   })) as Json;
 }
 
@@ -354,7 +414,13 @@ function parseMany<T>(data: unknown, error: { message?: string } | null, schema:
 }
 
 function mapError(error: { message?: string }) {
-  const known = ['permission_denied', 'program_not_found', 'published_program_read_only', 'program_days_required', 'program_step_required', 'quiz_answer_key_required', 'program_paid_not_ready', 'pending_reviews_exist', 'final_weight_missing', 'winners_already_locked', 'reason_required', 'moderation_conflict', 'correction_conflict'];
+  if (error.message?.includes('program_questions_prompt_media_check')) {
+    return new AdminRepositoryError('question_media_alt_text_required');
+  }
+  if (error.message?.includes('phase12_payment_handoff') || error.message?.includes('payment_destination_unavailable')) {
+    return new AdminRepositoryError('program_paid_not_ready');
+  }
+  const known = ['permission_denied', 'program_not_found', 'program_not_draft', 'published_program_read_only', 'program_days_required', 'program_step_required', 'question_prompt_required', 'quiz_answer_key_required', 'weigh_in_configuration_invalid', 'program_paid_not_ready', 'pending_reviews_exist', 'final_weight_missing', 'winners_already_locked', 'reason_required', 'moderation_conflict', 'correction_conflict', 'question_media_invalid'];
   return new AdminRepositoryError(known.find((code) => error.message?.includes(code)) ?? 'unknown');
 }
 
@@ -363,12 +429,23 @@ function adminErrorMessage(code: string) {
     permission_denied: 'Akun ini tidak memiliki wewenang Admin.', program_not_found: 'Program tidak ditemukan.',
     published_program_read_only: 'Program yang sudah diterbitkan hanya dapat dibaca. Duplikasikan sebagai draft untuk mengubahnya.',
     program_days_required: 'Tambahkan minimal satu hari program.', program_step_required: 'Setiap hari perlu memiliki minimal satu langkah.',
-    quiz_answer_key_required: 'Kuis memerlukan kunci jawaban lengkap.', program_paid_not_ready: 'Konfigurasi pembayaran program belum siap.',
+    program_not_draft: 'Program ini bukan draft atau sudah diterbitkan. Muat ulang untuk melihat status terbaru.',
+    question_prompt_required: 'Setiap pertanyaan perlu memiliki teks.',
+    quiz_answer_key_required: 'Kuis memerlukan kunci jawaban lengkap.',
+    weigh_in_configuration_invalid: 'Poin berat membutuhkan tepat satu timbang awal dan satu timbang akhir.',
+    program_paid_not_ready: 'Program berbayar belum dapat diterbitkan karena tujuan pembayaran belum dikonfigurasi.',
     pending_reviews_exist: 'Masih ada pemeriksaan bukti yang belum selesai.', final_weight_missing: 'Timbang akhir peserta belum lengkap.',
     winners_already_locked: 'Snapshot pemenang sudah dikunci.', reason_required: 'Alasan wajib diisi.',
     moderation_conflict: 'Konten telah diperiksa dari sesi lain. Muat ulang.', correction_conflict: 'Rating telah dikoreksi dari sesi lain. Muat ulang.',
+    question_media_invalid: 'Media pertanyaan harus berupa gambar atau video yang didukung dengan ukuran maksimal 50 MB.',
+    question_media_alt_text_required: 'Isi deskripsi media agar lampiran dapat disimpan.',
     insight_unavailable: 'Hasil AI belum tersedia untuk dikoreksi.', unknown: 'Operasi Admin belum dapat diselesaikan. Muat ulang lalu coba lagi.',
   } as Record<string, string>)[code] ?? 'Operasi Admin belum dapat diselesaikan.';
+}
+
+const MAX_QUESTION_VIDEO_BYTES = 50 * 1_024 * 1_024;
+function videoExtension(contentType: string) {
+  return ({ 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' } as Record<string, string>)[contentType];
 }
 
 let repository: AdminRepository | undefined;

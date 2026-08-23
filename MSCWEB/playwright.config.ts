@@ -24,5 +24,13 @@ export default defineConfig({
       name: 'chromium-compact',
       use: { ...devices['Pixel 7'] },
     },
+    {
+      name: 'edge-desktop',
+      use: { ...devices['Desktop Edge'], browserName: 'chromium' },
+    },
+    {
+      name: 'webkit-desktop',
+      use: { ...devices['Desktop Safari'], browserName: 'webkit' },
+    },
   ],
 });
